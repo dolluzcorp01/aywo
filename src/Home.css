@@ -1,0 +1,310 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f9fa;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    /* Push content to the top */
+    align-items: flex-start;
+}
+
+/* Main Container */
+.home-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    /* Move content to the top */
+    padding: 20px;
+    width: 100%;
+}
+
+/* Welcome Section */
+.welcome-section {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Welcome Text */
+.welcome-text {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* Make Form Button */
+.make-form-btn {
+    background-color: orange;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+/* My Forms Section */
+.section {
+    width: 100%;
+    max-width: 1200px;
+    margin-bottom: 50px;
+}
+
+.forms-list {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+.form-card {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e0e0e0;
+    width: 260px;
+    height: 90px;
+    /* Adjusted height */
+    transition: all 0.2s ease-in-out;
+    transform: scale(1);
+}
+
+.form-card:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    transform: translateY(-5px) scale(1.05);
+    /* Moves up & enlarges slightly */
+}
+
+.form-icon-container {
+    width: 50px;
+    height: 100%;
+    background: #d3e3fd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+.form-icon {
+    font-size: 20px;
+    color: #1a73e8;
+}
+
+.form-content {
+    flex: 1;
+    padding: 14px 12px 18px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.form-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: gray;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+    margin-top: 20px;
+}
+
+.response-count {
+    font-size: 15px;
+    color: gray;
+    margin-top: auto;
+}
+
+.menu-icon {
+    font-size: 16px;
+    color: #666;
+    cursor: pointer;
+    margin-left: auto;
+    margin-right: 10px;
+    padding: 10px;
+}
+
+.menu-container {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 30px;
+    background: white;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    overflow: hidden;
+    z-index: 1000;
+    display: block;
+    min-width: max-content;
+    padding: 5px 0;
+    font-size: 14px;
+}
+
+.dropdown-menu button {
+    width: 100%;
+    background: none;
+    color: black;
+    border: none;
+    padding: 10px 15px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.dropdown-menu button:hover {
+    background: #f1f3f4;
+}
+
+.rename-input-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.form-title-input {
+    width: 50px;
+    /* Adjust width to fit compactly */
+    font-size: 5px;
+    padding: 4px;
+    border: none;
+    outline: none;
+    border-radius: 4px;
+}
+
+.save-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    font-size: 14px;
+    color: #28a745;
+    /* Green checkmark */
+}
+
+.save-btn:hover {
+    background: none !important;
+}
+
+/* Bottom Spacing */
+.bottom-spacing {
+    height: 80px;
+}
+
+/* Ensure the modal is perfectly centered */
+.modal-dialog {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+/* Adjust Modal Size */
+.modal-lg {
+    max-width: 600px;
+}
+
+.modal-content {
+    text-align: center;
+    padding: 0;
+    /* Remove unnecessary padding */
+    box-shadow: none;
+    /* Remove extra shadow */
+    border-radius: 10px;
+}
+
+/* Modal Subtitle */
+.modal-subtitle {
+    font-size: 20px;
+    color: #444;
+    margin-bottom: 15px;
+}
+
+/* Adjusted Header Color (Lighter Orange) */
+.updated-header {
+    background: linear-gradient(135deg, #f08c50, #f4a672);
+    color: white;
+    border-bottom: none;
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* Make Close "X" White */
+.updated-header .btn-close {
+    filter: invert(1);
+    opacity: 1;
+}
+
+/* Layout for Blank & Template inside modal */
+.modal-options {
+    display: flex;
+    justify-content: center;
+    /* Center them properly */
+    gap: 60px;
+    /* Reduce the gap slightly */
+    padding: 20px;
+}
+
+/* Increased Option Card Size */
+.option-card {
+    width: 160px;
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid transparent;
+    background-color: #fff;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    transition: border 0.3s ease, transform 0.2s;
+    border-radius: 10px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    padding: 10px;
+}
+
+/* Hover Effect - Changed to Blue */
+.option-card:hover {
+    border: 2px solid #3498db;
+    transform: scale(1.08);
+}
+
+/* Option Icons */
+.option-icon {
+    font-size: 45px;
+    margin-bottom: 8px;
+}
+
+/* Colored Icons */
+.colored-icon-blank {
+    color: #ff7675;
+}
+
+.colored-icon-template {
+    color: #00cec9;
+}
+
+/* Option Subtext */
+.option-subtext {
+    font-size: 13px;
+    color: gray;
+}

@@ -1,0 +1,28 @@
+.left-navbar {
+    width: 200px;
+    background-color: #f8f9fa;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    border-right: 1px solid #ddd;
+}
+
+.left-navbar .nav-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.left-navbar .nav-item:hover,
+.left-navbar .nav-item.active {
+    background-color: #e0e0e0;
+    /* Keeps gray background when active */
+}
+
+
+.left-navbar .nav-item i {
+    margin-right: 10px;
+}
