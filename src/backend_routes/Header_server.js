@@ -3,6 +3,7 @@ const router = express.Router();
 const getDBConnection = require('../../config/db');
 const { verifyJWT } = require('./Login_server');
 
+// Generate a color based on user name
 function generateColorFromText(text) {
     let hash = 0;
     for (let i = 0; i < text.length; i++) {
@@ -12,6 +13,7 @@ function generateColorFromText(text) {
     return `hsl(${hue}, 70%, 60%)`;
 }
 
+// ✅ Get user profile details
 router.get('/get-user-profile', verifyJWT, (req, res) => {
     console.log('POST /api/header called');
     console.log('Decoded user_id from JWT:', req.user_id);
@@ -23,7 +25,7 @@ router.get('/get-user-profile', verifyJWT, (req, res) => {
     const db = getDBConnection('form_builder');
 
     const query = `
-        SELECT user_name, LEFT(user_name, 1) AS profile_letters
+        SELECT user_id, user_name, LEFT(user_name, 1) AS profile_letters
         FROM form_builder.users WHERE user_id = ?;
     `;
 
@@ -43,5 +45,12 @@ router.get('/get-user-profile', verifyJWT, (req, res) => {
     });
 
 });
+
+// ✅ Logout API
+router.post('/logout', (req, res) => {
+    res.clearCookie('token', { httpOnly: true, secure: true, sameSite: 'Strict' });
+    res.json({ success: true, message: 'Logged out successfully' });
+});
+
 
 module.exports = router;

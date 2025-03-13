@@ -1,9 +1,11 @@
 import Swal from "sweetalert2";
+import { useNotification } from "./NotificationContext";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Home.css";
 
 function Home() {
+  const { setShowNotification } = useNotification();
   const [profileDetails, setProfileDetails] = useState(null);
   const [forms, setForms] = useState([]);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -20,7 +22,23 @@ function Home() {
     const fetchProfile = fetch("http://localhost:5000/api/header/get-user-profile", {
       method: "GET",
       credentials: "include",
-    }).then((res) => res.json());
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Unauthorized");
+        }
+        return res.json();
+      })
+      .then((profileData) => {
+        if (!profileData?.user_id) {
+          throw new Error("No user found");
+        }
+        setProfileDetails(profileData);
+      })
+      .catch(() => {
+        navigate("/login"); // Redirect to login if authentication fails
+      })
+      .finally(() => setProfileLoading(false));
 
     const fetchForms = fetch("http://localhost:5000/api/form_builder/get-forms", {
       method: "GET",
@@ -28,23 +46,21 @@ function Home() {
     })
       .then((response) => {
         if (!response.ok) {
-          return response.json().then(err => { throw new Error(err.message || "Failed to fetch forms"); });
+          return response.json().then((err) => {
+            throw new Error(err.message || "Failed to fetch forms");
+          });
         }
         return response.json();
-      });
-
-
-    Promise.all([fetchProfile, fetchForms])
-      .then(([profileData, formsData]) => {
-        setProfileDetails(profileData);
+      })
+      .then((formsData) => {
         setForms(formsData);
+        setShowNotification(false); // Reset notification on home page
       })
       .catch((err) => setError(err.message))
-      .finally(() => {
-        setProfileLoading(false);
-        setFormsLoading(false);
-      });
-  }, []);
+      .finally(() => setFormsLoading(false));
+
+    Promise.all([fetchProfile, fetchForms]);
+  }, [navigate]); // Add navigate to dependency array
 
   const refreshForms = () => {
     setFormsLoading(true);
@@ -70,7 +86,7 @@ function Home() {
   };
 
   const handleFormClick = (formId) => {
-    navigate(`/form/${formId}`);
+    navigate(`/form-builder/${formId}`);
   };
 
   const handleDelete = (formId) => {
@@ -115,6 +131,7 @@ function Home() {
       handleRenameSubmit(formId);
     }
   };
+
   const handleRenameSubmit = (formId) => {
     if (!renameTitle.trim()) {
       Swal.fire("Error", "Form title cannot be empty.", "error");
@@ -142,7 +159,9 @@ function Home() {
           credentials: "include",
         })
           .then((res) => {
-            if (!res.ok) throw new Error("Failed to rename form");
+            if (!res.ok) {
+              return res.json().then(err => { throw new Error(err.error || "Failed to rename form"); });
+            }
             return res.json();
           })
           .then(() => {
@@ -153,7 +172,12 @@ function Home() {
           })
           .catch((error) => {
             console.error("Error renaming form:", error);
-            Swal.fire("Error", "Failed to rename form", "error");
+
+            if (error.message.includes("already exists")) {
+              Swal.fire("Duplicate Title", "A form with this title already exists. Please choose a different name.", "warning");
+            } else {
+              Swal.fire("Error", error.message, "error");
+            }
           });
       }
     });

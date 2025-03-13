@@ -92,7 +92,24 @@ const Header = () => {
       const data = await response.json();
       setProfileDetails(data);
     } catch (error) {
-      Swal.fire("Issue while populating profile details!");
+      console.error(error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/header/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        navigate('/login'); // Redirect to login page after logout
+      } else {
+        Swal.fire("Logout failed!");
+      }
+    } catch (error) {
+      Swal.fire("An error occurred while logging out.");
       console.error(error);
     }
   };
@@ -144,7 +161,7 @@ const Header = () => {
               <DropdownItem className="dropdown-item" href="#">My Profile</DropdownItem>
               <DropdownItem className="dropdown-item" href="/login?changePassword">Change Password</DropdownItem>
               <DropdownDivider />
-              <DropdownItem className="dropdown-item" href="/login">Logout</DropdownItem>
+              <DropdownItem className="dropdown-item" href="#" onClick={handleLogout}>Logout</DropdownItem>
             </DropdownMenu>
           </li>
         </ul>

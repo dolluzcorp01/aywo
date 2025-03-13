@@ -117,12 +117,6 @@ router.post('/verifyLogin', (req, res) => {
   });
 });
 
-// 🔹 Logout API
-router.post('/logout', (req, res) => {
-  res.clearCookie('token');
-  res.json({ success: true, message: 'Logged out successfully' });
-});
-
 // 🔹 Check if User Exists API
 router.post('/checkUserExists', (req, res) => {
   const { userInput } = req.body;

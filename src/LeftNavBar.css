@@ -11,18 +11,56 @@
 .left-navbar .nav-item {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    /* Ensures proper spacing */
     padding: 10px;
     cursor: pointer;
     border-radius: 5px;
+    width: 100%;
+    /* Makes sure spacing works */
 }
 
 .left-navbar .nav-item:hover,
 .left-navbar .nav-item.active {
     background-color: #e0e0e0;
-    /* Keeps gray background when active */
 }
-
 
 .left-navbar .nav-item i {
     margin-right: 10px;
+}
+
+/* Ensures text and icon are properly aligned */
+.nav-text {
+    flex-grow: 1;
+}
+
+/* Notification positioned at the END */
+.new-form-notification {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #ff8c00, #ff5e00);
+    /* Smooth gradient */
+    color: white;
+    font-size: 10px;
+    /* Slightly smaller font */
+    font-weight: bold;
+    padding: 5px 8px;
+    /* Reduced padding for a smaller badge */
+    border-radius: 10px;
+    /* Still rounded but slightly tighter */
+    margin-left: 6px;
+    /* Moves it slightly closer */
+    box-shadow: 0 1.5px 3px rgba(0, 0, 0, 0.2);
+    /* Softer shadow */
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    /* Slightly tighter spacing */
+    font-family: "Poppins", sans-serif;
+    /* Modern font */
+    line-height: 1;
+    /* Ensures vertical centering */
+    position: relative;
+    top: -1px;
+    /* Moves the text slightly downward */
 }
