@@ -38,36 +38,55 @@ router.post("/save-form", verifyJWT, async (req, res) => {
         return res.status(401).json({ error: "Unauthorized" });
     }
 
+    if (!title.trim()) {
+        return res.status(400).json({ error: "Form title cannot be empty." });
+    }
+
+    if (!fields || !Array.isArray(fields) || fields.length === 0) {
+        return res.status(400).json({ error: "At least one field is required." });
+    }
+
+    let connection;
     try {
+        connection = await db.getConnection();
+        await connection.beginTransaction(); // ✅ Start transaction
+
         // ✅ Check for duplicate form title
         const isDuplicate = await checkDuplicateFormTitle(userId, title);
         if (isDuplicate) {
+            await connection.rollback();
             return res.status(400).json({ error: "A form with this title already exists. Please choose a different name." });
         }
 
-        // ✅ Insert form (if no duplicate found)
+        // ✅ Insert form
         const forms_insert_query = `INSERT INTO forms (user_id, title) VALUES (?, ?)`;
-        const formResult = await queryPromise(db, forms_insert_query, [userId, title]);
-
+        const formResult = await queryPromise(connection, forms_insert_query, [userId, title]);
         const formId = formResult.insertId;
         console.log("✅ Form saved with ID:", formId);
 
-        // ✅ Insert form fields (if there are any)
-        if (fields.length > 0) {
-            const fieldQueries = fields.map((field) => {
-                const form_fields_insert_query = `INSERT INTO form_fields (form_id, field_type, label) VALUES (?, ?, ?)`;
-                return queryPromise(db, form_fields_insert_query, [formId, field.type, field.label]);
-            });
+        // ✅ Insert form fields (validate fields before inserting)
+        const fieldQueries = [];
+        for (const field of fields) {
+            if (!field.label.trim()) {
+                await connection.rollback();
+                return res.status(400).json({ error: "Field labels cannot be empty." });
+            }
 
-            await Promise.all(fieldQueries);
-            console.log("✅ All form fields inserted successfully");
+            const form_fields_insert_query = `INSERT INTO form_fields (form_id, field_type, label) VALUES (?, ?, ?)`;
+            fieldQueries.push(queryPromise(connection, form_fields_insert_query, [formId, field.type, field.label]));
         }
+
+        await Promise.all(fieldQueries);
+        await connection.commit(); // ✅ Commit transaction if everything is fine
 
         res.json({ message: "Form saved successfully!", formId });
 
     } catch (error) {
+        if (connection) await connection.rollback(); // ❌ Rollback on error
         console.error("❌ Server error:", error);
-        res.status(500).json({ error: "Server error" });
+        res.status(500).json({ error: "Server error, please try again." });
+    } finally {
+        if (connection) connection.release(); // ✅ Release connection
     }
 });
 
@@ -109,23 +128,65 @@ router.put("/rename-form/:formId", verifyJWT, async (req, res) => {
 // ✅ Fetch user forms (Protected Route)
 router.get("/get-forms", verifyJWT, async (req, res) => {
     try {
-        const userId = req.user_id; // ✅ Corrected extraction of user ID
+        const userId = req.user_id;
+        const sortBy = req.query.sortBy || "created_at_desc";
+
+        let orderClause = "ORDER BY f.created_at DESC"; // Default sorting
+        if (sortBy === "created_at_asc") orderClause = "ORDER BY f.created_at ASC";
+        if (sortBy === "title_asc") orderClause = "ORDER BY f.title ASC";
+        if (sortBy === "title_desc") orderClause = "ORDER BY f.title DESC";
+        if (sortBy === "responses_desc") orderClause = "ORDER BY response_count DESC";
+        if (sortBy === "responses_asc") orderClause = "ORDER BY response_count ASC";
 
         const query = `
             SELECT f.form_id, f.title, 
-                   COUNT(fr.response_id) AS response_count 
+                COUNT(fr.response_id) AS response_count 
             FROM forms f
             LEFT JOIN form_responses fr ON f.form_id = fr.form_id
             WHERE f.user_id = ?
             GROUP BY f.form_id, f.title
-            ORDER BY f.created_at DESC
+            ${orderClause}
         `;
 
         const forms = await queryPromise(db, query, [userId]);
-
         res.json(forms);
     } catch (error) {
         console.error("Error fetching forms:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+
+// ✅ Fetch a specific form by ID (Protected Route)
+router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
+    const { formId } = req.params;
+    const userId = req.user_id; // Ensure the user is authenticated
+
+    if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+        // ✅ Fetch form title
+        const formQuery = "SELECT title FROM forms WHERE form_id = ? AND user_id = ?";
+        const formResult = await queryPromise(db, formQuery, [formId, userId]);
+
+        if (formResult.length === 0) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        // ✅ Fetch form fields
+        const fieldsQuery = "SELECT field_id, field_type, label FROM form_fields WHERE form_id = ?";
+        const fieldsResult = await queryPromise(db, fieldsQuery, [formId]);
+
+        res.json({
+            formId,
+            title: formResult[0].title,
+            fields: fieldsResult
+        });
+
+    } catch (error) {
+        console.error("❌ Error fetching form:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 });

@@ -25,6 +25,15 @@ function App() {
           </Layout>
         }
       />
+      {/* ✅ Correct Dynamic Route */}
+      <Route
+        path="/form-builder/:formId"
+        element={
+          <Layout>
+            <FormBuilder />
+          </Layout>
+        }
+      />
       <Route path="/" element={<Navigate to="/login" />} />
     </Routes>
   );

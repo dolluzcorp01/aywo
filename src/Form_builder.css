@@ -1,41 +1,125 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+}
+
+/* Container for the form builder */
 .form-builder-container {
     padding: 20px;
-    max-width: 600px;
-    margin: auto;
-    background: white;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    /* Align items to the top */
+    position: relative;
+}
+
+/* Main form builder layout */
+.form-builder-layout {
+    display: flex;
+    width: 100%;
+    max-height: 90vh;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    padding: 20px;
+    overflow: hidden;
 }
 
+/* Form content area */
+.form-content {
+    flex-grow: 1;
+    height: 90vh;
+    overflow-y: auto;
+    /* Enable scrolling */
+    padding: 20px;
+    background: white;
+    position: relative;
+    max-height: calc(100vh - 100px);
+}
+
+/* Form title */
 .form-title-input {
-    font-size: 20px;
+    font-size: 22px;
+    font-weight: bold;
+    width: 100%;
+    margin-bottom: 15px;
+    border: none;
+    background: transparent;
+    outline: none;
+}
+
+/* Field buttons */
+.field-list button {
     width: 100%;
     padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
+    border: none;
     border-radius: 5px;
+    background: #ff7043;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
 }
 
-button {
-    padding: 10px 15px;
-    margin: 5px;
-    border: none;
-    background-color: #007bff;
+.field-list button:hover {
+    background: #e64a19;
+}
+
+/* Form fields */
+.form-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 5px;
+    background: #fafafa;
+    border: 1px solid #ddd;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 30%;
+    padding: 20px;
+    background: #f8f9fa;
+    border-right: 1px solid #ddd;
+}
+
+.sidebar h3 {
+    margin-bottom: 10px;
+}
+
+.sidebar button {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+/* Delete button */
+.delete-btn {
+    background: #ff5252;
     color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.delete-btn:hover {
+    background: #d32f2f;
+}
+
+/* Save button */
+.save-form-btn {
+    background: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
     border-radius: 5px;
     cursor: pointer;
 }
 
-button:hover {
-    background-color: #0056b3;
-}
-
-.input-field {
-    display: block;
-    width: 100%;
-    margin: 10px 0;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+.save-form-button:hover {
+    background: #0056b3;
 }

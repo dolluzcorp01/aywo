@@ -100,7 +100,7 @@ body {
     color: #1a73e8;
 }
 
-.form-content {
+.form-card-content {
     flex: 1;
     padding: 14px 12px 18px 12px;
     display: flex;
@@ -306,5 +306,28 @@ body {
 /* Option Subtext */
 .option-subtext {
     font-size: 13px;
+    color: gray;
+}
+
+.forms-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    margin-bottom: 20px;
+}
+
+.order-by-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.order-by-dropdown {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    cursor: pointer;
     color: gray;
 }

@@ -17,8 +17,34 @@ function Home() {
   const [renameTitle, setRenameTitle] = useState("");
   const menuRef = useRef(null);
   const renameRef = useRef(null);
+  const [sortBy, setSortBy] = useState("created_at_desc"); // Default sorting
+
+  const fetchForms = () => {
+    setFormsLoading(true);
+    fetch(`http://localhost:5000/api/form_builder/get-forms?sortBy=${sortBy}`, {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then(err => { throw new Error(err.message || "Failed to fetch forms"); });
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setForms(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching forms:", error);
+        setError(error.message);
+      })
+      .finally(() => setFormsLoading(false));
+  };
 
   useEffect(() => {
+    setProfileLoading(true);
+    setFormsLoading(true);
+
     const fetchProfile = fetch("http://localhost:5000/api/header/get-user-profile", {
       method: "GET",
       credentials: "include",
@@ -40,31 +66,12 @@ function Home() {
       })
       .finally(() => setProfileLoading(false));
 
-    const fetchForms = fetch("http://localhost:5000/api/form_builder/get-forms", {
-      method: "GET",
-      credentials: "include",
-    })
-      .then((response) => {
-        if (!response.ok) {
-          return response.json().then((err) => {
-            throw new Error(err.message || "Failed to fetch forms");
-          });
-        }
-        return response.json();
-      })
-      .then((formsData) => {
-        setForms(formsData);
-        setShowNotification(false); // Reset notification on home page
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setFormsLoading(false));
-
-    Promise.all([fetchProfile, fetchForms]);
-  }, [navigate]); // Add navigate to dependency array
+    fetchForms();
+  }, [navigate, sortBy]); // Now fetchForms is accessible
 
   const refreshForms = () => {
     setFormsLoading(true);
-    fetch("http://localhost:5000/api/form_builder/get-forms", {
+    fetch(`http://localhost:5000/api/form_builder/get-forms?sortBy=${sortBy}`, {
       method: "GET",
       credentials: "include",
     })
@@ -76,17 +83,17 @@ function Home() {
       })
       .then((data) => {
         setForms(data);
-        setFormsLoading(false);
       })
       .catch((error) => {
         console.error("Error fetching forms:", error);
         setError(error.message);
-        setFormsLoading(false);
-      });
+      })
+      .finally(() => setFormsLoading(false));
   };
 
+
   const handleFormClick = (formId) => {
-    navigate(`/form-builder/${formId}`);
+    navigate(`/form-builder/form-${formId}`);
   };
 
   const handleDelete = (formId) => {
@@ -234,7 +241,28 @@ function Home() {
 
       {/* Forms I have created */}
       <section className="section">
-        <h4 className="section-title mb-4">My Forms</h4>
+        <div className="forms-header">
+          <h4 className="section-title">My Forms</h4>
+          <div className="order-by-container">
+            <select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value);
+                fetchForms();
+              }}
+              className="order-by-dropdown"
+              style={{ outline: "none" }}
+            >
+              <option value="created_at_desc">Newest First</option>
+              <option value="created_at_asc">Oldest First</option>
+              <option value="title_asc">Title A-Z</option>
+              <option value="title_desc">Title Z-A</option>
+              <option value="responses_desc">Most Responses</option>
+              <option value="responses_asc">Fewest Responses</option>
+            </select>
+          </div>
+        </div>
+
         <div className="forms-list">
           {formsLoading ? (
             <p>Loading forms...</p>
@@ -248,7 +276,7 @@ function Home() {
                 <div className="form-icon-container">
                   <i className="fa-solid fa-file-alt form-icon"></i>
                 </div>
-                <div className="form-content" onClick={() => handleFormClick(form.form_id)}>
+                <div className="form-card-content" onClick={() => handleFormClick(form.form_id)}>
                   {renamingFormId === form.form_id ? (
                     <div ref={renameRef} className="rename-input-container">
                       <input
