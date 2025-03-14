@@ -19,28 +19,6 @@ function Home() {
   const renameRef = useRef(null);
   const [sortBy, setSortBy] = useState("created_at_desc"); // Default sorting
 
-  const fetchForms = () => {
-    setFormsLoading(true);
-    fetch(`http://localhost:5000/api/form_builder/get-forms?sortBy=${sortBy}`, {
-      method: "GET",
-      credentials: "include",
-    })
-      .then((response) => {
-        if (!response.ok) {
-          return response.json().then(err => { throw new Error(err.message || "Failed to fetch forms"); });
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setForms(data);
-      })
-      .catch((error) => {
-        console.error("Error fetching forms:", error);
-        setError(error.message);
-      })
-      .finally(() => setFormsLoading(false));
-  };
-
   useEffect(() => {
     setProfileLoading(true);
     setFormsLoading(true);
@@ -69,7 +47,7 @@ function Home() {
     fetchForms();
   }, [navigate, sortBy]); // Now fetchForms is accessible
 
-  const refreshForms = () => {
+  const fetchForms = () => {
     setFormsLoading(true);
     fetch(`http://localhost:5000/api/form_builder/get-forms?sortBy=${sortBy}`, {
       method: "GET",
@@ -83,6 +61,7 @@ function Home() {
       })
       .then((data) => {
         setForms(data);
+        setShowNotification(false); // Hide notification on success
       })
       .catch((error) => {
         console.error("Error fetching forms:", error);
@@ -90,7 +69,6 @@ function Home() {
       })
       .finally(() => setFormsLoading(false));
   };
-
 
   const handleFormClick = (formId) => {
     navigate(`/form-builder/form-${formId}`);
@@ -118,7 +96,7 @@ function Home() {
             return response.json();
           })
           .then(() => {
-            refreshForms();
+            fetchForms();
             Swal.fire("Deleted!", "Your form has been deleted.", "success");
           })
           .catch((error) => {
@@ -172,14 +150,13 @@ function Home() {
             return res.json();
           })
           .then(() => {
-            refreshForms();
+            fetchForms();
             setRenamingFormId(null);
             setRenameTitle("");
             Swal.fire("Renamed!", "Your form has been renamed.", "success");
           })
           .catch((error) => {
             console.error("Error renaming form:", error);
-
             if (error.message.includes("already exists")) {
               Swal.fire("Duplicate Title", "A form with this title already exists. Please choose a different name.", "warning");
             } else {

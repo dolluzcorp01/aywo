@@ -8,12 +8,12 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import "./Form_builder.css";
 
 const FIELD_TYPES = [
-    { type: "text", icon: "fa-font", label: "Short Answer" },
-    { type: "dropdown", icon: "fa-list", label: "Dropdown" },
-    { type: "radio", icon: "fa-dot-circle", label: "Multiple Choice" },
-    { type: "checkbox", icon: "fa-check-square", label: "Checkbox" },
-    { type: "date", icon: "fa-calendar", label: "Date" },
-    { type: "textarea", icon: "fa-paragraph", label: "Paragraph" }
+    { field_type: "text", icon: "fa-font", label: "Short Answer" },
+    { field_type: "dropdown", icon: "fa-list", label: "Dropdown" },
+    { field_type: "radio", icon: "fa-dot-circle", label: "Multiple Choice" },
+    { field_type: "checkbox", icon: "fa-check-square", label: "Checkbox" },
+    { field_type: "date", icon: "fa-calendar", label: "Date" },
+    { field_type: "textarea", icon: "fa-paragraph", label: "Paragraph" }
 ];
 
 const Field = ({ field, index, moveField, removeField, updateLabel }) => {
@@ -32,6 +32,8 @@ const Field = ({ field, index, moveField, removeField, updateLabel }) => {
         },
     });
 
+    const fieldType = field.field_type || field.type; // Ensure backward compatibility
+
     return (
         <div ref={(node) => ref(drop(node))} className="input-field">
             <input
@@ -41,24 +43,26 @@ const Field = ({ field, index, moveField, removeField, updateLabel }) => {
                 onChange={(e) => updateLabel(index, e.target.value)}
                 placeholder="Enter field label"
             />
-            {field.type === "dropdown" ? (
+            {fieldType === "dropdown" ? (
                 <select>
                     <option>Option 1</option>
                     <option>Option 2</option>
                 </select>
-            ) : field.type === "radio" || field.type === "checkbox" ? (
-                <input type={field.type} />
-            ) : field.type === "date" ? (
+            ) : fieldType === "radio" || fieldType === "checkbox" ? (
+                <input type={fieldType} />
+            ) : fieldType === "date" ? (
                 <input type="date" />
-            ) : field.type === "textarea" ? (
+            ) : fieldType === "textarea" ? (
                 <textarea placeholder="Enter text" />
             ) : (
-                <input type="text" placeholder={`Enter ${field.type}`} />
+                <input type="text" placeholder={`Enter ${fieldType}`} />
             )}
 
             <div className="field-actions">
                 <span className="drag-handle">☰</span>
-                <button onClick={() => removeField(index)}><i className="fa-solid fa-trash"></i> Delete</button>
+                <button onClick={() => removeField(index)}>
+                    <i className="fa-solid fa-trash"></i> Delete
+                </button>
             </div>
         </div>
     );
@@ -72,7 +76,7 @@ const FormBuilder = () => {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
-    const { formId } = useParams(); // Get form ID from URL
+    const { formId } = useParams();
 
     useEffect(() => {
         axios.get("http://localhost:5000/api/header/get-user-profile", { withCredentials: true })
@@ -93,11 +97,9 @@ const FormBuilder = () => {
         }, 0);
     }, [bgColor]);
 
-    // ✅ Fetch form data if formId exists
     useEffect(() => {
         if (formId) {
-            const cleanFormId = formId.replace("form-", ""); // ✅ Remove 'form-' prefix
-            console.log("Extracted Form ID:", cleanFormId); // Debugging log
+            const cleanFormId = formId.replace("form-", "");
 
             axios.get(`http://localhost:5000/api/form_builder/get-specific-form/${cleanFormId}`, { withCredentials: true })
                 .then((res) => {
@@ -111,8 +113,8 @@ const FormBuilder = () => {
         }
     }, [formId]);
 
-    const addField = (type) => {
-        setFields([...fields, { type, label: "", id: Date.now() }]);
+    const addField = (field_type) => {
+        setFields([...fields, { field_id: null, field_type, label: "" }]);
     };
 
     const moveField = (fromIndex, toIndex) => {
@@ -132,7 +134,7 @@ const FormBuilder = () => {
         setFields(updatedFields);
     };
 
-    const saveForm = async () => {
+    const saveOrUpdateForm = async (isNew = false) => {
         if (!formTitle.trim()) {
             Swal.fire("Error", "Form title cannot be empty.", "error");
             return;
@@ -149,18 +151,33 @@ const FormBuilder = () => {
         }
 
         try {
-            const response = await axios.post(
-                "http://localhost:5000/api/form_builder/save-form",
-                { title: formTitle, fields },
-                { withCredentials: true }
-            );
+            if (!isNew && formId) {
+                const cleanFormId = formId.replace("form-", "");
+                const response = await axios.put(
+                    `http://localhost:5000/api/form_builder/update-form/${cleanFormId}`,
+                    { title: formTitle, fields },
+                    { withCredentials: true }
+                );
+                Swal.fire("Success!", response.data.message, "success");
+            } else {
+                const response = await axios.post(
+                    "http://localhost:5000/api/form_builder/save-form",
+                    { title: formTitle, fields },
+                    { withCredentials: true }
+                );
+                Swal.fire("Success!", response.data.message, "success");
+            }
 
-            Swal.fire("Success!", response.data.message, "success");
             setShowNotification(true);
         } catch (error) {
-            console.error("Error saving form:", error);
-
-            Swal.fire("Error", error.response?.data.error || "Failed to save form. Please try again.", "error");
+            console.error("Error saving/updating form:", error);
+            // ✅ Check for "already exists" in the correct place
+            const errorMessage = error.response?.data?.error || "An error occurred";
+            if (errorMessage.includes("already exists")) {
+                Swal.fire("Duplicate Title", "A form with this title already exists. Please choose a different name.", "warning");
+            } else {
+                Swal.fire("Error", errorMessage, "error");
+            }
         }
     };
 
@@ -170,11 +187,10 @@ const FormBuilder = () => {
         <DndProvider backend={HTML5Backend}>
             <div className="form-builder-container" style={{ backgroundColor: bgColor }}>
                 <div className="form-builder-layout">
-                    {/* Sidebar - Left Panel */}
                     <div className="sidebar">
                         <h3>Fields</h3>
-                        {FIELD_TYPES.map(({ type, icon, label }) => (
-                            <button key={type} onClick={() => addField(type)}>
+                        {FIELD_TYPES.map(({ field_type, icon, label }) => (
+                            <button key={field_type} onClick={() => addField(field_type)}>
                                 <i className={`fa-solid ${icon}`}></i> {label}
                             </button>
                         ))}
@@ -186,15 +202,23 @@ const FormBuilder = () => {
                             style={{ marginBottom: "10px" }}
                         />
 
-                        {/* Save Button (Fixed at Bottom Right) */}
-                        <button className="save-form-btn" onClick={saveForm}>Save Form</button>
+                        <button
+                            className="save-form-btn"
+                            style={{ display: formId ? "inline-block" : "none" }}
+                            onClick={() => saveOrUpdateForm(false)}
+                        >
+                            Update Form
+                        </button>
+
+                        <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)}>
+                            Save Form
+                        </button>
                     </div>
 
-                    {/* Dynamic Form - Right Panel */}
                     <div className="form-content">
                         <input className="form-title-input" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} />
                         {fields.map((field, index) => (
-                            <Field key={field.id} field={field} index={index} moveField={moveField} removeField={removeField} updateLabel={updateLabel} />
+                            <Field key={`${field.field_type || field.type}-${index}`} field={field} index={index} moveField={moveField} removeField={removeField} updateLabel={updateLabel} />
                         ))}
                     </div>
                 </div>

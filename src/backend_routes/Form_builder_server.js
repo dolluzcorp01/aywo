@@ -21,11 +21,20 @@ const queryPromise = (db, sql, params) => {
 };
 
 // ✅ Function to check if a form title already exists for a user
-const checkDuplicateFormTitle = async (userId, title) => {
-    const query = `SELECT COUNT(*) AS count FROM forms WHERE user_id = ? AND title = ?`;
-    const result = await queryPromise(db, query, [userId, title]);
+const checkDuplicateFormTitle = async (userId, title, formId = null) => {
+    let query = `SELECT COUNT(*) AS count FROM forms WHERE user_id = ? AND title = ?`;
+    let params = [userId, title];
+
+    if (formId) {
+        // Exclude the current form ID when checking for duplicates
+        query += ` AND form_id != ?`;
+        params.push(formId);
+    }
+
+    const result = await queryPromise(db, query, params);
     return result[0].count > 0;
 };
+
 
 // ✅ Save a new form (Protected Route)
 router.post("/save-form", verifyJWT, async (req, res) => {
@@ -48,14 +57,20 @@ router.post("/save-form", verifyJWT, async (req, res) => {
 
     let connection;
     try {
-        connection = await db.getConnection();
+        connection = await new Promise((resolve, reject) => {
+            db.getConnection((err, conn) => {
+                if (err) reject(err);
+                else resolve(conn);
+            });
+        });
+
         await connection.beginTransaction(); // ✅ Start transaction
 
         // ✅ Check for duplicate form title
-        const isDuplicate = await checkDuplicateFormTitle(userId, title);
+        const isDuplicate = await checkDuplicateFormTitle(userId, title, null);
         if (isDuplicate) {
             await connection.rollback();
-            return res.status(400).json({ error: "A form with this title already exists. Please choose a different name." });
+            return res.status(409).json({ error: "A form with this title already exists. Please choose a different name." }); // HTTP 409 Conflict
         }
 
         // ✅ Insert form
@@ -72,8 +87,9 @@ router.post("/save-form", verifyJWT, async (req, res) => {
                 return res.status(400).json({ error: "Field labels cannot be empty." });
             }
 
+            // Inside the for loop in /save-form
             const form_fields_insert_query = `INSERT INTO form_fields (form_id, field_type, label) VALUES (?, ?, ?)`;
-            fieldQueries.push(queryPromise(connection, form_fields_insert_query, [formId, field.type, field.label]));
+            fieldQueries.push(queryPromise(connection, form_fields_insert_query, [formId, field.field_type, field.label]));
         }
 
         await Promise.all(fieldQueries);
@@ -106,9 +122,9 @@ router.put("/rename-form/:formId", verifyJWT, async (req, res) => {
 
     try {
         // ✅ Check if a different form with the same title already exists
-        const isDuplicate = await checkDuplicateFormTitle(userId, title);
+        const isDuplicate = await checkDuplicateFormTitle(userId, title, formId);
         if (isDuplicate) {
-            return res.status(409).json({ error: "A form with this title already exists." }); // HTTP 409 Conflict
+            return res.status(409).json({ error: "A form with this title already exists. Please choose a different name." }); // HTTP 409 Conflict
         }
 
         // ✅ Proceed with renaming if no duplicate is found
@@ -188,6 +204,74 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
     } catch (error) {
         console.error("❌ Error fetching form:", error);
         res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// ✅ Update form (using existing duplicate check function)
+router.put("/update-form/:formId", verifyJWT, async (req, res) => {
+    console.log("✅ Received request at /api/form_builder/update-form");
+
+    const { formId } = req.params;
+    const { title, fields } = req.body;
+    const userId = req.user_id;
+
+    if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    if (!title.trim()) {
+        return res.status(400).json({ error: "Form title cannot be empty." });
+    }
+
+    if (!fields || !Array.isArray(fields) || fields.length === 0) {
+        return res.status(400).json({ error: "At least one field is required." });
+    }
+
+    let connection;
+    try {
+        connection = await new Promise((resolve, reject) => {
+            db.getConnection((err, conn) => {
+                if (err) reject(err);
+                else resolve(conn);
+            });
+        });
+
+        await connection.beginTransaction(); // ✅ Start transaction
+
+        // ✅ Check if a different form with the same title already exists
+        const isDuplicate = await checkDuplicateFormTitle(userId, title, formId);
+        if (isDuplicate) {
+            await connection.rollback();
+            return res.status(409).json({ error: "A form with this title already exists. Please choose a different name." }); // HTTP 409 Conflict
+        }
+
+        // ✅ Update form title
+        const updateFormQuery = `UPDATE forms SET title = ? WHERE form_id = ? AND user_id = ?`;
+        await queryPromise(connection, updateFormQuery, [title, formId, userId]);
+
+        // ✅ Delete old fields
+        const deleteFieldsQuery = `DELETE FROM form_fields WHERE form_id = ?`;
+        await queryPromise(connection, deleteFieldsQuery, [formId]);
+
+        // ✅ Insert new fields
+        for (const field of fields) {
+            if (!field.label.trim()) {
+                await connection.rollback();
+                return res.status(400).json({ error: "Field labels cannot be empty." });
+            }
+
+            const insertFieldQuery = `INSERT INTO form_fields (form_id, field_type, label) VALUES (?, ?, ?)`;
+            await queryPromise(connection, insertFieldQuery, [formId, field.field_type, field.label]);
+        }
+
+        await connection.commit();
+        res.json({ message: "Form updated successfully!" });
+    } catch (error) {
+        console.error("Error updating form:", error);
+        if (connection) await connection.rollback(); // ❌ Rollback on error
+        res.status(500).json({ error: "Internal server error. Please try again." });
+    } finally {
+        if (connection) connection.release();
     }
 });
 
