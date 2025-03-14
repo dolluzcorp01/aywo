@@ -249,7 +249,7 @@ function Home() {
             <p>No forms created yet.</p>
           ) : (
             forms.map((form) => (
-              <div className="form-card" key={form.form_id} ref={menuRef}>
+              <div className={`form-card ${menuOpen === form.form_id ? "no-transform" : ""}`} key={form.form_id} ref={menuRef}>
                 <div className="form-icon-container">
                   <i className="fa-solid fa-file-alt form-icon"></i>
                 </div>

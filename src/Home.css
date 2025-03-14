@@ -64,6 +64,10 @@ body {
     align-items: stretch;
 }
 
+.form-card.no-transform {
+    transform: none !important; /* Disable transform when dropdown is open */
+}
+
 .form-card {
     display: flex;
     align-items: center;
@@ -73,7 +77,7 @@ body {
     border: 1px solid #e0e0e0;
     width: 260px;
     height: 90px;
-    /* Adjusted height */
+    position: relative;
     transition: all 0.2s ease-in-out;
     transform: scale(1);
 }
@@ -81,7 +85,6 @@ body {
 .form-card:hover {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
     transform: translateY(-5px) scale(1.05);
-    /* Moves up & enlarges slightly */
 }
 
 .form-icon-container {
@@ -106,6 +109,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    position: relative;
 }
 
 .form-title {
@@ -147,7 +151,7 @@ body {
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
     border-radius: 8px;
     overflow: hidden;
-    z-index: 1000;
+    z-index: 1050;
     display: block;
     min-width: max-content;
     padding: 5px 0;
