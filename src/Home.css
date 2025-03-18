@@ -24,7 +24,7 @@ body {
 }
 
 /* Welcome Section */
-.welcome-section {
+.home-container .welcome-section {
     width: 100%;
     max-width: 1200px;
     display: flex;
@@ -34,13 +34,13 @@ body {
 }
 
 /* Welcome Text */
-.welcome-text {
+.home-container .welcome-text {
     font-size: 24px;
     font-weight: bold;
 }
 
 /* Make Form Button */
-.make-form-btn {
+.home-container .make-form-btn {
     background-color: orange;
     color: white;
     padding: 10px 15px;
@@ -51,24 +51,25 @@ body {
 }
 
 /* My Forms Section */
-.section {
+.home-container .section {
     width: 100%;
     max-width: 1200px;
     margin-bottom: 50px;
 }
 
-.forms-list {
+.home-container .forms-list {
     display: flex;
     gap: 20px;
     flex-wrap: wrap;
     align-items: stretch;
 }
 
-.form-card.no-transform {
-    transform: none !important; /* Disable transform when dropdown is open */
+.home-container .form-card.no-transform {
+    transform: none !important;
+    /* Disable transform when dropdown is open */
 }
 
-.form-card {
+.home-container .form-card {
     display: flex;
     align-items: center;
     background: white;
@@ -82,12 +83,12 @@ body {
     transform: scale(1);
 }
 
-.form-card:hover {
+.home-container .form-card:hover {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
     transform: translateY(-5px) scale(1.05);
 }
 
-.form-icon-container {
+.home-container .form-icon-container {
     width: 50px;
     height: 100%;
     background: #d3e3fd;
@@ -98,12 +99,12 @@ body {
     border-bottom-left-radius: 8px;
 }
 
-.form-icon {
+.home-container .form-icon {
     font-size: 20px;
     color: #1a73e8;
 }
 
-.form-card-content {
+.home-container .form-card-content {
     flex: 1;
     padding: 14px 12px 18px 12px;
     display: flex;
@@ -112,7 +113,7 @@ body {
     position: relative;
 }
 
-.form-title {
+.home-container .form-title {
     font-size: 14px;
     font-weight: bold;
     color: gray;
@@ -123,13 +124,13 @@ body {
     margin-top: 20px;
 }
 
-.response-count {
+.home-container .response-count {
     font-size: 15px;
     color: gray;
     margin-top: auto;
 }
 
-.menu-icon {
+.home-container .menu-icon {
     font-size: 16px;
     color: #666;
     cursor: pointer;
@@ -138,12 +139,12 @@ body {
     padding: 10px;
 }
 
-.menu-container {
+.home-container .menu-container {
     position: relative;
     display: inline-block;
 }
 
-.dropdown-menu {
+.home-container .dropdown-menu {
     position: absolute;
     right: 0;
     top: 30px;
@@ -158,7 +159,7 @@ body {
     font-size: 14px;
 }
 
-.dropdown-menu button {
+.home-container .dropdown-menu button {
     width: 100%;
     background: none;
     color: black;
@@ -171,17 +172,17 @@ body {
     cursor: pointer;
 }
 
-.dropdown-menu button:hover {
+.home-container .dropdown-menu button:hover {
     background: #f1f3f4;
 }
 
-.rename-input-container {
+.home-container .rename-input-container {
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
-.form-title-input {
+.home-container .form-title-input {
     width: 50px;
     /* Adjust width to fit compactly */
     font-size: 5px;
@@ -191,7 +192,7 @@ body {
     border-radius: 4px;
 }
 
-.save-btn {
+.home-container .save-btn {
     background: none;
     border: none;
     cursor: pointer;
@@ -201,17 +202,17 @@ body {
     /* Green checkmark */
 }
 
-.save-btn:hover {
+.home-container .save-btn:hover {
     background: none !important;
 }
 
 /* Bottom Spacing */
-.bottom-spacing {
+.home-container .bottom-spacing {
     height: 80px;
 }
 
 /* Ensure the modal is perfectly centered */
-.modal-dialog {
+.home-container .modal-dialog {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -219,11 +220,11 @@ body {
 }
 
 /* Adjust Modal Size */
-.modal-lg {
+.home-container .modal-lg {
     max-width: 600px;
 }
 
-.modal-content {
+.home-container .modal-content {
     text-align: center;
     padding: 0;
     /* Remove unnecessary padding */
@@ -233,14 +234,14 @@ body {
 }
 
 /* Modal Subtitle */
-.modal-subtitle {
+.home-container .modal-subtitle {
     font-size: 20px;
     color: #444;
     margin-bottom: 15px;
 }
 
 /* Adjusted Header Color (Lighter Orange) */
-.updated-header {
+.home-container .updated-header {
     background: linear-gradient(135deg, #f08c50, #f4a672);
     color: white;
     border-bottom: none;
@@ -251,13 +252,13 @@ body {
 }
 
 /* Make Close "X" White */
-.updated-header .btn-close {
+.home-container .updated-header .btn-close {
     filter: invert(1);
     opacity: 1;
 }
 
 /* Layout for Blank & Template inside modal */
-.modal-options {
+.home-container .modal-options {
     display: flex;
     justify-content: center;
     /* Center them properly */
@@ -267,7 +268,7 @@ body {
 }
 
 /* Increased Option Card Size */
-.option-card {
+.home-container .option-card {
     width: 160px;
     height: 180px;
     display: flex;
@@ -287,33 +288,33 @@ body {
 }
 
 /* Hover Effect - Changed to Blue */
-.option-card:hover {
+.home-container .option-card:hover {
     border: 2px solid #3498db;
     transform: scale(1.08);
 }
 
 /* Option Icons */
-.option-icon {
+.home-container .option-icon {
     font-size: 45px;
     margin-bottom: 8px;
 }
 
 /* Colored Icons */
-.colored-icon-blank {
+.home-container .colored-icon-blank {
     color: #ff7675;
 }
 
-.colored-icon-template {
+.home-container .colored-icon-template {
     color: #00cec9;
 }
 
 /* Option Subtext */
-.option-subtext {
+.home-container .option-subtext {
     font-size: 13px;
     color: gray;
 }
 
-.forms-header {
+.home-container .forms-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -322,13 +323,13 @@ body {
     margin-bottom: 20px;
 }
 
-.order-by-container {
+.home-container .order-by-container {
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-.order-by-dropdown {
+.home-container .order-by-dropdown {
     padding: 5px;
     border-radius: 4px;
     border: 1px solid #ccc;

@@ -1,82 +1,45 @@
-import Swal from "sweetalert2";
-import { useNotification } from "./NotificationContext";
 import React, { useState, useEffect } from "react";
+import { Rnd } from "react-rnd";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { DndProvider, useDrag, useDrop } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
+import Swal from "sweetalert2";
+import { useNotification } from "./NotificationContext";
+import { FaFont, FaEnvelope, FaHashtag, FaList, FaCheckSquare, FaCaretDown, FaCalendarAlt, FaAlignLeft, FaTrash } from "react-icons/fa";
 import "./Form_builder.css";
 
-const FIELD_TYPES = [
-    { field_type: "text", icon: "fa-font", label: "Short Answer" },
-    { field_type: "dropdown", icon: "fa-list", label: "Dropdown" },
-    { field_type: "radio", icon: "fa-dot-circle", label: "Multiple Choice" },
-    { field_type: "checkbox", icon: "fa-check-square", label: "Checkbox" },
-    { field_type: "date", icon: "fa-calendar", label: "Date" },
-    { field_type: "textarea", icon: "fa-paragraph", label: "Paragraph" }
-];
-
-const Field = ({ field, index, moveField, removeField, updateLabel }) => {
-    const [, ref] = useDrag({
-        type: "field",
-        item: { index },
-    });
-
-    const [, drop] = useDrop({
-        accept: "field",
-        hover: (draggedItem) => {
-            if (draggedItem.index !== index) {
-                moveField(draggedItem.index, index);
-                draggedItem.index = index;
-            }
-        },
-    });
-
-    const fieldType = field.field_type || field.type; // Ensure backward compatibility
-
-    return (
-        <div ref={(node) => ref(drop(node))} className="input-field">
-            <input
-                type="text"
-                className="field-label"
-                value={field.label}
-                onChange={(e) => updateLabel(index, e.target.value)}
-                placeholder="Enter field label"
-            />
-            {fieldType === "dropdown" ? (
-                <select>
-                    <option>Option 1</option>
-                    <option>Option 2</option>
-                </select>
-            ) : fieldType === "radio" || fieldType === "checkbox" ? (
-                <input type={fieldType} />
-            ) : fieldType === "date" ? (
-                <input type="date" />
-            ) : fieldType === "textarea" ? (
-                <textarea placeholder="Enter text" />
-            ) : (
-                <input type="text" placeholder={`Enter ${fieldType}`} />
-            )}
-
-            <div className="field-actions">
-                <span className="drag-handle">☰</span>
-                <button onClick={() => removeField(index)}>
-                    <i className="fa-solid fa-trash"></i> Delete
-                </button>
-            </div>
-        </div>
-    );
+const fieldIcons = {
+    "Text Only": <FaFont color="#6c757d" />,
+    "Short Answer": <FaFont color="#007bff" />,
+    "Email": <FaEnvelope color="#28a745" />,
+    "Number": <FaHashtag color="#17a2b8" />,
+    "Multiple Choice": <FaList color="#ffc107" />,
+    "Checkbox": <FaCheckSquare color="#dc3545" />,
+    "Dropdown": <FaCaretDown color="#6610f2" />,
+    "Date": <FaCalendarAlt color="#e83e8c" />,
+    "Paragraph": <FaAlignLeft color="#fd7e14" />
 };
 
 const FormBuilder = () => {
+    const [formBgColor, setFormBgColor] = useState("#E08686");
+
     const [formTitle, setFormTitle] = useState("Untitled Form");
+    const [formTitleX, setFormTitleX] = useState(50);
+    const [formTitleY, setFormTitleY] = useState(20);
+    const [formTitleWidth, setFormTitleWidth] = useState(300);
+    const [formTitleHeight, setFormTitleHeight] = useState(50);
+    const [formTitleColor, setFormTitleColor] = useState("#000000");
+    const [formTitleBgColor, setFormTitleBgColor] = useState("#ffffff");
+    const [formTitleFontSize, setFormTitleFontSize] = useState(24);
+
     const [fields, setFields] = useState([]);
-    const [bgColor, setBgColor] = useState("#ffffff");
-    const { setShowNotification } = useNotification();
+    const [selectedField, setSelectedField] = useState(null);
+    const [lastPosition, setLastPosition] = useState({ x: 50, y: 80 });
+
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const { formId } = useParams();
+    const { setShowNotification } = useNotification();
 
     useEffect(() => {
         axios.get("http://localhost:5000/api/header/get-user-profile", { withCredentials: true })
@@ -89,49 +52,139 @@ const FormBuilder = () => {
     }, [navigate]);
 
     useEffect(() => {
-        setTimeout(() => {
-            const formBuilderLayout = document.querySelector(".form-content");
-            if (formBuilderLayout) {
-                formBuilderLayout.style.backgroundColor = bgColor;
-            }
-        }, 0);
-    }, [bgColor]);
+        let isMounted = true; // Track if component is mounted
 
-    useEffect(() => {
         if (formId) {
             const cleanFormId = formId.replace("form-", "");
 
             axios.get(`http://localhost:5000/api/form_builder/get-specific-form/${cleanFormId}`, { withCredentials: true })
                 .then((res) => {
-                    setFormTitle(res.data.title);
-                    setFields(res.data.fields);
+                    if (isMounted) { // Update state only if component is still mounted
+                        console.log("Fetched specific form data:", res.data);
+                        setFormBgColor(res.data.form_background || "#ffffff");
+                        setFormTitleColor(res.data.title_color || "#000000");
+                        setFormTitleBgColor(res.data.title_background || "#ffffff");
+                        setFormTitle(res.data.title || "Untitled Form");
+                        setFormTitleX(res.data.title_x ?? 50);
+                        setFormTitleY(res.data.title_y ?? 20);
+                        setFormTitleWidth(res.data.title_width ?? 300);
+                        setFormTitleHeight(res.data.title_height ?? 50);
+                        setFields(res.data.fields || []);
+                    }
                 })
                 .catch((err) => {
                     console.error("Error fetching form:", err);
                     Swal.fire("Error", "Failed to load form.", "error");
                 });
         }
+
+        return () => { isMounted = false; }; // Cleanup function
     }, [formId]);
 
-    const addField = (field_type) => {
-        setFields([...fields, { field_id: null, field_type, label: "" }]);
+    // Function to check if a new field overlaps with existing fields
+    const isOverlapping = (x, y, width, height, excludeId = null) => {
+        return fields.some(field => (
+            field.id !== excludeId &&
+            !(x + width < field.x || x > field.x + field.width ||
+                y + height < field.y || y > field.y + field.height)
+        )) || (
+                // Prevent title overlap
+                !(x + width < formTitleX || x > formTitleX + formTitleWidth ||
+                    y + height < formTitleY || y > formTitleY + formTitleHeight)
+            );
     };
 
-    const moveField = (fromIndex, toIndex) => {
-        const updatedFields = [...fields];
-        const [movedField] = updatedFields.splice(fromIndex, 1);
-        updatedFields.splice(toIndex, 0, movedField);
-        setFields(updatedFields);
+    // Adjust position to avoid overlap
+    const getValidPosition = (x, y, width, height, excludeId = null) => {
+        let newX = x, newY = y;
+        let attempts = 0;
+        const maxAttempts = 50; // Prevent infinite loops
+
+        while (isOverlapping(newX, newY, width, height, excludeId) && attempts < maxAttempts) {
+            // Try shifting right first
+            if (newX + width + 20 < 600) {
+                newX += 20;
+            }
+            // If no space, move down
+            else {
+                newX = 50;
+                newY += 60;
+            }
+            attempts++;
+        }
+
+        return { x: newX, y: newY };
     };
 
-    const removeField = (index) => {
-        setFields(fields.filter((_, i) => i !== index));
+    // Add new field with no overlap
+    const addField = (type) => {
+        let newX = 50, newY = lastPosition.y + 60;
+
+        if (fields.length > 0) {
+            const lastField = fields[fields.length - 1];
+
+            // Check if right side has space, otherwise move down
+            if (lastField.x + lastField.width + 20 < 600) {
+                newX = lastField.x + lastField.width + 20;
+                newY = lastField.y;
+            } else {
+                newX = 50;
+                newY = lastField.y + 60;
+            }
+        }
+
+        const { x: validX, y: validY } = getValidPosition(newX, newY, 200, 50);
+
+        const newField = {
+            id: Date.now(),
+            type,
+            field_type: type,
+            label: type,
+            bgColor: "#8B5E5E",
+            labelColor: "#FFFFFF",
+            fontSize: 16,
+            width: 200,
+            height: 50,
+            x: validX,
+            y: validY
+        };
+
+        setFields([...fields, newField]);
+        setLastPosition({ x: validX, y: validY });
     };
 
-    const updateLabel = (index, label) => {
-        const updatedFields = [...fields];
-        updatedFields[index].label = label;
-        setFields(updatedFields);
+    const getInputType = (type) => {
+        switch (type) {
+            case "Number":
+                return <input type="number" inputMode="numeric" onKeyDown={(e) => e.key === 'e' && e.preventDefault()} style={{ appearance: "textfield" }} />;
+            case "Date":
+                return <input type="date" />;
+            case "Checkbox":
+                return <input type="checkbox" />;
+            case "Text Only":
+                return null;
+            default:
+                return <input type="text" />;
+        }
+    };
+
+    const updateField = (id, key, value) => {
+        if (key === "label" && !value.trim()) return; // Prevent empty labels
+        setFields(prevFields => prevFields.map(field => field.id === id ? { ...field, [key]: value } : field));
+
+        if (selectedField?.id === id) {
+            setSelectedField(prev => ({ ...prev, [key]: value }));
+        }
+    };
+
+    const deleteField = (id) => {
+        console.log("Deleting field with ID:", id);
+        console.log("Before deletion:", fields);
+        setFields(prevFields => prevFields.filter(field => field.id !== id));
+        console.log("After deletion:", fields);
+        if (selectedField && selectedField.id === id) {
+            setSelectedField(null);
+        }
     };
 
     const saveOrUpdateForm = async (isNew = false) => {
@@ -150,28 +203,43 @@ const FormBuilder = () => {
             return;
         }
 
+        const formData = {
+            form_background: formBgColor,
+            title_color: formTitleColor,
+            title_background: formTitleBgColor,
+            title: formTitle,
+            title_x: formTitleX,
+            title_y: formTitleY,
+            title_width: formTitleWidth,
+            title_height: formTitleHeight,
+            fields,
+        };
+
         try {
             if (!isNew && formId) {
+                console.log("Updating form with fields:", fields);
                 const cleanFormId = formId.replace("form-", "");
                 const response = await axios.put(
                     `http://localhost:5000/api/form_builder/update-form/${cleanFormId}`,
-                    { title: formTitle, fields },
+                    formData,
                     { withCredentials: true }
                 );
                 Swal.fire("Success!", response.data.message, "success");
+                console.log("✅ Form updated successfully:", response.data);
             } else {
+                console.log("Saving form with fields:", fields);
                 const response = await axios.post(
                     "http://localhost:5000/api/form_builder/save-form",
-                    { title: formTitle, fields },
+                    formData,
                     { withCredentials: true }
                 );
                 Swal.fire("Success!", response.data.message, "success");
+                console.log("✅ Form saved successfully:", response.data);
             }
 
             setShowNotification(true);
         } catch (error) {
             console.error("Error saving/updating form:", error);
-            // ✅ Check for "already exists" in the correct place
             const errorMessage = error.response?.data?.error || "An error occurred";
             if (errorMessage.includes("already exists")) {
                 Swal.fire("Duplicate Title", "A form with this title already exists. Please choose a different name.", "warning");
@@ -184,46 +252,144 @@ const FormBuilder = () => {
     if (loading) return <p>Loading...</p>;
 
     return (
-        <DndProvider backend={HTML5Backend}>
-            <div className="form-builder-container" style={{ backgroundColor: bgColor }}>
-                <div className="form-builder-layout">
-                    <div className="sidebar">
-                        <h3>Fields</h3>
-                        {FIELD_TYPES.map(({ field_type, icon, label }) => (
-                            <button key={field_type} onClick={() => addField(field_type)}>
-                                <i className={`fa-solid ${icon}`}></i> {label}
-                            </button>
-                        ))}
-                        <label>Background Color:</label>
+        <div className="form-builder">
+            <div className="container">
+                <div className="sidebar">
+                    <h2>Field Types</h2>
+                    {Object.keys(fieldIcons).map((type) => (
+                        <button key={type} className="field-btn" onClick={() => addField(type)}>
+                            {fieldIcons[type]} {type}
+                        </button>
+                    ))}
+
+                    <button className="save-form-btn" style={{ display: formId ? "inline-block" : "none" }} onClick={() => saveOrUpdateForm(false)}>
+                        Update Form
+                    </button>
+
+                    <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)}>
+                        Save Form
+                    </button>
+
+                </div>
+
+                <div className="form-container" style={{ backgroundColor: formBgColor }}>
+                    <Rnd
+                        default={{ x: formTitleX, y: formTitleY, width: formTitleWidth, height: formTitleHeight }}
+                        bounds="parent"
+                        enableResizing={{ bottomRight: true }}
+                        onDragStop={(e, d) => {
+                            const { x, y } = getValidPosition(d.x, d.y, formTitleWidth, formTitleHeight);
+                            setFormTitleX(x);
+                            setFormTitleY(y);
+                        }}
+                        onResizeStop={(e, direction, ref, delta, position) => {
+                            setFormTitleWidth(ref.offsetWidth);
+                            setFormTitleHeight(ref.offsetHeight);
+                            setFormTitleX(position.x);
+                            setFormTitleY(position.y);
+                        }}
+                    >
+
                         <input
-                            type="color"
-                            value={bgColor}
-                            onChange={(e) => setBgColor(e.target.value)}
-                            style={{ marginBottom: "10px" }}
+                            type="text"
+                            value={formTitle}
+                            onChange={(e) => setFormTitle(e.target.value)}
+                            className="form-title"
+                            style={{
+                                color: formTitleColor,
+                                backgroundColor: formTitleBgColor,
+                                fontSize: `${formTitleFontSize}px`,
+                                width: `${formTitleWidth}px`, // Change this from "100%" to dynamic width
+                                height: `${formTitleHeight}px`, // Ensure height is dynamic too
+                            }}
                         />
+                    </Rnd>
 
-                        <button
-                            className="save-form-btn"
-                            style={{ display: formId ? "inline-block" : "none" }}
-                            onClick={() => saveOrUpdateForm(false)}
+                    {fields.map((field) => (
+                        <Rnd
+                            key={field.id}
+                            position={{ x: field.x, y: field.y }}
+                            size={{ width: field.width, height: field.height }}
+                            bounds="parent"
+                            enableResizing={{ bottomRight: true }}
+                            onDragStop={(e, d) => {
+                                let { x, y } = d;
+
+                                // Ensure new position does not overlap with other fields
+                                const { x: validX, y: validY } = getValidPosition(x, y, field.width, field.height, field.id);
+
+                                setFields((prevFields) =>
+                                    prevFields.map(f =>
+                                        f.id === field.id ? { ...f, x: validX, y: validY } : f
+                                    )
+                                );
+                            }}
+                            onResizeStop={(e, direction, ref, delta, position) => {
+                                let newWidth = ref.offsetWidth;
+                                let newHeight = ref.offsetHeight;
+                                let { x, y } = position;
+
+                                // Ensure new size does not overlap
+                                const { x: validX, y: validY } = getValidPosition(x, y, newWidth, newHeight, field.id);
+
+                                setFields((prevFields) =>
+                                    prevFields.map(f =>
+                                        f.id === field.id ? { ...f, x: validX, y: validY, width: newWidth, height: newHeight } : f
+                                    )
+                                );
+                            }}
                         >
-                            Update Form
-                        </button>
 
-                        <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)}>
-                            Save Form
-                        </button>
-                    </div>
+                            <div className="field" style={{ backgroundColor: field.bgColor, width: "100%", height: "100%", display: "flex", alignItems: "center", padding: "5px", borderRadius: "5px" }} onClick={() => setSelectedField(field)}>
+                                <span style={{ color: field.labelColor, fontSize: `${field.fontSize}px`, fontWeight: "bold", marginRight: "10px" }}>{field.label}</span>
+                                <div style={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
+                                    {getInputType(field.type)}
+                                    <button className="delete-btn" onClick={() => deleteField(field.id)} style={{ background: "red", color: "white", border: "none", borderRadius: "50%", width: "30px", height: "30px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginLeft: "10px" }}>
+                                        <FaTrash size={13} />
+                                    </button>
+                                </div>
+                            </div>
+                        </Rnd>
+                    ))}
 
-                    <div className="form-content">
-                        <input className="form-title-input" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} />
-                        {fields.map((field, index) => (
-                            <Field key={`${field.field_type || field.type}-${index}`} field={field} index={index} moveField={moveField} removeField={removeField} updateLabel={updateLabel} />
-                        ))}
-                    </div>
+                </div>
+
+                <div className="customize-section">
+                    <h2>Customize</h2>
+                    <label>Form Title:</label>
+                    <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} />
+
+                    <label>Title Color:</label>
+                    <input type="color" value={formTitleColor} onChange={(e) => setFormTitleColor(e.target.value)} />
+
+                    <label>Title Background Color:</label>
+                    <input type="color" value={formTitleBgColor} onChange={(e) => setFormTitleBgColor(e.target.value)} />
+
+                    <label>Title Font Size:</label>
+                    <input type="number" value={formTitleFontSize} onChange={(e) => setFormTitleFontSize(parseInt(e.target.value))} />
+
+                    <label>Form Background Color:</label>
+                    <input type="color" value={formBgColor} onChange={(e) => setFormBgColor(e.target.value)} />
+
+                    {selectedField && (
+                        <>
+                            <h3>Field Settings</h3>
+                            <label>Label Text:</label>
+                            <input type="text" value={selectedField.label} onChange={(e) => updateField(selectedField.id, "label", e.target.value)} />
+
+                            <label>Label Background Color:</label>
+                            <input type="color" value={selectedField.bgColor} onChange={(e) => updateField(selectedField.id, "bgColor", e.target.value)} />
+
+                            <label>Label Color:</label>
+                            <input type="color" value={selectedField.labelColor} onChange={(e) => updateField(selectedField.id, "labelColor", e.target.value)} />
+
+                            <label>Label Font Size:</label>
+                            <input type="number" value={selectedField.fontSize} onChange={(e) => updateField(selectedField.id, "fontSize", parseInt(e.target.value))} />
+                        </>
+                    )}
                 </div>
             </div>
-        </DndProvider>
+        </div>
     );
 };
 

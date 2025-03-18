@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import Swal from 'sweetalert2';
 import styled from 'styled-components';
 import { useNavigate } from "react-router-dom";
+import { FaCog, FaBug, FaBell } from "react-icons/fa"; // Import React Icons
 import './Header.css';
 
 const Navbar = styled.nav`
@@ -21,7 +22,7 @@ const RoundedCircle = styled.span`
 const DropdownMenu = styled.div`
   right: 0;
   left: auto;
-  display: ${({ $isOpen }) => ($isOpen ? 'block' : 'none')};  // ✅ Fixed: use $isOpen
+  display: ${({ $isOpen }) => ($isOpen ? 'block' : 'none')};  
   position: absolute;
   background-color: white;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
@@ -30,9 +31,8 @@ const DropdownMenu = styled.div`
   min-width: 160px;
 `;
 
-
 const DropdownItem = styled.a`
-  padding: 8px 15px; /* Reduce top and bottom padding */
+  padding: 8px 15px;
   display: block;
   font-size: 14px;
   color: #333;
@@ -46,12 +46,10 @@ const DropdownItem = styled.a`
 
 const DropdownDivider = styled.hr`
   margin: 5px auto;
-  width: 80%; /* Keep it shorter */
+  width: 80%;
   border: 0;
-  border-top: 2px solid #888; /* Darker and thicker line */
+  border-top: 2px solid #888;
 `;
-
-
 
 const Header = () => {
   const [profileDetails, setProfileDetails] = useState(null);
@@ -62,7 +60,6 @@ const Header = () => {
   useEffect(() => {
     populateProfileDetails();
 
-    // Close dropdown on outside click
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
@@ -104,7 +101,7 @@ const Header = () => {
       });
 
       if (response.ok) {
-        navigate('/login'); // Redirect to login page after logout
+        navigate('/login');
       } else {
         Swal.fire("Logout failed!");
       }
@@ -121,9 +118,21 @@ const Header = () => {
       </div>
       <div className="header-right">
         <ul className="navbar-nav">
-          <li className="nav-item"><a className="nav-link" href="#"><i className="fa fa-gear"></i></a></li>
-          <li className="nav-item"><a className="nav-link" href="#"><i className="fa-solid fa-bug"></i></a></li>
-          <li className="nav-item"><a className="nav-link" href="#"><i className="fa fa-bell"></i></a></li>
+          <li className="nav-item">
+            <a className="nav-link" href="#">
+              <FaCog style={{ color: "#545454", fontSize: "1rem" }} />
+            </a>
+          </li>
+          <li className="nav-item">
+            <a className="nav-link" href="#">
+              <FaBug style={{ color: "#545454", fontSize: "1rem" }} />
+            </a>
+          </li>
+          <li className="nav-item">
+            <a className="nav-link" href="#">
+              <FaBell style={{ color: "#545454", fontSize: "1rem" }} />
+            </a>
+          </li>
 
           <li className="nav-item dropdown" ref={dropdownRef}>
             <a
@@ -136,22 +145,20 @@ const Header = () => {
               }}
             >
               {profileDetails ? (
-                (
-                  <span>
-                    <RoundedCircle
-                      style={{
-                        width: '30px',
-                        height: '30px',
-                        backgroundColor: profileDetails.profile_color,
-                        color: 'white',
-                        fontWeight: 'bold',
-                      }}
-                    >
-                      {profileDetails.profile_letters}
-                    </RoundedCircle>{' '}
-                    {profileDetails.user_name}
-                  </span>
-                )
+                <span>
+                  <RoundedCircle
+                    style={{
+                      width: '30px',
+                      height: '30px',
+                      backgroundColor: profileDetails.profile_color,
+                      color: 'white',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {profileDetails.profile_letters}
+                  </RoundedCircle>{' '}
+                  {profileDetails.user_name}
+                </span>
               ) : (
                 'Loading...'
               )}

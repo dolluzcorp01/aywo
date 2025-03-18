@@ -12,13 +12,11 @@ import { NotificationProvider } from "./NotificationContext"; // Import the prov
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-  <React.StrictMode>
-    <NotificationProvider>
-      <Router>
-        <App />
-      </Router>
-    </NotificationProvider>
-  </React.StrictMode>
+  <NotificationProvider>
+    <Router>
+      <App />
+    </Router>
+  </NotificationProvider>
 );
 
 reportWebVitals();
