@@ -39,7 +39,9 @@ const checkDuplicateFormTitle = async (userId, title, formId = null) => {
 router.post("/save-form", verifyJWT, async (req, res) => {
     console.log("✅ Received request at /api/form_builder/save-form");
 
-    const { title, title_x, title_y, title_width, title_height, form_background, title_color, title_background, fields } = req.body;
+    const { title, title_x, title_y, title_width, title_height, form_background, title_color, title_background,
+        submit_button_x, submit_button_y, submit_button_width, submit_button_height, submit_button_color, submit_button_background,
+        fields } = req.body;
     const userId = req.user_id;
 
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
@@ -57,17 +59,18 @@ router.post("/save-form", verifyJWT, async (req, res) => {
 
         await connection.beginTransaction();
 
-        // Check for duplicate form title
+        // ✅ Check for duplicate form title
         const isDuplicate = await checkDuplicateFormTitle(userId, title);
         if (isDuplicate) {
             await connection.rollback();
             return res.status(409).json({ error: "A form with this title already exists." });
         }
 
-        // Insert form with new fields
+        // ✅ Insert form (with new color and button properties)
         const formInsertQuery = `
-            INSERT INTO forms (user_id, title, title_x, title_y, title_width, title_height, form_background, title_color, title_background) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            INSERT INTO forms (user_id, title, title_x, title_y, title_width, title_height, form_background, title_color, title_background, 
+                               submit_button_x, submit_button_y, submit_button_width, submit_button_height, submit_button_color, submit_button_background) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         const formResult = await queryPromise(connection, formInsertQuery, [
             userId,
             title,
@@ -77,48 +80,56 @@ router.post("/save-form", verifyJWT, async (req, res) => {
             title_height || 50,
             form_background || "#ffffff",
             title_color || "#000000",
-            title_background || "#ffffff"
+            title_background || "#ffffff",
+            submit_button_x || 50,
+            submit_button_y || 400,
+            submit_button_width || 150,
+            submit_button_height || 50,
+            submit_button_color || "#ffffff",
+            submit_button_background || "#007bff"
         ]);
         const formId = formResult.insertId;
 
-        // Insert form fields
-        const fieldQueries = fields.map(field => {
+        console.log("✅ Form saved with ID:", formId);
+
+        // ✅ Insert form fields (validate fields before inserting)
+        const fieldQueries = [];
+        for (const field of fields) {
             if (!field.label.trim()) {
-                return Promise.reject("Field labels cannot be empty.");
-            }
-            if (!field.field_type) {
-                console.error("❌ Missing field_type for field:", field);
-                return Promise.reject("Field type cannot be null.");
+                await connection.rollback();
+                return res.status(400).json({ error: "Field labels cannot be empty." });
             }
 
-            const fieldInsertQuery = `
+            const formFieldsInsertQuery = `
                 INSERT INTO form_fields (form_id, field_type, label, x, y, width, height, bgColor, labelColor, fontSize) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-            return queryPromise(connection, fieldInsertQuery, [
-                formId,
-                field.field_type,
-                field.label,
-                field.x || 50,
-                field.y || 80,
-                field.width || 200,
-                field.height || 50,
-                field.bgColor || "#8B5E5E",
-                field.labelColor || "#FFFFFF",
-                field.fontSize || 16
-            ]);
-        });
+            fieldQueries.push(
+                queryPromise(connection, formFieldsInsertQuery, [
+                    formId,
+                    field.field_type,
+                    field.label,
+                    field.x || 50,
+                    field.y || 80,
+                    field.width || 200,
+                    field.height || 50,
+                    field.bgColor || "#8B5E5E",
+                    field.labelColor || "#FFFFFF",
+                    field.fontSize || 16
+                ])
+            );
+        }
 
         await Promise.all(fieldQueries);
-        await connection.commit();
+        await connection.commit(); // ✅ Commit transaction if everything is fine
 
         res.json({ message: "Form saved successfully!", formId });
+
     } catch (error) {
-        if (connection) await connection.rollback();
+        if (connection) await connection.rollback(); // ❌ Rollback on error
         console.error("❌ Server error:", error);
         res.status(500).json({ error: "Server error, please try again." });
     } finally {
-        if (connection) connection.release();
+        if (connection) connection.release(); // ✅ Release connection
     }
 });
 
@@ -199,7 +210,9 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
     try {
         const formQuery = `
             SELECT title, title_x, title_y, title_width, title_height, 
-                   form_background, title_color, title_background
+                   form_background, title_color, title_background,
+                   submit_button_x, submit_button_y, submit_button_width, 
+                   submit_button_height, submit_button_color, submit_button_background
             FROM forms 
             WHERE form_id = ? AND user_id = ?`;
         const formResult = await queryPromise(db, formQuery, [formId, userId]);
@@ -234,6 +247,12 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
             form_background: formResult[0].form_background || "#ffffff",
             title_color: formResult[0].title_color || "#000000",
             title_background: formResult[0].title_background || "#ffffff",
+            submit_button_x: formResult[0].submit_button_x ?? 50,
+            submit_button_y: formResult[0].submit_button_y ?? 400,
+            submit_button_width: formResult[0].submit_button_width ?? 150,
+            submit_button_height: formResult[0].submit_button_height ?? 50,
+            submit_button_color: formResult[0].submit_button_color || "#ffffff",
+            submit_button_background: formResult[0].submit_button_background || "#007bff",
             fields: formattedFields
         });
 
@@ -243,18 +262,21 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
     }
 });
 
-
 // ✅ Update form (Protected Route)
 router.put("/update-form/:formId", verifyJWT, async (req, res) => {
     console.log("✅ Received request at /api/form_builder/update-form");
 
     const { formId } = req.params;
-    const { title, title_x, title_y, title_width, title_height, form_background, title_color, title_background, fields } = req.body;
+    const { title, title_x, title_y, title_width, title_height, form_background, title_color, title_background,
+        submit_button_x, submit_button_y, submit_button_width, submit_button_height, submit_button_color, submit_button_background, fields } = req.body;
     const userId = req.user_id;
 
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
     if (!title.trim()) return res.status(400).json({ error: "Form title cannot be empty." });
-    if (!fields || !Array.isArray(fields) || fields.length === 0) return res.status(400).json({ error: "At least one field is required." });
+
+    if (!fields || !Array.isArray(fields) || fields.length === 0) {
+        return res.status(400).json({ error: "At least one field is required." });
+    }
 
     let connection;
     try {
@@ -267,18 +289,20 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
 
         await connection.beginTransaction();
 
-        // Check for duplicate title (excluding the current form)
+        // ✅ Check for duplicate title (excluding the current form)
         const isDuplicate = await checkDuplicateFormTitle(userId, title, formId);
         if (isDuplicate) {
             await connection.rollback();
             return res.status(409).json({ error: "A form with this title already exists." });
         }
 
-        // Update form title and new properties
+        // ✅ Update form details including colors and button properties
         const updateFormQuery = `
             UPDATE forms 
             SET title = ?, title_x = ?, title_y = ?, title_width = ?, title_height = ?, 
-                form_background = ?, title_color = ?, title_background = ?
+                form_background = ?, title_color = ?, title_background = ?, 
+                submit_button_x = ?, submit_button_y = ?, submit_button_width = ?, submit_button_height = ?, 
+                submit_button_color = ?, submit_button_background = ?
             WHERE form_id = ? AND user_id = ?`;
         await queryPromise(connection, updateFormQuery, [
             title,
@@ -289,17 +313,42 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
             form_background || "#ffffff",
             title_color || "#000000",
             title_background || "#ffffff",
+            submit_button_x || 50,
+            submit_button_y || 400,
+            submit_button_width || 150,
+            submit_button_height || 50,
+            submit_button_color || "#ffffff",
+            submit_button_background || "#007bff",
             formId,
             userId
         ]);
 
-        // Delete old fields and insert new ones
+        // ✅ Delete old fields
         await queryPromise(connection, "DELETE FROM form_fields WHERE form_id = ?", [formId]);
-        await Promise.all(fields.map(field => queryPromise(connection, `
-            INSERT INTO form_fields (form_id, field_type, label, x, y, width, height, bgColor, labelColor, fontSize) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [formId, field.field_type, field.label, field.x, field.y, field.width, field.height, field.bgColor, field.labelColor, field.fontSize]
-        )));
+
+        // ✅ Insert updated fields
+        for (const field of fields) {
+            if (!field.label.trim()) {
+                await connection.rollback();
+                return res.status(400).json({ error: "Field labels cannot be empty." });
+            }
+
+            const insertFieldQuery = `
+                INSERT INTO form_fields (form_id, field_type, label, x, y, width, height, bgColor, labelColor, fontSize) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            await queryPromise(connection, insertFieldQuery, [
+                formId,
+                field.field_type,
+                field.label,
+                field.x || 50,
+                field.y || 80,
+                field.width || 200,
+                field.height || 50,
+                field.bgColor || "#8B5E5E",
+                field.labelColor || "#FFFFFF",
+                field.fontSize || 16
+            ]);
+        }
 
         await connection.commit();
         res.json({ message: "Form updated successfully!" });
@@ -311,6 +360,7 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
         if (connection) connection.release();
     }
 });
+
 
 // ✅ Delete a form (Fixed Version)
 router.delete("/delete-form/:formId", verifyJWT, async (req, res) => {

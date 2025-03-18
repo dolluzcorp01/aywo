@@ -35,11 +35,24 @@ const FormBuilder = () => {
     const [selectedField, setSelectedField] = useState(null);
     const [lastPosition, setLastPosition] = useState({ x: 50, y: 80 });
 
+    const [submitBtnX, setSubmitBtnX] = useState(260);
+    const [submitBtnY, setSubmitBtnY] = useState(500);
+    const [submitBtnWidth, setSubmitBtnWidth] = useState(150);
+    const [submitBtnHeight, setSubmitBtnHeight] = useState(50);
+    const [submitBtnBgColor, setSubmitBtnBgColor] = useState("#28a745");
+    const [submitBtnTextColor, setSubmitBtnTextColor] = useState("#ffffff");
+    const [submitBtnFontSize, setSubmitBtnFontSize] = useState(16);
+
+    const [formResponses, setFormResponses] = useState({});
+
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const { formId } = useParams();
     const { setShowNotification } = useNotification();
+
+    const publishedUrl = null; // Temporary fix until publishing is implemented
+
 
     useEffect(() => {
         axios.get("http://localhost:5000/api/header/get-user-profile", { withCredentials: true })
@@ -59,8 +72,9 @@ const FormBuilder = () => {
 
             axios.get(`http://localhost:5000/api/form_builder/get-specific-form/${cleanFormId}`, { withCredentials: true })
                 .then((res) => {
-                    if (isMounted) { // Update state only if component is still mounted
+                    if (isMounted) {
                         console.log("Fetched specific form data:", res.data);
+
                         setFormBgColor(res.data.form_background || "#ffffff");
                         setFormTitleColor(res.data.title_color || "#000000");
                         setFormTitleBgColor(res.data.title_background || "#ffffff");
@@ -69,7 +83,21 @@ const FormBuilder = () => {
                         setFormTitleY(res.data.title_y ?? 20);
                         setFormTitleWidth(res.data.title_width ?? 300);
                         setFormTitleHeight(res.data.title_height ?? 50);
-                        setFields(res.data.fields || []);
+
+                        // ✅ Ensure that field types are properly set
+                        const updatedFields = res.data.fields.map(field => ({
+                            ...field,
+                            type: field.type || field.field_type // Ensure type consistency
+                        }));
+
+                        setFields(updatedFields);
+
+                        setSubmitBtnX(res.data.submit_button_x ?? 50);
+                        setSubmitBtnY(res.data.submit_button_y ?? 400);
+                        setSubmitBtnWidth(res.data.submit_button_width ?? 150);
+                        setSubmitBtnHeight(res.data.submit_button_height ?? 50);
+                        setSubmitBtnTextColor(res.data.submit_button_color || "#ffffff");
+                        setSubmitBtnBgColor(res.data.submit_button_background || "#007bff");
                     }
                 })
                 .catch((err) => {
@@ -80,6 +108,7 @@ const FormBuilder = () => {
 
         return () => { isMounted = false; }; // Cleanup function
     }, [formId]);
+
 
     // Function to check if a new field overlaps with existing fields
     const isOverlapping = (x, y, width, height, excludeId = null) => {
@@ -161,6 +190,21 @@ const FormBuilder = () => {
                 return <input type="date" />;
             case "Checkbox":
                 return <input type="checkbox" />;
+            case "Multiple Choice": // ✅ Radio buttons for Multiple Choice
+                return (
+                    <div>
+                        <label><input type="radio" name="multiple_choice" value="Option 1" /> Option 1</label>
+                        <label><input type="radio" name="multiple_choice" value="Option 2" /> Option 2</label>
+                    </div>
+                );
+            case "Dropdown": // ✅ Dropdown for Dropdown field
+                return (
+                    <select>
+                        <option value="">Select an option</option>
+                        <option value="Option 1">Option 1</option>
+                        <option value="Option 2">Option 2</option>
+                    </select>
+                );
             case "Text Only":
                 return null;
             default:
@@ -213,6 +257,12 @@ const FormBuilder = () => {
             title_width: formTitleWidth,
             title_height: formTitleHeight,
             fields,
+            submit_button_x: submitBtnX,
+            submit_button_y: submitBtnY,
+            submit_button_width: submitBtnWidth,
+            submit_button_height: submitBtnHeight,
+            submit_button_color: submitBtnTextColor,
+            submit_button_background: submitBtnBgColor
         };
 
         try {
@@ -247,6 +297,52 @@ const FormBuilder = () => {
                 Swal.fire("Error", errorMessage, "error");
             }
         }
+    };
+
+    // Function to handle user input changes
+    const handleInputChange = (fieldId, value) => {
+        setFormResponses((prevResponses) => ({
+            ...prevResponses,
+            [fieldId]: value
+        }));
+    };
+
+    const submitForm = () => {
+        const currentUrl = window.location.href;
+
+        if (!publishedUrl || currentUrl !== publishedUrl) {
+            return;
+        }
+
+        if (!formTitle.trim()) {
+            Swal.fire("Error", "Form title cannot be empty.", "error");
+            return;
+        }
+
+        if (fields.length === 0) {
+            Swal.fire("Error", "At least one field is required.", "error");
+            return;
+        }
+
+        if (Object.keys(formResponses).length < fields.length) {
+            Swal.fire("Error", "Please fill all fields before submitting.", "warning");
+            return;
+        }
+
+        axios.post("http://localhost:5000/api/form_builder/submit-form", {
+            form_id: formId,
+            title: formTitle,
+            form_background: formBgColor,
+            responses: formResponses,
+        })
+            .then((res) => {
+                Swal.fire("Success!", "Form submitted successfully.", "success");
+                setShowNotification(true);
+                setFormResponses({}); // Reset form after submission
+            })
+            .catch((error) => {
+                Swal.fire("Error", "Failed to submit form.", "error");
+            });
     };
 
     if (loading) return <p>Loading...</p>;
@@ -314,8 +410,6 @@ const FormBuilder = () => {
                             enableResizing={{ bottomRight: true }}
                             onDragStop={(e, d) => {
                                 let { x, y } = d;
-
-                                // Ensure new position does not overlap with other fields
                                 const { x: validX, y: validY } = getValidPosition(x, y, field.width, field.height, field.id);
 
                                 setFields((prevFields) =>
@@ -325,22 +419,12 @@ const FormBuilder = () => {
                                 );
                             }}
                             onResizeStop={(e, direction, ref, delta, position) => {
-                                let newWidth = ref.offsetWidth;
-                                let newHeight = ref.offsetHeight;
-                                let { x, y } = position;
-
-                                // Ensure new size does not overlap
-                                const { x: validX, y: validY } = getValidPosition(x, y, newWidth, newHeight, field.id);
-
-                                setFields((prevFields) =>
-                                    prevFields.map(f =>
-                                        f.id === field.id ? { ...f, x: validX, y: validY, width: newWidth, height: newHeight } : f
-                                    )
-                                );
+                                updateField(field.id, "width", ref.offsetWidth);
+                                updateField(field.id, "height", ref.offsetHeight);
                             }}
                         >
 
-                            <div className="field" style={{ backgroundColor: field.bgColor, width: "100%", height: "100%", display: "flex", alignItems: "center", padding: "5px", borderRadius: "5px" }} onClick={() => setSelectedField(field)}>
+                            <div className="field" style={{ backgroundColor: field.bgColor, display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "5px", borderRadius: "5px" }} onClick={() => setSelectedField(field)}>
                                 <span style={{ color: field.labelColor, fontSize: `${field.fontSize}px`, fontWeight: "bold", marginRight: "10px" }}>{field.label}</span>
                                 <div style={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
                                     {getInputType(field.type)}
@@ -349,8 +433,46 @@ const FormBuilder = () => {
                                     </button>
                                 </div>
                             </div>
+
                         </Rnd>
                     ))}
+
+                    <Rnd
+                        default={{
+                            x: submitBtnX,
+                            y: submitBtnY,
+                            width: submitBtnWidth,
+                            height: submitBtnHeight
+                        }}
+                        bounds="parent"
+                        enableResizing={{ bottomRight: true }}
+                        onDragStop={(e, d) => {
+                            setSubmitBtnX(d.x);
+                            setSubmitBtnY(d.y);
+                        }}
+                        onResizeStop={(e, direction, ref, delta, position) => {
+                            setSubmitBtnWidth(ref.offsetWidth);
+                            setSubmitBtnHeight(ref.offsetHeight);
+                            setSubmitBtnX(position.x);
+                            setSubmitBtnY(position.y);
+                        }}
+                    >
+                        <button
+                            onClick={submitForm}
+                            style={{
+                                backgroundColor: submitBtnBgColor,
+                                color: submitBtnTextColor,
+                                fontSize: `${submitBtnFontSize}px`,
+                                width: "100%",
+                                height: "100%",
+                                border: "none",
+                                borderRadius: "5px",
+                                cursor: "pointer"
+                            }}
+                        >
+                            Submit
+                        </button>
+                    </Rnd>
 
                 </div>
 
@@ -371,6 +493,22 @@ const FormBuilder = () => {
                     <label>Form Background Color:</label>
                     <input type="color" value={formBgColor} onChange={(e) => setFormBgColor(e.target.value)} />
 
+                    <label>Submit Button Background:</label>
+                    <input
+                        type="color"
+                        value={submitBtnBgColor}
+                        onChange={(e) => setSubmitBtnBgColor(e.target.value)}
+                    />
+
+                    <label>Submit Button Text Color:</label>
+                    <input
+                        type="color"
+                        value={submitBtnTextColor}
+                        onChange={(e) => setSubmitBtnTextColor(e.target.value)}
+                    />
+                    <label>Submit Button Font Size</label>
+                    <input type="number" value={submitBtnFontSize} onChange={(e) => setSubmitBtnFontSize(parseInt(e.target.value, 10) || 16)} />
+
                     {selectedField && (
                         <>
                             <h3>Field Settings</h3>
@@ -389,7 +527,7 @@ const FormBuilder = () => {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
