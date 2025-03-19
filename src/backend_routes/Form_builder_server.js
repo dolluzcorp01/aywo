@@ -66,7 +66,7 @@ router.post("/save-form", verifyJWT, async (req, res) => {
             return res.status(409).json({ error: "A form with this title already exists." });
         }
 
-        // ✅ Insert form (with new color and button properties)
+        // ✅ Insert form (including colors and button properties)
         const formInsertQuery = `
             INSERT INTO forms (user_id, title, title_x, title_y, title_width, title_height, form_background, title_color, title_background, 
                                submit_button_x, submit_button_y, submit_button_width, submit_button_height, submit_button_color, submit_button_background) 
@@ -93,7 +93,6 @@ router.post("/save-form", verifyJWT, async (req, res) => {
         console.log("✅ Form saved with ID:", formId);
 
         // ✅ Insert form fields (validate fields before inserting)
-        const fieldQueries = [];
         for (const field of fields) {
             if (!field.label.trim()) {
                 await connection.rollback();
@@ -103,23 +102,29 @@ router.post("/save-form", verifyJWT, async (req, res) => {
             const formFieldsInsertQuery = `
                 INSERT INTO form_fields (form_id, field_type, label, x, y, width, height, bgColor, labelColor, fontSize) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-            fieldQueries.push(
-                queryPromise(connection, formFieldsInsertQuery, [
-                    formId,
-                    field.field_type,
-                    field.label,
-                    field.x || 50,
-                    field.y || 80,
-                    field.width || 200,
-                    field.height || 50,
-                    field.bgColor || "#8B5E5E",
-                    field.labelColor || "#FFFFFF",
-                    field.fontSize || 16
-                ])
-            );
+            const fieldResult = await queryPromise(connection, formFieldsInsertQuery, [
+                formId,
+                field.field_type,
+                field.label,
+                field.x || 50,
+                field.y || 80,
+                field.width || 200,
+                field.height || 50,
+                field.bgColor || "#8B5E5E",
+                field.labelColor || "#FFFFFF",
+                field.fontSize || 16
+            ]);
+
+            const fieldId = fieldResult.insertId; // Get the newly inserted field ID
+
+            // ✅ Insert options if the field is Dropdown or Multiple Choice
+            if ((field.field_type === "Dropdown" || field.field_type === "Multiple Choice") && field.options && Array.isArray(field.options)) {
+                for (const option of field.options) {
+                    await queryPromise(connection, "INSERT INTO form_field_options (field_id, option_text) VALUES (?, ?)", [fieldId, option]);
+                }
+            }
         }
 
-        await Promise.all(fieldQueries);
         await connection.commit(); // ✅ Commit transaction if everything is fine
 
         res.json({ message: "Form saved successfully!", formId });
@@ -208,6 +213,7 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
     try {
+        // Fetch form details
         const formQuery = `
             SELECT title, title_x, title_y, title_width, title_height, 
                    form_background, title_color, title_background,
@@ -221,9 +227,28 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
             return res.status(404).json({ error: "Form not found or unauthorized" });
         }
 
-        const fieldsQuery = "SELECT field_id, field_type, label, x, y, width, height, bgColor, labelColor, fontSize FROM form_fields WHERE form_id = ?";
+        // Fetch form fields
+        const fieldsQuery = `
+            SELECT field_id, field_type, label, x, y, width, height, bgColor, labelColor, fontSize
+            FROM form_fields 
+            WHERE form_id = ?`;
         const fieldsResult = await queryPromise(db, fieldsQuery, [formId]);
 
+        // Fetch options for Dropdown and Multiple Choice fields
+        const optionsQuery = `
+            SELECT field_id, option_text 
+            FROM form_field_options 
+            WHERE field_id IN (SELECT field_id FROM form_fields WHERE form_id = ?)`;
+        const optionsResult = await queryPromise(db, optionsQuery, [formId]);
+
+        // Group options by field_id
+        const optionsMap = optionsResult.reduce((acc, row) => {
+            if (!acc[row.field_id]) acc[row.field_id] = [];
+            acc[row.field_id].push(row.option_text);
+            return acc;
+        }, {});
+
+        // Format fields and attach options
         const formattedFields = fieldsResult.map(field => ({
             id: field.field_id,
             field_type: field.field_type,
@@ -234,7 +259,8 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
             height: field.height,
             bgColor: field.bgColor,
             labelColor: field.labelColor,
-            fontSize: field.fontSize
+            fontSize: field.fontSize,
+            options: (field.field_type === "Dropdown" || field.field_type === "Multiple Choice") ? optionsMap[field.field_id] || [] : undefined
         }));
 
         res.json({
@@ -302,7 +328,7 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
             SET title = ?, title_x = ?, title_y = ?, title_width = ?, title_height = ?, 
                 form_background = ?, title_color = ?, title_background = ?, 
                 submit_button_x = ?, submit_button_y = ?, submit_button_width = ?, submit_button_height = ?, 
-                submit_button_color = ?, submit_button_background = ?
+                submit_button_color = ?, submit_button_background = ? 
             WHERE form_id = ? AND user_id = ?`;
         await queryPromise(connection, updateFormQuery, [
             title,
@@ -323,7 +349,8 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
             userId
         ]);
 
-        // ✅ Delete old fields
+        // ✅ Delete old fields and associated options
+        await queryPromise(connection, "DELETE FROM form_field_options WHERE field_id IN (SELECT field_id FROM form_fields WHERE form_id = ?)", [formId]);
         await queryPromise(connection, "DELETE FROM form_fields WHERE form_id = ?", [formId]);
 
         // ✅ Insert updated fields
@@ -336,7 +363,7 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
             const insertFieldQuery = `
                 INSERT INTO form_fields (form_id, field_type, label, x, y, width, height, bgColor, labelColor, fontSize) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-            await queryPromise(connection, insertFieldQuery, [
+            const result = await queryPromise(connection, insertFieldQuery, [
                 formId,
                 field.field_type,
                 field.label,
@@ -348,6 +375,15 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
                 field.labelColor || "#FFFFFF",
                 field.fontSize || 16
             ]);
+
+            const fieldId = result.insertId; // Get the newly inserted field ID
+
+            // ✅ Insert options if the field is Dropdown or Multiple Choice
+            if ((field.field_type === "Dropdown" || field.field_type === "Multiple Choice") && field.options && Array.isArray(field.options)) {
+                for (const option of field.options) {
+                    await queryPromise(connection, "INSERT INTO form_field_options (field_id, option_text) VALUES (?, ?)", [fieldId, option]);
+                }
+            }
         }
 
         await connection.commit();
@@ -360,7 +396,6 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
         if (connection) connection.release();
     }
 });
-
 
 // ✅ Delete a form (Fixed Version)
 router.delete("/delete-form/:formId", verifyJWT, async (req, res) => {

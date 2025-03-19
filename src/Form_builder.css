@@ -75,8 +75,10 @@
 
 /* Form Title */
 .form-builder .form-title {
-    width: auto;  /* Allows dynamic width */
-    height: auto; /* Allows dynamic height */
+    width: auto;
+    /* Allows dynamic width */
+    height: auto;
+    /* Allows dynamic height */
     resize: none;
     overflow: hidden;
 }
@@ -107,6 +109,19 @@
     margin: 0;
 }
 
+.form-builder .multiple-choice-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-builder .multiple-choice-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+
 /* Customization panel */
 .form-builder .customize-section {
     width: 250px;
@@ -115,7 +130,12 @@
     border-left: 2px solid #e0e0e0;
     border-radius: 8px;
     flex-shrink: 0;
+    max-height: 90vh;
+    /* Ensures it does not take the entire height */
+    overflow-y: auto;
+    /* Enables vertical scrolling */
 }
+
 
 /* Customization inputs */
 .form-builder .customize-section input {
@@ -146,8 +166,10 @@
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    margin-top: auto; /* Pushes the button to the bottom */
-    align-self: center; /* Centers the button */
+    margin-top: auto;
+    /* Pushes the button to the bottom */
+    align-self: center;
+    /* Centers the button */
     width: 150px;
 }
 

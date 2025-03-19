@@ -22,6 +22,10 @@ const fieldIcons = {
 const FormBuilder = () => {
     const [formBgColor, setFormBgColor] = useState("#E08686");
 
+    const [fields, setFields] = useState([]);
+    const [selectedField, setSelectedField] = useState(null);
+    const [lastPosition, setLastPosition] = useState({ x: 50, y: 80 });
+
     const [formTitle, setFormTitle] = useState("Untitled Form");
     const [formTitleX, setFormTitleX] = useState(50);
     const [formTitleY, setFormTitleY] = useState(20);
@@ -30,10 +34,6 @@ const FormBuilder = () => {
     const [formTitleColor, setFormTitleColor] = useState("#000000");
     const [formTitleBgColor, setFormTitleBgColor] = useState("#ffffff");
     const [formTitleFontSize, setFormTitleFontSize] = useState(24);
-
-    const [fields, setFields] = useState([]);
-    const [selectedField, setSelectedField] = useState(null);
-    const [lastPosition, setLastPosition] = useState({ x: 50, y: 80 });
 
     const [submitBtnX, setSubmitBtnX] = useState(260);
     const [submitBtnY, setSubmitBtnY] = useState(500);
@@ -84,13 +84,14 @@ const FormBuilder = () => {
                         setFormTitleWidth(res.data.title_width ?? 300);
                         setFormTitleHeight(res.data.title_height ?? 50);
 
-                        // ✅ Ensure that field types are properly set
-                        const updatedFields = res.data.fields.map(field => ({
+                        // ✅ Ensure that field types & options are properly set
+                        setFields(res.data.fields.map(field => ({
                             ...field,
-                            type: field.type || field.field_type // Ensure type consistency
-                        }));
-
-                        setFields(updatedFields);
+                            type: field.type || field.field_type,
+                            options: (field.field_type === "Dropdown" || field.field_type === "Multiple Choice")
+                                ? Array.isArray(field.options) ? field.options : []
+                                : []
+                        })));
 
                         setSubmitBtnX(res.data.submit_button_x ?? 50);
                         setSubmitBtnY(res.data.submit_button_y ?? 400);
@@ -108,7 +109,6 @@ const FormBuilder = () => {
 
         return () => { isMounted = false; }; // Cleanup function
     }, [formId]);
-
 
     // Function to check if a new field overlaps with existing fields
     const isOverlapping = (x, y, width, height, excludeId = null) => {
@@ -152,7 +152,6 @@ const FormBuilder = () => {
         if (fields.length > 0) {
             const lastField = fields[fields.length - 1];
 
-            // Check if right side has space, otherwise move down
             if (lastField.x + lastField.width + 20 < 600) {
                 newX = lastField.x + lastField.width + 20;
                 newY = lastField.y;
@@ -175,34 +174,49 @@ const FormBuilder = () => {
             width: 200,
             height: 50,
             x: validX,
-            y: validY
+            y: validY,
+            options: type === "Dropdown" || type === "Multiple Choice" ? ["Option 1", "Option 2"] : []
         };
 
         setFields([...fields, newField]);
         setLastPosition({ x: validX, y: validY });
     };
 
-    const getInputType = (type) => {
+
+    const getInputType = (type, id) => {
+        if (!fields || !Array.isArray(fields)) return null; // Prevents error if fields is undefined
+
+        const field = fields.find(f => f.id === id);
+        if (!field) return null; // Prevents error if field is not found
+
+        // ✅ Ensure options is always an array
+        const options = Array.isArray(field.options) ? field.options : [];
+
         switch (type) {
             case "Number":
-                return <input type="number" inputMode="numeric" onKeyDown={(e) => e.key === 'e' && e.preventDefault()} style={{ appearance: "textfield" }} />;
+                return <input type="number" inputMode="numeric" onKeyDown={(e) => e.key === 'e' && e.preventDefault()} />;
             case "Date":
                 return <input type="date" />;
             case "Checkbox":
                 return <input type="checkbox" />;
-            case "Multiple Choice": // ✅ Radio buttons for Multiple Choice
+            case "Multiple Choice":
                 return (
-                    <div>
-                        <label><input type="radio" name="multiple_choice" value="Option 1" /> Option 1</label>
-                        <label><input type="radio" name="multiple_choice" value="Option 2" /> Option 2</label>
+                    <div className="multiple-choice-container">
+                        {options.map((opt, index) => (
+                            <div key={index} className="multiple-choice-option">
+                                <input type="radio" name={`multiple_choice_${id}`} value={opt} />
+                                <span>{opt}</span>
+                            </div>
+                        ))}
                     </div>
                 );
-            case "Dropdown": // ✅ Dropdown for Dropdown field
+            case "Dropdown":
                 return (
                     <select>
                         <option value="">Select an option</option>
-                        <option value="Option 1">Option 1</option>
-                        <option value="Option 2">Option 2</option>
+                        {options.map((opt, i) => (
+                            <option key={i} value={opt}>{opt}</option>
+                        ))}
                     </select>
                 );
             case "Text Only":
@@ -213,12 +227,15 @@ const FormBuilder = () => {
     };
 
     const updateField = (id, key, value) => {
-        if (key === "label" && !value.trim()) return; // Prevent empty labels
-        setFields(prevFields => prevFields.map(field => field.id === id ? { ...field, [key]: value } : field));
+        if (key === "label" && !value.trim()) return;
 
-        if (selectedField?.id === id) {
-            setSelectedField(prev => ({ ...prev, [key]: value }));
-        }
+        setFields(prevFields =>
+            prevFields.map(field =>
+                field.id === id ? { ...field, [key]: value } : field
+            )
+        );
+
+        setSelectedField(prev => (prev?.id === id ? { ...prev, [key]: value } : prev));
     };
 
     const deleteField = (id) => {
@@ -256,7 +273,7 @@ const FormBuilder = () => {
             title_y: formTitleY,
             title_width: formTitleWidth,
             title_height: formTitleHeight,
-            fields,
+            fields, // ✅ No need to map again, already structured
             submit_button_x: submitBtnX,
             submit_button_y: submitBtnY,
             submit_button_width: submitBtnWidth,
@@ -275,7 +292,6 @@ const FormBuilder = () => {
                     { withCredentials: true }
                 );
                 Swal.fire("Success!", response.data.message, "success");
-                console.log("✅ Form updated successfully:", response.data);
             } else {
                 console.log("Saving form with fields:", fields);
                 const response = await axios.post(
@@ -284,27 +300,14 @@ const FormBuilder = () => {
                     { withCredentials: true }
                 );
                 Swal.fire("Success!", response.data.message, "success");
-                console.log("✅ Form saved successfully:", response.data);
             }
 
             setShowNotification(true);
         } catch (error) {
             console.error("Error saving/updating form:", error);
             const errorMessage = error.response?.data?.error || "An error occurred";
-            if (errorMessage.includes("already exists")) {
-                Swal.fire("Duplicate Title", "A form with this title already exists. Please choose a different name.", "warning");
-            } else {
-                Swal.fire("Error", errorMessage, "error");
-            }
+            Swal.fire("Error", errorMessage, "error");
         }
-    };
-
-    // Function to handle user input changes
-    const handleInputChange = (fieldId, value) => {
-        setFormResponses((prevResponses) => ({
-            ...prevResponses,
-            [fieldId]: value
-        }));
     };
 
     const submitForm = () => {
@@ -427,7 +430,8 @@ const FormBuilder = () => {
                             <div className="field" style={{ backgroundColor: field.bgColor, display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "5px", borderRadius: "5px" }} onClick={() => setSelectedField(field)}>
                                 <span style={{ color: field.labelColor, fontSize: `${field.fontSize}px`, fontWeight: "bold", marginRight: "10px" }}>{field.label}</span>
                                 <div style={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
-                                    {getInputType(field.type)}
+                                    {/* ✅ Pass field.id to getInputType */}
+                                    {getInputType(field.type, field.id)}
                                     <button className="delete-btn" onClick={() => deleteField(field.id)} style={{ background: "red", color: "white", border: "none", borderRadius: "50%", width: "30px", height: "30px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginLeft: "10px" }}>
                                         <FaTrash size={13} />
                                     </button>
@@ -523,8 +527,36 @@ const FormBuilder = () => {
 
                             <label>Label Font Size:</label>
                             <input type="number" value={selectedField.fontSize} onChange={(e) => updateField(selectedField.id, "fontSize", parseInt(e.target.value))} />
+
+                            {/* Option Editing for Dropdown & Multiple Choice */}
+                            {(selectedField.type === "Dropdown" || selectedField.type === "Multiple Choice") && (
+                                <>
+                                    <h4>Options</h4>
+                                    {selectedField.options.map((option, index) => (
+                                        <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
+                                            <input
+                                                type="text"
+                                                value={option}
+                                                onChange={(e) => {
+                                                    const newOptions = [...selectedField.options];
+                                                    newOptions[index] = e.target.value;
+                                                    updateField(selectedField.id, "options", newOptions);
+                                                }}
+                                            />
+                                            <button onClick={() => {
+                                                const newOptions = selectedField.options.filter((_, i) => i !== index);
+                                                updateField(selectedField.id, "options", newOptions);
+                                            }}>❌</button>
+                                        </div>
+                                    ))}
+                                    <button onClick={() => updateField(selectedField.id, "options", [...selectedField.options, `Option ${selectedField.options.length + 1}`])}>
+                                        ➕ Add Option
+                                    </button>
+                                </>
+                            )}
                         </>
                     )}
+
                 </div>
             </div>
         </div >
