@@ -43,8 +43,6 @@ const FormBuilder = () => {
     const [submitBtnTextColor, setSubmitBtnTextColor] = useState("#ffffff");
     const [submitBtnFontSize, setSubmitBtnFontSize] = useState(16);
 
-    const [formResponses, setFormResponses] = useState({});
-
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
@@ -52,7 +50,6 @@ const FormBuilder = () => {
     const { setShowNotification } = useNotification();
 
     const publishedUrl = null; // Temporary fix until publishing is implemented
-
 
     useEffect(() => {
         axios.get("http://localhost:5000/api/header/get-user-profile", { withCredentials: true })
@@ -315,42 +312,27 @@ const FormBuilder = () => {
         }
     };
 
-    const submitForm = () => {
-        const currentUrl = window.location.href;
-
-        if (!publishedUrl || currentUrl !== publishedUrl) {
+    const publishForm = async () => {
+        if (!formId) {
+            Swal.fire("Error", "Please save the form before publishing.", "error");
             return;
         }
 
-        if (!formTitle.trim()) {
-            Swal.fire("Error", "Form title cannot be empty.", "error");
-            return;
-        }
+        try {
+            const cleanFormId = formId.replace("form-", "");
+            const response = await axios.put(
+                `http://localhost:5000/api/form_builder/publish-form/${cleanFormId}`,
+                { published: true },
+                { withCredentials: true }
+            );
 
-        if (fields.length === 0) {
-            Swal.fire("Error", "At least one field is required.", "error");
-            return;
-        }
+            const publicUrl = `${window.location.origin}/forms/${cleanFormId}`;
+            Swal.fire("Success!", `Form published successfully! Share this link: <br><b>${publicUrl}</b>`, "success");
 
-        if (Object.keys(formResponses).length < fields.length) {
-            Swal.fire("Error", "Please fill all fields before submitting.", "warning");
-            return;
+        } catch (error) {
+            console.error("Error publishing form:", error);
+            Swal.fire("Error", "Failed to publish the form.", "error");
         }
-
-        axios.post("http://localhost:5000/api/form_builder/submit-form", {
-            form_id: formId,
-            title: formTitle,
-            form_background: formBgColor,
-            responses: formResponses,
-        })
-            .then((res) => {
-                Swal.fire("Success!", "Form submitted successfully.", "success");
-                setShowNotification(true);
-                setFormResponses({}); // Reset form after submission
-            })
-            .catch((error) => {
-                Swal.fire("Error", "Failed to submit form.", "error");
-            });
     };
 
     if (loading) return <p>Loading...</p>;
@@ -366,12 +348,16 @@ const FormBuilder = () => {
                         </button>
                     ))}
 
-                    <button className="save-form-btn" style={{ display: formId ? "inline-block" : "none" }} onClick={() => saveOrUpdateForm(false)}>
+                    <button className="update-form-btn" style={{ display: formId ? "inline-block" : "none" }} onClick={() => saveOrUpdateForm(false)}>
                         Update Form
                     </button>
 
                     <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)}>
                         Save Form
+                    </button>
+
+                    <button className="publish-form-btn" style={{ display: formId ? "inline-block" : "none" }} onClick={() => publishForm()}>
+                        Publish Form
                     </button>
 
                 </div>
@@ -467,7 +453,6 @@ const FormBuilder = () => {
                         }}
                     >
                         <button
-                            onClick={submitForm}
                             style={{
                                 backgroundColor: submitBtnBgColor,
                                 color: submitBtnTextColor,

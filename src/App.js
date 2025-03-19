@@ -3,7 +3,8 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import Layout from "./Layout";
 import Login from "./Login";
 import Home from "./Home";
-import FormBuilder from "./Form_builder"; // Import Form Builder Page
+import FormBuilder from "./Form_builder";
+import PublishedForm from "./PublishedForm";
 
 function App() {
   return (
@@ -34,6 +35,10 @@ function App() {
           </Layout>
         }
       />
+
+      {/* ✅ New Route for Published Form */}
+      <Route path="/forms/:formId" element={<PublishedForm />} />
+
       <Route path="/" element={<Navigate to="/login" />} />
     </Routes>
   );

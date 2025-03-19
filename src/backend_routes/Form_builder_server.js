@@ -204,7 +204,6 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
     }
 });
 
-
 // ✅ Fetch a specific form by ID (Protected Route)
 router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
     const { formId } = req.params;
@@ -442,5 +441,67 @@ router.delete("/delete-form/:formId", verifyJWT, async (req, res) => {
     }
 });
 
+// ✅ Submit Form Responses (Public Access)
+router.post("/submit-form", async (req, res) => {
+    const { form_id, responses } = req.body;
+
+    if (!form_id || !responses || Object.keys(responses).length === 0) {
+        return res.status(400).json({ error: "Form ID and responses are required." });
+    }
+
+    let connection;
+    try {
+        connection = await new Promise((resolve, reject) => {
+            db.getConnection((err, conn) => {
+                if (err) reject(err);
+                else resolve(conn);
+            });
+        });
+
+        await connection.beginTransaction();
+
+        // ✅ Insert response into `form_responses`
+        const responseInsertQuery = "INSERT INTO form_responses (form_id) VALUES (?)";
+        const responseResult = await queryPromise(connection, responseInsertQuery, [form_id]);
+        const response_id = responseResult.insertId;
+
+        // ✅ Insert individual field responses
+        for (const [field_id, answer] of Object.entries(responses)) {
+            const responseFieldQuery = `
+                INSERT INTO response_fields (response_id, field_id, answer) 
+                VALUES (?, ?, ?)`;
+            await queryPromise(connection, responseFieldQuery, [response_id, field_id, answer]);
+        }
+
+        await connection.commit();
+        res.json({ message: "Form submitted successfully!" });
+
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error("❌ Error submitting form:", error);
+        res.status(500).json({ error: "Internal server error" });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+// ✅ Publish or Unpublish a Form (Protected Route)
+router.put("/publish-form/:formId", verifyJWT, async (req, res) => {
+    const { formId } = req.params;
+    const { published } = req.body;
+    const userId = req.user_id;
+
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    try {
+        const updateQuery = "UPDATE forms SET published = ? WHERE form_id = ? AND user_id = ?";
+        await queryPromise(db, updateQuery, [published, formId, userId]);
+
+        res.json({ message: published ? "Form published successfully!" : "Form unpublished.", formId });
+    } catch (error) {
+        console.error("❌ Error publishing form:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
 
 module.exports = router;
