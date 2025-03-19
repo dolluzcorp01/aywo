@@ -300,6 +300,11 @@ const FormBuilder = () => {
                     { withCredentials: true }
                 );
                 Swal.fire("Success!", response.data.message, "success");
+
+                // ✅ Navigate to the newly created form page using the returned formId
+                if (response.data.formId) {
+                    navigate(`/form-builder/form-${response.data.formId}`);
+                }
             }
 
             setShowNotification(true);
