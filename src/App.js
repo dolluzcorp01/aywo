@@ -5,6 +5,7 @@ import Login from "./Login";
 import Home from "./Home";
 import FormBuilder from "./Form_builder";
 import PublishedForm from "./PublishedForm";
+import Responses from "./Responses";
 
 function App() {
   return (
@@ -36,8 +37,18 @@ function App() {
         }
       />
 
-      {/* ✅ New Route for Published Form */}
+      {/* ✅ Route for Published Form */}
       <Route path="/forms/:formId" element={<PublishedForm />} />
+
+      {/* ✅ New Route for Responses Page */}
+      <Route
+        path="/responses/:formId"
+        element={
+          <Layout>
+            <Responses />
+          </Layout>
+        }
+      />
 
       <Route path="/" element={<Navigate to="/login" />} />
     </Routes>

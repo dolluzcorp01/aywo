@@ -18,12 +18,14 @@ const loginRoutes = require('./src/backend_routes/Login_server');
 const headerRoutes = require('./src/backend_routes/Header_server');
 const formBuilderRoutes = require("./src/backend_routes/Form_builder_server");
 const publishedFormRoutes = require("./src/backend_routes/PublishedForm_server"); // ✅ FIXED
+const responsesRoutes = require("./src/backend_routes/Responses_server");
 
 // ✅ Use Routes
 app.use('/api/login', loginRoutes.router);
 app.use('/api/header', loginRoutes.verifyJWT, headerRoutes);  // ✅ Protect `/header` with JWT auth
 app.use("/api/form_builder", formBuilderRoutes);
 app.use("/api/published_form", publishedFormRoutes); // ✅ FIXED ROUTE
+app.use("/api/responses", responsesRoutes);
 
 console.log('✅ Routes have been set up');
 

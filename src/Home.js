@@ -280,13 +280,28 @@ function Home() {
                     <p className="form-title">{form.title}</p>
                   )}
 
-                  <p className="response-count">
+                  <p
+                    className="response-count"
+                    style={{
+                      cursor: form.response_count > 0 ? "pointer" : "default",
+                      color: form.response_count > 0 ? "blue" : "",
+                      textDecoration: form.response_count > 0 ? "underline" : "none"
+                    }}
+                    onClick={(e) => {
+                      if (form.response_count > 0) {
+                        e.stopPropagation(); // Prevent navigating to form-builder
+                        navigate(`/responses/${form.form_id}`);
+                      }
+                    }}
+                  >
                     {form.response_count} {form.response_count === 1 ? "response" : "responses"}
                   </p>
+
                 </div>
                 <div className="menu-container">
                   <i
                     className="fa-solid fa-ellipsis-vertical menu-icon"
+                    style={{ color: "blue"}}
                     onClick={(e) => {
                       e.stopPropagation();
                       setMenuOpen(menuOpen === form.form_id ? null : form.form_id);

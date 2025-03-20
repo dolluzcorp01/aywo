@@ -31,7 +31,7 @@ const PublishedForm = () => {
             return;
         }
 
-        axios.post("http://localhost:5000/api/form_builder/submit-form", {
+        axios.post("http://localhost:5000/api/published_form/submit-form", {
             form_id: form.form_id,
             responses
         })
