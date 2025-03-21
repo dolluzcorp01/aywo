@@ -187,7 +187,7 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
         if (sortBy === "responses_asc") orderClause = "ORDER BY response_count ASC";
 
         const query = `
-            SELECT f.form_id, f.title, 
+            SELECT f.form_id, f.title, f.published, 
                 COUNT(fr.response_id) AS response_count 
             FROM forms f
             LEFT JOIN form_responses fr ON f.form_id = fr.form_id

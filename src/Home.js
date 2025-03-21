@@ -301,7 +301,7 @@ function Home() {
                 <div className="menu-container">
                   <i
                     className="fa-solid fa-ellipsis-vertical menu-icon"
-                    style={{ color: "blue"}}
+                    style={{ color: "blue" }}
                     onClick={(e) => {
                       e.stopPropagation();
                       setMenuOpen(menuOpen === form.form_id ? null : form.form_id);
@@ -319,9 +319,24 @@ function Home() {
                       >
                         <i className="fa-solid fa-pen"></i> Rename
                       </button>
+
                       <button onClick={() => handleDelete(form.form_id)}>
                         <i className="fa-solid fa-trash"></i> Delete
                       </button>
+
+                      {/* Show Share Button Only if Published */}
+                      {form.published === 1 && (
+                        <button
+                          onClick={() => {
+                            const publicUrl = `${window.location.origin}/forms/${form.form_id}`;
+                            navigator.clipboard.writeText(publicUrl);
+                            Swal.fire("Copied!", `Share this link: <br><b>${publicUrl}</b>`, "success");
+                            setMenuOpen(null);
+                          }}
+                        >
+                          <i className="fa-solid fa-share"></i> Share
+                        </button>
+                      )}
                     </div>
                   )}
 
