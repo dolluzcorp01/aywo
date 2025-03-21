@@ -419,7 +419,7 @@ const FormBuilder = () => {
                         >
 
                             <div className="field" style={{ backgroundColor: field.bgColor, display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "5px", borderRadius: "5px" }} onClick={() => setSelectedField(field)}>
-                                <span style={{ color: field.labelColor, fontSize: `${field.fontSize}px`, fontWeight: "bold", marginRight: "10px" }}>{field.label}</span>
+                                <span style={{ color: field.labelColor, fontSize: `${field.fontSize}px`, fontWeight: "bold", marginRight: "10px", marginBottom: "10px" }}>{field.label}</span>
                                 <div style={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
                                     {/* ✅ Pass field.id to getInputType */}
                                     {getInputType(field.type, field.id)}
