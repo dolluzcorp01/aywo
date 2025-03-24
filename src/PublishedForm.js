@@ -98,8 +98,8 @@ const PublishedForm = () => {
                             position: "absolute",
                             left: `${field.x}px`,
                             top: `${field.y}px`,
-                            width: `${field.width}px`,
-                            height: `${field.height}px`,
+                            width: `${field.width}px`, // Ensure this reflects actual width
+                            height: `${field.height}px`, // Ensure this reflects actual height
                             backgroundColor: field.bgColor,
                             padding: "5px",
                             borderRadius: "5px",
@@ -120,12 +120,14 @@ const PublishedForm = () => {
                             {field.label}
                         </label>
 
-                        {field.field_type === "Text" && (
+                        {/* Text and Short Answer */}
+                        {(field.field_type === "Text Only" || field.field_type === "Short Answer") && (
                             <input
                                 type="text"
                                 style={{
-                                    width: "100%",
-                                    height: "100%",
+                                    width: "100%", // Make sure it fills the parent div
+                                    height: "auto", // Allow height to adjust naturally
+                                    minHeight: `${field.height}px`, // Use minHeight instead of height
                                     fontSize: `${field.fontSize}px`,
                                     borderRadius: "5px",
                                     border: "1px solid #ccc",
@@ -134,38 +136,22 @@ const PublishedForm = () => {
                             />
                         )}
 
-                        {field.field_type === "Number" && (
-                            <input
-                                type="number"
-                                style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    fontSize: `${field.fontSize}px`,
-                                    borderRadius: "5px",
-                                    border: "1px solid #ccc",
-                                    appearance: "textfield",
-                                    MozAppearance: "textfield",
-                                    WebkitAppearance: "none",
-                                }}
-                                onChange={(e) => setResponses({ ...responses, [field.field_id]: e.target.value })}
-                                onWheel={(e) => e.target.blur()}
-                            />
-                        )}
-
-                        {field.field_type === "Date" && (
-                            <input
-                                type="date"
-                                style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    fontSize: `${field.fontSize}px`,
-                                    borderRadius: "5px",
-                                    border: "1px solid #ccc",
-                                }}
+                        {/* Paragraph */}
+                        {field.field_type === "Paragraph" && (
+                            <textarea
+                            style={{
+                                width: "100%", // Make sure it fills the parent div
+                                height: "auto", // Allow height to adjust naturally
+                                minHeight: `${field.height}px`, // Use minHeight instead of height
+                                fontSize: `${field.fontSize}px`,
+                                borderRadius: "5px",
+                                border: "1px solid #ccc",
+                            }}
                                 onChange={(e) => setResponses({ ...responses, [field.field_id]: e.target.value })}
                             />
                         )}
 
+                        {/* Email */}
                         {field.field_type === "Email" && (
                             <input
                                 type="email"
@@ -180,17 +166,51 @@ const PublishedForm = () => {
                             />
                         )}
 
+                        {/* Number */}
+                        {field.field_type === "Number" && (
+                            <input
+                                type="number"
+                                style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    fontSize: `${field.fontSize}px`,
+                                    borderRadius: "5px",
+                                    border: "1px solid #ccc",
+                                    appearance: "textfield",
+                                    MozAppearance: "textfield",
+                                    WebkitAppearance: "none",
+                                }}
+                                onChange={(e) => setResponses({ ...responses, [field.field_id]: e.target.value })}
+                                onWheel={(e) => e.target.blur()} // Prevents number scroll
+                            />
+                        )}
+
+                        {/* Date */}
+                        {field.field_type === "Date" && (
+                            <input
+                                type="date"
+                                style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    fontSize: `${field.fontSize}px`,
+                                    borderRadius: "5px",
+                                    border: "1px solid #ccc",
+                                }}
+                                onChange={(e) => setResponses({ ...responses, [field.field_id]: e.target.value })}
+                            />
+                        )}
+
+                        {/* Checkbox */}
                         {field.field_type === "Checkbox" && (
                             <input
                                 type="checkbox"
-                                style={{
-                                    transform: "scale(1.5)",
-                                }}
+                                style={{ transform: "scale(1.5)" }}
                                 onChange={(e) => setResponses({ ...responses, [field.field_id]: e.target.checked })}
                             />
                         )}
 
-                        {field.field_type === "Multiple Choice" && field.options.length > 0 && (
+                        {/* Multiple Choice */}
+                        {field.field_type === "Multiple Choice" && field.options?.length > 0 && (
                             <div>
                                 {field.options.map((option, index) => (
                                     <label key={`${field.field_id}-option-${index}`} style={{ display: "block", marginBottom: "5px" }}>
@@ -206,7 +226,8 @@ const PublishedForm = () => {
                             </div>
                         )}
 
-                        {field.field_type === "Dropdown" && field.options.length > 0 && (
+                        {/* Dropdown */}
+                        {field.field_type === "Dropdown" && field.options?.length > 0 && (
                             <select
                                 style={{
                                     width: "100%",
@@ -219,7 +240,7 @@ const PublishedForm = () => {
                             >
                                 <option value="">Select an option</option>
                                 {field.options.map((option, index) => (
-                                    <option key={`${field.field_id}-option-${index}`} value={option}>
+                                    <option key={`${field.field_id}-dropdown-${index}`} value={option}>
                                         {option}
                                     </option>
                                 ))}

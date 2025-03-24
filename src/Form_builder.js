@@ -49,8 +49,6 @@ const FormBuilder = () => {
     const { formId } = useParams();
     const { setShowNotification } = useNotification();
 
-    const publishedUrl = null; // Temporary fix until publishing is implemented
-
     useEffect(() => {
         axios.get("http://localhost:5000/api/header/get-user-profile", { withCredentials: true })
             .then((res) => {
@@ -107,6 +105,31 @@ const FormBuilder = () => {
         return () => { isMounted = false; }; // Cleanup function
     }, [formId]);
 
+    useEffect(() => {
+        const updateFormHeight = () => {
+            const formContainer = document.querySelector('.form-container');
+            if (formContainer) {
+                // Find the bottom-most field
+                let maxBottom = 0;
+                fields.forEach(field => {
+                    let bottom = field.y + field.height;
+                    if (bottom > maxBottom) {
+                        maxBottom = bottom;
+                    }
+                });
+
+                // Find the submit button bottom position
+                let submitButtonBottom = submitBtnY + submitBtnHeight;
+
+                // Adjust form container height dynamically
+                let newHeight = Math.max(maxBottom, submitButtonBottom) + 100; // Add padding
+                formContainer.style.minHeight = `${newHeight}px`;
+            }
+        };
+
+        updateFormHeight();
+    }, [fields, submitBtnY, submitBtnHeight]);
+
     // Function to check if a new field overlaps with existing fields
     const isOverlapping = (x, y, width, height, excludeId = null) => {
         return fields.some(field => (
@@ -144,20 +167,18 @@ const FormBuilder = () => {
 
     // Add new field with no overlap
     const addField = (type) => {
-        let newX = 50, newY = lastPosition.y + 60;
+        let newX = 50;
+        let newY = lastPosition.y + 60; // Default stacking below the last added/moved field
 
         if (fields.length > 0) {
             const lastField = fields[fields.length - 1];
 
-            if (lastField.x + lastField.width + 20 < 600) {
-                newX = lastField.x + lastField.width + 20;
-                newY = lastField.y;
-            } else {
-                newX = 50;
-                newY = lastField.y + 60;
-            }
+            // Always stack fields vertically below the last field, even if it was moved
+            newX = lastField.x; // Keep the last field's X position
+            newY = lastField.y + lastField.height + 60; // Stack below with spacing
         }
 
+        // Ensure the position is valid before placing the new field
         const { x: validX, y: validY } = getValidPosition(newX, newY, 200, 50);
 
         const newField = {
@@ -178,7 +199,6 @@ const FormBuilder = () => {
         setFields([...fields, newField]);
         setLastPosition({ x: validX, y: validY });
     };
-
 
     const getInputType = (type, id) => {
         if (!fields || !Array.isArray(fields)) return null; // Prevents error if fields is undefined
@@ -327,7 +347,16 @@ const FormBuilder = () => {
             );
 
             const publicUrl = `${window.location.origin}/forms/${cleanFormId}`;
-            Swal.fire("Success!", `Form published successfully! Share this link: <br><b>${publicUrl}</b>`, "success");
+
+            // Copy link to clipboard
+            await navigator.clipboard.writeText(publicUrl);
+
+            // Show success alert
+            Swal.fire({
+                title: "Success!",
+                html: `Form published successfully! <br> The link has been copied to clipboard: <br> <b>${publicUrl}</b>`,
+                icon: "success"
+            });
 
         } catch (error) {
             console.error("Error publishing form:", error);
@@ -413,8 +442,14 @@ const FormBuilder = () => {
                                 );
                             }}
                             onResizeStop={(e, direction, ref, delta, position) => {
-                                updateField(field.id, "width", ref.offsetWidth);
-                                updateField(field.id, "height", ref.offsetHeight);
+                                const updatedWidth = ref.offsetWidth;
+                                const updatedHeight = ref.offsetHeight;
+
+                                setFields(prevFields =>
+                                    prevFields.map(f =>
+                                        f.id === field.id ? { ...f, width: updatedWidth, height: updatedHeight } : f
+                                    )
+                                );                                
                             }}
                         >
 
@@ -453,6 +488,7 @@ const FormBuilder = () => {
                         }}
                     >
                         <button
+                            className="submit-form-btn"
                             style={{
                                 backgroundColor: submitBtnBgColor,
                                 color: submitBtnTextColor,

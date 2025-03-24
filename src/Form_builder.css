@@ -64,13 +64,21 @@
     text-align: center;
     background-color: #ffffff;
     min-width: 500px;
-    /* Prevents shrinking */
-    min-height: 80vh;
-    /* Ensures enough space */
     display: flex;
     flex-direction: column;
     align-items: center;
     position: relative;
+    overflow-y: auto;
+    /* Allow scrolling */
+    max-height: 85vh;
+    /* Limit height so scrolling triggers */
+    padding-bottom: 80px;
+    /* Ensures the submit button is visible */
+}
+
+.form-builder .form-container {
+    overflow-y: scroll !important;
+    /* Force scrollbar */
 }
 
 /* Form Title */
@@ -86,6 +94,41 @@
 /* Form fields */
 .form-builder .field:hover {
     box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.2);
+}
+
+.form-builder .field {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: rgb(139, 94, 94);
+    width: fit-content;
+    /* Adjust width based on content */
+    min-width: 100%;
+    /* Ensure it stretches with the input */
+}
+
+.form-builder .field>div {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.form-builder .field input {
+    flex-grow: 1;
+    /* Allow input to take full space */
+    width: 100%;
+    /* Ensure it stretches */
+    min-width: 200px;
+    /* Adjust as needed */
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.form-builder .delete-btn {
+    margin-left: 10px;
 }
 
 /* Labels */
@@ -121,7 +164,6 @@
     gap: 8px;
 }
 
-
 /* Customization panel */
 .form-builder .customize-section {
     width: 250px;
@@ -135,7 +177,6 @@
     overflow-y: auto;
     /* Enables vertical scrolling */
 }
-
 
 /* Customization inputs */
 .form-builder .customize-section input {
