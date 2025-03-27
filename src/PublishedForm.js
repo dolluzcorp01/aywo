@@ -99,7 +99,7 @@ const PublishedForm = () => {
                             left: `${field.x}px`,
                             top: `${field.y}px`,
                             width: `${field.width}px`,
-                            minHeight: `${field.height}px`,  
+                            height: `${field.height}px`,  // Ensuring the height matches
                             backgroundColor: field.bgColor,
                             padding: "5px",
                             borderRadius: "5px",
@@ -127,12 +127,15 @@ const PublishedForm = () => {
                                 type={field.field_type === "Email" ? "email" : "text"}
                                 style={{
                                     width: "100%",
-                                    minHeight: "35px",
+                                    height: "100%", // Ensures input stretches inside the field
                                     fontSize: `${field.fontSize}px`,
                                     borderRadius: "5px",
                                     border: "1px solid #ccc",
                                     padding: "5px",
                                     boxSizing: "border-box",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
                                 }}
                                 onChange={(e) => setResponses({ ...responses, [field.field_id]: e.target.value })}
                             />
@@ -143,12 +146,15 @@ const PublishedForm = () => {
                             <textarea
                                 style={{
                                     width: "100%",
-                                    minHeight: `${field.height}px`,
+                                    height: "100%", // Ensures input stretches inside the field
                                     fontSize: `${field.fontSize}px`,
                                     borderRadius: "5px",
                                     border: "1px solid #ccc",
                                     padding: "5px",
                                     boxSizing: "border-box",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
                                 }}
                                 onChange={(e) => setResponses({ ...responses, [field.field_id]: e.target.value })}
                             />
@@ -160,12 +166,15 @@ const PublishedForm = () => {
                                 type="number"
                                 style={{
                                     width: "100%",
-                                    minHeight: "35px",
+                                    height: "100%", // Ensures input stretches inside the field
                                     fontSize: `${field.fontSize}px`,
                                     borderRadius: "5px",
                                     border: "1px solid #ccc",
                                     padding: "5px",
                                     boxSizing: "border-box",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
                                     appearance: "textfield",
                                     MozAppearance: "textfield",
                                     WebkitAppearance: "none",

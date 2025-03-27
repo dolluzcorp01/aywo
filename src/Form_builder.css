@@ -23,7 +23,6 @@
     padding: 20px;
     gap: 20px;
     overflow: hidden;
-    /* Prevents unwanted scrolling */
 }
 
 /* Sidebar styles */
@@ -69,44 +68,35 @@
     align-items: center;
     position: relative;
     overflow-y: auto;
-    /* Allow scrolling */
     max-height: 85vh;
-    /* Limit height so scrolling triggers */
     padding-bottom: 80px;
-    /* Ensures the submit button is visible */
 }
 
 .form-builder .form-container {
     overflow-y: scroll !important;
-    /* Force scrollbar */
+}
+
+/* delete icon for fields */
+.form-builder .delete-btn {
+    margin-left: 10px;
 }
 
 /* Form Title */
 .form-builder .form-title {
     width: auto;
-    /* Allows dynamic width */
     height: auto;
-    /* Allows dynamic height */
     resize: none;
     overflow: hidden;
+}
+
+/* Labels */
+.form-builder .field label {
+    flex-grow: 1;
 }
 
 /* Form fields */
 .form-builder .field:hover {
     box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.2);
-}
-
-.form-builder .field {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 10px;
-    border-radius: 5px;
-    background-color: rgb(139, 94, 94);
-    width: fit-content;
-    /* Adjust width based on content */
-    min-width: 100%;
-    /* Ensure it stretches with the input */
 }
 
 .form-builder .field>div {
@@ -117,32 +107,12 @@
 
 .form-builder .field input {
     flex-grow: 1;
-    /* Allow input to take full space */
     width: 100%;
-    /* Ensure it stretches */
-    min-width: 200px;
-    /* Adjust as needed */
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-.form-builder .delete-btn {
-    margin-left: 10px;
-}
-
-/* Labels */
-.form-builder .field label {
-    flex-grow: 1;
-}
-
-/* Input fields */
-.form-builder .field input {
-    flex-grow: 2;
+    height: 100%; 
+    min-height: 30px; 
     padding: 5px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    width: 100%;
 }
 
 /* Prevent number field issues */
@@ -150,6 +120,12 @@
 .form-builder .field input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
+}
+
+.form-builder .field textarea {
+    width: 100%;
+    min-height: 40px;
+    resize: vertical; 
 }
 
 .form-builder .multiple-choice-container {
@@ -173,9 +149,7 @@
     border-radius: 8px;
     flex-shrink: 0;
     max-height: 90vh;
-    /* Ensures it does not take the entire height */
     overflow-y: auto;
-    /* Enables vertical scrolling */
 }
 
 /* Customization inputs */
@@ -230,9 +204,7 @@
     border-radius: 5px;
     cursor: pointer;
     margin-top: auto;
-    /* Pushes the button to the bottom */
     align-self: center;
-    /* Centers the button */
     width: 150px;
 }
 

@@ -201,24 +201,31 @@ const FormBuilder = () => {
     };
 
     const getInputType = (type, id) => {
-        if (!fields || !Array.isArray(fields)) return null; // Prevents error if fields is undefined
+        if (!fields || !Array.isArray(fields)) return null;
 
         const field = fields.find(f => f.id === id);
-        if (!field) return null; // Prevents error if field is not found
+        if (!field) return null;
 
-        // ✅ Ensure options is always an array
         const options = Array.isArray(field.options) ? field.options : [];
+
+        const inputStyle = {
+            width: "100%",
+            height: "100%", 
+            fontSize: `${field.fontSize}px`,
+            padding: "5px",
+            boxSizing: "border-box",
+        };
 
         switch (type) {
             case "Number":
-                return <input type="number" inputMode="numeric" onKeyDown={(e) => e.key === 'e' && e.preventDefault()} />;
+                return <input type="number" style={inputStyle} inputMode="numeric" onKeyDown={(e) => e.key === 'e' && e.preventDefault()} />;
             case "Date":
-                return <input type="date" />;
+                return <input type="date" style={inputStyle} />;
             case "Checkbox":
-                return <input type="checkbox" />;
+                return <input type="checkbox" style={{ width: "20px", height: "20px" }} />;
             case "Multiple Choice":
                 return (
-                    <div className="multiple-choice-container">
+                    <div className="multiple-choice-container" style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                         {options.map((opt, index) => (
                             <div key={index} className="multiple-choice-option">
                                 <input type="radio" name={`multiple_choice_${id}`} value={opt} />
@@ -229,7 +236,7 @@ const FormBuilder = () => {
                 );
             case "Dropdown":
                 return (
-                    <select>
+                    <select style={inputStyle}>
                         <option value="">Select an option</option>
                         {options.map((opt, i) => (
                             <option key={i} value={opt}>{opt}</option>
@@ -239,7 +246,7 @@ const FormBuilder = () => {
             case "Text Only":
                 return null;
             default:
-                return <input type="text" />;
+                return <input type="text" style={inputStyle} />;
         }
     };
 
@@ -395,7 +402,16 @@ const FormBuilder = () => {
                     <Rnd
                         default={{ x: formTitleX, y: formTitleY, width: formTitleWidth, height: formTitleHeight }}
                         bounds="parent"
-                        enableResizing={{ bottomRight: true }}
+                        enableResizing={{
+                            top: true,
+                            right: true,
+                            bottom: true,
+                            left: true,
+                            topRight: true,
+                            bottomRight: true,
+                            bottomLeft: true,
+                            topLeft: true
+                        }}
                         onDragStop={(e, d) => {
                             const { x, y } = getValidPosition(d.x, d.y, formTitleWidth, formTitleHeight);
                             setFormTitleX(x);
@@ -430,7 +446,16 @@ const FormBuilder = () => {
                             position={{ x: field.x, y: field.y }}
                             size={{ width: field.width, height: field.height }}
                             bounds="parent"
-                            enableResizing={{ bottomRight: true }}
+                            enableResizing={{
+                                top: true,
+                                right: true,
+                                bottom: true,
+                                left: true,
+                                topRight: true,
+                                bottomRight: true,
+                                bottomLeft: true,
+                                topLeft: true
+                            }}
                             onDragStop={(e, d) => {
                                 let { x, y } = d;
                                 const { x: validX, y: validY } = getValidPosition(x, y, field.width, field.height, field.id);
@@ -443,20 +468,31 @@ const FormBuilder = () => {
                             }}
                             onResizeStop={(e, direction, ref, delta, position) => {
                                 const updatedWidth = ref.offsetWidth;
-                                const updatedHeight = ref.offsetHeight;
+                                const updatedHeight = ref.offsetHeight; // Ensure height is updated
 
                                 setFields(prevFields =>
                                     prevFields.map(f =>
-                                        f.id === field.id ? { ...f, width: updatedWidth, height: updatedHeight } : f
+                                        f.id === field.id
+                                            ? { ...f, width: updatedWidth, height: updatedHeight } // Update height here
+                                            : f
                                     )
-                                );                                
+                                );
                             }}
                         >
 
-                            <div className="field" style={{ backgroundColor: field.bgColor, display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "5px", borderRadius: "5px" }} onClick={() => setSelectedField(field)}>
+                            <div className="field" style={{
+                                backgroundColor: field.bgColor,
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "flex-start",
+                                padding: "5px",
+                                borderRadius: "5px",
+                                width: "100%",  // Makes it fully resizable
+                                height: "100%", // Ensures height is taken from `Rnd`
+                                minHeight: "40px" // Prevents collapsing
+                            }} onClick={() => setSelectedField(field)}>
                                 <span style={{ color: field.labelColor, fontSize: `${field.fontSize}px`, fontWeight: "bold", marginRight: "10px", marginBottom: "10px" }}>{field.label}</span>
-                                <div style={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
-                                    {/* ✅ Pass field.id to getInputType */}
+                                <div style={{ display: "flex", alignItems: "center", flexGrow: 1, width: "100%" }}>
                                     {getInputType(field.type, field.id)}
                                     <button className="delete-btn" onClick={() => deleteField(field.id)} style={{ background: "red", color: "white", border: "none", borderRadius: "50%", width: "30px", height: "30px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginLeft: "10px" }}>
                                         <FaTrash size={13} />
