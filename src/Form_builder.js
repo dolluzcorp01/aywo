@@ -109,7 +109,6 @@ const FormBuilder = () => {
         const updateFormHeight = () => {
             const formContainer = document.querySelector('.form-container');
             if (formContainer) {
-                // Find the bottom-most field
                 let maxBottom = 0;
                 fields.forEach(field => {
                     let bottom = field.y + field.height;
@@ -118,12 +117,15 @@ const FormBuilder = () => {
                     }
                 });
 
-                // Find the submit button bottom position
                 let submitButtonBottom = submitBtnY + submitBtnHeight;
-
-                // Adjust form container height dynamically
                 let newHeight = Math.max(maxBottom, submitButtonBottom) + 100; // Add padding
-                formContainer.style.minHeight = `${newHeight}px`;
+
+                // Allow scrolling only when content height exceeds the container height
+                if (newHeight > formContainer.clientHeight) {
+                    formContainer.style.overflowY = 'auto';
+                } else {
+                    formContainer.style.overflowY = 'hidden';
+                }
             }
         };
 
@@ -210,7 +212,7 @@ const FormBuilder = () => {
 
         const inputStyle = {
             width: "100%",
-            height: "100%", 
+            height: "100%",
             fontSize: `${field.fontSize}px`,
             padding: "5px",
             boxSizing: "border-box",
