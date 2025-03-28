@@ -43,6 +43,15 @@ const FormBuilder = () => {
     const [submitBtnTextColor, setSubmitBtnTextColor] = useState("#ffffff");
     const [submitBtnFontSize, setSubmitBtnFontSize] = useState(16);
 
+    // State for Global Customization
+    const [globalSettings, setGlobalSettings] = useState({
+        bgColor: "#8B5E5E",
+        labelColor: "#FFFFFF",
+        fontSize: 16,
+        width: 200,
+        height: 50,
+    });
+
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
@@ -195,7 +204,8 @@ const FormBuilder = () => {
             height: 50,
             x: validX,
             y: validY,
-            options: type === "Dropdown" || type === "Multiple Choice" ? ["Option 1", "Option 2"] : []
+            options: type === "Dropdown" || type === "Multiple Choice" ? ["Option 1", "Option 2"] : [],
+            customized: {}
         };
 
         setFields([...fields, newField]);
@@ -252,12 +262,22 @@ const FormBuilder = () => {
         }
     };
 
+
+    const updateGlobalSettings = (key, value) => {
+        setGlobalSettings(prev => ({ ...prev, [key]: value }));
+        setFields(prevFields =>
+            prevFields.map(field =>
+                !field.customized?.[key] ? { ...field, [key]: value } : field
+            )
+        );
+    };
+
     const updateField = (id, key, value) => {
         if (key === "label" && !value.trim()) return;
 
         setFields(prevFields =>
             prevFields.map(field =>
-                field.id === id ? { ...field, [key]: value } : field
+                field.id === id ? { ...field, [key]: value, customized: { ...field.customized, [key]: true } } : field
             )
         );
 
@@ -576,6 +596,43 @@ const FormBuilder = () => {
                     />
                     <label>Submit Button Font Size</label>
                     <input type="number" value={submitBtnFontSize} onChange={(e) => setSubmitBtnFontSize(parseInt(e.target.value, 10) || 16)} />
+
+                    <h2>Global Customization</h2>
+
+                    <label>Global Background Color:</label>
+                    <input
+                        type="color"
+                        value={globalSettings.bgColor}
+                        onChange={(e) => updateGlobalSettings("bgColor", e.target.value)}
+                    />
+
+                    <label>Global Label Color:</label>
+                    <input
+                        type="color"
+                        value={globalSettings.labelColor}
+                        onChange={(e) => updateGlobalSettings("labelColor", e.target.value)}
+                    />
+
+                    <label>Global Font Size:</label>
+                    <input
+                        type="number"
+                        value={globalSettings.fontSize}
+                        onChange={(e) => updateGlobalSettings("fontSize", parseInt(e.target.value, 10))}
+                    />
+
+                    <label>Global Width:</label>
+                    <input
+                        type="number"
+                        value={globalSettings.width}
+                        onChange={(e) => updateGlobalSettings("width", parseInt(e.target.value, 10))}
+                    />
+
+                    <label>Global Height:</label>
+                    <input
+                        type="number"
+                        value={globalSettings.height}
+                        onChange={(e) => updateGlobalSettings("height", parseInt(e.target.value, 10))}
+                    />
 
                     {selectedField && (
                         <>
