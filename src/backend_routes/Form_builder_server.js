@@ -204,41 +204,58 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
     }
 });
 
-// ✅ Fetch a specific form by ID (Protected Route)
+// ✅ Fetch a specific form or template by ID
 router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
     const { formId } = req.params;
     const userId = req.user_id;
 
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
+    // Check if formId starts with "template-", otherwise assume it's a regular form
+    const isTemplate = formId.startsWith("template-");
+    const cleanId = isTemplate ? formId.replace("template-", "") : formId.replace("form-", "");
+
+    // Use the correct table names
+    const formTable = isTemplate ? "form_templates" : "forms";
+    const fieldsTable = isTemplate ? "template_fields" : "form_fields";
+    const optionsTable = isTemplate ? "template_field_options" : "form_field_options";
+    const userCondition = isTemplate ? "" : "AND user_id = ?"; // Only check user_id for user-created forms
+
     try {
-        // Fetch form details
+        // Fetch form/template details
         const formQuery = `
             SELECT title, title_x, title_y, title_width, title_height, 
                    form_background, title_color, title_background,
                    submit_button_x, submit_button_y, submit_button_width, 
                    submit_button_height, submit_button_color, submit_button_background
-            FROM forms 
-            WHERE form_id = ? AND user_id = ?`;
-        const formResult = await queryPromise(db, formQuery, [formId, userId]);
+            FROM ${formTable} 
+            WHERE ${isTemplate ? "template_id" : "form_id"} = ? ${userCondition}`;
+
+        const queryParams = isTemplate ? [cleanId] : [cleanId, userId];
+        const formResult = await queryPromise(db, formQuery, queryParams);
 
         if (formResult.length === 0) {
-            return res.status(404).json({ error: "Form not found or unauthorized" });
+            return res.status(404).json({ error: "Form or template not found or unauthorized" });
         }
 
-        // Fetch form fields
+        // Fetch form/template fields
         const fieldsQuery = `
-            SELECT field_id, field_type, label, x, y, width, height, bgColor, labelColor, fontSize
-            FROM form_fields 
-            WHERE form_id = ?`;
-        const fieldsResult = await queryPromise(db, fieldsQuery, [formId]);
+            SELECT ${isTemplate ? "template_field_id AS field_id" : "field_id"},  
+            field_type, label, x, y, width, height, bgColor, labelColor, fontSize
+            FROM ${fieldsTable} 
+            WHERE ${isTemplate ? "template_id" : "form_id"} = ?`;
+        const fieldsResult = await queryPromise(db, fieldsQuery, [cleanId]);
 
         // Fetch options for Dropdown and Multiple Choice fields
         const optionsQuery = `
-            SELECT field_id, option_text 
-            FROM form_field_options 
-            WHERE field_id IN (SELECT field_id FROM form_fields WHERE form_id = ?)`;
-        const optionsResult = await queryPromise(db, optionsQuery, [formId]);
+        SELECT ${isTemplate ? "template_field_id AS field_id" : "field_id"}, option_text 
+        FROM ${optionsTable} 
+        WHERE ${isTemplate ? "template_field_id" : "field_id"} IN (
+            SELECT ${isTemplate ? "template_field_id" : "field_id"} 
+            FROM ${fieldsTable} 
+            WHERE ${isTemplate ? "template_id" : "form_id"} = ?
+        ) `;
+        const optionsResult = await queryPromise(db, optionsQuery, [cleanId]);
 
         // Group options by field_id
         const optionsMap = optionsResult.reduce((acc, row) => {
@@ -282,7 +299,7 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Error fetching form:", error);
+        console.error("❌ Error fetching form/template:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 });

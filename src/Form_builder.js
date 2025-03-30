@@ -72,12 +72,10 @@ const FormBuilder = () => {
         let isMounted = true; // Track if component is mounted
 
         if (formId) {
-            const cleanFormId = formId.replace("form-", "");
-
-            axios.get(`http://localhost:5000/api/form_builder/get-specific-form/${cleanFormId}`, { withCredentials: true })
+            axios.get(`http://localhost:5000/api/form_builder/get-specific-form/${formId}`, { withCredentials: true })
                 .then((res) => {
                     if (isMounted) {
-                        console.log("Fetched specific form data:", res.data);
+                        console.log(`Fetched form data:`, res.data);
 
                         setFormBgColor(res.data.form_background || "#ffffff");
                         setFormTitleColor(res.data.title_color || "#000000");
