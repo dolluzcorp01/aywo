@@ -1,4 +1,6 @@
 const express = require("express");
+const multer = require("multer");
+const path = require("path");
 const router = express.Router();
 const getDBConnection = require("../../config/db");
 
@@ -17,10 +19,33 @@ const queryPromise = (db, sql, params) => {
     });
 };
 
-// ✅ Submit Form Responses (Public Access)
-router.post("/submit-form", async (req, res) => {
-    const { form_id, responses } = req.body;
+// ✅ Define `upload` before using it
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "uploads/"); // Folder where files will be stored
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + "-" + file.originalname); // Unique file name
+    }
+});
 
+const upload = multer({ storage });
+
+router.post("/submit-form", upload.single("document"), async (req, res) => {
+    const { form_id } = req.body;
+    let responses;
+
+    try {
+        // Parse `responses` correctly
+        responses = JSON.parse(req.body.responses);
+    } catch (error) {
+        console.error("Error parsing responses:", error);
+        responses = req.body.responses || {};
+    }
+
+    console.log("Received responses:", responses); // Debugging
+
+    const file = req.file;
     if (!form_id || !responses || Object.keys(responses).length === 0) {
         return res.status(400).json({ error: "Form ID and responses are required." });
     }
@@ -41,16 +66,34 @@ router.post("/submit-form", async (req, res) => {
         const responseResult = await queryPromise(connection, responseInsertQuery, [form_id]);
         const response_id = responseResult.insertId;
 
+        console.log("Inserted response_id:", response_id); // Debugging
+
         // ✅ Insert individual field responses
         for (const [field_id, answer] of Object.entries(responses)) {
+            let finalAnswer = answer;
+
+            // ✅ Check if this is the file input field
+            if (file && answer === "file_attached") {
+                finalAnswer = `/uploads/${file.filename}`;
+            }
+
+            // ✅ Prevent inserting empty values
+            if (!finalAnswer) {
+                console.warn(`Skipping field_id ${field_id} because answer is empty.`);
+                continue;
+            }
+
+            console.log(`Inserting field_id ${field_id} with value:`, finalAnswer); // Debugging
+
             const responseFieldQuery = `
                 INSERT INTO response_fields (response_id, field_id, answer) 
                 VALUES (?, ?, ?)`;
-            await queryPromise(connection, responseFieldQuery, [response_id, field_id, answer]);
+
+            await queryPromise(connection, responseFieldQuery, [response_id, field_id, finalAnswer]);
         }
 
         await connection.commit();
-        res.json({ message: "Form submitted successfully!" });
+        res.json({ message: "Form submitted successfully!", filePath: file ? `/uploads/${file.filename}` : null });
 
     } catch (error) {
         if (connection) await connection.rollback();

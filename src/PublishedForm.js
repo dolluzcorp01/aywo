@@ -31,13 +31,42 @@ const PublishedForm = () => {
             return;
         }
 
-        axios.post("http://localhost:5000/api/published_form/submit-form", {
-            form_id: form.form_id,
-            responses
+        const formData = new FormData();
+        formData.append("form_id", form.form_id);
+
+        const responsesObject = {}; // Store responses in an object
+
+        Object.entries(responses).forEach(([key, value]) => {
+            if (value instanceof File) {
+                formData.append("document", value);
+                responsesObject[key] = "file_attached"; // Placeholder, backend handles file separately
+            } else {
+                responsesObject[key] = value;
+            }
+        });
+
+        // Append stringified JSON of responses
+        formData.append("responses", JSON.stringify(responsesObject));
+
+        console.log("Final FormData:", Object.fromEntries(formData.entries())); // Debugging
+
+        axios.post("http://localhost:5000/api/published_form/submit-form", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
         })
             .then(() => {
                 Swal.fire("Success!", "Form submitted successfully!", "success");
+
+                // Clear all input fields
                 setResponses({});
+                document.querySelectorAll("input, textarea, select").forEach((element) => {
+                    if (element.type === "checkbox" || element.type === "radio") {
+                        element.checked = false;
+                    } else if (element.type === "file") {
+                        element.value = "";
+                    } else {
+                        element.value = "";
+                    }
+                });
             })
             .catch(() => {
                 Swal.fire("Error", "Failed to submit form.", "error");
@@ -251,6 +280,30 @@ const PublishedForm = () => {
                                 ))}
                             </select>
                         )}
+
+                        {/* Document Upload Field */}
+                        {field.field_type === "Document Type" && (
+                            <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+                                <span role="img" aria-label="Document Icon" style={{ marginRight: "8px" }}>
+                                    📄
+                                </span>
+                                <input
+                                    type="file"
+                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                    style={{
+                                        flexGrow: 1,
+                                        minHeight: "35px",
+                                        fontSize: `${field.fontSize}px`,
+                                        borderRadius: "5px",
+                                        border: "1px solid #ccc",
+                                        padding: "5px",
+                                        boxSizing: "border-box",
+                                    }}
+                                    onChange={(e) => setResponses({ ...responses, [field.field_id]: e.target.files[0] })}
+                                />
+                            </div>
+                        )}
+
                     </div>
                 ))}
 

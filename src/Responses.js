@@ -66,7 +66,14 @@ const Responses = () => {
                             title: field,
                             data: (row) => {
                                 const answer = row.answers.find((a) => a.label === field);
-                                return answer ? answer.answer : "-";
+                                if (!answer) return "-";
+
+                                if (answer.filePath) {
+                                    // ✅ Make file name clickable
+                                    return `<a href="http://localhost:5000/${answer.filePath.replace(/^\/?uploads\//, 'uploads/')}" target="_blank">${answer.answer}</a>`;
+                                }
+
+                                return answer.answer;
                             },
                         })),
                     ];

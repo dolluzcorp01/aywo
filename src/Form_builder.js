@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNotification } from "./NotificationContext";
-import { FaFont, FaEnvelope, FaHashtag, FaList, FaCheckSquare, FaCaretDown, FaCalendarAlt, FaAlignLeft, FaTrash } from "react-icons/fa";
+import { FaFont, FaEnvelope, FaHashtag, FaList, FaCheckSquare, FaCaretDown, FaCalendarAlt, FaAlignLeft, FaFileAlt, FaTrash } from "react-icons/fa";
 import "./Form_builder.css";
 
 const fieldIcons = {
@@ -16,11 +16,12 @@ const fieldIcons = {
     "Checkbox": <FaCheckSquare color="#dc3545" />,
     "Dropdown": <FaCaretDown color="#6610f2" />,
     "Date": <FaCalendarAlt color="#e83e8c" />,
-    "Paragraph": <FaAlignLeft color="#fd7e14" />
+    "Paragraph": <FaAlignLeft color="#fd7e14" />,
+    "Document Type": <FaFileAlt color="#6f42c1" />
 };
 
 const FormBuilder = () => {
-    const [formBgColor, setFormBgColor] = useState("#E08686");
+    const [formBgColor, setFormBgColor] = useState("gray");
 
     const [fields, setFields] = useState([]);
     const [selectedField, setSelectedField] = useState(null);
@@ -45,8 +46,8 @@ const FormBuilder = () => {
 
     // State for Global Customization
     const [globalSettings, setGlobalSettings] = useState({
-        bgColor: "#8B5E5E",
-        labelColor: "#FFFFFF",
+        bgColor: "#ffffff",
+        labelColor: "#000000",
         fontSize: 16,
         width: 200,
         height: 50,
@@ -195,8 +196,8 @@ const FormBuilder = () => {
             type,
             field_type: type,
             label: type,
-            bgColor: "#8B5E5E",
-            labelColor: "#FFFFFF",
+            bgColor: "#FFFFFF",
+            labelColor: "#000000",
             fontSize: 16,
             width: 200,
             height: 50,
@@ -253,13 +254,16 @@ const FormBuilder = () => {
                         ))}
                     </select>
                 );
+            case "Document Type":
+                return (
+                    <input type="file" style={inputStyle} accept=".pdf,.doc,.docx" />
+                );
             case "Text Only":
                 return null;
             default:
                 return <input type="text" style={inputStyle} />;
         }
     };
-
 
     const updateGlobalSettings = (key, value) => {
         setGlobalSettings(prev => ({ ...prev, [key]: value }));

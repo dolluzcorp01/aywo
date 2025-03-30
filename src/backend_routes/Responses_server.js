@@ -22,15 +22,13 @@ router.get("/get-responses/:formId", async (req, res) => {
     const { formId } = req.params;
 
     try {
-        // ✅ Fetch responses for the given form ID
         const formResponsesQuery = "SELECT * FROM form_responses WHERE form_id = ?";
         const formResponses = await queryPromise(db, formResponsesQuery, [formId]);
 
         if (formResponses.length === 0) {
-            return res.json([]); // Return empty array if no responses found
+            return res.json([]);
         }
 
-        // ✅ Fetch response fields for all responses
         const responseIds = formResponses.map(res => res.response_id);
         const responseFieldsQuery = `
             SELECT rf.response_id, rf.field_id, ff.label, rf.answer 
@@ -40,13 +38,21 @@ router.get("/get-responses/:formId", async (req, res) => {
         `;
         const responseFields = await queryPromise(db, responseFieldsQuery, responseIds);
 
-        // ✅ Organize responses in structured format
+        // ✅ Modify responses: Extract only the file name
         const structuredResponses = formResponses.map(response => ({
             response_id: response.response_id,
             submitted_at: response.submitted_at,
             answers: responseFields
-                .filter(field => field.response_id === response.response_id)
-                .map(({ field_id, label, answer }) => ({ field_id, label, answer }))
+                .filter(({ response_id }) => response_id === response.response_id) // ✅ Filter answers for this response only
+                .map(({ field_id, label, answer }) => {
+                    const isFile = answer && answer.includes("/");
+                    return {
+                        field_id,
+                        label,
+                        answer: isFile ? answer.split("/").pop() : answer, // Extract file name
+                        filePath: isFile ? answer : null, // Keep full path separately
+                    };
+                }),
         }));
 
         res.json(structuredResponses);

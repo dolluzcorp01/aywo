@@ -26,6 +26,7 @@ app.use('/api/header', loginRoutes.verifyJWT, headerRoutes);  // ✅ Protect `/h
 app.use("/api/form_builder", formBuilderRoutes);
 app.use("/api/published_form", publishedFormRoutes); // ✅ FIXED ROUTE
 app.use("/api/responses", responsesRoutes);
+app.use("/uploads", express.static("uploads"));
 
 console.log('✅ Routes have been set up');
 
