@@ -192,10 +192,11 @@ const PublishedForm = () => {
                         {/* Number */}
                         {field.field_type === "Number" && (
                             <input
-                                type="number"
+                                type="text" // Keeps it as a text field
+                                inputMode="numeric" // Brings up a numeric keyboard on mobile
                                 style={{
                                     width: "100%",
-                                    height: "100%", // Ensures input stretches inside the field
+                                    height: "100%",
                                     fontSize: `${field.fontSize}px`,
                                     borderRadius: "5px",
                                     border: "1px solid #ccc",
@@ -204,12 +205,17 @@ const PublishedForm = () => {
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
-                                    appearance: "textfield",
-                                    MozAppearance: "textfield",
-                                    WebkitAppearance: "none",
                                 }}
-                                onChange={(e) => setResponses({ ...responses, [field.field_id]: e.target.value })}
-                                onWheel={(e) => e.target.blur()} // Prevents number scroll
+                                value={responses[field.field_id] || ""}
+                                onChange={(e) => {
+                                    const value = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
+                                    setResponses((prev) => ({ ...prev, [field.field_id]: value }));
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "e" || e.key === "E" || e.key === "-" || e.key === "+") {
+                                        e.preventDefault(); // Block 'e', 'E', '-', '+'
+                                    }
+                                }}
                             />
                         )}
 
