@@ -1,4 +1,5 @@
 import Swal from "sweetalert2";
+import Form_Builder_Icon from "./assets/img/form_builder_icon.webp";
 import { useNotification } from "./NotificationContext";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +19,38 @@ function Home() {
   const menuRef = useRef(null);
   const renameRef = useRef(null);
   const [sortBy, setSortBy] = useState("created_at_desc"); // Default sorting
+
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [isPreview, setIsPreview] = useState(false);
+
+  const templates = [
+    { name: "Contact Form", image: Form_Builder_Icon, url: "template-1" },
+    { name: "Feedback Form", image: Form_Builder_Icon, url: "template-2" },
+    { name: "Survey Form", image: Form_Builder_Icon, url: "template-3" },
+  ];
+
+  const handleTemplateClick = () => {
+    setShowTemplateModal(true);
+    setIsPreview(false); 
+    setSelectedTemplate(null); 
+  };
+
+  const handleBackClick = () => {
+    setIsPreview(false); 
+    setSelectedTemplate(null); 
+  };
+
+  const handleUseTemplateclick = () => {
+    const modal = document.getElementById("templateModal");
+    if (modal) {
+      modal.classList.remove("show");
+      modal.style.display = "none";
+    }
+    document.body.classList.remove("modal-open");
+    document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+    navigate(`/form-builder/${selectedTemplate.url}`);
+  };
 
   useEffect(() => {
     setProfileLoading(true);
@@ -192,10 +225,6 @@ function Home() {
     navigate("/form-builder");
   };
 
-  const handleTemplateClick = () => {
-    alert("Template Selected");
-  };
-
   return (
     <div className="home-container">
       <div className="welcome-section">
@@ -368,6 +397,42 @@ function Home() {
                   <small className="option-subtext">Pre-built designs</small>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={`modal fade ${showTemplateModal ? "show d-block" : ""}`} id="templateModal" tabIndex="-1" aria-hidden="true">
+        <div className="modal-dialog modal-lg modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Select a Template</h5>
+              <button type="button" className="btn-close" onClick={() => setShowTemplateModal(false)}></button>
+            </div>
+            <div className="modal-body" style={{ height: "500px", overflowY: "auto" }}>
+              {!isPreview ? (
+                // Show template grid first
+                <div className="template-grid">
+                  {templates.map((template, index) => (
+                    <div key={index} className="template-card" onClick={() => {
+                      setSelectedTemplate(template);
+                      setIsPreview(true); // Switch to preview mode after selecting a template
+                    }}>
+                      <img src={template.image} alt={template.name} className="template-image" />
+                      <p className="template-name">{template.name}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                // Show template preview when isPreview is true
+                <div className="template-preview">
+                  <img src={selectedTemplate.image} alt={selectedTemplate.name} className="full-template-image" style={{ width: "100%", borderRadius: "8px" }} />
+                  <div className="button-group" style={{ marginTop: "20px", textAlign: "center" }}>
+                    <button className="btn btn-secondary me-2" onClick={handleBackClick}>Back</button>
+                    <button className="btn btn-primary" onClick={handleUseTemplateclick}>Use This Template</button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

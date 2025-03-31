@@ -336,3 +336,33 @@ body {
     cursor: pointer;
     color: gray;
 }
+
+.home-container .template-grid {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.home-container .template-card {
+    width: 150px;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease-in-out;
+}
+
+.home-container .template-card:hover {
+    transform: scale(1.05);
+}
+
+.home-container .template-image {
+    width: 100%;
+    border-radius: 8px 8px 0 0;
+}
+
+.home-container .template-text {
+    padding: 10px;
+    font-weight: bold;
+}
