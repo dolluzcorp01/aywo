@@ -104,6 +104,7 @@ const PublishedForm = () => {
                     style={{
                         position: "absolute",
                         left: `${form.title_x}px`,
+                        fontSize: `${form.title_font_size}px`,
                         top: `${form.title_y}px`,
                         width: `${form.title_width}px`,
                         height: `${form.title_height}px`,
@@ -128,7 +129,7 @@ const PublishedForm = () => {
                             left: `${field.x}px`,
                             top: `${field.y}px`,
                             width: `${field.width}px`,
-                            height: `${field.height}px`,  // Ensuring the height matches
+                            height: `${field.height}px`, 
                             backgroundColor: field.bgColor,
                             padding: "5px",
                             borderRadius: "5px",
