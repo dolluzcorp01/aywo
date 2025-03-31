@@ -39,7 +39,7 @@ const checkDuplicateFormTitle = async (userId, title, formId = null) => {
 router.post("/save-form", verifyJWT, async (req, res) => {
     console.log("✅ Received request at /api/form_builder/save-form");
 
-    const { title, title_x, title_y, title_width, title_height, form_background, title_color, title_background,
+    const { title, title_font_size, title_x, title_y, title_width, title_height, form_background, title_color, title_background,
         submit_button_x, submit_button_y, submit_button_width, submit_button_height, submit_button_color, submit_button_background,
         fields } = req.body;
     const userId = req.user_id;
@@ -68,12 +68,13 @@ router.post("/save-form", verifyJWT, async (req, res) => {
 
         // ✅ Insert form (including colors and button properties)
         const formInsertQuery = `
-            INSERT INTO forms (user_id, title, title_x, title_y, title_width, title_height, form_background, title_color, title_background, 
+            INSERT INTO forms (user_id, title, title_font_size, title_x, title_y, title_width, title_height, form_background, title_color, title_background, 
                                submit_button_x, submit_button_y, submit_button_width, submit_button_height, submit_button_color, submit_button_background) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         const formResult = await queryPromise(connection, formInsertQuery, [
             userId,
             title,
+            title_font_size,
             title_x || 50,
             title_y || 20,
             title_width || 300,
@@ -224,7 +225,7 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
     try {
         // Fetch form/template details
         const formQuery = `
-            SELECT title, title_x, title_y, title_width, title_height, 
+            SELECT title, title_font_size, title_x, title_y, title_width, title_height, 
                    form_background, title_color, title_background,
                    submit_button_x, submit_button_y, submit_button_width, 
                    submit_button_height, submit_button_color, submit_button_background
@@ -282,6 +283,7 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
         res.json({
             formId,
             title: formResult[0].title,
+            title_font_size: formResult[0].title_font_size,
             title_x: formResult[0].title_x,
             title_y: formResult[0].title_y,
             title_width: formResult[0].title_width,
@@ -309,7 +311,7 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
     console.log("✅ Received request at /api/form_builder/update-form");
 
     const { formId } = req.params;
-    const { title, title_x, title_y, title_width, title_height, form_background, title_color, title_background,
+    const { title, title_font_size, title_x, title_y, title_width, title_height, form_background, title_color, title_background,
         submit_button_x, submit_button_y, submit_button_width, submit_button_height, submit_button_color, submit_button_background, fields } = req.body;
     const userId = req.user_id;
 
@@ -341,13 +343,14 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
         // ✅ Update form details including colors and button properties
         const updateFormQuery = `
             UPDATE forms 
-            SET title = ?, title_x = ?, title_y = ?, title_width = ?, title_height = ?, 
+            SET title = ?, title_font_size = ?, title_x = ?, title_y = ?, title_width = ?, title_height = ?, 
                 form_background = ?, title_color = ?, title_background = ?, 
                 submit_button_x = ?, submit_button_y = ?, submit_button_width = ?, submit_button_height = ?, 
                 submit_button_color = ?, submit_button_background = ? 
             WHERE form_id = ? AND user_id = ?`;
         await queryPromise(connection, updateFormQuery, [
             title,
+            title_font_size,
             title_x || 50,
             title_y || 20,
             title_width || 300,

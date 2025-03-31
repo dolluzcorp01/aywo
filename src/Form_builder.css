@@ -56,19 +56,14 @@
 }
 
 /* Main form container */
-.form-builder .form-container {
-    flex-grow: 1;
-    padding: 20px;
-    border-radius: 8px;
-    text-align: center;
-    background-color: #ffffff;
-    min-width: 500px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+.form-container {
     position: relative;
-    overflow-y: auto; /* Enables scrolling */
-    max-height: 85vh; /* Limits height to avoid overflow */
+    width: 100%;
+    height: auto; /* Allow auto height instead of a fixed height */
+    min-height: 100vh; /* Ensure it expands properly */
+    max-height: none; /* Prevent height restriction */
+    overflow-y: auto; /* Allow vertical scrolling */
+    padding-bottom: 100px; /* Ensure space for the submit button */
 }
 
 .form-builder .form-container {

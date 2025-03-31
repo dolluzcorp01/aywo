@@ -52,6 +52,7 @@ const FormBuilder = () => {
         width: 200,
         height: 50,
     });
+    const [lastFieldSize, setLastFieldSize] = useState({ width: 200, height: 50 });
 
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -82,6 +83,7 @@ const FormBuilder = () => {
                         setFormTitleColor(res.data.title_color || "#000000");
                         setFormTitleBgColor(res.data.title_background || "#ffffff");
                         setFormTitle(res.data.title || "Untitled Form");
+                        setFormTitleFontSize(res.data.title_font_size ?? 24);
                         setFormTitleX(res.data.title_x ?? 50);
                         setFormTitleY(res.data.title_y ?? 20);
                         setFormTitleWidth(res.data.title_width ?? 300);
@@ -126,13 +128,15 @@ const FormBuilder = () => {
                 });
 
                 let submitButtonBottom = submitBtnY + submitBtnHeight;
-                let newHeight = Math.max(maxBottom, submitButtonBottom) + 100; // Add padding
+                let newHeight = Math.max(maxBottom, submitButtonBottom) + 150; // Add extra padding
 
-                // Allow scrolling only when content height exceeds the container height
-                if (newHeight > formContainer.clientHeight) {
-                    formContainer.style.overflowY = 'auto';
+                formContainer.style.height = `${newHeight}px`; // Dynamically adjust height
+
+                // Ensure scrolling
+                if (newHeight > window.innerHeight) {
+                    formContainer.style.overflowY = "auto";
                 } else {
-                    formContainer.style.overflowY = 'hidden';
+                    formContainer.style.overflowY = "hidden";
                 }
             }
         };
@@ -178,18 +182,15 @@ const FormBuilder = () => {
     // Add new field with no overlap
     const addField = (type) => {
         let newX = 50;
-        let newY = lastPosition.y + 60; // Default stacking below the last added/moved field
+        let newY = lastPosition.y + lastFieldSize.height + 30; // Maintain spacing
 
         if (fields.length > 0) {
             const lastField = fields[fields.length - 1];
-
-            // Always stack fields vertically below the last field, even if it was moved
-            newX = lastField.x; // Keep the last field's X position
-            newY = lastField.y + lastField.height + 60; // Stack below with spacing
+            newX = lastField.x;
+            newY = lastField.y + lastFieldSize.height + 30;
         }
 
-        // Ensure the position is valid before placing the new field
-        const { x: validX, y: validY } = getValidPosition(newX, newY, 200, 50);
+        const { x: validX, y: validY } = getValidPosition(newX, newY, lastFieldSize.width, lastFieldSize.height);
 
         const newField = {
             id: Date.now(),
@@ -199,8 +200,8 @@ const FormBuilder = () => {
             bgColor: "#FFFFFF",
             labelColor: "#000000",
             fontSize: 16,
-            width: 200,
-            height: 50,
+            width: lastFieldSize.width,
+            height: lastFieldSize.height,
             x: validX,
             y: validY,
             options: type === "Dropdown" || type === "Multiple Choice" ? ["Option 1", "Option 2"] : [],
@@ -317,6 +318,7 @@ const FormBuilder = () => {
             title_color: formTitleColor,
             title_background: formTitleBgColor,
             title: formTitle,
+            title_font_size: formTitleFontSize,
             title_x: formTitleX,
             title_y: formTitleY,
             title_width: formTitleWidth,
@@ -492,15 +494,17 @@ const FormBuilder = () => {
                             }}
                             onResizeStop={(e, direction, ref, delta, position) => {
                                 const updatedWidth = ref.offsetWidth;
-                                const updatedHeight = ref.offsetHeight; // Ensure height is updated
+                                const updatedHeight = ref.offsetHeight;
 
                                 setFields(prevFields =>
                                     prevFields.map(f =>
                                         f.id === field.id
-                                            ? { ...f, width: updatedWidth, height: updatedHeight } // Update height here
+                                            ? { ...f, width: updatedWidth, height: updatedHeight }
                                             : f
                                     )
                                 );
+
+                                setLastFieldSize({ width: updatedWidth, height: updatedHeight }); // Update global last field size
                             }}
                         >
 
@@ -537,8 +541,15 @@ const FormBuilder = () => {
                         bounds="parent"
                         enableResizing={{ bottomRight: true }}
                         onDragStop={(e, d) => {
+                            let newY = d.y;
+
+                            // If submit button is near the bottom, increase container height
+                            if (newY + submitBtnHeight > document.querySelector(".form-container").clientHeight - 20) {
+                                document.querySelector(".form-container").style.height = `${newY + submitBtnHeight + 50}px`;
+                            }
+
                             setSubmitBtnX(d.x);
-                            setSubmitBtnY(d.y);
+                            setSubmitBtnY(newY);
                         }}
                         onResizeStop={(e, direction, ref, delta, position) => {
                             setSubmitBtnWidth(ref.offsetWidth);
