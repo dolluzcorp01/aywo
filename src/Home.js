@@ -1,5 +1,6 @@
 import Swal from "sweetalert2";
-import Form_Builder_Icon from "./assets/img/form_builder_icon.webp";
+import Contact_info from "./assets/img/Contact_info.jpg";
+import Appointment_booking from "./assets/img/Appointment_booking.jpg";
 import { useNotification } from "./NotificationContext";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -25,9 +26,9 @@ function Home() {
   const [isPreview, setIsPreview] = useState(false);
 
   const templates = [
-    { name: "Contact Form", image: Form_Builder_Icon, url: "template-1" },
-    { name: "Feedback Form", image: Form_Builder_Icon, url: "template-2" },
-    { name: "Survey Form", image: Form_Builder_Icon, url: "template-3" },
+    { name: "Contact Form", image: Contact_info, url: "template-1" },
+    { name: "Appointment Booking", image: Appointment_booking, url: "template-2" },
+    { name: "Survey Form", image: Contact_info, url: "template-3" },
   ];
 
   const handleTemplateClick = () => {

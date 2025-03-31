@@ -70,7 +70,8 @@ router.post("/save-form", verifyJWT, async (req, res) => {
         const formInsertQuery = `
             INSERT INTO forms (user_id, title, title_font_size, title_x, title_y, title_width, title_height, form_background, title_color, title_background, 
                                submit_button_x, submit_button_y, submit_button_width, submit_button_height, submit_button_color, submit_button_background) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
         const formResult = await queryPromise(connection, formInsertQuery, [
             userId,
             title,

@@ -6,6 +6,7 @@ import Swal from "sweetalert2";
 import { useNotification } from "./NotificationContext";
 import { FaFont, FaEnvelope, FaHashtag, FaList, FaCheckSquare, FaCaretDown, FaCalendarAlt, FaAlignLeft, FaFileAlt, FaTrash } from "react-icons/fa";
 import "./Form_builder.css";
+import { useLocation } from "react-router-dom";
 
 const fieldIcons = {
     "Text Only": <FaFont color="#6c757d" />,
@@ -43,6 +44,9 @@ const FormBuilder = () => {
     const [submitBtnBgColor, setSubmitBtnBgColor] = useState("#28a745");
     const [submitBtnTextColor, setSubmitBtnTextColor] = useState("#ffffff");
     const [submitBtnFontSize, setSubmitBtnFontSize] = useState(16);
+
+    const location = useLocation();
+    const isEditableForm = /^\/form-builder\/form-\d+$/.test(location.pathname); // Checks if URL matches /form-builder/form-{number}
 
     // State for Global Customization
     const [globalSettings, setGlobalSettings] = useState({
@@ -410,16 +414,20 @@ const FormBuilder = () => {
                         </button>
                     ))}
 
-                    <button className="update-form-btn" style={{ display: formId ? "inline-block" : "none" }} onClick={() => saveOrUpdateForm(false)}>
-                        Update Form
-                    </button>
+                    {/* Show "Update" and "Publish" buttons only if it's a form and not a template */}
+                    {isEditableForm && (
+                        <>
+                            <button className="update-form-btn" onClick={() => saveOrUpdateForm(false)}>
+                                Update Form
+                            </button>
+                            <button className="publish-form-btn" onClick={() => publishForm()}>
+                                Publish Form
+                            </button>
+                        </>
+                    )}
 
                     <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)}>
                         Save Form
-                    </button>
-
-                    <button className="publish-form-btn" style={{ display: formId ? "inline-block" : "none" }} onClick={() => publishForm()}>
-                        Publish Form
                     </button>
 
                 </div>
