@@ -88,20 +88,8 @@
     flex-grow: 1;
 }
 
-/* Form fields */
-.form-builder .field:hover {
-    box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.2);
-}
-
-.form-builder .field>div {
-    display: flex;
-    align-items: center;
-    width: 100%;
-}
-
 .form-builder .field input {
-    flex-grow: 1;
-    width: 100%;
+    width: 10%;
     padding: 5px;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -118,18 +106,6 @@
     width: 100%;
     min-height: 40px;
     resize: vertical;
-}
-
-.form-builder .multiple-choice-container {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.form-builder .multiple-choice-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
 }
 
 /* Customization panel */

@@ -149,16 +149,15 @@ const FormBuilder = () => {
     }, [fields, submitBtnY, submitBtnHeight]);
 
     // Function to check if a new field overlaps with existing fields
-    const isOverlapping = (x, y, width, height, excludeId = null) => {
-        return fields.some(field => (
-            field.id !== excludeId &&
-            !(x + width < field.x || x > field.x + field.width ||
-                y + height < field.y || y > field.y + field.height)
-        )) || (
-                // Prevent title overlap
-                !(x + width < formTitleX || x > formTitleX + formTitleWidth ||
-                    y + height < formTitleY || y > formTitleY + formTitleHeight)
-            );
+    const isOverlapping = (x, y, width, height, excludeId = null, isTitle = false) => {
+        if (!isTitle) {
+            return fields.some(field => (
+                field.id !== excludeId &&
+                !(x + width < field.x || x > field.x + field.width ||
+                    y + height < field.y || y > field.y + field.height)
+            ));
+        }
+        return false; // Don't check overlap when dragging the title
     };
 
     // Adjust position to avoid overlap
@@ -447,7 +446,7 @@ const FormBuilder = () => {
                             topLeft: true
                         }}
                         onDragStop={(e, d) => {
-                            const { x, y } = getValidPosition(d.x, d.y, formTitleWidth, formTitleHeight);
+                            const { x, y } = getValidPosition(d.x, d.y, formTitleWidth, formTitleHeight, null, true);
                             setFormTitleX(x);
                             setFormTitleY(y);
                         }}
