@@ -1,6 +1,7 @@
 import Swal from "sweetalert2";
 import Contact_info from "./assets/img/Contact_info.jpg";
 import Appointment_booking from "./assets/img/Appointment_booking.jpg";
+import Job_Application from "./assets/img/Job_Application.jpg";
 import { useNotification } from "./NotificationContext";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -28,18 +29,18 @@ function Home() {
   const templates = [
     { name: "Contact Form", image: Contact_info, url: "template-1" },
     { name: "Appointment Booking", image: Appointment_booking, url: "template-2" },
-    { name: "Survey Form", image: Contact_info, url: "template-3" },
+    { name: "Job Application", image: Job_Application, url: "template-3" },
   ];
 
   const handleTemplateClick = () => {
     setShowTemplateModal(true);
-    setIsPreview(false); 
-    setSelectedTemplate(null); 
+    setIsPreview(false);
+    setSelectedTemplate(null);
   };
 
   const handleBackClick = () => {
-    setIsPreview(false); 
-    setSelectedTemplate(null); 
+    setIsPreview(false);
+    setSelectedTemplate(null);
   };
 
   const handleUseTemplateclick = () => {
