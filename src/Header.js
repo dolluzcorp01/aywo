@@ -39,7 +39,7 @@ const DropdownItem = styled.a`
   text-decoration: none;
 
   &:hover {
-    color: hsl(8, 77%, 56%);
+    color: #5A5AEC;
     background-color: #f8f9fa;
   }
 `;

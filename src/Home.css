@@ -41,11 +41,11 @@ body {
 
 /* Make Form Button */
 .home-container .make-form-btn {
-    background-color: orange;
-    color: white;
+    background-color: #5A5AEC;
+    color: white; 
     padding: 10px 15px;
     border: none;
-    border-radius: 5px;
+    border-radius: 5px; 
     cursor: pointer;
     font-size: 15px;
 }

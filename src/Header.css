@@ -22,7 +22,7 @@
 .navbar-brand {
     font-size: 22px;
     font-weight: bold;
-    background: linear-gradient(to right, #ff7e5f, #feb47b);
+    background: linear-gradient(to right, #5A5AEC, #8181F7);
     background-clip: text;
     /* Standard property */
     -webkit-background-clip: text;

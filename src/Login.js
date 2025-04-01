@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Form_Builder_Icon from "./assets/img/form_builder_icon.webp";
+import Form_Builder_Icon from "./assets/img/form_builder_icon.png";
 import "./Login.css";
 
 function Login() {
@@ -351,7 +351,7 @@ function Login() {
             <div className="d-flex flex-column align-items-center">
               <button className="btn btn-primary"
                 style={{
-                  backgroundColor: "hsl(8, 77%, 56%)",
+                  backgroundColor: "#5A5AEC",
                   border: "none",
                   width: "50%",
                   maxWidth: "250px",
@@ -413,7 +413,7 @@ function Login() {
                   <button
                     type="button"
                     className="btn"
-                    style={{ color: "hsl(8,77%,56%)", marginTop: "0px" }}
+                    style={{ color: "#5A5AEC", marginTop: "0px" }}
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     <i className={showPassword ? "fa fa-eye-slash" : "fa fa-eye"}></i>
@@ -421,7 +421,7 @@ function Login() {
                 </div>
               </div>
 
-              <button onClick={handleSignUp} className="btn btn-success w-100 mt-4 mb-2" style={{ backgroundColor: "hsl(8,77%,56%)", border: "none" }}>
+              <button onClick={handleSignUp} className="btn btn-success w-100 mt-4 mb-2" style={{ backgroundColor: "#5A5AEC", border: "none" }}>
                 Create Account
               </button>
 
@@ -458,7 +458,7 @@ function Login() {
                     type="button"
                     className="btn"
                     id="toggle-password"
-                    style={{ color: "hsl(8,77%,56%)", marginTop: "0px" }}
+                    style={{ color: "#5A5AEC", marginTop: "0px" }}
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     <i className={showPassword ? "fa fa-eye-slash" : "fa fa-eye"}></i>
@@ -466,7 +466,7 @@ function Login() {
                 </div>
               </div>
 
-              <button onClick={verifyLogin} className="btn btn-primary w-100 mt-4 mb-2" style={{ backgroundColor: "hsl(8,77%,56%)", border: "none" }} >
+              <button onClick={verifyLogin} className="btn btn-primary w-100 mt-4 mb-2" style={{ backgroundColor: "#5A5AEC", border: "none" }} >
                 Secure Sign-in
               </button>
 
@@ -494,7 +494,7 @@ function Login() {
                   <label htmlFor="otp-input">Enter your Email</label>
                   <input type="text" id="otp-input" className="form-control" placeholder="Email" value={otpInput} onChange={(e) => setOtpInput(e.target.value)} />
                 </div>
-                <button onClick={sendOTP} className="btn btn-primary w-100 mt-3" style={{ backgroundColor: "hsl(8,77%,56%)", border: "none", outline: "none" }}>Send OTP</button>
+                <button onClick={sendOTP} className="btn btn-primary w-100 mt-3" style={{ backgroundColor: "#5A5AEC", border: "none", outline: "none" }}>Send OTP</button>
                 {showBackToLogin && (
                   <button onClick={showLoginForm} id="Back_to_Login_btn" className="btn btn-secondary w-100 mt-2" style={{ border: "none", outline: "none" }}>Back to Login</button>
                 )}
@@ -523,8 +523,8 @@ function Login() {
                   <label htmlFor="old-password">Enter Old Password</label>
                   <input type="password" id="old-password" className="form-control" placeholder="Enter Old Password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
                 </div>
-                <button onClick={validateOldPassword} className="btn btn-primary w-100 mt-3" style={{ backgroundColor: "hsl(8,77%,56%)", border: "none", outline: "none" }}>Continue</button>
-                <button onClick={changePasswordByOTP} className="btn btn-secondary w-100 mt-2" style={{ backgroundColor: "hsl(8,77%,56%)", border: "none", outline: "none" }}>Change Password via OTP</button>
+                <button onClick={validateOldPassword} className="btn btn-primary w-100 mt-3" style={{ backgroundColor: "#5A5AEC", border: "none", outline: "none" }}>Continue</button>
+                <button onClick={changePasswordByOTP} className="btn btn-secondary w-100 mt-2" style={{ backgroundColor: "#5A5AEC", border: "none", outline: "none" }}>Change Password via OTP</button>
                 <button onClick={showLoginForm} className="btn btn-secondary w-100 mt-2" style={{ border: "none", outline: "none" }}>Back to Login</button>
               </div>
             )}
