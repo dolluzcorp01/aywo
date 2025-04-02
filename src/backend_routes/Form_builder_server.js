@@ -275,10 +275,11 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
 
         // Fetch grid options for Matrix/Grid fields
         const gridQuery = `
-         SELECT field_id, row_label, column_label
+         SELECT ${isTemplate ? "template_field_id AS field_id" : "field_id"}, row_label, column_label
          FROM ${gridTable}
-         WHERE field_id IN (
-             SELECT field_id FROM ${fieldsTable} 
+         WHERE ${isTemplate ? "template_field_id" : "field_id"} IN (
+             SELECT ${isTemplate ? "template_field_id" : "field_id"}  
+             FROM ${fieldsTable} 
              WHERE ${isTemplate ? "template_id" : "form_id"} = ?
          )`;
         const gridResult = await queryPromise(db, gridQuery, [cleanId]);
