@@ -102,8 +102,8 @@ router.post("/save-form", verifyJWT, async (req, res) => {
             }
 
             const formFieldsInsertQuery = `
-                INSERT INTO form_fields (form_id, field_type, label, x, y, width, height, bgColor, labelColor, fontSize) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            INSERT INTO form_fields (form_id, field_type, label, x, y, width, height, bgColor, labelColor, fontSize, min_value, max_value) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
             const fieldResult = await queryPromise(connection, formFieldsInsertQuery, [
                 formId,
                 field.field_type,
@@ -114,7 +114,9 @@ router.post("/save-form", verifyJWT, async (req, res) => {
                 field.height || 50,
                 field.bgColor || "#8B5E5E",
                 field.labelColor || "#FFFFFF",
-                field.fontSize || 16
+                field.fontSize || 16,
+                field.min_value || 1, // Default value of 1
+                field.max_value || 5  // Default value of 5
             ]);
 
             const fieldId = fieldResult.insertId; // Get the newly inserted field ID
@@ -123,6 +125,16 @@ router.post("/save-form", verifyJWT, async (req, res) => {
             if ((field.field_type === "Dropdown" || field.field_type === "Multiple Choice") && field.options && Array.isArray(field.options)) {
                 for (const option of field.options) {
                     await queryPromise(connection, "INSERT INTO form_field_options (field_id, option_text) VALUES (?, ?)", [fieldId, option]);
+                }
+            }
+
+            // ✅ Insert Multiple Choice Grid options
+            if (field.field_type === "Multiple Choice Grid" && field.grid_options) {
+                for (const { row_label, column_label } of field.grid_options) {
+                    await queryPromise(connection,
+                        "INSERT INTO form_field_grid_options (field_id, row_label, column_label) VALUES (?, ?, ?)",
+                        [fieldId, row_label, column_label]
+                    );
                 }
             }
         }
@@ -221,6 +233,7 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
     const formTable = isTemplate ? "form_templates" : "forms";
     const fieldsTable = isTemplate ? "template_fields" : "form_fields";
     const optionsTable = isTemplate ? "template_field_options" : "form_field_options";
+    const gridTable = isTemplate ? "template_field_grid_options" : "form_field_grid_options";
     const userCondition = isTemplate ? "" : "AND user_id = ?"; // Only check user_id for user-created forms
 
     try {
@@ -243,7 +256,8 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
         // Fetch form/template fields
         const fieldsQuery = `
             SELECT ${isTemplate ? "template_field_id AS field_id" : "field_id"},  
-            field_type, label, x, y, width, height, bgColor, labelColor, fontSize
+            field_type, label, x, y, width, height, bgColor, labelColor, fontSize, 
+            min_value, max_value 
             FROM ${fieldsTable} 
             WHERE ${isTemplate ? "template_id" : "form_id"} = ?`;
         const fieldsResult = await queryPromise(db, fieldsQuery, [cleanId]);
@@ -259,10 +273,27 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
         ) `;
         const optionsResult = await queryPromise(db, optionsQuery, [cleanId]);
 
+        // Fetch grid options for Matrix/Grid fields
+        const gridQuery = `
+         SELECT field_id, row_label, column_label
+         FROM ${gridTable}
+         WHERE field_id IN (
+             SELECT field_id FROM ${fieldsTable} 
+             WHERE ${isTemplate ? "template_id" : "form_id"} = ?
+         )`;
+        const gridResult = await queryPromise(db, gridQuery, [cleanId]);
+
         // Group options by field_id
         const optionsMap = optionsResult.reduce((acc, row) => {
             if (!acc[row.field_id]) acc[row.field_id] = [];
             acc[row.field_id].push(row.option_text);
+            return acc;
+        }, {});
+
+        // Group grid options by field_id
+        const gridMap = gridResult.reduce((acc, row) => {
+            if (!acc[row.field_id]) acc[row.field_id] = [];
+            acc[row.field_id].push({ row_label: row.row_label, column_label: row.column_label });
             return acc;
         }, {});
 
@@ -278,7 +309,12 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
             bgColor: field.bgColor,
             labelColor: field.labelColor,
             fontSize: field.fontSize,
-            options: (field.field_type === "Dropdown" || field.field_type === "Multiple Choice") ? optionsMap[field.field_id] || [] : undefined
+            min_value: field.min_value,
+            max_value: field.max_value,
+            options: (field.field_type === "Dropdown" || field.field_type === "Multiple Choice")
+                ? optionsMap[field.field_id] || []
+                : undefined,
+            grid_options: field.field_type === "Multiple Choice Grid" ? gridMap[field.field_id] || [] : undefined
         }));
 
         res.json({
@@ -371,6 +407,7 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
 
         // ✅ Delete old fields and associated options
         await queryPromise(connection, "DELETE FROM form_field_options WHERE field_id IN (SELECT field_id FROM form_fields WHERE form_id = ?)", [formId]);
+        await queryPromise(connection, "DELETE FROM form_field_grid_options WHERE field_id IN (SELECT field_id FROM form_fields WHERE form_id = ?)", [formId]);
         await queryPromise(connection, "DELETE FROM form_fields WHERE form_id = ?", [formId]);
 
         // ✅ Insert updated fields
@@ -381,8 +418,8 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
             }
 
             const insertFieldQuery = `
-                INSERT INTO form_fields (form_id, field_type, label, x, y, width, height, bgColor, labelColor, fontSize) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            INSERT INTO form_fields (form_id, field_type, label, x, y, width, height, bgColor, labelColor, fontSize, min_value, max_value) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
             const result = await queryPromise(connection, insertFieldQuery, [
                 formId,
                 field.field_type,
@@ -393,7 +430,9 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
                 field.height || 50,
                 field.bgColor || "#8B5E5E",
                 field.labelColor || "#FFFFFF",
-                field.fontSize || 16
+                field.fontSize || 16,
+                field.min_value || 1, // Default value of 1
+                field.max_value || 5  // Default value of 5
             ]);
 
             const fieldId = result.insertId; // Get the newly inserted field ID
@@ -402,6 +441,16 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
             if ((field.field_type === "Dropdown" || field.field_type === "Multiple Choice") && field.options && Array.isArray(field.options)) {
                 for (const option of field.options) {
                     await queryPromise(connection, "INSERT INTO form_field_options (field_id, option_text) VALUES (?, ?)", [fieldId, option]);
+                }
+            }
+
+            // Insert field and options (similar to save-form)
+            if (field.field_type === "Multiple Choice Grid" && field.grid_options) {
+                for (const { row_label, column_label } of field.grid_options) {
+                    await queryPromise(connection,
+                        "INSERT INTO form_field_grid_options (field_id, row_label, column_label) VALUES (?, ?, ?)",
+                        [fieldId, row_label, column_label]
+                    );
                 }
             }
         }

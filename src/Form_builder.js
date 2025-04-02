@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNotification } from "./NotificationContext";
-import { FaFont, FaEnvelope, FaHashtag, FaList, FaCheckSquare, FaCaretDown, FaCalendarAlt, FaAlignLeft, FaFileAlt, FaTrash } from "react-icons/fa";
+import { FaFont, FaEnvelope, FaHashtag, FaList, FaCheckSquare, FaCaretDown, FaCalendarAlt, FaAlignLeft, FaFileAlt, FaTrash, FaRuler, FaTable } from "react-icons/fa";
 import "./Form_builder.css";
 import { useLocation } from "react-router-dom";
 
@@ -18,7 +18,9 @@ const fieldIcons = {
     "Dropdown": <FaCaretDown color="#6610f2" />,
     "Date": <FaCalendarAlt color="#e83e8c" />,
     "Paragraph": <FaAlignLeft color="#fd7e14" />,
-    "Document Type": <FaFileAlt color="#6f42c1" />
+    "Document Type": <FaFileAlt color="#6f42c1" />,
+    "Linear Scale": <FaRuler color="#ff5733" />,
+    "Multiple Choice Grid": <FaTable color="#17a2b8" />
 };
 
 const FormBuilder = () => {
@@ -94,13 +96,27 @@ const FormBuilder = () => {
                         setFormTitleHeight(res.data.title_height ?? 50);
 
                         // ✅ Ensure that field types & options are properly set
-                        setFields(res.data.fields.map(field => ({
-                            ...field,
-                            type: field.type || field.field_type,
-                            options: (field.field_type === "Dropdown" || field.field_type === "Multiple Choice")
-                                ? Array.isArray(field.options) ? field.options : []
-                                : []
-                        })));
+                        setFields(res.data.fields ? res.data.fields.map(field => {
+                            if (field.field_type === "Linear Scale") {
+                                return {
+                                    ...field,
+                                    type: "Linear Scale",
+                                    min: field.min_value,
+                                    max: field.max_value
+                                };
+                            }
+
+                            if (field.field_type === "Multiple Choice Grid") {
+                                return {
+                                    ...field,
+                                    type: "Multiple Choice Grid",
+                                    rows: field.grid_options ? field.grid_options.map(option => option.row_label) : [],
+                                    columns: field.grid_options ? field.grid_options.map(option => option.column_label) : []
+                                };
+                            }
+
+                            return field;
+                        }) : []);
 
                         setSubmitBtnX(res.data.submit_button_x ?? 50);
                         setSubmitBtnY(res.data.submit_button_y ?? 400);
@@ -211,6 +227,18 @@ const FormBuilder = () => {
             customized: {}
         };
 
+        if (type === "Linear Scale") {
+            newField.min = 1;
+            newField.max = 5;
+        } else if (type === "Multiple Choice Grid") {
+            newField.rows = ["Row 1", "Row 2"];
+            newField.columns = ["Column 1", "Column 2"];
+            newField.options = {
+                "Row 1": { "Column 1": "", "Column 2": "" },
+                "Row 2": { "Column 1": "", "Column 2": "" }
+            };
+        }
+
         setFields([...fields, newField]);
         setLastPosition({ x: validX, y: validY });
     };
@@ -264,6 +292,42 @@ const FormBuilder = () => {
                 );
             case "Text Only":
                 return null;
+            case "Linear Scale":
+                return (
+                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                        {Array.from({ length: field.max - field.min + 1 }, (_, i) => i + field.min).map((val) => (
+                            <label key={val} style={{ display: "flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
+                                <input type="radio" name={`linear_${id}`} value={val} style={{ appearance: "none", width: "20px", height: "20px", borderRadius: "50%", border: "1px solid #000", display: "inline-block", cursor: "pointer" }} />
+                                <span>{val}</span>
+                            </label>
+                        ))}
+                    </div>
+                );
+            case "Multiple Choice Grid":
+                return (
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                        <thead>
+                            <tr>
+                                <th></th>
+                                {field.columns.map((col, i) => (
+                                    <th key={i} style={{ border: "1px solid #ddd", padding: "5px" }}>{col}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {field.rows.map((row, i) => (
+                                <tr key={i}>
+                                    <td style={{ border: "1px solid #ddd", padding: "5px" }}>{row}</td>
+                                    {field.columns.map((col, j) => (
+                                        <td key={j} style={{ border: "1px solid #ddd", padding: "5px", textAlign: "center" }}>
+                                            <input type="radio" name={`grid_${id}_row${i}`} value={col} />
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                );
             default:
                 return <input type="text" style={inputStyle} />;
         }
@@ -316,6 +380,29 @@ const FormBuilder = () => {
             return;
         }
 
+        // Prepare fields with linear scale values and grid options
+        const updatedFields = fields.map(field => {
+            if (field.type === "Linear Scale") {
+                return {
+                    ...field,
+                    min_value: field.min || 1, // Ensure min_value is set
+                    max_value: field.max || 5  // Ensure max_value is set
+                };
+            }
+
+            if (field.type === "Multiple Choice Grid") {
+                return {
+                    ...field,
+                    grid_options: field.rows.map((row, rowIndex) => ({
+                        row_label: row,
+                        column_label: field.columns[rowIndex] || field.columns[0]  // Match row with correct column
+                    }))
+                };
+            }
+
+            return field;
+        });
+        debugger
         const formData = {
             form_background: formBgColor,
             title_color: formTitleColor,
@@ -326,7 +413,7 @@ const FormBuilder = () => {
             title_y: formTitleY,
             title_width: formTitleWidth,
             title_height: formTitleHeight,
-            fields, // ✅ No need to map again, already structured
+            fields: updatedFields,
             submit_button_x: submitBtnX,
             submit_button_y: submitBtnY,
             submit_button_width: submitBtnWidth,
@@ -334,7 +421,7 @@ const FormBuilder = () => {
             submit_button_color: submitBtnTextColor,
             submit_button_background: submitBtnBgColor
         };
-
+        debugger
         try {
             if (!isNew && formId) {
                 console.log("Updating form with fields:", fields);
@@ -695,6 +782,68 @@ const FormBuilder = () => {
                                     </button>
                                 </>
                             )}
+
+                            {selectedField?.type === "Linear Scale" && (
+                                <>
+                                    <label>Min Value:</label>
+                                    <input type="number" value={selectedField.min} onChange={(e) => updateField(selectedField.id, "min", parseInt(e.target.value))} />
+                                    <label>Max Value:</label>
+                                    <input type="number" value={selectedField.max} onChange={(e) => updateField(selectedField.id, "max", parseInt(e.target.value))} />
+                                </>
+                            )}
+
+                            {selectedField && selectedField.type === "Multiple Choice Grid" && (
+                                <>
+                                    <h3>Field Settings</h3>
+
+                                    {/* Customize Rows */}
+                                    <h4>Rows</h4>
+                                    {selectedField.rows.map((row, index) => (
+                                        <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
+                                            <input
+                                                type="text"
+                                                value={row}
+                                                onChange={(e) => {
+                                                    const newRows = [...selectedField.rows];
+                                                    newRows[index] = e.target.value;
+                                                    updateField(selectedField.id, "rows", newRows);
+                                                }}
+                                            />
+                                            <button onClick={() => {
+                                                const newRows = selectedField.rows.filter((_, i) => i !== index);
+                                                updateField(selectedField.id, "rows", newRows);
+                                            }}>❌</button>
+                                        </div>
+                                    ))}
+                                    <button onClick={() => updateField(selectedField.id, "rows", [...selectedField.rows, `Row ${selectedField.rows.length + 1}`])}>
+                                        ➕ Add Row
+                                    </button>
+
+                                    {/* Customize Columns */}
+                                    <h4>Columns</h4>
+                                    {selectedField.columns.map((col, index) => (
+                                        <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
+                                            <input
+                                                type="text"
+                                                value={col}
+                                                onChange={(e) => {
+                                                    const newColumns = [...selectedField.columns];
+                                                    newColumns[index] = e.target.value;
+                                                    updateField(selectedField.id, "columns", newColumns);
+                                                }}
+                                            />
+                                            <button onClick={() => {
+                                                const newColumns = selectedField.columns.filter((_, i) => i !== index);
+                                                updateField(selectedField.id, "columns", newColumns);
+                                            }}>❌</button>
+                                        </div>
+                                    ))}
+                                    <button onClick={() => updateField(selectedField.id, "columns", [...selectedField.columns, `Column ${selectedField.columns.length + 1}`])}>
+                                        ➕ Add Column
+                                    </button>
+                                </>
+                            )}
+
                         </>
                     )}
 
