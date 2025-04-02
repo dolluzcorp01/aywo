@@ -114,7 +114,7 @@ const Header = () => {
   return (
     <Navbar className="navbar navbar-expand-lg navbar-light header">
       <div className="header-left">
-        <a className="navbar-brand" href="#">Form Builder</a>
+        <a className="navbar-brand" style={{ fontSize: "1.5rem" }} href="#">dFroms</a>
       </div>
       <div className="header-right">
         <ul className="navbar-nav">

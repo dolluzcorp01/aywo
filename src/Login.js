@@ -1,17 +1,36 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Form_Builder_Icon from "./assets/img/form_builder_icon.png";
+import { FaCreditCard, FaShieldAlt, FaUserCheck, FaPaintBrush, FaRobot } from "react-icons/fa";
+import Login_pg_pg_intro from "./assets/img/Login_pg_pg_intro.png";
+import Login_intro_bottom_img from "./assets/img/Login_intro_bottom_img.png";
+import styled from 'styled-components';
 import "./Login.css";
+
+const Navbar = styled.nav`
+  background-color: #fff !important;
+  height: 70px; /* Adjust height as needed */
+  display: flex;
+  align-items: center; /* Ensures content is vertically centered */
+  padding: 0 20px; /* Optional: Adds horizontal padding */
+`;
+
+const messages = [
+  { text: "Payments", icon: <FaCreditCard />, color: "green" },
+  { text: "Security", icon: <FaShieldAlt />, color: "red" },
+  { text: "User Experience", icon: <FaUserCheck />, color: "blue" },
+  { text: "Customization", icon: <FaPaintBrush />, color: "purple" },
+  { text: "Automation", icon: <FaRobot />, color: "orange" },
+];
 
 function Login() {
   const navigate = useNavigate();
+  const [showLogin, setShowLogin] = useState(true);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showInitialOptions, setShowInitialOptions] = useState(true);
   const [showSignUpSection, setShowSignUpSection] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showLoginSection, setShowLoginSection] = useState(false);
+  const [showLoginSection, setShowLoginSection] = useState(true);
   const [showOTPSection, setShowOTPSection] = useState(false);
   const [showEnterMailSection, setshowEnterMailSection] = useState(false);
   const [showChangePasswordSection, setShowChangePasswordSection] = useState(false);
@@ -24,8 +43,42 @@ function Login() {
   const [otpTimer, setOtpTimer] = useState(null);
   const [timeLeft, setTimeLeft] = useState(120);
   const [otpEntered, setOtpEntered] = useState(false);
-  const [showBackToLogin, setShowBackToLogin] = useState(true); // New state variable
-  const [showBackToChangePassword, setShowBackToChangePassword] = useState(false); // New state variable
+  const [showBackToLogin, setShowBackToLogin] = useState(true);
+  const [showBackToChangePassword, setShowBackToChangePassword] = useState(false);
+
+  const [currentMessage, setCurrentMessage] = useState(messages[0]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentMessage((prev) => {
+        const currentIndex = messages.indexOf(prev);
+        return messages[(currentIndex + 1) % messages.length];
+      });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleLoginbtn = () => {
+    setShowLogin(false);
+    setShowLoginSection(true);
+    setShowSignUpSection(false);
+    setShowChangePasswordSection(false);
+    setUsername(""); // Clear username
+    setEmail(""); // Clear email
+    setPassword(""); // Clear password
+  };
+
+  const handleSignUpbtn = () => {
+    setShowLogin(true);
+    setShowLoginSection(false);
+    setShowSignUpSection(true);
+    setShowChangePasswordSection(false);
+    setUsername(""); // Clear username
+    setEmail(""); // Clear email
+    setPassword(""); // Clear password
+  };
+
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -44,7 +97,6 @@ function Login() {
     setPassword(""); // Clear password
     setShowLoginSection(true);
     setShowSignUpSection(false);
-    setShowInitialOptions(false);
   };
 
   const openSignUpForm = () => {
@@ -53,7 +105,6 @@ function Login() {
     setPassword(""); // Clear password
     setShowSignUpSection(true);
     setShowLoginSection(false);
-    setShowInitialOptions(false);
   };
 
   const handleSignUp = async () => {
@@ -261,7 +312,6 @@ function Login() {
 
   const showChangePassFrom = () => {
     setShowOTPSection(true);
-    setShowInitialOptions(false);
     setshowEnterMailSection(false);
     setShowChangePasswordSection(true);
     setShowOTPVerificationSection(false);
@@ -333,232 +383,216 @@ function Login() {
   };
 
   return (
-    <div className="container d-flex flex-column align-items-center mt-5">
-      <div className="card">
-        {showInitialOptions && (
-          <div className="text-center my-4">
-            {/* Project Title */}
-            <h1 style={{ fontSize: "2rem", fontWeight: "bold", color: "#333" }}>
-              Welcome to Form Builder
-            </h1>
-
-            {/* Subtitle / Short Description */}
-            <p style={{ fontSize: "1.2rem", color: "#666", marginBottom: "20px" }}>
-              Create and manage forms effortlessly!
-            </p>
-
-            {/* Login & Signup Buttons */}
-            <div className="d-flex flex-column align-items-center">
-              <button className="btn btn-primary"
-                style={{
-                  backgroundColor: "hsl(8, 77%, 56%)",
-                  border: "none",
-                  width: "50%",
-                  maxWidth: "250px",
-                  padding: "10px 15px",
-                  fontSize: "16px",
-                  marginBottom: "10px",
-                }}
-                onClick={openLoginForm}
-              >
-                Login
-              </button>
-              <button className="btn btn-secondary"
-                style={{
-                  width: "50%",
-                  maxWidth: "250px",
-                  padding: "10px 15px",
-                  fontSize: "16px",
-                }}
-                onClick={openSignUpForm}
-              >
-                Sign Up
-              </button>
-            </div>
-
-          </div>
-        )}
-
-        {showSignUpSection && (
-          <div id="signup-section">
-            <h4 className="card-title text-center my-3 font-weight-bold">Create Account</h4>
-            <p className="text-muted text-center">Fill in the details below.</p>
-
-            <div className="form-group mt-3">
-
-              <div className="input-group">
-                <label htmlFor="username">Username</label>
-                <div className="input-container">
-                  <input type="text" id="username" className="form-control" placeholder="e.g. Jane Doe"
-                    value={username} onChange={(e) => setUsername(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="input-group">
-                <label htmlFor="email">Email</label>
-                <div className="input-container">
-                  <input type="email" id="email" className="form-control" placeholder="e.g. jane.doe@acme.com"
-                    value={email} onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="input-group">
-                <label htmlFor="password">Password</label>
-                <div className="input-container">
-                  <input type={showPassword ? "text" : "password"} id="password" className="form-control" placeholder="Create a strong password"
-                    value={password} onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="btn"
-                    style={{ color: "hsl(8, 77%, 56%)", marginTop: "0px" }}
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    <i className={showPassword ? "fa fa-eye-slash" : "fa fa-eye"}></i>
-                  </button>
-                </div>
-              </div>
-
-              <button onClick={handleSignUp} className="btn btn-success w-100 mt-4 mb-2" style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none" }}>
-                Create Account
-              </button>
-
-              <button className="btn btn-secondary w-100 mb-4"
-                onClick={() => {
-                  setShowInitialOptions(true); setShowSignUpSection(false); setShowLoginSection(false);
-                }}> Go Back
-              </button>
-
-            </div>
-          </div>
-        )}
-
-        {showLoginSection && (
-          <div id="login-section">
-            <h4 className="card-title text-center my-3 font-weight-bold">Sign In</h4>
-            <p className="text-muted text-center">Please login to access the home.</p>
-
-            <div className="form-group mt-3">
-              <div className="input-group">
-                <label htmlFor="email">Email</label>
-                <div className="input-container">
-                  <input type="text" id="email" name="email" className="form-control" placeholder="e.g. jane.doe@acme.com"
-                    value={email} onChange={(e) => setEmail(e.target.value)} />
-                </div>
-              </div>
-
-              <div className="input-group">
-                <label htmlFor="password">Password</label>
-                <div className="input-container">
-                  <input type={showPassword ? "text" : "password"} id="password" name="password" className="form-control" placeholder="Use alphanumeric characters"
-                    value={password} onChange={(e) => setPassword(e.target.value)} />
-                  <button
-                    type="button"
-                    className="btn"
-                    id="toggle-password"
-                    style={{ color: "hsl(8, 77%, 56%)", marginTop: "0px" }}
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    <i className={showPassword ? "fa fa-eye-slash" : "fa fa-eye"}></i>
-                  </button>
-                </div>
-              </div>
-
-              <button onClick={verifyLogin} className="btn btn-primary w-100 mt-4 mb-2" style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none" }} >
-                Secure Sign-in
-              </button>
-
-              <button className="btn btn-secondary w-100 mb-4"
-                onClick={() => {
-                  setShowInitialOptions(true); setShowSignUpSection(false); setShowLoginSection(false);
-                }}> Go Back
-              </button>
-
-              <div className="text-center mt-3">
-                <small>
-                  <a href="#" onClick={showOTPForm} className="Forgot_password">Forgot password?</a>
-                </small>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {showOTPSection && (
-          <div id="otp-section">
-            {showEnterMailSection && (
-              <div id="enter-mail-for-otp">
-                <h4 className="text-center my-3 font-weight-bold">Login via OTP</h4>
-                <div className="form-group mt-4">
-                  <label htmlFor="otp-input">Enter your Email</label>
-                  <input type="text" id="otp-input" className="form-control" placeholder="Email" value={otpInput} onChange={(e) => setOtpInput(e.target.value)} />
-                </div>
-                <button onClick={sendOTP} className="btn btn-primary w-100 mt-3" style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none", outline: "none" }}>Send OTP</button>
-                {showBackToLogin && (
-                  <button onClick={showLoginForm} id="Back_to_Login_btn" className="btn btn-secondary w-100 mt-2" style={{ border: "none", outline: "none" }}>Back to Login</button>
-                )}
-                {showBackToChangePassword && (
-                  <button onClick={showChangePassFrom} id="Back_to_Change_New_Password_btn" className="btn btn-secondary w-100 mt-2" style={{ border: "none", outline: "none" }}>Back to Change New Password</button>
-                )}
-              </div>
-            )}
-
-            {showOTPVerificationSection && (
-              <div id="otp-verification-section">
-                <div className="form-group mt-3">
-                  <label htmlFor="otp-code">Enter OTP</label>
-                  <input type="text" id="otp-code" className="form-control" placeholder="Enter OTP" value={otpCode} onChange={handleOtpInputChange} />
-                  <small id="otp-timer" style={{ display: timeLeft > 0 ? "block" : "none", color: "red", fontWeight: "bold" }}>{`Time left: ${timeLeft} sec`}</small>
-                </div>
-                <button onClick={() => verifyOTP('')} id="login-btn" className="btn btn-success w-100 mt-3" style={{ display: otpEntered && !document.getElementById("Back_to_Change_New_Password_btn")?.offsetParent ? "block" : "none" }}>Login</button>
-                <button onClick={() => verifyOTP('showChangeNewPassFrom')} id="show-change-pass-btn" className="btn btn-success w-100 mt-3" style={{ display: otpEntered && document.getElementById("Back_to_Change_New_Password_btn")?.offsetParent ? "block" : "none" }}>Continue</button>
-              </div>
-            )}
-
-            {showChangePasswordSection && (
-              <div id="change-password-section">
-                <h4 className="text-center my-3 font-weight-bold">Change New Password</h4>
-                <div className="form-group mt-4">
-                  <label htmlFor="old-password">Enter Old Password</label>
-                  <input type="password" id="old-password" className="form-control" placeholder="Enter Old Password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
-                </div>
-                <button onClick={validateOldPassword} className="btn btn-primary w-100 mt-3" style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none", outline: "none" }}>Continue</button>
-                <button onClick={changePasswordByOTP} className="btn btn-secondary w-100 mt-2" style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none", outline: "none" }}>Change Password via OTP</button>
-                <button onClick={showLoginForm} className="btn btn-secondary w-100 mt-2" style={{ border: "none", outline: "none" }}>Back to Login</button>
-              </div>
-            )}
-
-            {showNewPasswordSection && (
-              <div id="new-password-section">
-                <div className="form-group mt-3">
-                  <label htmlFor="new-password">Enter New Password</label>
-                  <input type="password" id="new-password" className="form-control" placeholder="Enter New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-                </div>
-                <button onClick={updatePassword} className="btn btn-success w-100 mt-3">Update Password</button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div id="right-after-card" style={{ width: "500px", left: "100%", backgroundColor: "transparent", border: "none", boxShadow: "none" }} className="info-box">
-        <div id="alert-message" className="alert alert-danger alert-custom" role="alert"
-          style={{ borderRadius: "0", height: "65px", backgroundColor: "hsl(0,75%,97%)", display: "none", borderLeft: "5px solid #dc3545", alignItems: "center" }}>
-          <strong style={{ display: "inline-flex", alignItems: "center", height: "100%", marginLeft: "0", paddingLeft: "0px" }}>
-            <i className="fa-sharp fa-solid fa-circle-exclamation mr-3"></i>
-          </strong>
-          <span style={{ color: "black", lineHeight: "1.5" }} id="alert-message-text">Invalid Mail Id or password.</span>
-          <button type="button" id="close_alert_message" style={{ marginLeft: "auto", paddingBottom: "1%", boxShadow: "none", border: "none", outline: "none" }} className="close mt-1">
-            <span aria-hidden="true">&times;</span>
-          </button>
+    <div>
+      {/* Header Navbar */}
+      <Navbar className="navbar navbar-expand-lg navbar-light header">
+        <div className="header-left">
+          <a className="navbar-brand" style={{ fontSize: "1.5rem" }} href="#">dForms</a>
         </div>
+        <div className="header-right">
+          {showLogin ? (
+            <button className="btn navbtns" onClick={handleLoginbtn} >
+              Login
+            </button>
+          ) : (
+            <button className="btn navbtns" onClick={handleSignUpbtn}>
+              Sign Up
+            </button>
+          )}
+        </div>
+      </Navbar >
+      {/* left side login details */}
+      <div className="login-container">
+        <div className="login-card">
+          <div className="card">
+            {showSignUpSection && (
+              <div id="signup-section">
+                <h4 className="card-title text-center my-3 font-weight-bold">Create Account</h4>
+                <p className="text-muted text-center">Fill in the details below.</p>
+
+                <div className="form-group mt-3">
+
+                  <div className="input-group">
+                    <label htmlFor="username">Username</label>
+                    <div className="input-container">
+                      <input type="text" id="username" className="form-control" placeholder="e.g. Jane Doe"
+                        value={username} onChange={(e) => setUsername(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="input-group">
+                    <label htmlFor="email">Email</label>
+                    <div className="input-container">
+                      <input type="email" id="email" className="form-control" placeholder="e.g. jane.doe@acme.com"
+                        value={email} onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="input-group">
+                    <label htmlFor="password">Password</label>
+                    <div className="input-container">
+                      <input type={showPassword ? "text" : "password"} id="password" className="form-control" placeholder="Create a strong password"
+                        value={password} onChange={(e) => setPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="btn"
+                        style={{ color: "hsl(8, 77%, 56%)", marginTop: "0px" }}
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        <i className={showPassword ? "fa fa-eye-slash" : "fa fa-eye"}></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <button onClick={handleSignUp} className="btn btn-success w-100 mt-4 mb-2" style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none" }}>
+                    Create Account
+                  </button>
+
+                </div>
+              </div>
+            )}
+
+            {showLoginSection && (
+              <div id="login-section">
+                <h4 className="card-title text-center my-3 font-weight-bold">Sign In</h4>
+                <p className="text-muted text-center">Please login to access the home.</p>
+
+                <div className="form-group mt-3">
+                  <div className="input-group">
+                    <label htmlFor="email">Email</label>
+                    <div className="input-container">
+                      <input type="text" id="email" name="email" className="form-control" placeholder="e.g. jane.doe@acme.com"
+                        value={email} onChange={(e) => setEmail(e.target.value)} />
+                    </div>
+                  </div>
+
+                  <div className="input-group">
+                    <label htmlFor="password">Password</label>
+                    <div className="input-container">
+                      <input type={showPassword ? "text" : "password"} id="password" name="password" className="form-control" placeholder="Use alphanumeric characters"
+                        value={password} onChange={(e) => setPassword(e.target.value)} />
+                      <button
+                        type="button"
+                        className="btn"
+                        id="toggle-password"
+                        style={{ color: "hsl(8, 77%, 56%)", marginTop: "0px" }}
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        <i className={showPassword ? "fa fa-eye-slash" : "fa fa-eye"}></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <button onClick={verifyLogin} className="btn btn-primary w-100 mt-4 mb-2" style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none" }} >
+                    Secure Sign-in
+                  </button>
+
+                  <div className="text-center mt-3">
+                    <small>
+                      <a href="#" onClick={showOTPForm} className="Forgot_password">Forgot password?</a>
+                    </small>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {showOTPSection && (
+              <div id="otp-section">
+                {showEnterMailSection && (
+                  <div id="enter-mail-for-otp">
+                    <h4 className="text-center my-3 font-weight-bold">Login via OTP</h4>
+                    <div className="form-group mt-4">
+                      <label htmlFor="otp-input">Enter your Email</label>
+                      <input type="text" id="otp-input" className="form-control" placeholder="Email" value={otpInput} onChange={(e) => setOtpInput(e.target.value)} />
+                    </div>
+                    <button onClick={sendOTP} className="btn btn-primary w-100 mt-3" style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none", outline: "none" }}>Send OTP</button>
+                    {showBackToLogin && (
+                      <button onClick={showLoginForm} id="Back_to_Login_btn" className="btn btn-secondary w-100 mt-2" style={{ border: "none", outline: "none" }}>Back to Login</button>
+                    )}
+                    {showBackToChangePassword && (
+                      <button onClick={showChangePassFrom} id="Back_to_Change_New_Password_btn" className="btn btn-secondary w-100 mt-2" style={{ border: "none", outline: "none" }}>Back to Change New Password</button>
+                    )}
+                  </div>
+                )}
+
+                {showOTPVerificationSection && (
+                  <div id="otp-verification-section">
+                    <div className="form-group mt-3">
+                      <label htmlFor="otp-code">Enter OTP</label>
+                      <input type="text" id="otp-code" className="form-control" placeholder="Enter OTP" value={otpCode} onChange={handleOtpInputChange} />
+                      <small id="otp-timer" style={{ display: timeLeft > 0 ? "block" : "none", color: "red", fontWeight: "bold" }}>{`Time left: ${timeLeft} sec`}</small>
+                    </div>
+                    <button onClick={() => verifyOTP('')} id="login-btn" className="btn btn-success w-100 mt-3" style={{ display: otpEntered && !document.getElementById("Back_to_Change_New_Password_btn")?.offsetParent ? "block" : "none" }}>Login</button>
+                    <button onClick={() => verifyOTP('showChangeNewPassFrom')} id="show-change-pass-btn" className="btn btn-success w-100 mt-3" style={{ display: otpEntered && document.getElementById("Back_to_Change_New_Password_btn")?.offsetParent ? "block" : "none" }}>Continue</button>
+                  </div>
+                )}
+
+                {showChangePasswordSection && (
+                  <div id="change-password-section">
+                    <h4 className="text-center my-3 font-weight-bold">Change New Password</h4>
+                    <div className="form-group mt-4">
+                      <label htmlFor="old-password">Enter Old Password</label>
+                      <input type="password" id="old-password" className="form-control" placeholder="Enter Old Password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
+                    </div>
+                    <button onClick={validateOldPassword} className="btn btn-primary w-100 mt-3" style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none", outline: "none" }}>Continue</button>
+                    <button onClick={changePasswordByOTP} className="btn btn-secondary w-100 mt-2" style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none", outline: "none" }}>Change Password via OTP</button>
+                    <button onClick={showLoginForm} className="btn btn-secondary w-100 mt-2" style={{ border: "none", outline: "none" }}>Back to Login</button>
+                  </div>
+                )}
+
+                {showNewPasswordSection && (
+                  <div id="new-password-section">
+                    <div className="form-group mt-3">
+                      <label htmlFor="new-password">Enter New Password</label>
+                      <input type="password" id="new-password" className="form-control" placeholder="Enter New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                    </div>
+                    <button onClick={updatePassword} className="btn btn-success w-100 mt-3">Update Password</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div id="right-after-card" style={{ width: "500px", left: "100%", backgroundColor: "transparent", border: "none", boxShadow: "none" }} className="info-box">
+            <div id="alert-message" className="alert alert-danger alert-custom" role="alert"
+              style={{ borderRadius: "0", height: "65px", backgroundColor: "hsl(0,75%,97%)", display: "none", borderLeft: "5px solid #dc3545", alignItems: "center" }}>
+              <strong style={{ display: "inline-flex", alignItems: "center", height: "100%", marginLeft: "0", paddingLeft: "0px" }}>
+                <i className="fa-sharp fa-solid fa-circle-exclamation mr-3"></i>
+              </strong>
+              <span style={{ color: "black", lineHeight: "1.5" }} id="alert-message-text">Invalid Mail Id or password.</span>
+              <button type="button" id="close_alert_message" style={{ marginLeft: "auto", paddingBottom: "1%", boxShadow: "none", border: "none", outline: "none" }} className="close mt-1">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Right side image content */}
+        <div className="login-image">
+          <img src={Login_pg_pg_intro} alt="Login Background" />
+
+          {/* White Div with Dynamic Text */}
+          <div className="dynamic-text-container" style={{ color: currentMessage.color }}>
+            <span className="icon">{currentMessage.icon}</span>
+            <span className="dynamic-text mt-1">{currentMessage.text}</span>
+          </div>
+
+          {/* Text */}
+          <div className="overlay-text">Make a form</div>
+
+          {/* Second image inside a div */}
+          <div className="bottom-image-container">
+            <img src={Login_intro_bottom_img} alt="Bottom Image" className="bottom-image" />
+          </div>
+        </div>
+
       </div>
 
-      <div className="image-container">
-        <img src={Form_Builder_Icon} alt="Form_Builder_Icon Icon" />
-      </div>
-    </div>
+    </div >
   );
 }
 
