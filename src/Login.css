@@ -74,7 +74,7 @@ body {
 }
 
 .Forgot_password {
-    color: #5A5AEC;
+    color:  hsl(8, 77%, 56%);
     font-size: 12px;
     text-decoration: none;
 }
