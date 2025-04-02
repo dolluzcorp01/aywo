@@ -17,7 +17,6 @@ const Navbar = styled.nav`
 `;
 
 const messages = [
-  { text: "Payments", icon: <FaCreditCard />, color: "green" },
   { text: "Security", icon: <FaShieldAlt />, color: "red" },
   { text: "User Experience", icon: <FaUserCheck />, color: "blue" },
   { text: "Customization", icon: <FaPaintBrush />, color: "purple" },
@@ -63,7 +62,15 @@ function Login() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has("changePassword")) {
+      showChangePassFrom();
+    }
+  }, []);
+
   const handleLoginbtn = () => {
+    window.history.pushState({}, "", "/login");
     setUsername(""); // Clear username
     setEmail(""); // Clear email
     setPassword(""); // Clear password
@@ -75,6 +82,7 @@ function Login() {
   };
 
   const handleSignUpbtn = () => {
+    window.history.pushState({}, "", "/signup");
     setUsername(""); // Clear username
     setEmail(""); // Clear email
     setPassword(""); // Clear password
@@ -84,14 +92,6 @@ function Login() {
     setShowSignUpSection(false);
     setShowLoginbtn(true);
   };
-
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has("changePassword")) {
-      showChangePassFrom();
-    }
-  }, []);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -613,7 +613,7 @@ function Login() {
 
           <div style={{ textAlign: "center" }}>
             <span style={{ color: "gray", fontSize: "0.7rem", display: "block", marginTop: "-5px" }}>
-              By using Fillout, you are agreeing to our{" "}
+              By using dFroms, you are agreeing to our{" "}
               <a
                 href="#"
                 style={{ color: "gray", textDecoration: "underline" }}
