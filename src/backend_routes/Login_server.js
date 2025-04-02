@@ -24,6 +24,70 @@ const verifyJWT = (req, res, next) => {
   });
 };
 
+//Google signup 
+router.post("/google-signin", (req, res) => {
+  const { email, username } = req.body;
+  const db = getDBConnection("form_builder");
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Email is required" });
+  }
+
+  // Check if email already exists
+  const checkQuery = "SELECT user_id FROM users WHERE email = ?";
+  db.query(checkQuery, [email], (err, result) => {
+    if (err) {
+      console.error("❌ Database error:", err);
+      return res.status(500).json({ success: false, message: "Database error" });
+    }
+
+    if (result.length > 0) {
+      // Email already exists, generate a JWT token for login
+      const user_id = result[0].user_id;
+      const token = jwt.sign({ user_id }, JWT_SECRET, { expiresIn: "1h" });
+
+      res.cookie("token", token, { httpOnly: true, secure: true, sameSite: "Strict" });
+      return res.status(200).json({ success: true, message: "User logged in successfully", token });
+    } else {
+      // Insert new Google user (password will be empty)
+      const insertQuery = "INSERT INTO users (user_name, email, account_password, created_time) VALUES (?, ?, '', NOW())";
+      db.query(insertQuery, [username, email], (err, insertResult) => {
+        if (err) {
+          console.error("❌ Error inserting Google user:", err);
+          return res.status(500).json({ success: false, message: "Database error" });
+        }
+
+        if (insertResult.affectedRows === 1) {
+          // Fetch user ID
+          const userQuery = "SELECT user_id FROM users WHERE email = ?";
+          db.query(userQuery, [email], (err, userResult) => {
+            if (err) {
+              console.error("❌ Error fetching user ID:", err);
+              return res.status(500).json({ success: false, message: "Database error" });
+            }
+
+            if (userResult.length > 0) {
+              const user_id = userResult[0].user_id;
+              const token = jwt.sign({ user_id }, JWT_SECRET, { expiresIn: "1h" });
+
+              res.cookie("token", token, { httpOnly: true, secure: true, sameSite: "Strict" });
+              return res.status(201).json({
+                success: true,
+                message: "Google account registered successfully!",
+                token,
+              });
+            }
+          });
+        } else {
+          return res.status(500).json({ success: false, message: "Error creating account" });
+        }
+      });
+    }
+  });
+});
+
+
+//Normal singup
 router.post('/signup', (req, res) => {
   const { username, email, password } = req.body;
   const db = getDBConnection('form_builder');
@@ -105,14 +169,23 @@ router.post('/verifyLogin', (req, res) => {
     if (results.length > 0) {
       const user_id = results[0].user_id;
       const storedHashedPassword = results[0].account_password;
-      const isPasswordCorrect = bcrypt.compareSync(password, storedHashedPassword);
 
+      // 🔹 Check if the password is empty (Google sign-in user)
+      if (!storedHashedPassword || storedHashedPassword.trim() === "") {
+        return res.json({
+          success: false,
+          message: "Login with Google instead. Account does not have password login enabled."
+        });
+      }
+
+      const isPasswordCorrect = bcrypt.compareSync(password, storedHashedPassword);
       if (isPasswordCorrect) {
         const token = jwt.sign({ user_id }, JWT_SECRET, { expiresIn: '1h' });
         res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
         return res.json({ success: true, token });
       }
     }
+
     return res.json({ success: false, message: 'Invalid credentials' });
   });
 });

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { auth, provider, signInWithPopup } from "./firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { FaCreditCard, FaShieldAlt, FaUserCheck, FaPaintBrush, FaRobot } from "react-icons/fa";
 import Login_pg_pg_intro from "./assets/img/Login_pg_pg_intro.png";
 import Login_intro_bottom_img from "./assets/img/Login_intro_bottom_img.png";
+import Google_icon from "./assets/img/Google_icon.png";
 import styled from 'styled-components';
 import "./Login.css";
 
@@ -24,7 +26,7 @@ const messages = [
 
 function Login() {
   const navigate = useNavigate();
-  const [showLogin, setShowLogin] = useState(true);
+  const [showLoginbtn, setShowLoginbtn] = useState(true);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,6 +48,8 @@ function Login() {
   const [showBackToLogin, setShowBackToLogin] = useState(true);
   const [showBackToChangePassword, setShowBackToChangePassword] = useState(false);
 
+  const [user, setUser] = useState(null);
+
   const [currentMessage, setCurrentMessage] = useState(messages[0]);
 
   useEffect(() => {
@@ -60,23 +64,25 @@ function Login() {
   }, []);
 
   const handleLoginbtn = () => {
-    setShowLogin(false);
-    setShowLoginSection(true);
-    setShowSignUpSection(false);
-    setShowChangePasswordSection(false);
     setUsername(""); // Clear username
     setEmail(""); // Clear email
     setPassword(""); // Clear password
+
+    setShowLoginSection(false);
+    setShowChangePasswordSection(false);
+    setShowSignUpSection(true);
+    setShowLoginbtn(false);
   };
 
   const handleSignUpbtn = () => {
-    setShowLogin(true);
-    setShowLoginSection(false);
-    setShowSignUpSection(true);
-    setShowChangePasswordSection(false);
     setUsername(""); // Clear username
     setEmail(""); // Clear email
     setPassword(""); // Clear password
+
+    setShowLoginSection(true);
+    setShowChangePasswordSection(false);
+    setShowSignUpSection(false);
+    setShowLoginbtn(true);
   };
 
 
@@ -85,26 +91,31 @@ function Login() {
     if (urlParams.has("changePassword")) {
       showChangePassFrom();
     }
-
-    document.getElementById('close_alert_message').addEventListener('click', function () {
-      document.getElementById("alert-message").style.display = 'none';
-    });
   }, []);
 
-  const openLoginForm = () => {
-    setUsername(""); // Clear username
-    setEmail(""); // Clear email
-    setPassword(""); // Clear password
-    setShowLoginSection(true);
-    setShowSignUpSection(false);
-  };
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await signInWithPopup(auth, provider); // Call sign-in only inside onClick
+      const user = result.user;
+      console.log("User Info:", user);
 
-  const openSignUpForm = () => {
-    setUsername(""); // Clear username
-    setEmail(""); // Clear email
-    setPassword(""); // Clear password
-    setShowSignUpSection(true);
-    setShowLoginSection(false);
+      // Send user details to backend
+      const response = await fetch("http://localhost:5000/api/login/google-signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email, username: user.displayName || "", password: "" }),
+        credentials: "include",
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        navigate("/Home"); // Redirect after login
+      } else {
+        console.error("Error inserting Google user:", data.message);
+      }
+    } catch (error) {
+      console.error("Google Sign-In Error:", error);
+    }
   };
 
   const handleSignUp = async () => {
@@ -112,7 +123,7 @@ function Login() {
       showErrorMessage("Please fill all fields.");
       return;
     }
-    debugger
+
     try {
       const response = await fetch("http://localhost:5000/api/login/signup", {
         method: "POST",
@@ -146,7 +157,7 @@ function Login() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
-        credentials: "include"  // ✅ Required to include cookies
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -154,14 +165,14 @@ function Login() {
       if (data.success) {
         navigate("/home");
       } else {
-        showErrorMessage("Invalid mail id or password.");
+        // 🔹 Show the correct error message
+        showErrorMessage(data.message || "Invalid email or password.");
       }
     } catch (error) {
       showErrorMessage("An error occurred. Please try again later.");
       console.error(error);
     }
   };
-
 
   const showOTPForm = () => {
     setShowOTPSection(true);
@@ -205,7 +216,7 @@ function Login() {
       });
 
       const data = await response.json();
-      debugger
+
       if (data.message === "exists") {
         showSuccessMessage("OTP has been sent successfully!");
         setShowOTPVerificationSection(true);
@@ -352,13 +363,23 @@ function Login() {
     alertBox.classList.remove("alert-success");
     alertBox.classList.add("alert-danger");
     alertBox.style.display = "flex";
-    alertBox.style.borderLeft = "5px solid #dc3545";
-    alertBox.style.backgroundColor = "#f8d7da";
-    alertBox.style.color = "#721c24";
-    document.querySelector("#alert-message strong i").style.color = "#dc3545";
-    document.getElementById("alert-message-text").innerHTML = message;
+    alertBox.style.alignItems = "center";
+    alertBox.style.borderRadius = "8px";
+    alertBox.style.backgroundColor = "#FFFAEB"; // Light yellow background
+    alertBox.style.color = "rgb(133, 77, 14)"; // Dark yellow-brown text color
+    alertBox.style.padding = "14px";
+    alertBox.style.marginTop = "10px";
+    alertBox.style.lineHeight = "1.5";
+    alertBox.style.fontSize = "14px";
+    alertBox.style.border = "1px solid lightgray"; // No border
+
+    alertBox.innerHTML = `
+      <i class="fa fa-exclamation-triangle" style="color: #856404; margin-right: 10px;"></i>
+      <span id="alert-message-text" style="font-weight: 50; font-family: Arial, sans-serif;">${message}</span>
+    `;
+
     setTimeout(() => {
-      alertBox.style.display = 'none';
+      alertBox.style.display = "none";
     }, 5000);
   };
 
@@ -367,13 +388,21 @@ function Login() {
     alertBox.classList.remove("alert-danger");
     alertBox.classList.add("alert-success");
     alertBox.style.display = "flex";
-    alertBox.style.borderLeft = "5px solid #28a745";
-    alertBox.style.backgroundColor = "#d4f8d4";
+    alertBox.style.alignItems = "center";
+    alertBox.style.borderRadius = "8px";
+    alertBox.style.border = "1px solid #c3e6cb";
+    alertBox.style.backgroundColor = "#d4edda"; // Light green background for success
     alertBox.style.color = "#155724";
-    document.querySelector("#alert-message strong i").style.color = "#28a745";
-    document.getElementById("alert-message-text").innerHTML = message;
+    alertBox.style.padding = "15px";  // Increase padding for more height
+    alertBox.style.marginTop = "10px";
+    alertBox.style.lineHeight = "1.5"; // Improve text spacing
+    alertBox.innerHTML = `
+      <i class="fa fa-check-circle" style="color: #155724; margin-right: 10px;"></i>
+      <span id="alert-message-text">${message}</span>
+    `;
+
     setTimeout(() => {
-      alertBox.style.display = 'none';
+      alertBox.style.display = "none";
     }, 5000);
   };
 
@@ -390,13 +419,13 @@ function Login() {
           <a className="navbar-brand" style={{ fontSize: "1.5rem" }} href="#">dForms</a> {/* Project name changed */}
         </div>
         <div className="header-right">
-          {showLogin ? (
+          {showLoginbtn ? (
             <button className="btn navbtns" onClick={handleLoginbtn} >
-              Login
+              Sign Up
             </button>
           ) : (
             <button className="btn navbtns" onClick={handleSignUpbtn}>
-              Sign Up
+              Login
             </button>
           )}
         </div>
@@ -411,8 +440,12 @@ function Login() {
                 <p className="text-muted text-center">Fill in the details below.</p>
 
                 <div className="form-group mt-3">
+                  <button onClick={handleGoogleSignIn} className="googleauthbtn">
+                    <img src={Google_icon} alt="Google" style={{ width: "30px", height: "30px" }} className="google-icon" />
+                    Sign in with Google
+                  </button>
 
-                  <div className="input-group">
+                  <div className="input-group mt-2">
                     <label htmlFor="username">Username</label>
                     <div className="input-container">
                       <input type="text" id="username" className="form-control" placeholder="e.g. Jane Doe"
@@ -447,6 +480,9 @@ function Login() {
                     </div>
                   </div>
 
+                  {/* alert messages */}
+                  <div id="alert-message" style={{ display: "none" }}></div>
+
                   <button onClick={handleSignUp} className="btn btn-success w-100 mt-4 mb-2" style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none" }}>
                     Create Account
                   </button>
@@ -459,7 +495,6 @@ function Login() {
               <div id="login-section">
                 <h4 className="card-title text-center my-3 font-weight-bold">Sign In</h4>
                 <p className="text-muted text-center">Please login to access the home.</p>
-
                 <div className="form-group mt-3">
                   <div className="input-group">
                     <label htmlFor="email">Email</label>
@@ -486,6 +521,9 @@ function Login() {
                     </div>
                   </div>
 
+                  {/* alert messages */}
+                  <div id="alert-message" style={{ display: "none" }}></div>
+
                   <button onClick={verifyLogin} className="btn btn-primary w-100 mt-4 mb-2" style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none" }} >
                     Secure Sign-in
                   </button>
@@ -508,6 +546,10 @@ function Login() {
                       <label htmlFor="otp-input">Enter your Email</label>
                       <input type="text" id="otp-input" className="form-control" placeholder="Email" value={otpInput} onChange={(e) => setOtpInput(e.target.value)} />
                     </div>
+
+                    {/* alert messages */}
+                    <div id="alert-message" style={{ display: "none" }}></div>
+
                     <button onClick={sendOTP} className="btn btn-primary w-100 mt-3" style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none", outline: "none" }}>Send OTP</button>
                     {showBackToLogin && (
                       <button onClick={showLoginForm} id="Back_to_Login_btn" className="btn btn-secondary w-100 mt-2" style={{ border: "none", outline: "none" }}>Back to Login</button>
@@ -525,6 +567,10 @@ function Login() {
                       <input type="text" id="otp-code" className="form-control" placeholder="Enter OTP" value={otpCode} onChange={handleOtpInputChange} />
                       <small id="otp-timer" style={{ display: timeLeft > 0 ? "block" : "none", color: "red", fontWeight: "bold" }}>{`Time left: ${timeLeft} sec`}</small>
                     </div>
+
+                    {/* alert messages */}
+                    <div id="alert-message" style={{ display: "none" }}></div>
+
                     <button onClick={() => verifyOTP('')} id="login-btn" className="btn btn-success w-100 mt-3" style={{ display: otpEntered && !document.getElementById("Back_to_Change_New_Password_btn")?.offsetParent ? "block" : "none" }}>Login</button>
                     <button onClick={() => verifyOTP('showChangeNewPassFrom')} id="show-change-pass-btn" className="btn btn-success w-100 mt-3" style={{ display: otpEntered && document.getElementById("Back_to_Change_New_Password_btn")?.offsetParent ? "block" : "none" }}>Continue</button>
                   </div>
@@ -537,6 +583,10 @@ function Login() {
                       <label htmlFor="old-password">Enter Old Password</label>
                       <input type="password" id="old-password" className="form-control" placeholder="Enter Old Password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
                     </div>
+
+                    {/* alert messages */}
+                    <div id="alert-message" style={{ display: "none" }}></div>
+
                     <button onClick={validateOldPassword} className="btn btn-primary w-100 mt-3" style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none", outline: "none" }}>Continue</button>
                     <button onClick={changePasswordByOTP} className="btn btn-secondary w-100 mt-2" style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none", outline: "none" }}>Change Password via OTP</button>
                     <button onClick={showLoginForm} className="btn btn-secondary w-100 mt-2" style={{ border: "none", outline: "none" }}>Back to Login</button>
@@ -549,14 +599,19 @@ function Login() {
                       <label htmlFor="new-password">Enter New Password</label>
                       <input type="password" id="new-password" className="form-control" placeholder="Enter New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                     </div>
+
+                    {/* alert messages */}
+                    <div id="alert-message" style={{ display: "none" }}></div>
+
                     <button onClick={updatePassword} className="btn btn-success w-100 mt-3">Update Password</button>
                   </div>
                 )}
               </div>
             )}
+
           </div>
 
-          <div style={{ marginTop: "-12%", marginBottom: "10%", textAlign: "center" }}>
+          <div style={{ textAlign: "center" }}>
             <span style={{ color: "gray", fontSize: "0.7rem", display: "block", marginTop: "-5px" }}>
               By using Fillout, you are agreeing to our{" "}
               <a
@@ -579,18 +634,6 @@ function Login() {
             </span>
           </div>
 
-          <div id="right-after-card" style={{ width: "500px", left: "100%", backgroundColor: "transparent", border: "none", boxShadow: "none" }} className="info-box">
-            <div id="alert-message" className="alert alert-danger alert-custom" role="alert"
-              style={{ borderRadius: "0", height: "65px", backgroundColor: "hsl(0,75%,97%)", display: "none", borderLeft: "5px solid #dc3545", alignItems: "center" }}>
-              <strong style={{ display: "inline-flex", alignItems: "center", height: "100%", marginLeft: "0", paddingLeft: "0px" }}>
-                <i className="fa-sharp fa-solid fa-circle-exclamation mr-3"></i>
-              </strong>
-              <span style={{ color: "black", lineHeight: "1.5" }} id="alert-message-text">Invalid Mail Id or password.</span>
-              <button type="button" id="close_alert_message" style={{ marginLeft: "auto", paddingBottom: "1%", boxShadow: "none", border: "none", outline: "none" }} className="close mt-1">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Right side image content */}
