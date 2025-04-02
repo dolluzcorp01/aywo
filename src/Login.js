@@ -387,7 +387,7 @@ function Login() {
       {/* Header Navbar */}
       <Navbar className="navbar navbar-expand-lg navbar-light header">
         <div className="header-left">
-          <a className="navbar-brand" style={{ fontSize: "1.5rem" }} href="#">dForms</a>
+          <a className="navbar-brand" style={{ fontSize: "1.5rem" }} href="#">dForms</a> {/* Project name changed */}
         </div>
         <div className="header-right">
           {showLogin ? (
