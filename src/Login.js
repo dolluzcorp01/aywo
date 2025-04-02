@@ -556,6 +556,29 @@ function Login() {
             )}
           </div>
 
+          <div style={{ marginTop: "-12%", marginBottom: "10%", textAlign: "center" }}>
+            <span style={{ color: "gray", fontSize: "0.7rem", display: "block", marginTop: "-5px" }}>
+              By using Fillout, you are agreeing to our{" "}
+              <a
+                href="#"
+                style={{ color: "gray", textDecoration: "underline" }}
+                onMouseOver={(e) => { e.target.style.color = "blue"; }}
+                onMouseOut={(e) => { e.target.style.color = "gray"; }}
+              >
+                privacy policy
+              </a>{" "}
+              and{" "}
+              <a
+                href="#"
+                style={{ color: "gray", textDecoration: "underline" }}
+                onMouseOver={(e) => { e.target.style.color = "blue"; }}
+                onMouseOut={(e) => { e.target.style.color = "gray"; }}
+              >
+                terms
+              </a>.
+            </span>
+          </div>
+
           <div id="right-after-card" style={{ width: "500px", left: "100%", backgroundColor: "transparent", border: "none", boxShadow: "none" }} className="info-box">
             <div id="alert-message" className="alert alert-danger alert-custom" role="alert"
               style={{ borderRadius: "0", height: "65px", backgroundColor: "hsl(0,75%,97%)", display: "none", borderLeft: "5px solid #dc3545", alignItems: "center" }}>
@@ -568,7 +591,6 @@ function Login() {
               </button>
             </div>
           </div>
-
         </div>
 
         {/* Right side image content */}
