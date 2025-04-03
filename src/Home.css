@@ -18,9 +18,9 @@ body {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    /* Move content to the top */
     padding: 20px;
-    width: 100%;
+    margin-left: 100px;
+    transition: margin-left 0.3s ease-in-out;
 }
 
 /* Welcome Section */
@@ -41,13 +41,17 @@ body {
 
 /* Make Form Button */
 .home-container .make-form-btn {
-    background-color: orange;
-    color: white; 
+    background-color: rgb(255 199 56);
+    color: black;
     padding: 10px 15px;
     border: none;
-    border-radius: 5px; 
+    border-radius: 5px;
     cursor: pointer;
     font-size: 15px;
+}
+
+.home-container .make-form-btn:hover {
+    background-color: rgba(255, 199, 56, 0.8); 
 }
 
 /* My Forms Section */
