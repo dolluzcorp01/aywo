@@ -69,8 +69,16 @@ function Login() {
     }
   }, []);
 
+  useEffect(() => {
+    if (window.location.pathname === "/signup") {
+      setShowLoginSection(false);
+      setShowSignUpSection(true);
+      setShowLoginbtn(false);
+    }
+  }, []);
+
   const handleLoginbtn = () => {
-    window.history.pushState({}, "", "/login");
+    window.history.pushState({}, "", "/signup");
     setUsername(""); // Clear username
     setEmail(""); // Clear email
     setPassword(""); // Clear password
@@ -82,7 +90,7 @@ function Login() {
   };
 
   const handleSignUpbtn = () => {
-    window.history.pushState({}, "", "/signup");
+    window.history.pushState({}, "", "/login");
     setUsername(""); // Clear username
     setEmail(""); // Clear email
     setPassword(""); // Clear password
@@ -93,14 +101,14 @@ function Login() {
     setShowLoginbtn(true);
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignUp = async () => {
     try {
       const result = await signInWithPopup(auth, provider); // Call sign-in only inside onClick
       const user = result.user;
       console.log("User Info:", user);
 
       // Send user details to backend
-      const response = await fetch("http://localhost:5000/api/login/google-signin", {
+      const response = await fetch("http://localhost:5000/api/login/google-signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email, username: user.displayName || "", password: "" }),
@@ -109,9 +117,37 @@ function Login() {
 
       const data = await response.json();
       if (data.success) {
-        navigate("/Home"); // Redirect after login
+        showSuccessMessage("Account created successfully! Redirecting...");
+        navigate("/home"); // Redirect after login
       } else {
-        console.error("Error inserting Google user:", data.message);
+        showErrorMessage(data.message || "Error inserting Google user.");
+      }
+    } catch (error) {
+      console.error("Google Sign-In Error:", error);
+    }
+  };
+
+  const handleGoogleSignIp = async () => {
+    try {
+      const result = await signInWithPopup(auth, provider); // Sign in with Google
+      const user = result.user;
+      console.log("Google Sign-In User Info:", user);
+
+      // Send user details to backend for verification
+      const response = await fetch("http://localhost:5000/api/login/google-signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email }),
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showSuccessMessage("Login successful! Redirecting...");
+        navigate("/home"); // Redirect on successful login
+      } else {
+        showErrorMessage(data.message || "Google Sign-In failed. Please try again.");
       }
     } catch (error) {
       console.error("Google Sign-In Error:", error);
@@ -436,14 +472,18 @@ function Login() {
           <div className="card">
             {showSignUpSection && (
               <div id="signup-section">
-                <h4 className="card-title text-center my-3 font-weight-bold">Create Account</h4>
-                <p className="text-muted text-center">Fill in the details below.</p>
+                <h4 className="card-title text-center my-3 font-weight-bold">Create your account</h4>
 
                 <div className="form-group mt-3">
-                  <button onClick={handleGoogleSignIn} className="googleauthbtn">
+                  <button onClick={handleGoogleSignUp} className="googleauthbtn">
                     <img src={Google_icon} alt="Google" style={{ width: "30px", height: "30px" }} className="google-icon" />
-                    Sign in with Google
+                    Sign up with Google
                   </button>
+
+                  {/* Divider Line with "Or" */}
+                  <div className="divider">
+                    <span className="divider-text">Or</span>
+                  </div>
 
                   <div className="input-group mt-2">
                     <label htmlFor="username">Username</label>
@@ -493,8 +533,17 @@ function Login() {
 
             {showLoginSection && (
               <div id="login-section">
-                <h4 className="card-title text-center my-3 font-weight-bold">Sign In</h4>
-                <p className="text-muted text-center">Please login to access the home.</p>
+                <h4 className="card-title text-center my-3 font-weight-bold">Sign in to dFroms</h4>
+                <button onClick={handleGoogleSignIp} className="googleauthbtn">
+                  <img src={Google_icon} alt="Google" style={{ width: "30px", height: "30px" }} className="google-icon" />
+                  Sign in with Google
+                </button>
+
+                {/* Divider Line with "Or" */}
+                <div className="divider">
+                  <span className="divider-text">Or</span>
+                </div>
+
                 <div className="form-group mt-3">
                   <div className="input-group">
                     <label htmlFor="email">Email</label>
@@ -612,7 +661,7 @@ function Login() {
           </div>
 
           <div style={{ textAlign: "center" }}>
-            <span style={{ color: "gray", fontSize: "0.7rem", display: "block", marginTop: "-5px" }}>
+            <span style={{ color: "gray", fontSize: "0.7rem", display: "block", marginTop: "-20px" }}>
               By using dFroms, you are agreeing to our{" "}
               <a
                 href="#"

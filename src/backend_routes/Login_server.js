@@ -25,7 +25,7 @@ const verifyJWT = (req, res, next) => {
 };
 
 //Google signup 
-router.post("/google-signin", (req, res) => {
+router.post("/google-signup", (req, res) => {
   const { email, username } = req.body;
   const db = getDBConnection("form_builder");
 
@@ -86,6 +86,35 @@ router.post("/google-signin", (req, res) => {
   });
 });
 
+router.post("/google-signin", (req, res) => {
+  const { email } = req.body;
+  const db = getDBConnection("form_builder");
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Email is required" });
+  }
+
+  // Check if the email exists
+  const query = "SELECT user_id FROM users WHERE email = ?";
+  db.query(query, [email], (err, result) => {
+    if (err) {
+      console.error("❌ Database error:", err);
+      return res.status(500).json({ success: false, message: "Database error" });
+    }
+
+    if (result.length > 0) {
+      // User exists, generate JWT token for login
+      const user_id = result[0].user_id;
+      const token = jwt.sign({ user_id }, JWT_SECRET, { expiresIn: "1h" });
+
+      res.cookie("token", token, { httpOnly: true, secure: true, sameSite: "Strict" });
+      return res.status(200).json({ success: true, message: "Google login successful", token });
+    } else {
+      // User not found
+      return res.status(404).json({ success: false, message: "Google account not registered. Please sign up first." });
+    }
+  });
+});
 
 //Normal singup
 router.post('/signup', (req, res) => {
