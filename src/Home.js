@@ -153,11 +153,13 @@ function Home() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(null); // Track which menu is open
+  const [recentlyViewedMenuOpen, setRecentlyViewedMenuOpen] = useState(null); // Recently Viewed menu
   const [renamingFormId, setRenamingFormId] = useState(null);
   const [renameTitle, setRenameTitle] = useState("");
   const menuRef = useRef(null);
   const renameRef = useRef(null);
   const [sortBy, setSortBy] = useState("created_at_desc"); // Default sorting
+  const [hoveredFormId, setHoveredFormId] = useState(null);
 
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -180,6 +182,24 @@ function Home() {
   ];
 
   const selectedOption = options.find((option) => option.value === sortBy);
+
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
+
+  useEffect(() => {
+    // Load recently viewed forms from localStorage
+    const storedRecentlyViewed = JSON.parse(localStorage.getItem("recentlyViewedForms")) || [];
+    setRecentlyViewed(storedRecentlyViewed);
+  }, []);
+
+  const handleFormClick = (form_id, title, response_count) => {
+    // Navigate to form builder
+    navigate(`/form-builder/form-${form_id}`);
+
+    // Update recently viewed forms
+    const updatedRecentlyViewed = [{ form_id, title, response_count }, ...recentlyViewed.filter(f => f.form_id !== form_id)].slice(0, 3);
+    setRecentlyViewed(updatedRecentlyViewed);
+    localStorage.setItem("recentlyViewedForms", JSON.stringify(updatedRecentlyViewed));
+  };
 
   const handleSelect = (value) => {
     setSortBy(value);
@@ -274,9 +294,9 @@ function Home() {
       .finally(() => setFormsLoading(false));
   };
 
-  const handleFormClick = (formId) => {
-    navigate(`/form-builder/form-${formId}`);
-  };
+  // const handleFormClick = (formId) => {
+  //   navigate(`/form-builder/form-${formId}`);
+  // };
 
   const handleDelete = (formId) => {
     Swal.fire({
@@ -376,6 +396,11 @@ function Home() {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setMenuOpen(null);
       }
+
+      if (!event.target.closest(".recently-viewed-menu") && !event.target.closest(".dropdown-menu")) {
+        setRecentlyViewedMenuOpen(null);
+      }
+
       if (renameRef.current && !renameRef.current.contains(event.target)) {
         setRenamingFormId(null);
       }
@@ -426,7 +451,73 @@ function Home() {
 
       {/* Forms I have created */}
       <section className="section">
-        <div className="forms-header">
+        {/* Recently Viewed Forms */}
+        {recentlyViewed.length > 0 && (
+          <section className="recently-viewed-section">
+            <h4 className="recently-viewed-title" style={{ marginBottom: "25px", fontSize: "0.8rem", color: "gray" }}>RECENTLY VIEWED</h4>
+            <div className="recently-viewed-list">
+              {recentlyViewed.map((form) => (
+                <div className="recently-viewed-card"
+                  onClick={() => handleFormClick(form.form_id, form.title, form.response_count)}
+                  onMouseEnter={() => setHoveredFormId(form.form_id)}
+                  onMouseLeave={() => setHoveredFormId(null)}
+                >
+                  {/* Top Row */}
+                  <div className="recently-viewed-header">
+                    {/* File Icon */}
+                    <div className="recently-viewed-icon-container">
+                      <i className="fa-solid fa-file-alt recently-viewed-icon"></i>
+                    </div>
+
+                    {/* Three-dot menu (shown on hover) */}
+                    <i
+                      className="fa-solid fa-ellipsis-vertical recently-viewed-menu"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRecentlyViewedMenuOpen(recentlyViewedMenuOpen === form.form_id ? null : form.form_id);
+                      }}
+                    ></i>
+
+                    {recentlyViewedMenuOpen === form.form_id && (
+                      <div className="recently-viewed-dropdown">
+                        <button onClick={() => handleRenameChange(form.form_id)}>
+                          <i className="fa-solid fa-pen"></i> Rename
+                        </button>
+                        <button onClick={() => handleDelete(form.form_id)}>
+                          <i className="fa-solid fa-trash"></i> Delete
+                        </button>
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* Title */}
+                  <p className="recently-viewed-title-text">{form.title}</p>
+
+                  {/* Responses */}
+                  <p
+                    className="recently-viewed-responses"
+                    style={{
+                      cursor: form.response_count > 0 ? "pointer" : "default",
+                      color: form.response_count > 0 ? "blue" : "",
+                      textDecoration: form.response_count > 0 ? "underline" : "none",
+                    }}
+                    onClick={(e) => {
+                      if (form.response_count > 0) {
+                        e.stopPropagation();
+                        navigate(`/responses/${form.form_id}`);
+                      }
+                    }}
+                  >
+                    {form.response_count} {form.response_count === 1 ? "response" : "responses"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <div className="forms-header" style={{ marginTop: "50px" }}>
           <h4 className="section-title">My Forms</h4>
 
           <div ref={orderByRef} className={`custom-dropdown ${isOrderByOpen ? "open" : ""}`}>
@@ -436,7 +527,7 @@ function Home() {
             </button>
 
             {isOrderByOpen && (
-              <ul className="dropdown-menu">
+              <ul className="orderby-dropdown-menu">
                 {options.map((option) => (
                   <li key={option.value} onClick={() => handleSelect(option.value)}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -465,7 +556,7 @@ function Home() {
                 <div className="form-icon-container">
                   <i className="fa-solid fa-file-alt form-icon"></i>
                 </div>
-                <div className="form-card-content" onClick={() => handleFormClick(form.form_id)}>
+                <div className="form-card-content" onClick={() => handleFormClick(form.form_id, form.title, form.response_count)}>
                   {renamingFormId === form.form_id ? (
                     <div ref={renameRef} className="rename-input-container">
                       <input
@@ -513,7 +604,6 @@ function Home() {
                 <div className="menu-container">
                   <i
                     className="fa-solid fa-ellipsis-vertical menu-icon"
-                    style={{ color: "blue" }}
                     onClick={(e) => {
                       e.stopPropagation();
                       setMenuOpen(menuOpen === form.form_id ? null : form.form_id);
