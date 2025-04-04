@@ -67,7 +67,7 @@ const FormBuilder = () => {
     const { setShowNotification } = useNotification();
 
     useEffect(() => {
-        axios.get("http://localhost:5000/api/header/get-user-profile", { withCredentials: true })
+        axios.get("http://localhost:5000/api/leftnavbar/get-user-profile", { withCredentials: true })
             .then((res) => {
                 if (!res.data?.user_id) throw new Error("Unauthorized");
                 setProfile(res.data);
@@ -402,7 +402,7 @@ const FormBuilder = () => {
 
             return field;
         });
-        debugger
+        
         const formData = {
             form_background: formBgColor,
             title_color: formTitleColor,
@@ -421,7 +421,7 @@ const FormBuilder = () => {
             submit_button_color: submitBtnTextColor,
             submit_button_background: submitBtnBgColor
         };
-        debugger
+        
         try {
             if (!isNew && formId) {
                 console.log("Updating form with fields:", fields);

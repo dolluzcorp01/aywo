@@ -8,13 +8,13 @@
     /* Border added */
 }
 
-.header-left {
+.header .header-left {
     flex: 1;
     text-align: left;
 }
 
-.navbar-brand {
-    font-size: 1.9rem;
+.header .navbar-brand {
+    font-size: 1.8rem;
     font-weight: bold;
     color: black;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;

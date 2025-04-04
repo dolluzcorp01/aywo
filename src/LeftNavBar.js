@@ -97,7 +97,7 @@ const LeftNavBar = () => {
 
     const populateProfileDetails = async () => {
         try {
-            debugger
+            
             const response = await fetch('http://localhost:5000/api/leftnavbar/get-user-profile', {
                 method: 'GET',
                 credentials: 'include',
@@ -125,7 +125,7 @@ const LeftNavBar = () => {
                 method: 'POST',
                 credentials: 'include',
             });
-            debugger
+            
             if (response.ok) {
                 navigate('/login');
             } else {
@@ -139,6 +139,11 @@ const LeftNavBar = () => {
 
     return (
         <div className="left-navbar">
+            {/* Search Bar */}
+            <div className="search-container">
+                <i className="fa fa-search search-icon"></i>
+                <input type="text" className="search-input" placeholder="Search..." readOnly style={{ cursor: "pointer" }} onClick={() => window.dispatchEvent(new Event('openSearchPopup'))} />
+            </div>
             {/* Navigation Items */}
             <div className="nav-content">
                 <div
@@ -206,8 +211,8 @@ const LeftNavBar = () => {
                     </DropdownProfile>
 
                     {/* Options */}
-                    <DropdownItem href="#"><i class="fa fa-hands-helping"></i> Help center</DropdownItem>
-                    <DropdownItem href="/login?changePassword"><i class="fa fa-key"></i> Change Password</DropdownItem>
+                    <DropdownItem href="#"><i className="fa fa-hands-helping"></i> Help center</DropdownItem>
+                    <DropdownItem href="/login?changePassword"><i className="fa fa-key"></i> Change Password</DropdownItem>
                     <DropdownDivider />
                     <DropdownItem onClick={handleLogout} style={{ color: "red" }}>Logout</DropdownItem>
                 </DropdownMenu>

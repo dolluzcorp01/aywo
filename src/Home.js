@@ -1,4 +1,5 @@
 import Swal from "sweetalert2";
+import styled from 'styled-components';
 import Contact_info from "./assets/img/Contact_info.jpg";
 import Appointment_booking from "./assets/img/Appointment_booking.jpg";
 import Job_Application from "./assets/img/Job_Application.jpg";
@@ -6,6 +7,142 @@ import { useNotification } from "./NotificationContext";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Home.css";
+
+const SearchPopup = styled.div`
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  padding: 20px;
+  min-width: 600px;  
+  max-width: 700px;
+  max-height: 500px;
+  z-index: 10000;
+  display: ${({ $isOpen }) => ($isOpen ? "block" : "none")};
+
+  .search-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+  }
+
+  .search-sections {
+    margin-top: 15px;
+  }
+
+  .search-section-title {
+    font-size: 12px;
+    margin-bottom: 8px;
+    color: #888;
+    text-transform: uppercase;
+  }
+
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .new-form-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: transparent;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    position: relative; /* Required for ::before */
+    padding-left: 18px; /* Space for left border */
+    transition: background 0.2s;
+  }
+
+  .new-form-btn::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0; /* Aligns to the left */
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: transparent; /* Default transparent */
+    border-radius: 2px;
+    transition: background 0.2s;
+  }
+
+  .new-form-btn:hover {
+    background: #eaf2ff;
+  }
+
+  .new-form-btn:hover::before {
+    background: #1a73e8; /* Show blue on hover */
+  }
+
+  .form-list {
+    max-height: 250px;
+    overflow-y: auto;
+  }
+        
+  .form-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s;
+    position: relative;
+    padding-left: 18px; /* Ensure enough space for icon */
+  }
+
+  .form-item::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0; /* Ensures it starts from the left edge */
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: transparent; /* Default transparent */
+    border-radius: 2px;
+    transition: background 0.2s;
+  }
+
+  .form-item:hover {
+    background: #eaf2ff;
+  }
+
+  .form-item:hover::before {
+    background: #1a73e8; /* Show blue on hover */
+  }
+
+
+  /* Icon default color */
+  .search-modal-form-icon {
+    font-size: 15px;
+    margin-right: 10px;
+    color: gray;
+    transition: color 0.2s;
+  }
+
+  /* Icon turns blue on hover */
+  .form-item:hover .search-modal-form-icon {
+    color: #1a73e8;
+  }
+
+  /* Always blue plus icon */
+  .search-modal-plus-icon {
+    color: #1a73e8;
+  }
+
+  .form-name {
+    font-size: 16px;
+  }
+`;
 
 function Home() {
   const { setShowNotification } = useNotification();
@@ -25,6 +162,19 @@ function Home() {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isPreview, setIsPreview] = useState(false);
+
+  const [isSearchPopupOpen, setIsSearchPopupOpen] = useState(false);
+  const searchPopupRef = useRef(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    const handleSearchOpen = () => setIsSearchPopupOpen(true);
+    window.addEventListener('openSearchPopup', handleSearchOpen);
+
+    return () => {
+      window.removeEventListener('openSearchPopup', handleSearchOpen);
+    };
+  }, []);
 
   const templates = [
     { name: "Contact Form", image: Contact_info, url: "template-1" },
@@ -210,6 +360,10 @@ function Home() {
       if (renameRef.current && !renameRef.current.contains(event.target)) {
         setRenamingFormId(null);
       }
+
+      if (searchPopupRef.current && !searchPopupRef.current.contains(event.target)) {
+        setIsSearchPopupOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -378,6 +532,47 @@ function Home() {
         </div>
       </section>
 
+      {/* Search Popup */}
+      {isSearchPopupOpen && (
+        <SearchPopup ref={searchPopupRef} $isOpen={isSearchPopupOpen}>
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search all workspaces..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+
+          <div className="search-sections">
+            {/* Actions Section */}
+            <div className="search-section-title">Actions</div>
+            <div className="actions">
+              <button className="new-form-btn" data-bs-toggle="modal" data-bs-target="#myModal" onClick={() => setIsSearchPopupOpen(false)}>
+                <i className="fa fa-plus search-modal-plus-icon"></i> New Form
+              </button>
+            </div>
+
+            {/* Navigation Section */}
+            <div className="search-section-title">Navigation</div>
+            <div className="form-list">
+              {forms
+                .filter((form) => form.title.toLowerCase().includes(searchTerm.toLowerCase()))
+                .map((form) => (
+                  <div
+                    key={form.form_id}
+                    className="form-item"
+                    onClick={() => navigate(`/form-builder/${form.form_id}`)}
+                  >
+                    <i className="fa-solid fa-file-alt search-modal-form-icon"></i>
+                    <span className="form-name">{form.title}</span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </SearchPopup>
+      )
+      }
+
       <div className="modal fade" id="myModal" tabIndex="-1" aria-hidden="true">
         <div className="modal-dialog modal-lg modal-dialog-centered">
           <div className="modal-content">
@@ -441,7 +636,7 @@ function Home() {
       </div>
 
       <div className="bottom-spacing"></div>
-    </div>
+    </div >
   );
 }
 
