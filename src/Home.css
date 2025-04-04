@@ -51,7 +51,7 @@ body {
 }
 
 .home-container .make-form-btn:hover {
-    background-color: rgba(255, 199, 56, 0.8); 
+    background-color: rgba(255, 199, 56, 0.8);
 }
 
 /* My Forms Section */
@@ -327,17 +327,69 @@ body {
     margin-bottom: 20px;
 }
 
-.home-container .order-by-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+/* Order by */
+.home-container .custom-dropdown {
+    position: relative;
+    display: inline-block;
 }
 
-.home-container .order-by-dropdown {
-    padding: 5px;
-    border-radius: 4px;
+/* Default - gray when closed */
+.home-container .dropdown-toggle-btn {
+    background: white;
+    color: gray;
     border: 1px solid #ccc;
+    padding: 6px 12px;
+    border-radius: 4px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+    font-size: 14px;
+    white-space: nowrap;
+}
+  
+/* Change color when open */
+.home-container .custom-dropdown.open .dropdown-toggle-btn {
+    color: black;
+}
+
+/* Dropdown list */
+.home-container .dropdown-menu {
+    position: absolute;
+    top: 42px;
+    /* Push it slightly below */
+    left: 10;
+    background: white;
+    color: gray;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    list-style: none;
+    padding: 5px 0;
+    margin: 0;
+    width: auto;
+    min-width: 200px;
+    z-index: 1000;
+}
+
+/* Menu text turns black when open */
+.home-container .custom-dropdown.open .dropdown-menu {
+    color: black;
+}
+
+.home-container .dropdown-menu li {
+    padding: 10px 14px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.home-container .dropdown-menu li:hover {
+    background: #eaf2ff;
+}
+
+.home-container .dropdown-menu i.fa-check {
     color: gray;
 }
 

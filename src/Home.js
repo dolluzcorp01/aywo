@@ -167,6 +167,25 @@ function Home() {
   const searchPopupRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
 
+  const [isOrderByOpen, setIsOrderByOpen] = useState(false);
+  const orderByRef = useRef(null);
+
+  const options = [
+    { value: "created_at_desc", label: "Newest First", icon: "fa-arrow-down" },
+    { value: "created_at_asc", label: "Oldest First", icon: "fa-arrow-up" },
+    { value: "title_asc", label: "Title A-Z", icon: "fa-sort-alpha-up" },
+    { value: "title_desc", label: "Title Z-A", icon: "fa-sort-alpha-down" },
+    { value: "responses_desc", label: "Most Responses", icon: "fa-chart-bar" },
+    { value: "responses_asc", label: "Fewest Responses", icon: "fa-chart-line" },
+  ];
+
+  const selectedOption = options.find((option) => option.value === sortBy);
+
+  const handleSelect = (value) => {
+    setSortBy(value);
+    setIsOrderByOpen(false);
+  };
+
   useEffect(() => {
     const handleSearchOpen = () => setIsSearchPopupOpen(true);
     window.addEventListener('openSearchPopup', handleSearchOpen);
@@ -364,6 +383,10 @@ function Home() {
       if (searchPopupRef.current && !searchPopupRef.current.contains(event.target)) {
         setIsSearchPopupOpen(false);
       }
+
+      if (orderByRef.current && !orderByRef.current.contains(event.target)) {
+        setIsOrderByOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -405,24 +428,28 @@ function Home() {
       <section className="section">
         <div className="forms-header">
           <h4 className="section-title">My Forms</h4>
-          <div className="order-by-container">
-            <select
-              value={sortBy}
-              onChange={(e) => {
-                setSortBy(e.target.value);
-                fetchForms();
-              }}
-              className="order-by-dropdown"
-              style={{ outline: "none" }}
-            >
-              <option value="created_at_desc">Newest First</option>
-              <option value="created_at_asc">Oldest First</option>
-              <option value="title_asc">Title A-Z</option>
-              <option value="title_desc">Title Z-A</option>
-              <option value="responses_desc">Most Responses</option>
-              <option value="responses_asc">Fewest Responses</option>
-            </select>
+
+          <div ref={orderByRef} className={`custom-dropdown ${isOrderByOpen ? "open" : ""}`}>
+            <button className="dropdown-toggle-btn" onClick={() => setIsOrderByOpen(!isOrderByOpen)}>
+              <i className={`fa ${selectedOption?.icon}`}></i> {selectedOption?.label || "Select"}
+              <i className={`fa ${isOrderByOpen ? "fa-chevron-up" : "fa-chevron-down"}`} style={{ marginLeft: "8px", fontSize: "10px" }}></i>
+            </button>
+
+            {isOrderByOpen && (
+              <ul className="dropdown-menu">
+                {options.map((option) => (
+                  <li key={option.value} onClick={() => handleSelect(option.value)}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <i className={`fa ${option.icon}`}></i>
+                      {option.label}
+                    </div>
+                    {sortBy === option.value && <i className="fa fa-check chcek_icon"></i>}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
+
         </div>
 
         <div className="forms-list">
