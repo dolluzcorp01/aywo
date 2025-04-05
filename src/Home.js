@@ -154,12 +154,14 @@ function Home() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(null); // Track which menu is open
   const [recentlyViewedMenuOpen, setRecentlyViewedMenuOpen] = useState(null); // Recently Viewed menu
-  const [renamingFormId, setRenamingFormId] = useState(null);
+  const [renamingFormId, setRenamingFormId] = useState([null]);
   const [renameTitle, setRenameTitle] = useState("");
   const menuRef = useRef(null);
   const renameRef = useRef(null);
   const [sortBy, setSortBy] = useState("created_at_desc"); // Default sorting
   const [hoveredFormId, setHoveredFormId] = useState(null);
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const renameModalRef = useRef(null);
 
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -294,10 +296,6 @@ function Home() {
       .finally(() => setFormsLoading(false));
   };
 
-  // const handleFormClick = (formId) => {
-  //   navigate(`/form-builder/form-${formId}`);
-  // };
-
   const handleDelete = (formId) => {
     Swal.fire({
       title: "Are you sure?",
@@ -320,6 +318,11 @@ function Home() {
             return response.json();
           })
           .then(() => {
+            // Remove the form from recently viewed list
+            const updatedRecentlyViewed = recentlyViewed.filter(f => f.form_id !== formId);
+            setRecentlyViewed(updatedRecentlyViewed);
+            localStorage.setItem("recentlyViewedForms", JSON.stringify(updatedRecentlyViewed));
+
             fetchForms();
             Swal.fire("Deleted!", "Your form has been deleted.", "success");
           })
@@ -335,18 +338,12 @@ function Home() {
     setRenameTitle(event.target.value);
   };
 
-  const handleKeyDown = (event, formId) => {
-    if (event.key === "Enter") {
-      handleRenameSubmit(formId);
-    }
-  };
-
   const handleRenameSubmit = (formId) => {
     if (!renameTitle.trim()) {
       Swal.fire("Error", "Form title cannot be empty.", "error");
       return;
     }
-
+    
     if (renameTitle === forms.find(f => f.form_id === formId)?.title) {
       setRenamingFormId(null);
       return;
@@ -374,6 +371,14 @@ function Home() {
             return res.json();
           })
           .then(() => {
+            // Update local recently viewed list if renamed form is there
+            const updatedRecentlyViewed = recentlyViewed.map(f =>
+              f.form_id === formId ? { ...f, title: renameTitle } : f
+            );
+            
+            setRecentlyViewed(updatedRecentlyViewed);
+            localStorage.setItem("recentlyViewedForms", JSON.stringify(updatedRecentlyViewed));
+
             fetchForms();
             setRenamingFormId(null);
             setRenameTitle("");
@@ -401,16 +406,16 @@ function Home() {
         setRecentlyViewedMenuOpen(null);
       }
 
-      if (renameRef.current && !renameRef.current.contains(event.target)) {
-        setRenamingFormId(null);
-      }
-
       if (searchPopupRef.current && !searchPopupRef.current.contains(event.target)) {
         setIsSearchPopupOpen(false);
       }
 
       if (orderByRef.current && !orderByRef.current.contains(event.target)) {
         setIsOrderByOpen(false);
+      }
+
+      if (renameModalRef.current && !renameModalRef.current.contains(event.target)) {
+        setIsRenameModalOpen(false);
       }
     };
 
@@ -479,20 +484,47 @@ function Home() {
                     ></i>
 
                     {recentlyViewedMenuOpen === form.form_id && (
-                      <div className="recently-viewed-dropdown">
-                        <button onClick={() => handleRenameChange(form.form_id)}>
+                      <div ref={menuRef} className="dropdown-menu">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRenamingFormId(form.form_id);
+                            setRenameTitle(form.title);
+                            setMenuOpen(null);
+                            setIsRenameModalOpen(true); // Open rename modal
+                            setRecentlyViewedMenuOpen(null);
+                          }}
+                        >
                           <i className="fa-solid fa-pen"></i> Rename
                         </button>
-                        <button onClick={() => handleDelete(form.form_id)}>
+
+                        <button onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(form.form_id)
+                        }}>
                           <i className="fa-solid fa-trash"></i> Delete
                         </button>
+
+                        {/* Show Share Button Only if Published */}
+                        {form.published === 1 && (
+                          <button
+                            onClick={() => {
+                              const publicUrl = `${window.location.origin}/forms/${form.form_id}`;
+                              navigator.clipboard.writeText(publicUrl);
+                              Swal.fire("Copied!", `Share this link: <br><b>${publicUrl}</b>`, "success");
+                              setMenuOpen(null);
+                            }}
+                          >
+                            <i className="fa-solid fa-share"></i> Share
+                          </button>
+                        )}
                       </div>
                     )}
 
                   </div>
 
                   {/* Title */}
-                  <p className="recently-viewed-title-text">{form.title}</p>
+                  < p className="form-title-text" > {form.title}</p>
 
                   {/* Responses */}
                   <p
@@ -514,8 +546,9 @@ function Home() {
                 </div>
               ))}
             </div>
-          </section>
-        )}
+          </section >
+        )
+        }
 
         <div className="forms-header" style={{ marginTop: "50px" }}>
           <h4 className="section-title">My Forms</h4>
@@ -559,25 +592,7 @@ function Home() {
                 <div className="form-card-content" onClick={() => handleFormClick(form.form_id, form.title, form.response_count)}>
                   {renamingFormId === form.form_id ? (
                     <div ref={renameRef} className="rename-input-container">
-                      <input
-                        type="text"
-                        value={renameTitle}
-                        onChange={handleRenameChange}
-                        onKeyDown={(e) => handleKeyDown(e, form.form_id)}
-                        autoFocus
-                        onFocus={(e) => e.target.select()}
-                        className="form-title-input"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <button
-                        className="save-btn"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleRenameSubmit(form.form_id);
-                        }}
-                      >
-                        <i className="fa-solid fa-check"></i>
-                      </button>
+                      <p className="form-title-text">{form.title}</p>
                     </div>
                   ) : (
                     <p className="form-title">{form.title}</p>
@@ -617,6 +632,7 @@ function Home() {
                           setRenamingFormId(form.form_id);
                           setRenameTitle(form.title);
                           setMenuOpen(null);
+                          setIsRenameModalOpen(true); // Open rename modal
                         }}
                       >
                         <i className="fa-solid fa-pen"></i> Rename
@@ -647,47 +663,84 @@ function Home() {
             ))
           )}
         </div>
-      </section>
+      </section >
 
-      {/* Search Popup */}
-      {isSearchPopupOpen && (
-        <SearchPopup ref={searchPopupRef} $isOpen={isSearchPopupOpen}>
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search all workspaces..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      {isRenameModalOpen && (
+        <div className="rename-modal-overlay">
+          <div className="rename-modal" ref={renameModalRef}>
+            {/* Close Button (X) */}
+            <button className="rename-modal-close" onClick={() => setIsRenameModalOpen(false)}>
+              ✖
+            </button>
 
-          <div className="search-sections">
-            {/* Actions Section */}
-            <div className="search-section-title">Actions</div>
-            <div className="actions">
-              <button className="new-form-btn" data-bs-toggle="modal" data-bs-target="#myModal" onClick={() => setIsSearchPopupOpen(false)}>
-                <i className="fa fa-plus search-modal-plus-icon"></i> New Form
+            {/* Title (Aligned Left) */}
+            <h3 className="rename-modal-title">Name your form</h3>
+
+            {/* Input Field */}
+            <input
+              type="text"
+              value={renameTitle}
+              onChange={handleRenameChange}
+              className="rename-modal-input"
+              autoFocus
+            />
+
+            {/* Buttons */}
+            <div className="rename-modal-buttons">
+              <button
+                className="rename-save-btn"
+                onClick={() => {
+                  handleRenameSubmit(renamingFormId);
+                  setIsRenameModalOpen(false); // Close modal
+                }}
+              >
+                Continue
               </button>
             </div>
-
-            {/* Navigation Section */}
-            <div className="search-section-title">Navigation</div>
-            <div className="form-list">
-              {forms
-                .filter((form) => form.title.toLowerCase().includes(searchTerm.toLowerCase()))
-                .map((form) => (
-                  <div
-                    key={form.form_id}
-                    className="form-item"
-                    onClick={() => navigate(`/form-builder/${form.form_id}`)}
-                  >
-                    <i className="fa-solid fa-file-alt search-modal-form-icon"></i>
-                    <span className="form-name">{form.title}</span>
-                  </div>
-                ))}
-            </div>
           </div>
-        </SearchPopup>
-      )
+        </div>
+      )}
+
+      {/* Search Popup */}
+      {
+        isSearchPopupOpen && (
+          <SearchPopup ref={searchPopupRef} $isOpen={isSearchPopupOpen}>
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search all workspaces..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+
+            <div className="search-sections">
+              {/* Actions Section */}
+              <div className="search-section-title">Actions</div>
+              <div className="actions">
+                <button className="new-form-btn" data-bs-toggle="modal" data-bs-target="#myModal" onClick={() => setIsSearchPopupOpen(false)}>
+                  <i className="fa fa-plus search-modal-plus-icon"></i> New Form
+                </button>
+              </div>
+
+              {/* Navigation Section */}
+              <div className="search-section-title">Navigation</div>
+              <div className="form-list">
+                {forms
+                  .filter((form) => form.title.toLowerCase().includes(searchTerm.toLowerCase()))
+                  .map((form) => (
+                    <div
+                      key={form.form_id}
+                      className="form-item"
+                      onClick={() => navigate(`/form-builder/${form.form_id}`)}
+                    >
+                      <i className="fa-solid fa-file-alt search-modal-form-icon"></i>
+                      <span className="form-name">{form.title}</span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </SearchPopup>
+        )
       }
 
       <div className="modal fade" id="myModal" tabIndex="-1" aria-hidden="true">
