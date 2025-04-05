@@ -5,6 +5,7 @@ import Appointment_booking from "./assets/img/Appointment_booking.jpg";
 import Job_Application from "./assets/img/Job_Application.jpg";
 import { useNotification } from "./NotificationContext";
 import React, { useState, useEffect, useRef } from "react";
+import { FaThLarge } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import "./Home.css";
 
@@ -173,6 +174,8 @@ function Home() {
 
   const [isOrderByOpen, setIsOrderByOpen] = useState(false);
   const orderByRef = useRef(null);
+
+  const [viewType, setViewType] = useState("grid"); // or "list"
 
   const options = [
     { value: "created_at_desc", label: "Newest First", icon: "fa-arrow-down" },
@@ -343,7 +346,7 @@ function Home() {
       Swal.fire("Error", "Form title cannot be empty.", "error");
       return;
     }
-    
+
     if (renameTitle === forms.find(f => f.form_id === formId)?.title) {
       setRenamingFormId(null);
       return;
@@ -375,7 +378,7 @@ function Home() {
             const updatedRecentlyViewed = recentlyViewed.map(f =>
               f.form_id === formId ? { ...f, title: renameTitle } : f
             );
-            
+
             setRecentlyViewed(updatedRecentlyViewed);
             localStorage.setItem("recentlyViewedForms", JSON.stringify(updatedRecentlyViewed));
 
@@ -553,30 +556,86 @@ function Home() {
         <div className="forms-header" style={{ marginTop: "50px" }}>
           <h4 className="section-title">My Forms</h4>
 
-          <div ref={orderByRef} className={`custom-dropdown ${isOrderByOpen ? "open" : ""}`}>
-            <button className="dropdown-toggle-btn" onClick={() => setIsOrderByOpen(!isOrderByOpen)}>
-              <i className={`fa ${selectedOption?.icon}`}></i> {selectedOption?.label || "Select"}
-              <i className={`fa ${isOrderByOpen ? "fa-chevron-up" : "fa-chevron-down"}`} style={{ marginLeft: "8px", fontSize: "10px" }}></i>
-            </button>
-
-            {isOrderByOpen && (
-              <ul className="orderby-dropdown-menu">
-                {options.map((option) => (
-                  <li key={option.value} onClick={() => handleSelect(option.value)}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <i className={`fa ${option.icon}`}></i>
-                      {option.label}
-                    </div>
-                    {sortBy === option.value && <i className="fa fa-check chcek_icon"></i>}
-                  </li>
+          <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+            {/* Grid Icon */}
+            <div
+              onClick={() => setViewType("grid")}
+              style={{
+                backgroundColor: "#E5E7EB",
+                padding: "6px",
+                borderRadius: "6px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 10px)",
+                gridGap: "2px",
+              }}>
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} style={{
+                    width: "8px",
+                    height: "8px",
+                    border: "3px solid #374151",
+                    borderRadius: "2px",
+                  }}></div>
                 ))}
-              </ul>
-            )}
+              </div>
+            </div>
+            {/* four line Icon */}
+            <div
+              onClick={() => setViewType("list")}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                height: "19px",
+                gap: "3px"
+              }}>
+              {[...Array(4)].map((_, i) => (
+                <div key={i} style={{
+                  width: "23px",
+                  height: "8px",
+                  backgroundColor: "#9CA3AF",
+                  borderRadius: "1px",
+                }}></div>
+              ))}
+            </div>
+
+
+            <div ref={orderByRef} className={`custom-dropdown ${isOrderByOpen ? "open" : ""}`}>
+
+
+              <button className="dropdown-toggle-btn" onClick={() => setIsOrderByOpen(!isOrderByOpen)}>
+                <i className={`fa ${selectedOption?.icon}`}></i> {selectedOption?.label || "Select"}
+                <i className={`fa ${isOrderByOpen ? "fa-chevron-up" : "fa-chevron-down"}`} style={{ marginLeft: "8px", fontSize: "10px" }}></i>
+              </button>
+
+              {isOrderByOpen && (
+                <ul className="orderby-dropdown-menu">
+                  {options.map((option) => (
+                    <li key={option.value} onClick={() => handleSelect(option.value)}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <i className={`fa ${option.icon}`}></i>
+                        {option.label}
+                      </div>
+                      {sortBy === option.value && <i className="fa fa-check chcek_icon"></i>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
 
         </div>
 
-        <div className="forms-list">
+        <div className="forms-list"
+          style={{
+            display: viewType === "grid" ? "flex" : "block",
+            gap: viewType === "grid" ? "20px" : "0",
+            width: "100%", 
+          }}>
           {formsLoading ? (
             <p>Loading forms...</p>
           ) : error && forms.length === 0 ? (
@@ -585,11 +644,19 @@ function Home() {
             <p>No forms created yet.</p>
           ) : (
             forms.map((form) => (
-              <div className={`form-card ${menuOpen === form.form_id ? "no-transform" : ""}`} key={form.form_id} ref={menuRef}>
+              <div
+                className={`form-card ${viewType === "list" ? "list-view" : ""} ${menuOpen === form.form_id ? "no-transform" : ""}`}
+                key={form.form_id}
+                ref={menuRef}
+              >
                 <div className="form-icon-container">
                   <i className="fa-solid fa-file-alt form-icon"></i>
                 </div>
-                <div className="form-card-content" onClick={() => handleFormClick(form.form_id, form.title, form.response_count)}>
+
+                <div
+                  className="form-card-content"
+                  onClick={() => handleFormClick(form.form_id, form.title, form.response_count)}
+                >
                   {renamingFormId === form.form_id ? (
                     <div ref={renameRef} className="rename-input-container">
                       <p className="form-title-text">{form.title}</p>
@@ -598,24 +665,48 @@ function Home() {
                     <p className="form-title">{form.title}</p>
                   )}
 
+                  {/* Only show response count inside form-card-content in grid view */}
+                  {viewType !== "list" && (
+                    <p
+                      className="response-count"
+                      style={{
+                        cursor: form.response_count > 0 ? "pointer" : "default",
+                        color: form.response_count > 0 ? "#1a73e8" : "#6b7280",
+                        textDecoration: form.response_count > 0 ? "underline" : "none",
+                      }}
+                      onClick={(e) => {
+                        if (form.response_count > 0) {
+                          e.stopPropagation();
+                          navigate(`/responses/${form.form_id}`);
+                        }
+                      }}
+                    >
+                      {form.response_count} {form.response_count === 1 ? "response" : "responses"}
+                    </p>
+                  )}
+                </div>
+
+                {/* Response count in list view goes here */}
+                {viewType === "list" && (
                   <p
-                    className="response-count"
+                    className="response-count list-response"
                     style={{
                       cursor: form.response_count > 0 ? "pointer" : "default",
-                      color: form.response_count > 0 ? "blue" : "",
-                      textDecoration: form.response_count > 0 ? "underline" : "none"
+                      color: form.response_count > 0 ? "#1a73e8" : "#6b7280",
+                      textDecoration: form.response_count > 0 ? "underline" : "none",
+                      marginRight: "12px",
                     }}
                     onClick={(e) => {
                       if (form.response_count > 0) {
-                        e.stopPropagation(); // Prevent navigating to form-builder
+                        e.stopPropagation();
                         navigate(`/responses/${form.form_id}`);
                       }
                     }}
                   >
                     {form.response_count} {form.response_count === 1 ? "response" : "responses"}
                   </p>
+                )}
 
-                </div>
                 <div className="menu-container">
                   <i
                     className="fa-solid fa-ellipsis-vertical menu-icon"
@@ -632,7 +723,7 @@ function Home() {
                           setRenamingFormId(form.form_id);
                           setRenameTitle(form.title);
                           setMenuOpen(null);
-                          setIsRenameModalOpen(true); // Open rename modal
+                          setIsRenameModalOpen(true);
                         }}
                       >
                         <i className="fa-solid fa-pen"></i> Rename
@@ -642,7 +733,6 @@ function Home() {
                         <i className="fa-solid fa-trash"></i> Delete
                       </button>
 
-                      {/* Show Share Button Only if Published */}
                       {form.published === 1 && (
                         <button
                           onClick={() => {
@@ -657,7 +747,6 @@ function Home() {
                       )}
                     </div>
                   )}
-
                 </div>
               </div>
             ))
