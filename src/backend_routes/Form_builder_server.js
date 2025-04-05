@@ -531,4 +531,78 @@ router.put("/publish-form/:formId", verifyJWT, async (req, res) => {
     }
 });
 
+router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
+    const userId = req.user_id;
+    const { formId } = req.params;
+
+    let connection;
+    try {
+        connection = await new Promise((resolve, reject) => {
+            db.getConnection((err, conn) => (err ? reject(err) : resolve(conn)));
+        });
+
+        await connection.beginTransaction();
+
+        // Get original form
+        const [originalForm] = await queryPromise(connection, "SELECT * FROM forms WHERE form_id = ?", [formId]);
+        if (!originalForm) return res.status(404).json({ error: "Original form not found." });
+
+        const newTitle = originalForm.title + " (Copy)";
+
+        // Insert new form
+        const formInsertQuery = `INSERT INTO forms (user_id, title, title_font_size, title_x, title_y, title_width, title_height,
+        form_background, title_color, title_background, submit_button_x, submit_button_y, submit_button_width, submit_button_height,
+        submit_button_color, submit_button_background)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+        const { insertId: newFormId } = await queryPromise(connection, formInsertQuery, [
+            userId, newTitle, originalForm.title_font_size, originalForm.title_x, originalForm.title_y,
+            originalForm.title_width, originalForm.title_height, originalForm.form_background,
+            originalForm.title_color, originalForm.title_background,
+            originalForm.submit_button_x, originalForm.submit_button_y, originalForm.submit_button_width,
+            originalForm.submit_button_height, originalForm.submit_button_color, originalForm.submit_button_background
+        ]);
+
+        // Copy fields
+        const formFields = await queryPromise(connection, "SELECT * FROM form_fields WHERE form_id = ?", [formId]);
+        for (const field of formFields) {
+            const { insertId: newFieldId } = await queryPromise(connection, `
+          INSERT INTO form_fields (form_id, field_type, label, x, y, width, height, bgColor, labelColor, fontSize, min_value, max_value)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                newFormId, field.field_type, field.label, field.x, field.y, field.width,
+                field.height, field.bgColor, field.labelColor, field.fontSize,
+                field.min_value, field.max_value
+            ]);
+
+            // Copy options
+            if (["Dropdown", "Multiple Choice"].includes(field.field_type)) {
+                const options = await queryPromise(connection, "SELECT * FROM form_field_options WHERE field_id = ?", [field.field_id]);
+                for (const option of options) {
+                    await queryPromise(connection, "INSERT INTO form_field_options (field_id, option_text) VALUES (?, ?)", [newFieldId, option.option_text]);
+                }
+            }
+
+            // Copy grid options
+            if (field.field_type === "Multiple Choice Grid") {
+                const gridOptions = await queryPromise(connection, "SELECT * FROM form_field_grid_options WHERE field_id = ?", [field.field_id]);
+                for (const grid of gridOptions) {
+                    await queryPromise(connection, `
+              INSERT INTO form_field_grid_options (field_id, row_label, column_label)
+              VALUES (?, ?, ?)`, [newFieldId, grid.row_label, grid.column_label]);
+                }
+            }
+        }
+
+        await connection.commit();
+        res.json({ message: "Form duplicated successfully", newForm: { ...originalForm, form_id: newFormId, title: newTitle } });
+
+    } catch (err) {
+        if (connection) await connection.rollback();
+        console.error("Error duplicating form:", err);
+        res.status(500).json({ error: "Failed to duplicate form" });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
 module.exports = router;

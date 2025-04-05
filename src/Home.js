@@ -176,6 +176,8 @@ function Home() {
   const orderByRef = useRef(null);
 
   const [viewType, setViewType] = useState("grid"); // or "list"
+  const [dropdownDirection, setDropdownDirection] = useState('below'); // or 'above'
+  const [isDuplicateMode, setIsDuplicateMode] = useState(false);
 
   const options = [
     { value: "created_at_desc", label: "Newest First", icon: "fa-arrow-down" },
@@ -196,12 +198,12 @@ function Home() {
     setRecentlyViewed(storedRecentlyViewed);
   }, []);
 
-  const handleFormClick = (form_id, title, response_count) => {
+  const handleFormClick = (form_id, title, response_count, published) => {
     // Navigate to form builder
     navigate(`/form-builder/form-${form_id}`);
 
     // Update recently viewed forms
-    const updatedRecentlyViewed = [{ form_id, title, response_count }, ...recentlyViewed.filter(f => f.form_id !== form_id)].slice(0, 3);
+    const updatedRecentlyViewed = [{ form_id, title, response_count, published }, ...recentlyViewed.filter(f => f.form_id !== form_id)].slice(0, 3);
     setRecentlyViewed(updatedRecentlyViewed);
     localStorage.setItem("recentlyViewedForms", JSON.stringify(updatedRecentlyViewed));
   };
@@ -299,6 +301,30 @@ function Home() {
       .finally(() => setFormsLoading(false));
   };
 
+  const handleDuplicateForm = async (formId, customTitle) => {
+    debugger
+    try {
+      const response = await fetch(`http://localhost:5000/api/form_builder/duplicate-form/${formId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: renameTitle }),
+        credentials: "include",
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setShowNotification("Form duplicated successfully!");
+        setForms((prev) => [...prev, data.newForm]);
+      } else {
+        console.error("Duplication failed:", data.error);
+        setShowNotification(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("Error duplicating form:", error);
+      setShowNotification("Server error while duplicating the form.");
+    }
+  };
+
   const handleDelete = (formId) => {
     Swal.fire({
       title: "Are you sure?",
@@ -335,10 +361,6 @@ function Home() {
           });
       }
     });
-  };
-
-  const handleRenameChange = (event) => {
-    setRenameTitle(event.target.value);
   };
 
   const handleRenameSubmit = (formId) => {
@@ -466,7 +488,7 @@ function Home() {
             <div className="recently-viewed-list">
               {recentlyViewed.map((form) => (
                 <div className="recently-viewed-card"
-                  onClick={() => handleFormClick(form.form_id, form.title, form.response_count)}
+                  onClick={() => handleFormClick(form.form_id, form.title, form.response_count, form.published)}
                   onMouseEnter={() => setHoveredFormId(form.form_id)}
                   onMouseLeave={() => setHoveredFormId(null)}
                 >
@@ -487,40 +509,67 @@ function Home() {
                     ></i>
 
                     {recentlyViewedMenuOpen === form.form_id && (
-                      <div ref={menuRef} className="dropdown-menu">
+                      <div ref={menuRef} className={`dropdown-menu ${dropdownDirection}`}>
+                        {form.published === 1 && (
+                          <button
+                            onClick={(e) => {
+                              {
+                                e.stopPropagation();
+                                const publicUrl = `${window.location.origin}/forms/${form.form_id}`;
+                                navigator.clipboard.writeText(publicUrl);
+                                Swal.fire("Copied!", `Share this link: <br><b>${publicUrl}</b>`, "success");
+                                setMenuOpen(null);
+                              }
+                            }}
+                          >
+                            <i className="fa-solid fa-share"></i> Copy link
+                          </button>
+                        )}
+
+                        <button>
+                          <i className="fa-regular fa-star"></i> Star
+                        </button>
+                        <hr />
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setRenamingFormId(form.form_id);
                             setRenameTitle(form.title);
                             setMenuOpen(null);
-                            setIsRenameModalOpen(true); // Open rename modal
-                            setRecentlyViewedMenuOpen(null);
+                            setIsDuplicateMode(false);
+                            setIsRenameModalOpen(true);
                           }}
                         >
                           <i className="fa-solid fa-pen"></i> Rename
                         </button>
 
-                        <button onClick={(e) => {
-                          e.stopPropagation()
-                          handleDelete(form.form_id)
-                        }}>
-                          <i className="fa-solid fa-trash"></i> Delete
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRenamingFormId(form.form_id);
+                            setRenameTitle(form.title + " (Copy)");
+                            setMenuOpen(null);
+                            setIsDuplicateMode(true); // Set duplicate mode
+                            setIsRenameModalOpen(true);
+                          }}
+                        >
+                          <i className="fa-regular fa-copy"></i> Duplicate
                         </button>
 
-                        {/* Show Share Button Only if Published */}
-                        {form.published === 1 && (
-                          <button
-                            onClick={() => {
-                              const publicUrl = `${window.location.origin}/forms/${form.form_id}`;
-                              navigator.clipboard.writeText(publicUrl);
-                              Swal.fire("Copied!", `Share this link: <br><b>${publicUrl}</b>`, "success");
-                              setMenuOpen(null);
-                            }}
-                          >
-                            <i className="fa-solid fa-share"></i> Share
-                          </button>
-                        )}
+                        <hr />
+
+                        <button>
+                          <i className="fa-solid fa-lock"></i> Close form
+                        </button>
+
+                        <button style={{ color: "red" }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(form.form_id)
+                          }}>
+                          <i className="fa-solid fa-trash"></i>  Move to trash
+                        </button>
+
                       </div>
                     )}
 
@@ -634,7 +683,7 @@ function Home() {
           style={{
             display: viewType === "grid" ? "flex" : "block",
             gap: viewType === "grid" ? "20px" : "0",
-            width: "100%", 
+            width: "100%",
           }}>
           {formsLoading ? (
             <p>Loading forms...</p>
@@ -655,7 +704,7 @@ function Home() {
 
                 <div
                   className="form-card-content"
-                  onClick={() => handleFormClick(form.form_id, form.title, form.response_count)}
+                  onClick={() => handleFormClick(form.form_id, form.title, form.response_count, form.published)}
                 >
                   {renamingFormId === form.form_id ? (
                     <div ref={renameRef} className="rename-input-container">
@@ -712,27 +761,22 @@ function Home() {
                     className="fa-solid fa-ellipsis-vertical menu-icon"
                     onClick={(e) => {
                       e.stopPropagation();
+                      const iconRect = e.currentTarget.getBoundingClientRect();
+                      const dropdownHeight = 240; // Approx height of your dropdown
+                      const spaceBelow = window.innerHeight - iconRect.bottom;
+
+                      if (spaceBelow < dropdownHeight) {
+                        setDropdownDirection('above');
+                      } else {
+                        setDropdownDirection('below');
+                      }
+
                       setMenuOpen(menuOpen === form.form_id ? null : form.form_id);
                     }}
                   ></i>
 
                   {menuOpen === form.form_id && (
-                    <div ref={menuRef} className="dropdown-menu">
-                      <button
-                        onClick={() => {
-                          setRenamingFormId(form.form_id);
-                          setRenameTitle(form.title);
-                          setMenuOpen(null);
-                          setIsRenameModalOpen(true);
-                        }}
-                      >
-                        <i className="fa-solid fa-pen"></i> Rename
-                      </button>
-
-                      <button onClick={() => handleDelete(form.form_id)}>
-                        <i className="fa-solid fa-trash"></i> Delete
-                      </button>
-
+                    <div ref={menuRef} className={`dropdown-menu ${dropdownDirection}`}>
                       {form.published === 1 && (
                         <button
                           onClick={() => {
@@ -742,9 +786,48 @@ function Home() {
                             setMenuOpen(null);
                           }}
                         >
-                          <i className="fa-solid fa-share"></i> Share
+                          <i className="fa-solid fa-share"></i> Copy link
                         </button>
                       )}
+
+                      <button>
+                        <i className="fa-regular fa-star"></i> Star
+                      </button>
+                      <hr />
+                      <button
+                        onClick={() => {
+                          setRenamingFormId(form.form_id);
+                          setRenameTitle(form.title);
+                          setMenuOpen(null);
+                          setIsDuplicateMode(false);
+                          setIsRenameModalOpen(true);
+                        }}
+                      >
+                        <i className="fa-solid fa-pen"></i> Rename
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setRenamingFormId(form.form_id);
+                          setRenameTitle(form.title + " (Copy)");
+                          setMenuOpen(null);
+                          setIsDuplicateMode(true); // Set duplicate mode
+                          setIsRenameModalOpen(true);
+                        }}
+                      >
+                        <i className="fa-regular fa-copy"></i> Duplicate
+                      </button>
+
+                      <hr />
+
+                      <button>
+                        <i className="fa-solid fa-lock"></i> Close form
+                      </button>
+
+                      <button style={{ color: "red" }} onClick={() => handleDelete(form.form_id)}>
+                        <i className="fa-solid fa-trash"></i>  Move to trash
+                      </button>
+
                     </div>
                   )}
                 </div>
@@ -757,33 +840,42 @@ function Home() {
       {isRenameModalOpen && (
         <div className="rename-modal-overlay">
           <div className="rename-modal" ref={renameModalRef}>
-            {/* Close Button (X) */}
             <button className="rename-modal-close" onClick={() => setIsRenameModalOpen(false)}>
               ✖
             </button>
 
-            {/* Title (Aligned Left) */}
-            <h3 className="rename-modal-title">Name your form</h3>
+            <h3 className="rename-modal-title">
+              {isDuplicateMode ? `Duplicate: ${renameTitle.replace(" (Copy)", "")}` : "Name your form"}
+            </h3>
 
-            {/* Input Field */}
+            {isDuplicateMode && (
+              <p style={{ fontSize: "12px", marginBottom: "8px", color: "#555" }}>
+                New form name will be: <strong>{renameTitle}</strong>
+              </p>
+            )}
+
             <input
               type="text"
               value={renameTitle}
-              onChange={handleRenameChange}
+              onChange={(e) => setRenameTitle(e.target.value)}
               className="rename-modal-input"
               autoFocus
             />
 
-            {/* Buttons */}
             <div className="rename-modal-buttons">
               <button
                 className="rename-save-btn"
                 onClick={() => {
-                  handleRenameSubmit(renamingFormId);
+                  if (isDuplicateMode) {
+                    handleDuplicateForm(renamingFormId, renameTitle); // pass the new title
+                  } else {
+                    handleRenameSubmit(renamingFormId);
+                  }
                   setIsRenameModalOpen(false); // Close modal
+                  setIsDuplicateMode(false);  // Reset mode
                 }}
               >
-                Continue
+                {isDuplicateMode ? "Duplicate" : "Continue"}
               </button>
             </div>
           </div>
