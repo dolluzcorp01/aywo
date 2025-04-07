@@ -201,7 +201,7 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
         if (sortBy === "responses_asc") orderClause = "ORDER BY response_count ASC";
 
         const query = `
-            SELECT f.form_id, f.title, f.published, 
+            SELECT f.form_id, f.title, f.internal_note, f.published, 
                 COUNT(fr.response_id) AS response_count 
             FROM forms f
             LEFT JOIN form_responses fr ON f.form_id = fr.form_id
@@ -602,6 +602,41 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
         res.status(500).json({ error: "Failed to duplicate form" });
     } finally {
         if (connection) connection.release();
+    }
+});
+
+// ✅ Save internal note (Protected Route)
+router.post("/save-note/:formId", verifyJWT, async (req, res) => {
+    const { formId } = req.params;
+    const { note } = req.body;
+    const userId = req.user_id;
+
+    if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+        const result = await queryPromise(
+            db,
+            "UPDATE forms SET internal_note = ? WHERE form_id = ? AND user_id = ?",
+            [note, formId, userId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        // Return the updated form (optional)
+        const [updatedForm] = await queryPromise(
+            db,
+            "SELECT * FROM forms WHERE form_id = ?",
+            [formId]
+        );
+
+        res.json({ message: "Note saved successfully", newForm: updatedForm });
+    } catch (error) {
+        console.error("Error saving internal note:", error);
+        res.status(500).json({ error: "Internal server error" });
     }
 });
 

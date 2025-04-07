@@ -619,6 +619,25 @@ body {
     margin-top: 14px;
 }
 
+.rename-delete-btn {
+    background: #FEF2F2;
+    color: #e53935;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-weight: bold;
+    transition: 0.2s ease-in-out;
+    margin-right: 10px;
+    border: 1px solid #FECACA;
+}
+
+.rename-delete-btn:hover {
+    background: #ffe5e5;
+}
+
 .rename-save-btn {
     background: #2563EB;
     color: white;

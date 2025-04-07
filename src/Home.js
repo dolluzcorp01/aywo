@@ -179,6 +179,9 @@ function Home() {
   const [dropdownDirection, setDropdownDirection] = useState('below'); // or 'above'
   const [isDuplicateMode, setIsDuplicateMode] = useState(false);
 
+  const [isNoteMode, setIsNoteMode] = useState(false);
+  const [internalNote, setInternalNote] = useState("");
+
   const options = [
     { value: "created_at_desc", label: "Newest First", icon: "fa-arrow-down" },
     { value: "created_at_asc", label: "Oldest First", icon: "fa-arrow-up" },
@@ -301,8 +304,7 @@ function Home() {
       .finally(() => setFormsLoading(false));
   };
 
-  const handleDuplicateForm = async (formId, customTitle) => {
-    debugger
+  const handleDuplicateForm = async (formId) => {
     try {
       const response = await fetch(`http://localhost:5000/api/form_builder/duplicate-form/${formId}`, {
         method: "POST",
@@ -313,15 +315,70 @@ function Home() {
 
       const data = await response.json();
       if (response.ok) {
-        setShowNotification("Form duplicated successfully!");
+        Swal.fire({
+          icon: 'success',
+          title: 'Form duplicated successfully!',
+          showConfirmButton: false,
+          timer: 1500,
+        });
         setForms((prev) => [...prev, data.newForm]);
       } else {
         console.error("Duplication failed:", data.error);
-        setShowNotification(`Error: ${data.error}`);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.error,
+        });
       }
     } catch (error) {
       console.error("Error duplicating form:", error);
-      setShowNotification("Server error while duplicating the form.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Server Error',
+        text: 'An error occurred while duplicating the form.',
+      });
+    }
+  };
+
+  const handleSaveNote = async (formId, note) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/form_builder/save-note/${formId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note }),
+        credentials: "include",
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Note saved successfully!',
+          showConfirmButton: false,
+          timer: 1500,
+        });
+
+        // Optional: update form list if needed
+        setForms((prevForms) =>
+          prevForms.map((form) =>
+            form.form_id === formId ? { ...form, internal_note: note } : form
+          )
+        );
+      } else {
+        console.error("Note save failed:", data.error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.error,
+        });
+      }
+    } catch (error) {
+      console.error("Error saving note:", error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Server Error',
+        text: 'An error occurred while saving the note.',
+      });
     }
   };
 
@@ -478,7 +535,6 @@ function Home() {
         </button>
       </div>
 
-
       {/* Forms I have created */}
       <section className="section">
         {/* Recently Viewed Forms */}
@@ -511,28 +567,48 @@ function Home() {
                     {recentlyViewedMenuOpen === form.form_id && (
                       <div ref={menuRef} className={`dropdown-menu ${dropdownDirection}`}>
                         {form.published === 1 && (
-                          <button
-                            onClick={(e) => {
-                              {
+                          <>
+                            <button
+                              onClick={(e) => {
                                 e.stopPropagation();
+                                setRecentlyViewedMenuOpen(null);
                                 const publicUrl = `${window.location.origin}/forms/${form.form_id}`;
                                 navigator.clipboard.writeText(publicUrl);
                                 Swal.fire("Copied!", `Share this link: <br><b>${publicUrl}</b>`, "success");
                                 setMenuOpen(null);
-                              }
-                            }}
-                          >
-                            <i className="fa-solid fa-share"></i> Copy link
-                          </button>
+                              }}
+                            >
+                              <i className="fa-solid fa-share"></i> Copy link
+                            </button>
+                            <hr />
+                          </>
                         )}
 
                         <button>
                           <i className="fa-regular fa-star"></i> Star
                         </button>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRecentlyViewedMenuOpen(null);
+                            setRenamingFormId(form.form_id);
+                            setInternalNote(form.internal_note || ""); // Optional: load existing note
+                            setMenuOpen(null);
+                            setIsDuplicateMode(false);
+                            setIsNoteMode(true);
+                            setIsRenameModalOpen(true);
+                          }}
+                        >
+                          <i className="fa-regular fa-pen-to-square"></i>
+                          {form.internal_note ? "Edit Internal Note" : "Add Internal Note"}
+                        </button>
+
                         <hr />
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            setRecentlyViewedMenuOpen(null);
                             setRenamingFormId(form.form_id);
                             setRenameTitle(form.title);
                             setMenuOpen(null);
@@ -546,6 +622,7 @@ function Home() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            setRecentlyViewedMenuOpen(null);
                             setRenamingFormId(form.form_id);
                             setRenameTitle(form.title + " (Copy)");
                             setMenuOpen(null);
@@ -565,6 +642,7 @@ function Home() {
                         <button style={{ color: "red" }}
                           onClick={(e) => {
                             e.stopPropagation();
+                            setRecentlyViewedMenuOpen(null);
                             handleDelete(form.form_id)
                           }}>
                           <i className="fa-solid fa-trash"></i>  Move to trash
@@ -778,21 +856,41 @@ function Home() {
                   {menuOpen === form.form_id && (
                     <div ref={menuRef} className={`dropdown-menu ${dropdownDirection}`}>
                       {form.published === 1 && (
-                        <button
-                          onClick={() => {
-                            const publicUrl = `${window.location.origin}/forms/${form.form_id}`;
-                            navigator.clipboard.writeText(publicUrl);
-                            Swal.fire("Copied!", `Share this link: <br><b>${publicUrl}</b>`, "success");
-                            setMenuOpen(null);
-                          }}
-                        >
-                          <i className="fa-solid fa-share"></i> Copy link
-                        </button>
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const publicUrl = `${window.location.origin}/forms/${form.form_id}`;
+                              navigator.clipboard.writeText(publicUrl);
+                              Swal.fire("Copied!", `Share this link: <br><b>${publicUrl}</b>`, "success");
+                              setMenuOpen(null);
+                            }}
+                          >
+                            <i className="fa-solid fa-share"></i> Copy link
+                          </button>
+                          <hr />
+                        </>
                       )}
 
                       <button>
                         <i className="fa-regular fa-star"></i> Star
                       </button>
+
+                      <button
+                        onClick={() => {
+                          setRenamingFormId(form.form_id);
+                          setInternalNote(form.internal_note || ""); // Optional: load existing note
+                          setMenuOpen(null);
+                          setIsDuplicateMode(false);
+                          setIsNoteMode(true);
+                          setIsRenameModalOpen(true);
+                        }}
+                      >
+                        <i className="fa-regular fa-pen-to-square"></i>
+                        {form.internal_note ? "Edit Internal Note" : "Add Internal Note"}
+                      </button>
+
+
                       <hr />
                       <button
                         onClick={() => {
@@ -800,6 +898,7 @@ function Home() {
                           setRenameTitle(form.title);
                           setMenuOpen(null);
                           setIsDuplicateMode(false);
+                          setIsNoteMode(false);
                           setIsRenameModalOpen(true);
                         }}
                       >
@@ -812,6 +911,7 @@ function Home() {
                           setRenameTitle(form.title + " (Copy)");
                           setMenuOpen(null);
                           setIsDuplicateMode(true); // Set duplicate mode
+                          setIsNoteMode(false);
                           setIsRenameModalOpen(true);
                         }}
                       >
@@ -844,39 +944,85 @@ function Home() {
               ✖
             </button>
 
-            <h3 className="rename-modal-title">
-              {isDuplicateMode ? `Duplicate: ${renameTitle.replace(" (Copy)", "")}` : "Name your form"}
-            </h3>
+            {isNoteMode ? (
+              <>
+                <h3 className="rename-modal-title">Edit Internal Note</h3>
+                <p style={{ fontSize: "12px", marginBottom: "8px", color: "#555" }}>
+                  Add any information
+                </p>
+                <textarea
+                  value={internalNote}
+                  onChange={(e) => setInternalNote(e.target.value)}
+                  className="rename-modal-input"
+                  style={{ height: "100px", resize: "vertical" }}
+                  autoFocus
+                />
+              </>
+            ) : (
+              <>
+                <h3 className="rename-modal-title">
+                  {isDuplicateMode ? `Duplicate: ${renameTitle.replace(" (Copy)", "")}` : "Name your form"}
+                </h3>
 
-            {isDuplicateMode && (
-              <p style={{ fontSize: "12px", marginBottom: "8px", color: "#555" }}>
-                New form name will be: <strong>{renameTitle}</strong>
-              </p>
+                {isDuplicateMode && (
+                  <p style={{ fontSize: "12px", marginBottom: "8px", color: "#555" }}>
+                    New form name will be: <strong>{renameTitle}</strong>
+                  </p>
+                )}
+
+                <input
+                  type="text"
+                  value={renameTitle}
+                  onChange={(e) => setRenameTitle(e.target.value)}
+                  className="rename-modal-input"
+                  autoFocus
+                />
+              </>
             )}
 
-            <input
-              type="text"
-              value={renameTitle}
-              onChange={(e) => setRenameTitle(e.target.value)}
-              className="rename-modal-input"
-              autoFocus
-            />
-
             <div className="rename-modal-buttons">
+              {forms.find(f => f.form_id === renamingFormId)?.internal_note?.trim() && (
+                <button
+                  className="rename-delete-btn"
+                  onClick={() => {
+                    Swal.fire({
+                      title: 'Delete this note?',
+                      icon: 'warning',
+                      showCancelButton: true,
+                      confirmButtonText: 'Yes, delete it!',
+                      cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                      if (result.isConfirmed) {
+                        handleSaveNote(renamingFormId, ""); // Save empty string to remove note
+                        setInternalNote("");
+                        setIsRenameModalOpen(false);
+                        setIsNoteMode(false);
+                      }
+                    });
+                  }}
+                >
+                  Delete
+                </button>
+              )}
+
               <button
                 className="rename-save-btn"
                 onClick={() => {
-                  if (isDuplicateMode) {
-                    handleDuplicateForm(renamingFormId, renameTitle); // pass the new title
+                  if (isNoteMode) {
+                    handleSaveNote(renamingFormId, internalNote); // You define this function
+                  } else if (isDuplicateMode) {
+                    handleDuplicateForm(renamingFormId, renameTitle);
                   } else {
                     handleRenameSubmit(renamingFormId);
                   }
-                  setIsRenameModalOpen(false); // Close modal
-                  setIsDuplicateMode(false);  // Reset mode
+                  setIsRenameModalOpen(false);
+                  setIsDuplicateMode(false);
+                  setIsNoteMode(false);
                 }}
               >
-                {isDuplicateMode ? "Duplicate" : "Continue"}
+                {isNoteMode ? "Save" : isDuplicateMode ? "Duplicate" : "Continue"}
               </button>
+
             </div>
           </div>
         </div>
