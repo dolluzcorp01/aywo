@@ -201,12 +201,12 @@ function Home() {
     setRecentlyViewed(storedRecentlyViewed);
   }, []);
 
-  const handleFormClick = (form_id, title, response_count, published) => {
+  const handleFormClick = (form_id, title, response_count, published, internal_note) => {
     // Navigate to form builder
     navigate(`/form-builder/form-${form_id}`);
 
     // Update recently viewed forms
-    const updatedRecentlyViewed = [{ form_id, title, response_count, published }, ...recentlyViewed.filter(f => f.form_id !== form_id)].slice(0, 3);
+    const updatedRecentlyViewed = [{ form_id, title, response_count, published, internal_note }, ...recentlyViewed.filter(f => f.form_id !== form_id)].slice(0, 3);
     setRecentlyViewed(updatedRecentlyViewed);
     localStorage.setItem("recentlyViewedForms", JSON.stringify(updatedRecentlyViewed));
   };
@@ -544,25 +544,51 @@ function Home() {
             <div className="recently-viewed-list">
               {recentlyViewed.map((form) => (
                 <div className="recently-viewed-card"
-                  onClick={() => handleFormClick(form.form_id, form.title, form.response_count, form.published)}
+                  onClick={() => handleFormClick(form.form_id, form.title, form.response_count, form.published, form.internal_note)}
                   onMouseEnter={() => setHoveredFormId(form.form_id)}
                   onMouseLeave={() => setHoveredFormId(null)}
                 >
                   {/* Top Row */}
                   <div className="recently-viewed-header">
-                    {/* File Icon */}
-                    <div className="recently-viewed-icon-container">
-                      <i className="fa-solid fa-file-alt recently-viewed-icon"></i>
+                    {/* Left section */}
+                    <div className="left-section">
+                      <div className="recently-viewed-icon-container">
+                        <i className="fa-solid fa-file-alt recently-viewed-icon"></i>
+                      </div>
                     </div>
 
-                    {/* Three-dot menu (shown on hover) */}
-                    <i
-                      className="fa-solid fa-ellipsis-vertical recently-viewed-menu"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setRecentlyViewedMenuOpen(recentlyViewedMenuOpen === form.form_id ? null : form.form_id);
-                      }}
-                    ></i>
+                    {/* Right section */}
+                    <div className="right-section">
+                      {form.internal_note && (
+                        <i
+                          style={{
+                            marginRight: "10px",
+                            fontSize: "1.3rem"
+                          }}
+                          className="fa-regular fa-comment-dots note_icon recently-viewed-menu"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRenamingFormId(form.form_id);
+                            setInternalNote(form.internal_note || "");
+                            setMenuOpen(null);
+                            setIsDuplicateMode(false);
+                            setIsNoteMode(true);
+                            setIsRenameModalOpen(true);
+                          }}
+                        ></i>
+                      )}
+
+                      <i
+                        style={{
+                          fontSize: "1.3rem"
+                        }}
+                        className="fa-solid fa-ellipsis-vertical recently-viewed-menu"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRecentlyViewedMenuOpen(recentlyViewedMenuOpen === form.form_id ? null : form.form_id);
+                        }}
+                      ></i>
+                    </div>
 
                     {recentlyViewedMenuOpen === form.form_id && (
                       <div ref={menuRef} className={`dropdown-menu ${dropdownDirection}`}>
@@ -782,7 +808,7 @@ function Home() {
 
                 <div
                   className="form-card-content"
-                  onClick={() => handleFormClick(form.form_id, form.title, form.response_count, form.published)}
+                  onClick={() => handleFormClick(form.form_id, form.title, form.response_count, form.published, form.internal_note)}
                 >
                   {renamingFormId === form.form_id ? (
                     <div ref={renameRef} className="rename-input-container">
@@ -822,6 +848,7 @@ function Home() {
                       color: form.response_count > 0 ? "#1a73e8" : "#6b7280",
                       textDecoration: form.response_count > 0 ? "underline" : "none",
                       marginRight: "12px",
+                      marginTop: "12px",
                     }}
                     onClick={(e) => {
                       if (form.response_count > 0) {
@@ -835,8 +862,19 @@ function Home() {
                 )}
 
                 <div className="menu-container">
-                  <i
-                    className="fa-solid fa-ellipsis-vertical menu-icon"
+                  {form.internal_note && (
+                    <i className="fa-regular fa-comment-dots note_icon"
+                      onClick={() => {
+                        setRenamingFormId(form.form_id);
+                        setInternalNote(form.internal_note || ""); // Optional: load existing note
+                        setMenuOpen(null);
+                        setIsDuplicateMode(false);
+                        setIsNoteMode(true);
+                        setIsRenameModalOpen(true);
+                      }}></i>
+                  )}
+
+                  <i className="fa-solid fa-ellipsis-vertical menu-icon"
                     onClick={(e) => {
                       e.stopPropagation();
                       const iconRect = e.currentTarget.getBoundingClientRect();

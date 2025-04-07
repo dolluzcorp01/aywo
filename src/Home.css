@@ -179,6 +179,16 @@ body {
     margin-top: auto;
 }
 
+.home-container .note_icon {
+    font-size: 16px;
+    color: #B0B0B0;
+    cursor: pointer;
+}
+
+.home-container .note_icon:hover {
+    color: gray;
+}
+
 .home-container .menu-icon {
     font-size: 16px;
     color: #B0B0B0;
@@ -547,7 +557,6 @@ body {
 
 /* Three-dot menu */
 .recently-viewed-menu {
-    font-size: 16px;
     color: #A0A0A0;
     cursor: pointer;
     padding: 5px;
