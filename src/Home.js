@@ -1479,13 +1479,17 @@ function Home() {
             <div className="modal-body">
               <h5 className="modal-subtitle mt-2">Choose how to get started</h5>
               <div className="modal-options p-4">
-                <div className="option-card" onClick={handleBlankClick}>
-                  <div className="option-icon colored-icon-blank">📄</div>
+                <div className="option-card blank-card" onClick={handleBlankClick}>
+                  <div className="option-icon colored-icon-blank">
+                    <i class="fa-solid fa-file-alt" style={{ color: "rgb(26, 115, 232)" }}></i>
+                  </div>
                   <div className="option-text">Blank</div>
                   <small className="option-subtext">Start from scratch</small>
                 </div>
-                <div className="option-card" onClick={handleTemplateClick}>
-                  <div className="option-icon colored-icon-template">📑</div>
+                <div className="option-card template-card" onClick={handleTemplateClick}>
+                  <div className="option-icon colored-icon-template">
+                    <i class="fa-solid fa-folder-open" style={{ color: "black" }}></i>
+                  </div>
                   <div className="option-text">Template</div>
                   <small className="option-subtext">Pre-built designs</small>
                 </div>
