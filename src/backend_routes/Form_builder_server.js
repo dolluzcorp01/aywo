@@ -201,7 +201,7 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
         if (sortBy === "responses_asc") orderClause = "ORDER BY response_count ASC";
 
         const query = `
-            SELECT f.form_id, f.title, f.internal_note, f.published, 
+            SELECT f.form_id, f.title, f.starred, f.is_closed, f.internal_note, f.published, 
                 COUNT(fr.response_id) AS response_count 
             FROM forms f
             LEFT JOIN form_responses fr ON f.form_id = fr.form_id
@@ -636,6 +636,65 @@ router.post("/save-note/:formId", verifyJWT, async (req, res) => {
         res.json({ message: "Note saved successfully", newForm: updatedForm });
     } catch (error) {
         console.error("Error saving internal note:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// ✅ Close form (Protected Route)
+router.post("/close-form/:formId", verifyJWT, async (req, res) => {
+    const { formId } = req.params;
+    const { is_closed } = req.body; // TRUE or FALSE
+    const userId = req.user_id;
+
+    if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+        const result = await queryPromise(
+            db,
+            "UPDATE forms SET is_closed = ? WHERE form_id = ? AND user_id = ?",
+            [is_closed, formId, userId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        const [updatedForm] = await queryPromise(
+            db,
+            "SELECT * FROM forms WHERE form_id = ?",
+            [formId]
+        );
+
+        const statusMsg = is_closed ? "closed" : "re-opened";
+        res.json({ message: `Form ${statusMsg} successfully`, newForm: updatedForm });
+    } catch (error) {
+        console.error("Error updating form status:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// ✅ Toggle Starred Status (Protected Route)
+router.post("/toggle-star/:formId", verifyJWT, async (req, res) => {
+    const { formId } = req.params;
+    const { starred } = req.body;
+    const userId = req.user_id;
+
+    try {
+        const result = await queryPromise(
+            db,
+            "UPDATE forms SET starred = ? WHERE form_id = ? AND user_id = ?",
+            [starred, formId, userId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        res.json({ message: `Form ${starred ? "starred" : "unstarred"} successfully` });
+    } catch (error) {
+        console.error("Error toggling star:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 });

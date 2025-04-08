@@ -18,7 +18,7 @@ const SearchPopup = styled.div`
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
   padding: 20px;
-  min-width: 600px;  
+  min-width: 600px;
   max-width: 700px;
   max-height: 500px;
   z-index: 10000;
@@ -89,7 +89,7 @@ const SearchPopup = styled.div`
     max-height: 250px;
     overflow-y: auto;
   }
-        
+
   .form-item {
     display: flex;
     align-items: center;
@@ -154,11 +154,11 @@ function Home() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(null); // Track which menu is open
+  const [StarredFormsmenuOpen, setStarredFormsMenuOpen] = useState(null); // Track which menu is open
   const [recentlyViewedMenuOpen, setRecentlyViewedMenuOpen] = useState(null); // Recently Viewed menu
   const [renamingFormId, setRenamingFormId] = useState([null]);
   const [renameTitle, setRenameTitle] = useState("");
   const menuRef = useRef(null);
-  const renameRef = useRef(null);
   const [sortBy, setSortBy] = useState("created_at_desc"); // Default sorting
   const [hoveredFormId, setHoveredFormId] = useState(null);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
@@ -201,12 +201,13 @@ function Home() {
     setRecentlyViewed(storedRecentlyViewed);
   }, []);
 
-  const handleFormClick = (form_id, title, response_count, published, internal_note) => {
+  const handleFormClick = (form_id, title, response_count, published, internal_note, is_closed, starred) => {
+    debugger
     // Navigate to form builder
     navigate(`/form-builder/form-${form_id}`);
 
     // Update recently viewed forms
-    const updatedRecentlyViewed = [{ form_id, title, response_count, published, internal_note }, ...recentlyViewed.filter(f => f.form_id !== form_id)].slice(0, 3);
+    const updatedRecentlyViewed = [{ form_id, title, response_count, published, internal_note, is_closed, starred }, ...recentlyViewed.filter(f => f.form_id !== form_id)].slice(0, 3);
     setRecentlyViewed(updatedRecentlyViewed);
     localStorage.setItem("recentlyViewedForms", JSON.stringify(updatedRecentlyViewed));
   };
@@ -364,6 +365,15 @@ function Home() {
             form.form_id === formId ? { ...form, internal_note: note } : form
           )
         );
+
+        // ✅ Update recentlyViewed localStorage (if it exists)
+        const updatedRecentlyViewed = recentlyViewed.map(f =>
+          f.form_id === formId ? { ...f, internal_note: note } : f
+        );
+
+        setRecentlyViewed(updatedRecentlyViewed);
+        localStorage.setItem("recentlyViewedForms", JSON.stringify(updatedRecentlyViewed));
+
       } else {
         console.error("Note save failed:", data.error);
         Swal.fire({
@@ -379,6 +389,90 @@ function Home() {
         title: 'Server Error',
         text: 'An error occurred while saving the note.',
       });
+    }
+  };
+
+  const handleCloseForm = async (formId, isCurrentlyClosed) => {
+    const action = isCurrentlyClosed ? "re-open" : "close";
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/form_builder/close-form/${formId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_closed: !isCurrentlyClosed }), // Toggle value
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Swal.fire({
+          icon: 'success',
+          title: `Form ${action}ed successfully!`,
+          showConfirmButton: false,
+          timer: 1500,
+        });
+
+        const updatedRecentlyViewed = recentlyViewed.map(f =>
+          f.form_id === formId ? { ...f, is_closed: !isCurrentlyClosed } : f
+        );
+        setRecentlyViewed(updatedRecentlyViewed);
+        localStorage.setItem("recentlyViewedForms", JSON.stringify(updatedRecentlyViewed));
+        fetchForms();
+      } else {
+        console.error(`Form ${action} failed:`, data.error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.error,
+        });
+      }
+    } catch (error) {
+      console.error(`Error trying to ${action} form:`, error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Server Error',
+        text: `An error occurred while trying to ${action} the form.`,
+      });
+    }
+  };
+
+  const handleStarredForm = async (formId, starred) => {
+    const newStarredStatus = !starred;
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/form_builder/toggle-star/${formId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ starred: newStarredStatus }),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        // Update the recentlyViewed list in local state and localStorage
+        const updatedRecentlyViewed = recentlyViewed.map(form => {
+          if (form.form_id === formId) {
+            return { ...form, starred: newStarredStatus };
+          }
+          return form;
+        });
+
+        setRecentlyViewed(updatedRecentlyViewed);
+        localStorage.setItem("recentlyViewedForms", JSON.stringify(updatedRecentlyViewed));
+
+        fetchForms(); // refresh list if needed
+        Swal.fire({
+          icon: "success",
+          title: `Form ${newStarredStatus ? "starred" : "unstarred"}!`,
+          timer: 1200,
+          showConfirmButton: false,
+        });
+      } else {
+        Swal.fire("Error", result.error, "error");
+      }
+    } catch (err) {
+      Swal.fire("Error", "Something went wrong", "error");
     }
   };
 
@@ -482,6 +576,7 @@ function Home() {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setMenuOpen(null);
+        setStarredFormsMenuOpen(null);
       }
 
       if (!event.target.closest(".recently-viewed-menu") && !event.target.closest(".dropdown-menu")) {
@@ -544,16 +639,27 @@ function Home() {
             <div className="recently-viewed-list">
               {recentlyViewed.map((form) => (
                 <div className="recently-viewed-card"
-                  onClick={() => handleFormClick(form.form_id, form.title, form.response_count, form.published, form.internal_note)}
+                  onClick={() => handleFormClick(form.form_id, form.title, form.response_count, form.published, form.internal_note, form.is_closed)}
                   onMouseEnter={() => setHoveredFormId(form.form_id)}
                   onMouseLeave={() => setHoveredFormId(null)}
+                  title={form.is_closed ? "This form is closed" : ""}
                 >
                   {/* Top Row */}
                   <div className="recently-viewed-header">
                     {/* Left section */}
                     <div className="left-section">
-                      <div className="recently-viewed-icon-container">
-                        <i className="fa-solid fa-file-alt recently-viewed-icon"></i>
+                      <div
+                        className="recently-viewed-icon-container"
+                        style={{
+                          backgroundColor: form.is_closed ? "#E5E7EB" : "#d3e3fd",
+                        }}
+                      >
+                        <i
+                          className="fa-solid fa-file-alt recently-viewed-icon"
+                          style={{
+                            color: form.is_closed ? "rgb(75 85 99)" : "#1a73e8",
+                          }}
+                        ></i>
                       </div>
                     </div>
 
@@ -610,8 +716,19 @@ function Home() {
                           </>
                         )}
 
-                        <button>
-                          <i className="fa-regular fa-star"></i> Star
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRecentlyViewedMenuOpen(null);
+                            handleStarredForm(form.form_id, form.starred)
+                          }}
+                        >
+                          {form.starred ? (
+                            <i className="fa-solid fa-star" style={{ color: "#ffc738" }}></i>
+                          ) : (
+                            <i className="fa-regular fa-star"></i>
+                          )}
+                          <span> Star</span>
                         </button>
 
                         <button
@@ -661,8 +778,15 @@ function Home() {
 
                         <hr />
 
-                        <button>
-                          <i className="fa-solid fa-lock"></i> Close form
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            setRecentlyViewedMenuOpen(null);
+                            handleCloseForm(form.form_id, form.is_closed);
+                          }}
+                        >
+                          <i className={`fa-solid ${form.is_closed ? "fa-unlock" : "fa-lock"}`}></i>
+                          {form.is_closed ? " Re-open form" : " Close form"}
                         </button>
 
                         <button style={{ color: "red" }}
@@ -680,7 +804,18 @@ function Home() {
                   </div>
 
                   {/* Title */}
-                  < p className="form-title-text" > {form.title}</p>
+                  <div className="recently-viewed-form-title-row">
+                    <p className="form-title-text">{form.title}</p>
+                    {form.starred ? (
+                      <i className="fa-solid fa-star form-star-icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStarredForm(form.form_id, form.starred)
+                        }}
+                        style={{ color: "#ffc738", marginLeft: "5px", fontSize: "0.7rem" }}></i>
+                    ) : ("")
+                    }
+                  </div>
 
                   {/* Responses */}
                   <p
@@ -699,12 +834,204 @@ function Home() {
                   >
                     {form.response_count} {form.response_count === 1 ? "response" : "responses"}
                   </p>
+
                 </div>
               ))}
             </div>
           </section >
-        )
-        }
+        )}
+
+        {/* Starred Forms */}
+        {forms.some(form => form.starred) && (
+          <>
+            <h4 className="starred-forms-title" style={{ marginTop: "30px", marginBottom: "25px", fontSize: "0.8rem", color: "gray" }}>STARRED</h4>
+            <div className="starred-forms-list" style={{ display: "flex", gap: "20px" }}>
+              {forms.filter(form => form.starred).map(form => (
+                <div
+                  className={`form-card ${StarredFormsmenuOpen === form.form_id ? "no-transform" : ""}`}
+                  key={form.form_id}
+                  ref={menuRef}
+                  title={form.is_closed ? "This form is closed" : ""}
+                >
+                  <div
+                    className="form-icon-container"
+                    style={{
+                      backgroundColor: form.is_closed ? "#E5E7EB" : "#d3e3fd",
+                    }}
+                  >
+                    <i
+                      className="fa-solid fa-file-alt form-icon"
+                      style={{
+                        color: form.is_closed ? "rgb(75 85 99)" : "#1a73e8",
+                      }}
+                    ></i>
+                  </div>
+
+                  <div
+                    className="form-card-content"
+                    onClick={() => handleFormClick(form.form_id, form.title, form.response_count, form.published, form.internal_note, form.is_closed, form.starred)}
+                  >
+
+                    <div className="form-title-row">
+                      <p className="form-title">{form.title}</p>
+                      {form.starred ? (
+                        <i className="fa-solid fa-star form-star-icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStarredForm(form.form_id, form.starred)
+                          }}
+                          style={{ color: "#ffc738", marginLeft: "5px", fontSize: "0.7rem" }}></i>
+                      ) : ("")
+                      }
+                    </div>
+
+                    <p
+                      className="response-count"
+                      style={{
+                        cursor: form.response_count > 0 ? "pointer" : "default",
+                        color: form.response_count > 0 ? "#1a73e8" : "#6b7280",
+                        textDecoration: form.response_count > 0 ? "underline" : "none",
+                      }}
+                      onClick={(e) => {
+                        if (form.response_count > 0) {
+                          e.stopPropagation();
+                          navigate(`/responses/${form.form_id}`);
+                        }
+                      }}
+                    >
+                      {form.response_count} {form.response_count === 1 ? "response" : "responses"}
+                    </p>
+                  </div>
+
+                  <div className="menu-container">
+                    {form.internal_note && (
+                      <i className="fa-regular fa-comment-dots note_icon"
+                        onClick={() => {
+                          setRenamingFormId(form.form_id);
+                          setInternalNote(form.internal_note || ""); // Optional: load existing note
+                          setStarredFormsMenuOpen(null);
+                          setIsDuplicateMode(false);
+                          setIsNoteMode(true);
+                          setIsRenameModalOpen(true);
+                        }}></i>
+                    )}
+
+                    <i className="fa-solid fa-ellipsis-vertical menu-icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const iconRect = e.currentTarget.getBoundingClientRect();
+                        const dropdownHeight = 240; // Approx height of your dropdown
+                        const spaceBelow = window.innerHeight - iconRect.bottom;
+
+                        if (spaceBelow < dropdownHeight) {
+                          setDropdownDirection('above');
+                        } else {
+                          setDropdownDirection('below');
+                        }
+
+                        setStarredFormsMenuOpen(StarredFormsmenuOpen === form.form_id ? null : form.form_id);
+                      }}
+                    ></i>
+
+                    {StarredFormsmenuOpen === form.form_id && (
+                      <div ref={menuRef} className={`dropdown-menu ${dropdownDirection}`}>
+                        {form.published === 1 && (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const publicUrl = `${window.location.origin}/forms/${form.form_id}`;
+                                navigator.clipboard.writeText(publicUrl);
+                                Swal.fire("Copied!", `Share this link: <br><b>${publicUrl}</b>`, "success");
+                                setStarredFormsMenuOpen(null);
+                              }}
+                            >
+                              <i className="fa-solid fa-share"></i> Copy link
+                            </button>
+                            <hr />
+                          </>
+                        )}
+
+                        <button
+                          onClick={() => {
+                            handleStarredForm(form.form_id, form.starred)
+                          }}
+                        >
+                          {form.starred ? (
+                            <i className="fa-solid fa-star" style={{ color: "#ffc738" }}></i>
+                          ) : (
+                            <i className="fa-regular fa-star"></i>
+                          )}
+                          <span> Star</span>
+
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setRenamingFormId(form.form_id);
+                            setInternalNote(form.internal_note || ""); // Optional: load existing note
+                            setStarredFormsMenuOpen(null);
+                            setIsDuplicateMode(false);
+                            setIsNoteMode(true);
+                            setIsRenameModalOpen(true);
+                          }}
+                        >
+                          <i className="fa-regular fa-pen-to-square"></i>
+                          {form.internal_note ? "Edit Internal Note" : "Add Internal Note"}
+                        </button>
+
+
+                        <hr />
+                        <button
+                          onClick={() => {
+                            setRenamingFormId(form.form_id);
+                            setRenameTitle(form.title);
+                            setStarredFormsMenuOpen(null);
+                            setIsDuplicateMode(false);
+                            setIsNoteMode(false);
+                            setIsRenameModalOpen(true);
+                          }}
+                        >
+                          <i className="fa-solid fa-pen"></i> Rename
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setRenamingFormId(form.form_id);
+                            setRenameTitle(form.title + " (Copy)");
+                            setStarredFormsMenuOpen(null);
+                            setIsDuplicateMode(true); // Set duplicate mode
+                            setIsNoteMode(false);
+                            setIsRenameModalOpen(true);
+                          }}
+                        >
+                          <i className="fa-regular fa-copy"></i> Duplicate
+                        </button>
+
+                        <hr />
+
+                        <button
+                          onClick={async () => {
+                            setStarredFormsMenuOpen(null);
+                            handleCloseForm(form.form_id, form.is_closed);
+                          }}
+                        >
+                          <i className={`fa-solid ${form.is_closed ? "fa-unlock" : "fa-lock"}`}></i>
+                          {form.is_closed ? " Re-open form" : " Close form"}
+                        </button>
+
+                        <button style={{ color: "red" }} onClick={() => handleDelete(form.form_id)}>
+                          <i className="fa-solid fa-trash"></i>  Move to trash
+                        </button>
+
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         <div className="forms-header" style={{ marginTop: "50px" }}>
           <h4 className="section-title">My Forms</h4>
@@ -756,10 +1083,7 @@ function Home() {
               ))}
             </div>
 
-
             <div ref={orderByRef} className={`custom-dropdown ${isOrderByOpen ? "open" : ""}`}>
-
-
               <button className="dropdown-toggle-btn" onClick={() => setIsOrderByOpen(!isOrderByOpen)}>
                 <i className={`fa ${selectedOption?.icon}`}></i> {selectedOption?.label || "Select"}
                 <i className={`fa ${isOrderByOpen ? "fa-chevron-up" : "fa-chevron-down"}`} style={{ marginLeft: "8px", fontSize: "10px" }}></i>
@@ -801,22 +1125,42 @@ function Home() {
                 className={`form-card ${viewType === "list" ? "list-view" : ""} ${menuOpen === form.form_id ? "no-transform" : ""}`}
                 key={form.form_id}
                 ref={menuRef}
+                title={form.is_closed ? "This form is closed" : ""}
               >
-                <div className="form-icon-container">
-                  <i className="fa-solid fa-file-alt form-icon"></i>
+                <div
+                  className="form-icon-container"
+                  style={{
+                    backgroundColor: form.is_closed ? "#E5E7EB" : "#d3e3fd",
+                  }}
+                >
+                  <i
+                    className="fa-solid fa-file-alt form-icon"
+                    style={{
+                      color: form.is_closed ? "rgb(75 85 99)" : "#1a73e8",
+                    }}
+                  ></i>
                 </div>
 
                 <div
                   className="form-card-content"
-                  onClick={() => handleFormClick(form.form_id, form.title, form.response_count, form.published, form.internal_note)}
+                  style={{
+                    ...(viewType === "list" && { marginLeft: "-12%" }), // apply only in list view
+                  }}
+                  onClick={() => handleFormClick(form.form_id, form.title, form.response_count, form.published, form.internal_note, form.is_closed, form.starred)}
                 >
-                  {renamingFormId === form.form_id ? (
-                    <div ref={renameRef} className="rename-input-container">
-                      <p className="form-title-text">{form.title}</p>
-                    </div>
-                  ) : (
+
+                  <div className="form-title-row">
                     <p className="form-title">{form.title}</p>
-                  )}
+                    {form.starred ? (
+                      <i className="fa-solid fa-star form-star-icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStarredForm(form.form_id, form.starred)
+                        }}
+                        style={{ color: "#ffc738", marginLeft: "5px", fontSize: "0.7rem" }}></i>
+                    ) : ("")
+                    }
+                  </div>
 
                   {/* Only show response count inside form-card-content in grid view */}
                   {viewType !== "list" && (
@@ -910,8 +1254,19 @@ function Home() {
                         </>
                       )}
 
-                      <button>
-                        <i className="fa-regular fa-star"></i> Star
+                      <button
+                        onClick={() => {
+                          setMenuOpen(null);
+                          handleStarredForm(form.form_id, form.starred)
+                        }}
+                      >
+                        {form.starred ? (
+                          <i className="fa-solid fa-star" style={{ color: "#ffc738" }}></i>
+                        ) : (
+                          <i className="fa-regular fa-star"></i>
+                        )}
+                        <span> Star</span>
+
                       </button>
 
                       <button
@@ -958,8 +1313,14 @@ function Home() {
 
                       <hr />
 
-                      <button>
-                        <i className="fa-solid fa-lock"></i> Close form
+                      <button
+                        onClick={async () => {
+                          setMenuOpen(null);
+                          handleCloseForm(form.form_id, form.is_closed);
+                        }}
+                      >
+                        <i className={`fa-solid ${form.is_closed ? "fa-unlock" : "fa-lock"}`}></i>
+                        {form.is_closed ? " Re-open form" : " Close form"}
                       </button>
 
                       <button style={{ color: "red" }} onClick={() => handleDelete(form.form_id)}>

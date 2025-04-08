@@ -70,30 +70,6 @@ body {
     align-items: stretch;
 }
 
-.home-container .form-card.no-transform {
-    transform: none !important;
-    /* Disable transform when dropdown is open */
-}
-
-.home-container .form-card {
-    display: flex;
-    align-items: center;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e0e0e0;
-    width: 260px;
-    height: 90px;
-    position: relative;
-    transition: all 0.2s ease-in-out;
-    transform: scale(1);
-}
-
-.home-container .form-card:hover {
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-    transform: translateY(-5px) scale(1.05);
-}
-
 .home-container .form-card.list-view {
     width: 100%;
     height: 64px;
@@ -138,6 +114,30 @@ body {
     text-overflow: ellipsis;
 }
 
+.home-container .form-card.no-transform {
+    transform: none !important;
+    /* Disable transform when dropdown is open */
+}
+
+.home-container .form-card {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e0e0e0;
+    width: 260px;
+    height: 90px;
+    position: relative;
+    transition: all 0.2s ease-in-out;
+    transform: scale(1);
+}
+
+.home-container .form-card:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    transform: translateY(-5px) scale(1.05);
+}
+
 .home-container .form-icon-container {
     width: 50px;
     height: 100%;
@@ -147,7 +147,9 @@ body {
     justify-content: center;
     border-top-left-radius: 8px;
     border-bottom-left-radius: 8px;
+    flex-shrink: 0;
 }
+
 
 .home-container .form-icon {
     font-size: 20px;
@@ -161,6 +163,16 @@ body {
     flex-direction: column;
     justify-content: center;
     position: relative;
+    max-width: 60%;
+}
+
+.home-container .form-title-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .home-container .form-title {
@@ -169,24 +181,20 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 150px;
     margin-top: 20px;
+    max-width: 70%;
+    flex-shrink: 1;
 }
 
 .home-container .response-count {
     font-size: 15px;
     color: gray;
-    margin-top: auto;
 }
 
-.home-container .note_icon {
-    font-size: 16px;
-    color: #B0B0B0;
-    cursor: pointer;
-}
-
-.home-container .note_icon:hover {
-    color: gray;
+.home-container .menu-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .home-container .menu-icon {
@@ -202,9 +210,14 @@ body {
     color: gray;
 }
 
-.home-container .menu-container {
-    position: relative;
-    display: inline-block;
+.home-container .note_icon {
+    font-size: 16px;
+    color: #B0B0B0;
+    cursor: pointer;
+}
+
+.home-container .note_icon:hover {
+    color: gray;
 }
 
 .home-container .recently-viewed-dropdown {
@@ -509,6 +522,13 @@ body {
     font-weight: bold;
 }
 
+.starred-forms-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: flex-start;
+}
+
 /* Ensure cards stay in the same row */
 .recently-viewed-list {
     display: flex;
@@ -568,17 +588,32 @@ body {
     visibility: visible;
 }
 
+.recently-viewed-form-title-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
 /* Title */
 .form-title-text {
-    font-size: 15px;
-    margin: 10px 0;
+    font-size: 14px;
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 10px 0;
+    max-width: 70%;
+    flex-shrink: 1;
 }
 
 /* Responses */
 .recently-viewed-responses {
     font-size: 14px;
     color: gray;
+    margin-bottom: -10px;
 }
 
 .rename-modal-overlay {
