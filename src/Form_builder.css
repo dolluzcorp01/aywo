@@ -4,7 +4,7 @@
     flex-direction: column;
     width: 100%;
     height: 100vh;
-    background-color: #f8f9fa;
+    background-color: white;
 }
 
 /* Adjusting body inside form-builder */
@@ -59,11 +59,16 @@
 .form-container {
     position: relative;
     width: 100%;
-    height: auto; /* Allow auto height instead of a fixed height */
-    min-height: 100vh; /* Ensure it expands properly */
-    max-height: none; /* Prevent height restriction */
-    overflow-y: auto; /* Allow vertical scrolling */
-    padding-bottom: 100px; /* Ensure space for the submit button */
+    height: auto;
+    /* Allow auto height instead of a fixed height */
+    min-height: 100vh;
+    /* Ensure it expands properly */
+    max-height: none;
+    /* Prevent height restriction */
+    overflow-y: auto;
+    /* Allow vertical scrolling */
+    padding-bottom: 100px;
+    /* Ensure space for the submit button */
 }
 
 .form-builder .form-container {

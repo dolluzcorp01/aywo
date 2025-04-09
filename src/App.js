@@ -4,6 +4,7 @@ import Layout from "./Layout";
 import Login from "./Login";
 import Home from "./Home";
 import FormBuilder from "./Form_builder";
+import FormBuilderLayout from "./FormBuilderLayout";
 import PublishedForm from "./PublishedForm";
 import Responses from "./Responses";
 
@@ -11,7 +12,9 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Login />} /> {/* ✅ Render Login for /signup */}
+      <Route path="/signup" element={<Login />} />
+
+      {/* Normal layout */}
       <Route
         path="/home"
         element={
@@ -20,34 +23,35 @@ function App() {
           </Layout>
         }
       />
+
+      {/* ✅ Form Builder uses custom header */}
       <Route
         path="/form-builder"
         element={
-          <Layout>
+          <FormBuilderLayout>
             <FormBuilder />
-          </Layout>
+          </FormBuilderLayout>
         }
       />
-      {/* ✅ Correct Dynamic Route */}
       <Route
         path="/form-builder/:formId"
         element={
-          <Layout>
+          <FormBuilderLayout>
             <FormBuilder />
-          </Layout>
+          </FormBuilderLayout>
         }
       />
 
-      {/* ✅ Route for Published Form */}
+      {/* Published form (no layout) */}
       <Route path="/forms/:formId" element={<PublishedForm />} />
 
-      {/* ✅ New Route for Responses Page */}
+      {/* Responses page uses default layout */}
       <Route
         path="/responses/:formId"
         element={
-          <Layout>
+          <FormBuilderLayout>
             <Responses />
-          </Layout>
+          </FormBuilderLayout>
         }
       />
 

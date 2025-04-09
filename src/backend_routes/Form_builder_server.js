@@ -191,27 +191,38 @@ router.put("/rename-form/:formId", verifyJWT, async (req, res) => {
 router.get("/get-forms", verifyJWT, async (req, res) => {
     try {
         const userId = req.user_id;
+        const formId = req.query.formId;
         const sortBy = req.query.sortBy || "created_at_desc";
 
-        let orderClause = "ORDER BY f.created_at DESC"; // Default sorting
+        let orderClause = "ORDER BY f.created_at DESC";
         if (sortBy === "created_at_asc") orderClause = "ORDER BY f.created_at ASC";
         if (sortBy === "title_asc") orderClause = "ORDER BY f.title ASC";
         if (sortBy === "title_desc") orderClause = "ORDER BY f.title DESC";
         if (sortBy === "responses_desc") orderClause = "ORDER BY response_count DESC";
         if (sortBy === "responses_asc") orderClause = "ORDER BY response_count ASC";
 
-        const query = `
+        let query = `
             SELECT f.form_id, f.title, f.starred, f.is_closed, f.internal_note, f.published, 
-                COUNT(fr.response_id) AS response_count 
+                   COUNT(fr.response_id) AS response_count 
             FROM forms f
             LEFT JOIN form_responses fr ON f.form_id = fr.form_id
             WHERE f.user_id = ?
+        `;
+        const params = [userId];
+
+        // ✅ If formId is provided, filter by it
+        if (formId) {
+            query += ` AND f.form_id = ?`;
+            params.push(formId.replace("form-", ""));
+        }
+
+        query += `
             GROUP BY f.form_id, f.title
-            ${orderClause}
+            ${formId ? "" : orderClause}  -- Don’t order if you're fetching a specific form
         `;
 
-        const forms = await queryPromise(db, query, [userId]);
-        res.json(forms);
+        const forms = await queryPromise(db, query, params);
+        res.json(formId ? forms[0] : forms);  // ✅ Return single form object if filtering by formId
     } catch (error) {
         console.error("Error fetching forms:", error);
         res.status(500).json({ error: "Internal server error" });
