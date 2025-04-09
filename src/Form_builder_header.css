@@ -29,6 +29,7 @@
 
 .form_builder_header-form-title-text {
     font-size: 0.9rem;
+    font-weight: 500;
     color: rgb(156 163 175);
     white-space: nowrap;
     overflow: hidden;

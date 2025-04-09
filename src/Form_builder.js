@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Rnd } from "react-rnd";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNotification } from "./NotificationContext";
-import { FaFont, FaEnvelope, FaHashtag, FaList, FaCheckSquare, FaCaretDown, FaCalendarAlt, FaAlignLeft, FaFileAlt, FaTrash, FaRuler, FaTable } from "react-icons/fa";
+import {
+    FaFont, FaEnvelope, FaHashtag, FaList, FaCheckSquare, FaCaretDown,
+    FaCalendarAlt, FaAlignLeft, FaFileAlt, FaTrash, FaRuler, FaTable,
+    FaToggleOn, FaTh, FaCheck, FaImage, FaBoxes, FaGripHorizontal, FaSearch
+} from "react-icons/fa";
 import "./Form_builder.css";
-import { useLocation } from "react-router-dom";
 
 const fieldIcons = {
     "Text Only": <FaFont color="#6c757d" />,
@@ -20,12 +23,21 @@ const fieldIcons = {
     "Paragraph": <FaAlignLeft color="#fd7e14" />,
     "Document Type": <FaFileAlt color="#6f42c1" />,
     "Linear Scale": <FaRuler color="#ff5733" />,
-    "Multiple Choice Grid": <FaTable color="#17a2b8" />
+    "Multiple Choice Grid": <FaTable color="#17a2b8" />,
+
+    "Picture choice": <FaImage color="#ffc107" />,
+    "Multiselect": <FaTh color="#ffc107" />,
+    "Switch": <FaToggleOn color="#20c997" />,
+    "Checkboxes": <FaBoxes color="#6c757d" />,
+    "Choice matrix": <FaGripHorizontal color="#6c757d" />,
+    "Heading": <FaFont color="#007bff" />,
+    "Banner": <FaFileAlt color="#17a2b8" />
 };
 
 const FormBuilder = () => {
     const [formBgColor, setFormBgColor] = useState("gray");
 
+    const [searchTerm, setSearchTerm] = useState("");
     const [fields, setFields] = useState([]);
     const [selectedField, setSelectedField] = useState(null);
     const [lastPosition, setLastPosition] = useState({ x: 50, y: 80 });
@@ -149,15 +161,6 @@ const FormBuilder = () => {
 
                 let submitButtonBottom = submitBtnY + submitBtnHeight;
                 let newHeight = Math.max(maxBottom, submitButtonBottom) + 150; // Add extra padding
-
-                formContainer.style.height = `${newHeight}px`; // Dynamically adjust height
-
-                // Ensure scrolling
-                if (newHeight > window.innerHeight) {
-                    formContainer.style.overflowY = "auto";
-                } else {
-                    formContainer.style.overflowY = "hidden";
-                }
             }
         };
 
@@ -402,7 +405,7 @@ const FormBuilder = () => {
 
             return field;
         });
-        
+
         const formData = {
             form_background: formBgColor,
             title_color: formTitleColor,
@@ -421,7 +424,7 @@ const FormBuilder = () => {
             submit_button_color: submitBtnTextColor,
             submit_button_background: submitBtnBgColor
         };
-        
+
         try {
             if (!isNew && formId) {
                 console.log("Updating form with fields:", fields);
@@ -455,70 +458,68 @@ const FormBuilder = () => {
         }
     };
 
-    const publishForm = async () => {
-        if (!formId) {
-            Swal.fire("Error", "Please save the form before publishing.", "error");
-            return;
-        }
-
-        try {
-            const cleanFormId = formId.replace("form-", "");
-            const response = await axios.put(
-                `http://localhost:5000/api/form_builder/publish-form/${cleanFormId}`,
-                { published: true },
-                { withCredentials: true }
-            );
-
-            const publicUrl = `${window.location.origin}/forms/${cleanFormId}`;
-
-            // Copy link to clipboard
-            await navigator.clipboard.writeText(publicUrl);
-
-            // Show success alert
-            Swal.fire({
-                title: "Success!",
-                html: `Form published successfully! <br> The link has been copied to clipboard: <br> <b>${publicUrl}</b>`,
-                icon: "success"
-            });
-
-        } catch (error) {
-            console.error("Error publishing form:", error);
-            Swal.fire("Error", "Failed to publish the form.", "error");
-        }
-    };
-
     if (loading) return <p>Loading...</p>;
+
+    const FieldButton = ({ type }) => (
+        <button className="field-btn" onClick={() => addField(type)}>
+            <div className="field-icon">{fieldIcons[type] || <FaCheck />}</div>
+            <div className="field-label">{type}</div>
+        </button>
+    );
 
     return (
         <div className="form-builder">
-            <div className="container">
-                <div className="sidebar">
-                    <h2>Field Types</h2>
-                    {Object.keys(fieldIcons).map((type) => (
-                        <button key={type} className="field-btn" onClick={() => addField(type)}>
-                            {fieldIcons[type]} {type}
-                        </button>
-                    ))}
-
-                    {/* Show "Update" and "Publish" buttons only if it's a form and not a template */}
-                    {isEditableForm && (
-                        <>
-                            <button className="update-form-btn" onClick={() => saveOrUpdateForm(false)}>
-                                Update Form
-                            </button>
-                            <button className="publish-form-btn" onClick={() => publishForm()}>
-                                Publish Form
-                            </button>
-                        </>
-                    )}
-
-                    <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)}>
-                        Save Form
-                    </button>
-
+            <div className="sidebar">
+                <div className="search-wrapper">
+                    <FaSearch className="search-icon" />
+                    <input
+                        type="text"
+                        placeholder="Search fields"
+                        className="search-bar"
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                 </div>
 
-                <div className="form-container" style={{ backgroundColor: formBgColor }}>
+                <div className="field-group-scrollable mt-2">
+                    <div className="field-group mt-1">
+                        <h4>Frequently used</h4>
+                        <div className="field-grid">
+                            {["Short Answer", "Multiple Choice", "Email"]
+                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(type => <FieldButton key={type} type={type} />)}
+                        </div>
+                    </div>
+
+                    <div className="field-group mt-1">
+                        <h4>Display text</h4>
+                        <div className="field-grid">
+                            {["Heading", "Paragraph", "Banner"]
+                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(type => <FieldButton key={type} type={type} />)}
+                        </div>
+                    </div>
+
+                    <div className="field-group mt-1">
+                        <h4>Choices</h4>
+                        <div className="field-grid">
+                            {[
+                                "Dropdown", "Picture choice", "Multiselect", "Switch",
+                                "Multiple choice", "Checkbox", "Checkboxes", "Choice matrix"
+                            ]
+                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(type => <FieldButton key={type} type={type} />)}
+                        </div>
+                    </div>
+                </div>
+
+                {isEditableForm && (
+                    <button className="update-form-btn" onClick={() => saveOrUpdateForm(false)}>Update Form</button>
+                )}
+                <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)}>Save Form</button>
+            </div>
+
+            <div className="form-container" style={{ backgroundColor: formBgColor }}>
+                <div className="form-scroll-area">
                     <Rnd
                         default={{ x: formTitleX, y: formTitleY, width: formTitleWidth, height: formTitleHeight }}
                         bounds="parent"
@@ -668,187 +669,185 @@ const FormBuilder = () => {
                             Submit
                         </button>
                     </Rnd>
-
-                </div>
-
-                <div className="customize-section">
-                    <h2>Customize</h2>
-                    <label>Form Title:</label>
-                    <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} />
-
-                    <label>Title Color:</label>
-                    <input type="color" value={formTitleColor} onChange={(e) => setFormTitleColor(e.target.value)} />
-
-                    <label>Title Background Color:</label>
-                    <input type="color" value={formTitleBgColor} onChange={(e) => setFormTitleBgColor(e.target.value)} />
-
-                    <label>Title Font Size:</label>
-                    <input type="number" value={formTitleFontSize} onChange={(e) => setFormTitleFontSize(parseInt(e.target.value))} />
-
-                    <label>Form Background Color:</label>
-                    <input type="color" value={formBgColor} onChange={(e) => setFormBgColor(e.target.value)} />
-
-                    <label>Submit Button Background:</label>
-                    <input
-                        type="color"
-                        value={submitBtnBgColor}
-                        onChange={(e) => setSubmitBtnBgColor(e.target.value)}
-                    />
-
-                    <label>Submit Button Text Color:</label>
-                    <input
-                        type="color"
-                        value={submitBtnTextColor}
-                        onChange={(e) => setSubmitBtnTextColor(e.target.value)}
-                    />
-                    <label>Submit Button Font Size</label>
-                    <input type="number" value={submitBtnFontSize} onChange={(e) => setSubmitBtnFontSize(parseInt(e.target.value, 10) || 16)} />
-
-                    <h2>Global Customization</h2>
-
-                    <label>Global Background Color:</label>
-                    <input
-                        type="color"
-                        value={globalSettings.bgColor}
-                        onChange={(e) => updateGlobalSettings("bgColor", e.target.value)}
-                    />
-
-                    <label>Global Label Color:</label>
-                    <input
-                        type="color"
-                        value={globalSettings.labelColor}
-                        onChange={(e) => updateGlobalSettings("labelColor", e.target.value)}
-                    />
-
-                    <label>Global Font Size:</label>
-                    <input
-                        type="number"
-                        value={globalSettings.fontSize}
-                        onChange={(e) => updateGlobalSettings("fontSize", parseInt(e.target.value, 10))}
-                    />
-
-                    <label>Global Width:</label>
-                    <input
-                        type="number"
-                        value={globalSettings.width}
-                        onChange={(e) => updateGlobalSettings("width", parseInt(e.target.value, 10))}
-                    />
-
-                    <label>Global Height:</label>
-                    <input
-                        type="number"
-                        value={globalSettings.height}
-                        onChange={(e) => updateGlobalSettings("height", parseInt(e.target.value, 10))}
-                    />
-
-                    {selectedField && (
-                        <>
-                            <h3>Field Settings</h3>
-                            <label>Label Text:</label>
-                            <input type="text" value={selectedField.label} onChange={(e) => updateField(selectedField.id, "label", e.target.value)} />
-
-                            <label>Label Background Color:</label>
-                            <input type="color" value={selectedField.bgColor} onChange={(e) => updateField(selectedField.id, "bgColor", e.target.value)} />
-
-                            <label>Label Color:</label>
-                            <input type="color" value={selectedField.labelColor} onChange={(e) => updateField(selectedField.id, "labelColor", e.target.value)} />
-
-                            <label>Label Font Size:</label>
-                            <input type="number" value={selectedField.fontSize} onChange={(e) => updateField(selectedField.id, "fontSize", parseInt(e.target.value))} />
-
-                            {/* Option Editing for Dropdown & Multiple Choice */}
-                            {(selectedField.type === "Dropdown" || selectedField.type === "Multiple Choice") && (
-                                <>
-                                    <h4>Options</h4>
-                                    {selectedField.options.map((option, index) => (
-                                        <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
-                                            <input
-                                                type="text"
-                                                value={option}
-                                                onChange={(e) => {
-                                                    const newOptions = [...selectedField.options];
-                                                    newOptions[index] = e.target.value;
-                                                    updateField(selectedField.id, "options", newOptions);
-                                                }}
-                                            />
-                                            <button onClick={() => {
-                                                const newOptions = selectedField.options.filter((_, i) => i !== index);
-                                                updateField(selectedField.id, "options", newOptions);
-                                            }}>❌</button>
-                                        </div>
-                                    ))}
-                                    <button onClick={() => updateField(selectedField.id, "options", [...selectedField.options, `Option ${selectedField.options.length + 1}`])}>
-                                        ➕ Add Option
-                                    </button>
-                                </>
-                            )}
-
-                            {selectedField?.type === "Linear Scale" && (
-                                <>
-                                    <label>Min Value:</label>
-                                    <input type="number" value={selectedField.min} onChange={(e) => updateField(selectedField.id, "min", parseInt(e.target.value))} />
-                                    <label>Max Value:</label>
-                                    <input type="number" value={selectedField.max} onChange={(e) => updateField(selectedField.id, "max", parseInt(e.target.value))} />
-                                </>
-                            )}
-
-                            {selectedField && selectedField.type === "Multiple Choice Grid" && (
-                                <>
-                                    <h3>Field Settings</h3>
-
-                                    {/* Customize Rows */}
-                                    <h4>Rows</h4>
-                                    {selectedField.rows.map((row, index) => (
-                                        <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
-                                            <input
-                                                type="text"
-                                                value={row}
-                                                onChange={(e) => {
-                                                    const newRows = [...selectedField.rows];
-                                                    newRows[index] = e.target.value;
-                                                    updateField(selectedField.id, "rows", newRows);
-                                                }}
-                                            />
-                                            <button onClick={() => {
-                                                const newRows = selectedField.rows.filter((_, i) => i !== index);
-                                                updateField(selectedField.id, "rows", newRows);
-                                            }}>❌</button>
-                                        </div>
-                                    ))}
-                                    <button onClick={() => updateField(selectedField.id, "rows", [...selectedField.rows, `Row ${selectedField.rows.length + 1}`])}>
-                                        ➕ Add Row
-                                    </button>
-
-                                    {/* Customize Columns */}
-                                    <h4>Columns</h4>
-                                    {selectedField.columns.map((col, index) => (
-                                        <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
-                                            <input
-                                                type="text"
-                                                value={col}
-                                                onChange={(e) => {
-                                                    const newColumns = [...selectedField.columns];
-                                                    newColumns[index] = e.target.value;
-                                                    updateField(selectedField.id, "columns", newColumns);
-                                                }}
-                                            />
-                                            <button onClick={() => {
-                                                const newColumns = selectedField.columns.filter((_, i) => i !== index);
-                                                updateField(selectedField.id, "columns", newColumns);
-                                            }}>❌</button>
-                                        </div>
-                                    ))}
-                                    <button onClick={() => updateField(selectedField.id, "columns", [...selectedField.columns, `Column ${selectedField.columns.length + 1}`])}>
-                                        ➕ Add Column
-                                    </button>
-                                </>
-                            )}
-
-                        </>
-                    )}
-
                 </div>
             </div>
+
+            <div className="customize-section">
+                <h2>Customize</h2>
+                <label>Form Title:</label>
+                <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} />
+
+                <label>Title Color:</label>
+                <input type="color" value={formTitleColor} onChange={(e) => setFormTitleColor(e.target.value)} />
+
+                <label>Title Background Color:</label>
+                <input type="color" value={formTitleBgColor} onChange={(e) => setFormTitleBgColor(e.target.value)} />
+
+                <label>Title Font Size:</label>
+                <input type="number" value={formTitleFontSize} onChange={(e) => setFormTitleFontSize(parseInt(e.target.value))} />
+
+                <label>Form Background Color:</label>
+                <input type="color" value={formBgColor} onChange={(e) => setFormBgColor(e.target.value)} />
+
+                <label>Submit Button Background:</label>
+                <input
+                    type="color"
+                    value={submitBtnBgColor}
+                    onChange={(e) => setSubmitBtnBgColor(e.target.value)}
+                />
+
+                <label>Submit Button Text Color:</label>
+                <input
+                    type="color"
+                    value={submitBtnTextColor}
+                    onChange={(e) => setSubmitBtnTextColor(e.target.value)}
+                />
+                <label>Submit Button Font Size</label>
+                <input type="number" value={submitBtnFontSize} onChange={(e) => setSubmitBtnFontSize(parseInt(e.target.value, 10) || 16)} />
+
+                <h2>Global Customization</h2>
+
+                <label>Global Background Color:</label>
+                <input
+                    type="color"
+                    value={globalSettings.bgColor}
+                    onChange={(e) => updateGlobalSettings("bgColor", e.target.value)}
+                />
+
+                <label>Global Label Color:</label>
+                <input
+                    type="color"
+                    value={globalSettings.labelColor}
+                    onChange={(e) => updateGlobalSettings("labelColor", e.target.value)}
+                />
+
+                <label>Global Font Size:</label>
+                <input
+                    type="number"
+                    value={globalSettings.fontSize}
+                    onChange={(e) => updateGlobalSettings("fontSize", parseInt(e.target.value, 10))}
+                />
+
+                <label>Global Width:</label>
+                <input
+                    type="number"
+                    value={globalSettings.width}
+                    onChange={(e) => updateGlobalSettings("width", parseInt(e.target.value, 10))}
+                />
+
+                <label>Global Height:</label>
+                <input
+                    type="number"
+                    value={globalSettings.height}
+                    onChange={(e) => updateGlobalSettings("height", parseInt(e.target.value, 10))}
+                />
+
+                {selectedField && (
+                    <>
+                        <h3>Field Settings</h3>
+                        <label>Label Text:</label>
+                        <input type="text" value={selectedField.label} onChange={(e) => updateField(selectedField.id, "label", e.target.value)} />
+
+                        <label>Label Background Color:</label>
+                        <input type="color" value={selectedField.bgColor} onChange={(e) => updateField(selectedField.id, "bgColor", e.target.value)} />
+
+                        <label>Label Color:</label>
+                        <input type="color" value={selectedField.labelColor} onChange={(e) => updateField(selectedField.id, "labelColor", e.target.value)} />
+
+                        <label>Label Font Size:</label>
+                        <input type="number" value={selectedField.fontSize} onChange={(e) => updateField(selectedField.id, "fontSize", parseInt(e.target.value))} />
+
+                        {/* Option Editing for Dropdown & Multiple Choice */}
+                        {(selectedField.type === "Dropdown" || selectedField.type === "Multiple Choice") && (
+                            <>
+                                <h4>Options</h4>
+                                {selectedField.options.map((option, index) => (
+                                    <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
+                                        <input
+                                            type="text"
+                                            value={option}
+                                            onChange={(e) => {
+                                                const newOptions = [...selectedField.options];
+                                                newOptions[index] = e.target.value;
+                                                updateField(selectedField.id, "options", newOptions);
+                                            }}
+                                        />
+                                        <button onClick={() => {
+                                            const newOptions = selectedField.options.filter((_, i) => i !== index);
+                                            updateField(selectedField.id, "options", newOptions);
+                                        }}>❌</button>
+                                    </div>
+                                ))}
+                                <button onClick={() => updateField(selectedField.id, "options", [...selectedField.options, `Option ${selectedField.options.length + 1}`])}>
+                                    ➕ Add Option
+                                </button>
+                            </>
+                        )}
+
+                        {selectedField?.type === "Linear Scale" && (
+                            <>
+                                <label>Min Value:</label>
+                                <input type="number" value={selectedField.min} onChange={(e) => updateField(selectedField.id, "min", parseInt(e.target.value))} />
+                                <label>Max Value:</label>
+                                <input type="number" value={selectedField.max} onChange={(e) => updateField(selectedField.id, "max", parseInt(e.target.value))} />
+                            </>
+                        )}
+
+                        {selectedField && selectedField.type === "Multiple Choice Grid" && (
+                            <>
+                                <h3>Field Settings</h3>
+
+                                {/* Customize Rows */}
+                                <h4>Rows</h4>
+                                {selectedField.rows.map((row, index) => (
+                                    <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
+                                        <input
+                                            type="text"
+                                            value={row}
+                                            onChange={(e) => {
+                                                const newRows = [...selectedField.rows];
+                                                newRows[index] = e.target.value;
+                                                updateField(selectedField.id, "rows", newRows);
+                                            }}
+                                        />
+                                        <button onClick={() => {
+                                            const newRows = selectedField.rows.filter((_, i) => i !== index);
+                                            updateField(selectedField.id, "rows", newRows);
+                                        }}>❌</button>
+                                    </div>
+                                ))}
+                                <button onClick={() => updateField(selectedField.id, "rows", [...selectedField.rows, `Row ${selectedField.rows.length + 1}`])}>
+                                    ➕ Add Row
+                                </button>
+
+                                {/* Customize Columns */}
+                                <h4>Columns</h4>
+                                {selectedField.columns.map((col, index) => (
+                                    <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
+                                        <input
+                                            type="text"
+                                            value={col}
+                                            onChange={(e) => {
+                                                const newColumns = [...selectedField.columns];
+                                                newColumns[index] = e.target.value;
+                                                updateField(selectedField.id, "columns", newColumns);
+                                            }}
+                                        />
+                                        <button onClick={() => {
+                                            const newColumns = selectedField.columns.filter((_, i) => i !== index);
+                                            updateField(selectedField.id, "columns", newColumns);
+                                        }}>❌</button>
+                                    </div>
+                                ))}
+                                <button onClick={() => updateField(selectedField.id, "columns", [...selectedField.columns, `Column ${selectedField.columns.length + 1}`])}>
+                                    ➕ Add Column
+                                </button>
+                            </>
+                        )}
+                    </>
+                )}
+            </div>
+
         </div >
     );
 };

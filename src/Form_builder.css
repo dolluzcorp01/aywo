@@ -1,135 +1,166 @@
-/* Ensuring the form builder takes full height and width */
-.form-builder {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100vh;
-    background-color: white;
-}
-
 /* Adjusting body inside form-builder */
 .form-builder body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f8f9fa;
+    background-color: white;
 }
 
-/* Container for sidebar and form */
-.form-builder .container {
+/* Ensuring the form builder takes full height and width */
+.form-builder {
     display: flex;
-    flex-grow: 1;
+    flex: 1;
     width: 100%;
-    padding: 20px;
     gap: 20px;
-    overflow: visible;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 /* Sidebar styles */
 .form-builder .sidebar {
-    width: 250px;
-    min-width: 250px;
-    background: #ffffff;
-    padding: 15px;
-    border-right: 2px solid #e0e0e0;
-    border-radius: 8px;
-    flex-shrink: 0;
-}
-
-/* Sidebar buttons */
-.form-builder .field-btn {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 8px;
-    border: none;
-    cursor: pointer;
+    width: 300px;
+    background: #f8f9fa;
+    border-right: 1px solid #ddd;
     display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #f0f0f0;
-    border-radius: 5px;
-    transition: background 0.2s;
-}
-
-.form-builder .field-btn:hover {
-    background: #ddd;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 80px);
+    padding: 15px;
 }
 
 /* Main form container */
 .form-container {
-    position: relative;
-    width: 100%;
-    height: auto;
-    /* Allow auto height instead of a fixed height */
-    min-height: 100vh;
-    /* Ensure it expands properly */
-    max-height: none;
-    /* Prevent height restriction */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 80px);
     overflow-y: auto;
-    /* Allow vertical scrolling */
-    padding-bottom: 100px;
-    /* Ensure space for the submit button */
+    position: relative;
+    background-color: white;
 }
 
-.form-builder .form-container {
-    overflow-y: scroll !important;
-}
-
-/* delete icon for fields */
-.form-builder .delete-btn {
-    margin-left: 10px;
-}
-
-/* Form Title */
-.form-builder .form-title {
-    width: auto;
-    height: auto;
-    resize: none;
-    overflow: hidden;
-}
-
-/* Labels */
-.form-builder .field label {
-    flex-grow: 1;
-}
-
-.form-builder .field input {
-    width: 10%;
-    padding: 5px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-/* Prevent number field issues */
-.form-builder .field input[type="number"]::-webkit-inner-spin-button,
-.form-builder .field input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-.form-builder .field textarea {
-    width: 100%;
-    min-height: 40px;
-    resize: vertical;
+/* New Scrollable Inner Area */
+.form-scroll-area {
+    padding: 20px;
+    min-height: 100%;
 }
 
 /* Customization panel */
 .form-builder .customize-section {
+    background-color: #f8f9fa;
     width: 250px;
     min-width: 250px;
     padding: 15px;
     border-left: 2px solid #e0e0e0;
     border-radius: 8px;
     flex-shrink: 0;
-    max-height: 90vh;
+    max-height: calc(100vh - 80px);
     overflow-y: auto;
+    position: sticky;
+    top: 0;
 }
 
-/* Customization inputs */
-.form-builder .customize-section input {
+/* Sidebar buttons */
+.search-wrapper {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.search-icon {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    color: #888;
+    font-size: 14px;
+}
+
+.sidebar .search-bar {
+    padding: 8px 12px 8px 32px;
+    /* left padding for icon */
+    border: 1px solid #ccc;
+    border-radius: 5px;
     width: 100%;
-    padding: 5px;
-    margin-bottom: 10px;
+}
+
+.field-group-scrollable {
+    overflow-y: auto;
+    flex-grow: 1;
+    scrollbar-width: thin;
+    scrollbar-color: #ccc transparent;
+}
+
+/* Chrome, Edge, Safari */
+.field-group-scrollable::-webkit-scrollbar {
+    width: 6px;
+    height: 20px;
+}
+
+.field-group-scrollable::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 10px;
+}
+
+.field-group-scrollable::-webkit-scrollbar-thumb:hover {
+    background-color: #999;
+}
+
+.field-group-scrollable::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.field-group {
+    margin-bottom: 20px;
+}
+
+.field-group h4 {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: rgb(156 163 175);
+}
+
+.field-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.field-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    border: none;
+    background: rgb(255 255 255);
+    cursor: pointer;
+    text-align: center;
+    font-size: 12px;
+    color: #333;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.field-btn:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.field-icon {
+    font-size: 20px;
+    margin-bottom: 5px;
+}
+
+.field-label {
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+/* delete icon for fields */
+.form-builder .delete-btn {
+    margin-left: 10px;
 }
 
 /* Update button */
@@ -154,31 +185,53 @@
     margin-top: 10px;
 }
 
-/* Publish button */
-.form-builder .publish-form-btn {
-    background: #008040;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 10px;
+.form-builder .update-form-btn:hover {
+    background: #cc3700;
 }
 
-.form-builder .save-form-button:hover {
+.form-builder .save-form-btn:hover {
     background: #0056b3;
 }
 
-.form-builder .submit-form-btn {
-    background: #007bff;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: auto;
-    align-self: center;
-    width: 150px;
+/* Form Title */
+.form-builder .form-title {
+    width: auto;
+    height: auto;
+    resize: none;
+    overflow: hidden;
+}
+
+/* Labels */
+.form-builder .field label {
+    flex-grow: 1;
+}
+
+.form-builder .field input {
+    flex: 1;
+    min-width: 100px;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Prevent number field issues */
+.form-builder .field input[type="number"]::-webkit-inner-spin-button,
+.form-builder .field input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.form-builder .field textarea {
+    width: 100%;
+    min-height: 40px;
+    resize: vertical;
+}
+
+/* Customization inputs */
+.form-builder .customize-section input {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 10px;
 }
 
 /* Resizable elements inside RND */

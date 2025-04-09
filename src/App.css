@@ -39,7 +39,6 @@ body,
   height: calc(100vh - 60px);
   /* Ensure it accounts for the header */
   overflow: hidden;
-  margin-top: 60px;
   /* Push content below the header */
 }
 

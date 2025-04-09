@@ -1,7 +1,8 @@
 import Swal from "sweetalert2";
+import axios from "axios";
 import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import "./Form_builder_header.css";
 
 const Navbar = styled.nav`
@@ -33,6 +34,9 @@ const Form_builder_header = () => {
     const [profileDetails, setProfileDetails] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
+
+    const location = useLocation();
+    const isEditableForm = /^\/form-builder\/form-\d+$/.test(location.pathname); // Checks if URL matches /form-builder/form-{number}
 
 
     useEffect(() => {
@@ -68,24 +72,6 @@ const Form_builder_header = () => {
             const data = await response.json();
             setProfileDetails(data);
         } catch (error) {
-            console.error(error);
-        }
-    };
-
-    const handleLogout = async () => {
-        try {
-            const response = await fetch('http://localhost:5000/api/leftnavbar/logout', {
-                method: 'POST',
-                credentials: 'include',
-            });
-
-            if (response.ok) {
-                navigate('/login');
-            } else {
-                Swal.fire("Logout failed!");
-            }
-        } catch (error) {
-            Swal.fire("An error occurred while logging out.");
             console.error(error);
         }
     };
@@ -143,6 +129,38 @@ const Form_builder_header = () => {
             }
         } catch (err) {
             Swal.fire("Error", "Something went wrong", "error");
+        }
+    };
+
+    const publishForm = async () => {
+        if (!formId) {
+            Swal.fire("Error", "Please save the form before publishing.", "error");
+            return;
+        }
+
+        try {
+            const cleanFormId = formId.replace("form-", "");
+            const response = await axios.put(
+                `http://localhost:5000/api/form_builder/publish-form/${cleanFormId}`,
+                { published: true },
+                { withCredentials: true }
+            );
+
+            const publicUrl = `${window.location.origin}/forms/${cleanFormId}`;
+
+            // Copy link to clipboard
+            await navigator.clipboard.writeText(publicUrl);
+
+            // Show success alert
+            Swal.fire({
+                title: "Success!",
+                html: `Form published successfully! <br> The link has been copied to clipboard: <br> <b>${publicUrl}</b>`,
+                icon: "success"
+            });
+
+        } catch (error) {
+            console.error("Error publishing form:", error);
+            Swal.fire("Error", "Failed to publish the form.", "error");
         }
     };
 
@@ -222,9 +240,13 @@ const Form_builder_header = () => {
                                 <i className="fa-regular fa-clock"></i>
                             </button>
                             <button className="form_builder_header-preview-btn">Preview</button>
-                            <button className="form_builder_header-publish-btn">
-                                Publish <i className="fa-solid fa-bolt"></i>
-                            </button>
+                            {isEditableForm && (
+                                <>
+                                    <button className="form_builder_header-publish-btn" onClick={() => publishForm()}>
+                                        Publish <i className="fa-solid fa-bolt"></i>
+                                    </button>
+                                </>
+                            )}
                         </>
                     )}
 
