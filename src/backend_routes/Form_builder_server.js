@@ -39,7 +39,7 @@ const checkDuplicateFormTitle = async (userId, title, formId = null) => {
 router.post("/save-form", verifyJWT, async (req, res) => {
     console.log("✅ Received request at /api/form_builder/save-form");
 
-    const { title, title_font_size, title_x, title_y, title_width, title_height, form_background, title_color, title_background,
+    const { title, title_font_size, title_x, title_y, title_width, title_height, form_background_color, form_color, title_color, title_background,
         submit_button_x, submit_button_y, submit_button_width, submit_button_height, submit_button_color, submit_button_background,
         fields } = req.body;
     const userId = req.user_id;
@@ -68,7 +68,7 @@ router.post("/save-form", verifyJWT, async (req, res) => {
 
         // ✅ Insert form (including colors and button properties)
         const formInsertQuery = `
-            INSERT INTO forms (user_id, title, title_font_size, title_x, title_y, title_width, title_height, form_background, title_color, title_background, 
+            INSERT INTO forms (user_id, title, title_font_size, title_x, title_y, title_width, title_height, form_background_color, form_color, title_color, title_background, 
                                submit_button_x, submit_button_y, submit_button_width, submit_button_height, submit_button_color, submit_button_background) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
@@ -80,7 +80,8 @@ router.post("/save-form", verifyJWT, async (req, res) => {
             title_y || 20,
             title_width || 300,
             title_height || 50,
-            form_background || "#ffffff",
+            form_background_color || "lightgray",
+            form_color || "#ffffff",
             title_color || "#000000",
             title_background || "#ffffff",
             submit_button_x || 50,
@@ -251,7 +252,7 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
         // Fetch form/template details
         const formQuery = `
             SELECT title, title_font_size, title_x, title_y, title_width, title_height, 
-                   form_background, title_color, title_background,
+                   form_background_color, form_color, title_color, title_background,
                    submit_button_x, submit_button_y, submit_button_width, 
                    submit_button_height, submit_button_color, submit_button_background
             FROM ${formTable} 
@@ -337,7 +338,8 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
             title_y: formResult[0].title_y,
             title_width: formResult[0].title_width,
             title_height: formResult[0].title_height,
-            form_background: formResult[0].form_background || "#ffffff",
+            form_background_color: formResult[0].form_background_color || "lightgray",
+            form_color: formResult[0].form_color || "#ffffff",
             title_color: formResult[0].title_color || "#000000",
             title_background: formResult[0].title_background || "#ffffff",
             submit_button_x: formResult[0].submit_button_x ?? 50,
@@ -360,7 +362,7 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
     console.log("✅ Received request at /api/form_builder/update-form");
 
     const { formId } = req.params;
-    const { title, title_font_size, title_x, title_y, title_width, title_height, form_background, title_color, title_background,
+    const { title, title_font_size, title_x, title_y, title_width, title_height, form_background_color, form_color, title_color, title_background,
         submit_button_x, submit_button_y, submit_button_width, submit_button_height, submit_button_color, submit_button_background, fields } = req.body;
     const userId = req.user_id;
 
@@ -393,7 +395,7 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
         const updateFormQuery = `
             UPDATE forms 
             SET title = ?, title_font_size = ?, title_x = ?, title_y = ?, title_width = ?, title_height = ?, 
-                form_background = ?, title_color = ?, title_background = ?, 
+                form_background_color = ?, form_color = ?, title_color = ?, title_background = ?, 
                 submit_button_x = ?, submit_button_y = ?, submit_button_width = ?, submit_button_height = ?, 
                 submit_button_color = ?, submit_button_background = ? 
             WHERE form_id = ? AND user_id = ?`;
@@ -404,7 +406,8 @@ router.put("/update-form/:formId", verifyJWT, async (req, res) => {
             title_y || 20,
             title_width || 300,
             title_height || 50,
-            form_background || "#ffffff",
+            form_background_color || "lightgray",
+            form_color || "#ffffff",
             title_color || "#000000",
             title_background || "#ffffff",
             submit_button_x || 50,
@@ -562,13 +565,13 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
 
         // Insert new form
         const formInsertQuery = `INSERT INTO forms (user_id, title, title_font_size, title_x, title_y, title_width, title_height,
-        form_background, title_color, title_background, submit_button_x, submit_button_y, submit_button_width, submit_button_height,
+        form_background_color, form_color, title_color, title_background, submit_button_x, submit_button_y, submit_button_width, submit_button_height,
         submit_button_color, submit_button_background)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
         const { insertId: newFormId } = await queryPromise(connection, formInsertQuery, [
             userId, newTitle, originalForm.title_font_size, originalForm.title_x, originalForm.title_y,
-            originalForm.title_width, originalForm.title_height, originalForm.form_background,
+            originalForm.title_width, originalForm.title_height, originalForm.form_background_color, originalForm.form_color,
             originalForm.title_color, originalForm.title_background,
             originalForm.submit_button_x, originalForm.submit_button_y, originalForm.submit_button_width,
             originalForm.submit_button_height, originalForm.submit_button_color, originalForm.submit_button_background

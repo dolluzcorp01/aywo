@@ -35,7 +35,8 @@ const fieldIcons = {
 };
 
 const FormBuilder = () => {
-    const [formBgColor, setFormBgColor] = useState("gray");
+    const [formBgColor, setFormBgColor] = useState("lightgray");
+    const [formColor, setformColor] = useState("white");
 
     const [searchTerm, setSearchTerm] = useState("");
     const [fields, setFields] = useState([]);
@@ -58,6 +59,8 @@ const FormBuilder = () => {
     const [submitBtnBgColor, setSubmitBtnBgColor] = useState("#28a745");
     const [submitBtnTextColor, setSubmitBtnTextColor] = useState("#ffffff");
     const [submitBtnFontSize, setSubmitBtnFontSize] = useState(16);
+
+    const [showCustomize, setShowCustomize] = useState(true);
 
     const location = useLocation();
     const isEditableForm = /^\/form-builder\/form-\d+$/.test(location.pathname); // Checks if URL matches /form-builder/form-{number}
@@ -97,7 +100,8 @@ const FormBuilder = () => {
                     if (isMounted) {
                         console.log(`Fetched form data:`, res.data);
 
-                        setFormBgColor(res.data.form_background || "#ffffff");
+                        setFormBgColor(res.data.form_background_color || "lightgray");
+                        setformColor(res.data.form_color || "#ffffff");
                         setFormTitleColor(res.data.title_color || "#000000");
                         setFormTitleBgColor(res.data.title_background || "#ffffff");
                         setFormTitle(res.data.title || "Untitled Form");
@@ -149,23 +153,43 @@ const FormBuilder = () => {
 
     useEffect(() => {
         const updateFormHeight = () => {
-            const formContainer = document.querySelector('.form-container');
-            if (formContainer) {
-                let maxBottom = 0;
-                fields.forEach(field => {
-                    let bottom = field.y + field.height;
-                    if (bottom > maxBottom) {
-                        maxBottom = bottom;
-                    }
-                });
+            const formContainer = document.querySelector('.form-content');
+            if (!formContainer) return;
 
-                let submitButtonBottom = submitBtnY + submitBtnHeight;
-                let newHeight = Math.max(maxBottom, submitButtonBottom) + 150; // Add extra padding
+            // Get max bottom edge of all fields
+            let maxBottom = 0;
+            fields.forEach(field => {
+                const bottom = field.y + field.height;
+                if (bottom > maxBottom) maxBottom = bottom;
+            });
+
+            const submitBottom = submitBtnY + submitBtnHeight;
+            const contentHeight = Math.max(maxBottom, submitBottom) + 100;
+
+            // Only set if changed to prevent re-render flicker
+            const currentHeight = parseInt(formContainer.style.height || "0");
+            if (currentHeight !== contentHeight) {
+                formContainer.style.height = `${contentHeight}px`;
             }
         };
 
-        updateFormHeight();
+        // Run after DOM updates
+        setTimeout(updateFormHeight, 0);
     }, [fields, submitBtnY, submitBtnHeight]);
+
+    useEffect(() => {
+        const scrollToBottom = () => {
+            const body = document.querySelector('.form-body');
+            if (body) {
+                body.scrollTo({
+                    top: body.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
+        };
+
+        scrollToBottom();
+    }, [fields]);
 
     // Function to check if a new field overlaps with existing fields
     const isOverlapping = (x, y, width, height, excludeId = null, isTitle = false) => {
@@ -407,7 +431,8 @@ const FormBuilder = () => {
         });
 
         const formData = {
-            form_background: formBgColor,
+            form_background_color: formBgColor,
+            form_color: formColor,
             title_color: formTitleColor,
             title_background: formTitleBgColor,
             title: formTitle,
@@ -512,60 +537,24 @@ const FormBuilder = () => {
                     </div>
                 </div>
 
-                {isEditableForm && (
-                    <button className="update-form-btn" onClick={() => saveOrUpdateForm(false)}>Update Form</button>
-                )}
-                <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)}>Save Form</button>
+                <div className="sidebar-action-buttons">
+                    {isEditableForm && (
+                        <button className="update-form-btn" onClick={() => saveOrUpdateForm(false)}>
+                            Update Form
+                        </button>
+                    )}
+                    <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)}>
+                        Save Form
+                    </button>
+                </div>
+
             </div>
 
-            <div className="form-container" style={{ backgroundColor: formBgColor }}>
-                <div className="form-scroll-area">
-                    <Rnd
-                        default={{ x: formTitleX, y: formTitleY, width: formTitleWidth, height: formTitleHeight }}
-                        bounds="parent"
-                        enableResizing={{
-                            top: true,
-                            right: true,
-                            bottom: true,
-                            left: true,
-                            topRight: true,
-                            bottomRight: true,
-                            bottomLeft: true,
-                            topLeft: true
-                        }}
-                        onDragStop={(e, d) => {
-                            const { x, y } = getValidPosition(d.x, d.y, formTitleWidth, formTitleHeight, null, true);
-                            setFormTitleX(x);
-                            setFormTitleY(y);
-                        }}
-                        onResizeStop={(e, direction, ref, delta, position) => {
-                            setFormTitleWidth(ref.offsetWidth);
-                            setFormTitleHeight(ref.offsetHeight);
-                            setFormTitleX(position.x);
-                            setFormTitleY(position.y);
-                        }}
-                    >
-
-                        <input
-                            type="text"
-                            value={formTitle}
-                            onChange={(e) => setFormTitle(e.target.value)}
-                            className="form-title"
-                            style={{
-                                color: formTitleColor,
-                                backgroundColor: formTitleBgColor,
-                                fontSize: `${formTitleFontSize}px`,
-                                width: `${formTitleWidth}px`, // Change this from "100%" to dynamic width
-                                height: `${formTitleHeight}px`, // Ensure height is dynamic too
-                            }}
-                        />
-                    </Rnd>
-
-                    {fields.map((field) => (
+            <div className="form-container">
+                <div className="form-body" style={{ backgroundColor: formBgColor }}>
+                    <div className="form-content" style={{ backgroundColor: formColor }}>
                         <Rnd
-                            key={field.id}
-                            position={{ x: field.x, y: field.y }}
-                            size={{ width: field.width, height: field.height }}
+                            default={{ x: formTitleX, y: formTitleY, width: formTitleWidth, height: formTitleHeight }}
                             bounds="parent"
                             enableResizing={{
                                 top: true,
@@ -578,275 +567,323 @@ const FormBuilder = () => {
                                 topLeft: true
                             }}
                             onDragStop={(e, d) => {
-                                let { x, y } = d;
-                                const { x: validX, y: validY } = getValidPosition(x, y, field.width, field.height, field.id);
-
-                                setFields((prevFields) =>
-                                    prevFields.map(f =>
-                                        f.id === field.id ? { ...f, x: validX, y: validY } : f
-                                    )
-                                );
+                                const { x, y } = getValidPosition(d.x, d.y, formTitleWidth, formTitleHeight, null, true);
+                                setFormTitleX(x);
+                                setFormTitleY(y);
                             }}
                             onResizeStop={(e, direction, ref, delta, position) => {
-                                const updatedWidth = ref.offsetWidth;
-                                const updatedHeight = ref.offsetHeight;
-
-                                setFields(prevFields =>
-                                    prevFields.map(f =>
-                                        f.id === field.id
-                                            ? { ...f, width: updatedWidth, height: updatedHeight }
-                                            : f
-                                    )
-                                );
-
-                                setLastFieldSize({ width: updatedWidth, height: updatedHeight }); // Update global last field size
+                                setFormTitleWidth(ref.offsetWidth);
+                                setFormTitleHeight(ref.offsetHeight);
+                                setFormTitleX(position.x);
+                                setFormTitleY(position.y);
                             }}
                         >
 
-                            <div className="field" style={{
-                                backgroundColor: field.bgColor,
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "flex-start",
-                                padding: "5px",
-                                borderRadius: "5px",
-                                width: "100%",  // Makes it fully resizable
-                                height: "100%", // Ensures height is taken from `Rnd`
-                                minHeight: "40px" // Prevents collapsing
-                            }} onClick={() => setSelectedField(field)}>
-                                <span style={{ color: field.labelColor, fontSize: `${field.fontSize}px`, fontWeight: "bold", marginRight: "10px", marginBottom: "10px" }}>{field.label}</span>
-                                <div style={{ display: "flex", alignItems: "center", flexGrow: 1, width: "100%" }}>
-                                    {getInputType(field.type, field.id)}
-                                    <button className="delete-btn" onClick={() => deleteField(field.id)} style={{ background: "red", color: "white", border: "none", borderRadius: "50%", width: "30px", height: "30px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginLeft: "10px" }}>
-                                        <FaTrash size={13} />
-                                    </button>
-                                </div>
-                            </div>
-
+                            <input
+                                type="text"
+                                value={formTitle}
+                                onChange={(e) => setFormTitle(e.target.value)}
+                                className="form-title"
+                                style={{
+                                    color: formTitleColor,
+                                    backgroundColor: formTitleBgColor,
+                                    fontSize: `${formTitleFontSize}px`,
+                                    width: `${formTitleWidth}px`, // Change this from "100%" to dynamic width
+                                    height: `${formTitleHeight}px`, // Ensure height is dynamic too
+                                }}
+                            />
                         </Rnd>
-                    ))}
 
-                    <Rnd
-                        default={{
-                            x: submitBtnX,
-                            y: submitBtnY,
-                            width: submitBtnWidth,
-                            height: submitBtnHeight
-                        }}
-                        bounds="parent"
-                        enableResizing={{ bottomRight: true }}
-                        onDragStop={(e, d) => {
-                            let newY = d.y;
+                        {fields.map((field) => (
+                            <Rnd
+                                key={field.id}
+                                position={{ x: field.x, y: field.y }}
+                                size={{ width: field.width, height: field.height }}
+                                bounds="parent"
+                                enableResizing={{
+                                    top: true,
+                                    right: true,
+                                    bottom: true,
+                                    left: true,
+                                    topRight: true,
+                                    bottomRight: true,
+                                    bottomLeft: true,
+                                    topLeft: true
+                                }}
+                                onDragStop={(e, d) => {
+                                    let { x, y } = d;
+                                    const { x: validX, y: validY } = getValidPosition(x, y, field.width, field.height, field.id);
 
-                            // If submit button is near the bottom, increase container height
-                            if (newY + submitBtnHeight > document.querySelector(".form-container").clientHeight - 20) {
-                                document.querySelector(".form-container").style.height = `${newY + submitBtnHeight + 50}px`;
-                            }
+                                    setFields((prevFields) =>
+                                        prevFields.map(f =>
+                                            f.id === field.id ? { ...f, x: validX, y: validY } : f
+                                        )
+                                    );
+                                }}
+                                onResizeStop={(e, direction, ref, delta, position) => {
+                                    const updatedWidth = ref.offsetWidth;
+                                    const updatedHeight = ref.offsetHeight;
 
-                            setSubmitBtnX(d.x);
-                            setSubmitBtnY(newY);
-                        }}
-                        onResizeStop={(e, direction, ref, delta, position) => {
-                            setSubmitBtnWidth(ref.offsetWidth);
-                            setSubmitBtnHeight(ref.offsetHeight);
-                            setSubmitBtnX(position.x);
-                            setSubmitBtnY(position.y);
-                        }}
-                    >
-                        <button
-                            className="submit-form-btn"
-                            style={{
-                                backgroundColor: submitBtnBgColor,
-                                color: submitBtnTextColor,
-                                fontSize: `${submitBtnFontSize}px`,
-                                width: "100%",
-                                height: "100%",
-                                border: "none",
-                                borderRadius: "5px",
-                                cursor: "pointer"
+                                    setFields(prevFields =>
+                                        prevFields.map(f =>
+                                            f.id === field.id
+                                                ? { ...f, width: updatedWidth, height: updatedHeight }
+                                                : f
+                                        )
+                                    );
+
+                                    setLastFieldSize({ width: updatedWidth, height: updatedHeight }); // Update global last field size
+                                }}
+                            >
+
+                                <div className="field" style={{
+                                    backgroundColor: field.bgColor,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "flex-start",
+                                    padding: "5px",
+                                    borderRadius: "5px",
+                                    width: "100%",  // Makes it fully resizable
+                                    height: "100%", // Ensures height is taken from `Rnd`
+                                    minHeight: "40px" // Prevents collapsing
+                                }} onClick={() => setSelectedField(field)}>
+                                    <span style={{ color: field.labelColor, fontSize: `${field.fontSize}px`, fontWeight: "bold", marginRight: "10px", marginBottom: "10px" }}>{field.label}</span>
+                                    <div style={{ display: "flex", alignItems: "center", flexGrow: 1, width: "100%" }}>
+                                        {getInputType(field.type, field.id)}
+                                        <button className="delete-btn" onClick={() => deleteField(field.id)} style={{ background: "red", color: "white", border: "none", borderRadius: "50%", width: "30px", height: "30px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginLeft: "10px" }}>
+                                            <FaTrash size={13} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                            </Rnd>
+                        ))}
+
+                        <Rnd
+                            default={{
+                                x: submitBtnX,
+                                y: submitBtnY,
+                                width: submitBtnWidth,
+                                height: submitBtnHeight
+                            }}
+                            bounds="parent"
+                            enableResizing={{ bottomRight: true }}
+                            onDragStop={(e, d) => {
+                                let newY = d.y;
+                                setSubmitBtnX(d.x);
+                                setSubmitBtnY(newY);
+                            }}
+                            onResizeStop={(e, direction, ref, delta, position) => {
+                                setSubmitBtnWidth(ref.offsetWidth);
+                                setSubmitBtnHeight(ref.offsetHeight);
+                                setSubmitBtnX(position.x);
+                                setSubmitBtnY(position.y);
                             }}
                         >
-                            Submit
-                        </button>
-                    </Rnd>
+                            <button
+                                className="submit-form-btn"
+                                style={{
+                                    backgroundColor: submitBtnBgColor,
+                                    color: submitBtnTextColor,
+                                    fontSize: `${submitBtnFontSize}px`,
+                                    width: "100%",
+                                    height: "100%",
+                                    border: "none",
+                                    borderRadius: "5px",
+                                    cursor: "pointer"
+                                }}
+                            >
+                                Submit
+                            </button>
+                        </Rnd>
+                    </div>
                 </div>
             </div>
 
-            <div className="customize-section">
-                <h2>Customize</h2>
-                <label>Form Title:</label>
-                <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} />
+            {showCustomize && (
+                <div className="customize-section">
+                    <div className="customize-header">
+                        <button className="close-btn" onClick={() => setShowCustomize(false)}><i class="fa-solid fa-x"></i></button>
+                        <h2>Customize</h2>
+                    </div>
 
-                <label>Title Color:</label>
-                <input type="color" value={formTitleColor} onChange={(e) => setFormTitleColor(e.target.value)} />
+                    <label>Form Background Color:</label>
+                    <input type="color" value={formBgColor} onChange={(e) => setFormBgColor(e.target.value)} />
 
-                <label>Title Background Color:</label>
-                <input type="color" value={formTitleBgColor} onChange={(e) => setFormTitleBgColor(e.target.value)} />
+                    <label>Form Background Color:</label>
+                    <input type="color" value={formColor} onChange={(e) => setformColor(e.target.value)} />
 
-                <label>Title Font Size:</label>
-                <input type="number" value={formTitleFontSize} onChange={(e) => setFormTitleFontSize(parseInt(e.target.value))} />
+                    <label>Form Title:</label>
+                    <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} />
 
-                <label>Form Background Color:</label>
-                <input type="color" value={formBgColor} onChange={(e) => setFormBgColor(e.target.value)} />
+                    <label>Title Color:</label>
+                    <input type="color" value={formTitleColor} onChange={(e) => setFormTitleColor(e.target.value)} />
 
-                <label>Submit Button Background:</label>
-                <input
-                    type="color"
-                    value={submitBtnBgColor}
-                    onChange={(e) => setSubmitBtnBgColor(e.target.value)}
-                />
+                    <label>Title Background Color:</label>
+                    <input type="color" value={formTitleBgColor} onChange={(e) => setFormTitleBgColor(e.target.value)} />
 
-                <label>Submit Button Text Color:</label>
-                <input
-                    type="color"
-                    value={submitBtnTextColor}
-                    onChange={(e) => setSubmitBtnTextColor(e.target.value)}
-                />
-                <label>Submit Button Font Size</label>
-                <input type="number" value={submitBtnFontSize} onChange={(e) => setSubmitBtnFontSize(parseInt(e.target.value, 10) || 16)} />
+                    <label>Title Font Size:</label>
+                    <input type="number" value={formTitleFontSize} onChange={(e) => setFormTitleFontSize(parseInt(e.target.value))} />
 
-                <h2>Global Customization</h2>
+                    <label>Submit Button Background:</label>
+                    <input
+                        type="color"
+                        value={submitBtnBgColor}
+                        onChange={(e) => setSubmitBtnBgColor(e.target.value)}
+                    />
 
-                <label>Global Background Color:</label>
-                <input
-                    type="color"
-                    value={globalSettings.bgColor}
-                    onChange={(e) => updateGlobalSettings("bgColor", e.target.value)}
-                />
+                    <label>Submit Button Text Color:</label>
+                    <input
+                        type="color"
+                        value={submitBtnTextColor}
+                        onChange={(e) => setSubmitBtnTextColor(e.target.value)}
+                    />
+                    <label>Submit Button Font Size</label>
+                    <input type="number" value={submitBtnFontSize} onChange={(e) => setSubmitBtnFontSize(parseInt(e.target.value, 10) || 16)} />
 
-                <label>Global Label Color:</label>
-                <input
-                    type="color"
-                    value={globalSettings.labelColor}
-                    onChange={(e) => updateGlobalSettings("labelColor", e.target.value)}
-                />
+                    <h2>Global Customization</h2>
 
-                <label>Global Font Size:</label>
-                <input
-                    type="number"
-                    value={globalSettings.fontSize}
-                    onChange={(e) => updateGlobalSettings("fontSize", parseInt(e.target.value, 10))}
-                />
+                    <label>Global Background Color:</label>
+                    <input
+                        type="color"
+                        value={globalSettings.bgColor}
+                        onChange={(e) => updateGlobalSettings("bgColor", e.target.value)}
+                    />
 
-                <label>Global Width:</label>
-                <input
-                    type="number"
-                    value={globalSettings.width}
-                    onChange={(e) => updateGlobalSettings("width", parseInt(e.target.value, 10))}
-                />
+                    <label>Global Label Color:</label>
+                    <input
+                        type="color"
+                        value={globalSettings.labelColor}
+                        onChange={(e) => updateGlobalSettings("labelColor", e.target.value)}
+                    />
 
-                <label>Global Height:</label>
-                <input
-                    type="number"
-                    value={globalSettings.height}
-                    onChange={(e) => updateGlobalSettings("height", parseInt(e.target.value, 10))}
-                />
+                    <label>Global Font Size:</label>
+                    <input
+                        type="number"
+                        value={globalSettings.fontSize}
+                        onChange={(e) => updateGlobalSettings("fontSize", parseInt(e.target.value, 10))}
+                    />
 
-                {selectedField && (
-                    <>
-                        <h3>Field Settings</h3>
-                        <label>Label Text:</label>
-                        <input type="text" value={selectedField.label} onChange={(e) => updateField(selectedField.id, "label", e.target.value)} />
+                    <label>Global Width:</label>
+                    <input
+                        type="number"
+                        value={globalSettings.width}
+                        onChange={(e) => updateGlobalSettings("width", parseInt(e.target.value, 10))}
+                    />
 
-                        <label>Label Background Color:</label>
-                        <input type="color" value={selectedField.bgColor} onChange={(e) => updateField(selectedField.id, "bgColor", e.target.value)} />
+                    <label>Global Height:</label>
+                    <input
+                        type="number"
+                        value={globalSettings.height}
+                        onChange={(e) => updateGlobalSettings("height", parseInt(e.target.value, 10))}
+                    />
 
-                        <label>Label Color:</label>
-                        <input type="color" value={selectedField.labelColor} onChange={(e) => updateField(selectedField.id, "labelColor", e.target.value)} />
+                    {selectedField && (
+                        <>
+                            <h3>Field Settings</h3>
+                            <label>Label Text:</label>
+                            <input type="text" value={selectedField.label} onChange={(e) => updateField(selectedField.id, "label", e.target.value)} />
 
-                        <label>Label Font Size:</label>
-                        <input type="number" value={selectedField.fontSize} onChange={(e) => updateField(selectedField.id, "fontSize", parseInt(e.target.value))} />
+                            <label>Label Background Color:</label>
+                            <input type="color" value={selectedField.bgColor} onChange={(e) => updateField(selectedField.id, "bgColor", e.target.value)} />
 
-                        {/* Option Editing for Dropdown & Multiple Choice */}
-                        {(selectedField.type === "Dropdown" || selectedField.type === "Multiple Choice") && (
-                            <>
-                                <h4>Options</h4>
-                                {selectedField.options.map((option, index) => (
-                                    <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
-                                        <input
-                                            type="text"
-                                            value={option}
-                                            onChange={(e) => {
-                                                const newOptions = [...selectedField.options];
-                                                newOptions[index] = e.target.value;
+                            <label>Label Color:</label>
+                            <input type="color" value={selectedField.labelColor} onChange={(e) => updateField(selectedField.id, "labelColor", e.target.value)} />
+
+                            <label>Label Font Size:</label>
+                            <input type="number" value={selectedField.fontSize} onChange={(e) => updateField(selectedField.id, "fontSize", parseInt(e.target.value))} />
+
+                            {/* Option Editing for Dropdown & Multiple Choice */}
+                            {(selectedField.type === "Dropdown" || selectedField.type === "Multiple Choice") && (
+                                <>
+                                    <h4>Options</h4>
+                                    {selectedField.options.map((option, index) => (
+                                        <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
+                                            <input
+                                                type="text"
+                                                value={option}
+                                                onChange={(e) => {
+                                                    const newOptions = [...selectedField.options];
+                                                    newOptions[index] = e.target.value;
+                                                    updateField(selectedField.id, "options", newOptions);
+                                                }}
+                                            />
+                                            <button onClick={() => {
+                                                const newOptions = selectedField.options.filter((_, i) => i !== index);
                                                 updateField(selectedField.id, "options", newOptions);
-                                            }}
-                                        />
-                                        <button onClick={() => {
-                                            const newOptions = selectedField.options.filter((_, i) => i !== index);
-                                            updateField(selectedField.id, "options", newOptions);
-                                        }}>❌</button>
-                                    </div>
-                                ))}
-                                <button onClick={() => updateField(selectedField.id, "options", [...selectedField.options, `Option ${selectedField.options.length + 1}`])}>
-                                    ➕ Add Option
-                                </button>
-                            </>
-                        )}
+                                            }}>❌</button>
+                                        </div>
+                                    ))}
+                                    <button onClick={() => updateField(selectedField.id, "options", [...selectedField.options, `Option ${selectedField.options.length + 1}`])}>
+                                        ➕ Add Option
+                                    </button>
+                                </>
+                            )}
 
-                        {selectedField?.type === "Linear Scale" && (
-                            <>
-                                <label>Min Value:</label>
-                                <input type="number" value={selectedField.min} onChange={(e) => updateField(selectedField.id, "min", parseInt(e.target.value))} />
-                                <label>Max Value:</label>
-                                <input type="number" value={selectedField.max} onChange={(e) => updateField(selectedField.id, "max", parseInt(e.target.value))} />
-                            </>
-                        )}
+                            {selectedField?.type === "Linear Scale" && (
+                                <>
+                                    <label>Min Value:</label>
+                                    <input type="number" value={selectedField.min} onChange={(e) => updateField(selectedField.id, "min", parseInt(e.target.value))} />
+                                    <label>Max Value:</label>
+                                    <input type="number" value={selectedField.max} onChange={(e) => updateField(selectedField.id, "max", parseInt(e.target.value))} />
+                                </>
+                            )}
 
-                        {selectedField && selectedField.type === "Multiple Choice Grid" && (
-                            <>
-                                <h3>Field Settings</h3>
+                            {selectedField && selectedField.type === "Multiple Choice Grid" && (
+                                <>
+                                    <h3>Field Settings</h3>
 
-                                {/* Customize Rows */}
-                                <h4>Rows</h4>
-                                {selectedField.rows.map((row, index) => (
-                                    <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
-                                        <input
-                                            type="text"
-                                            value={row}
-                                            onChange={(e) => {
-                                                const newRows = [...selectedField.rows];
-                                                newRows[index] = e.target.value;
+                                    {/* Customize Rows */}
+                                    <h4>Rows</h4>
+                                    {selectedField.rows.map((row, index) => (
+                                        <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
+                                            <input
+                                                type="text"
+                                                value={row}
+                                                onChange={(e) => {
+                                                    const newRows = [...selectedField.rows];
+                                                    newRows[index] = e.target.value;
+                                                    updateField(selectedField.id, "rows", newRows);
+                                                }}
+                                            />
+                                            <button onClick={() => {
+                                                const newRows = selectedField.rows.filter((_, i) => i !== index);
                                                 updateField(selectedField.id, "rows", newRows);
-                                            }}
-                                        />
-                                        <button onClick={() => {
-                                            const newRows = selectedField.rows.filter((_, i) => i !== index);
-                                            updateField(selectedField.id, "rows", newRows);
-                                        }}>❌</button>
-                                    </div>
-                                ))}
-                                <button onClick={() => updateField(selectedField.id, "rows", [...selectedField.rows, `Row ${selectedField.rows.length + 1}`])}>
-                                    ➕ Add Row
-                                </button>
+                                            }}>❌</button>
+                                        </div>
+                                    ))}
+                                    <button onClick={() => updateField(selectedField.id, "rows", [...selectedField.rows, `Row ${selectedField.rows.length + 1}`])}>
+                                        ➕ Add Row
+                                    </button>
 
-                                {/* Customize Columns */}
-                                <h4>Columns</h4>
-                                {selectedField.columns.map((col, index) => (
-                                    <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
-                                        <input
-                                            type="text"
-                                            value={col}
-                                            onChange={(e) => {
-                                                const newColumns = [...selectedField.columns];
-                                                newColumns[index] = e.target.value;
+                                    {/* Customize Columns */}
+                                    <h4>Columns</h4>
+                                    {selectedField.columns.map((col, index) => (
+                                        <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
+                                            <input
+                                                type="text"
+                                                value={col}
+                                                onChange={(e) => {
+                                                    const newColumns = [...selectedField.columns];
+                                                    newColumns[index] = e.target.value;
+                                                    updateField(selectedField.id, "columns", newColumns);
+                                                }}
+                                            />
+                                            <button onClick={() => {
+                                                const newColumns = selectedField.columns.filter((_, i) => i !== index);
                                                 updateField(selectedField.id, "columns", newColumns);
-                                            }}
-                                        />
-                                        <button onClick={() => {
-                                            const newColumns = selectedField.columns.filter((_, i) => i !== index);
-                                            updateField(selectedField.id, "columns", newColumns);
-                                        }}>❌</button>
-                                    </div>
-                                ))}
-                                <button onClick={() => updateField(selectedField.id, "columns", [...selectedField.columns, `Column ${selectedField.columns.length + 1}`])}>
-                                    ➕ Add Column
-                                </button>
-                            </>
-                        )}
-                    </>
-                )}
-            </div>
+                                            }}>❌</button>
+                                        </div>
+                                    ))}
+                                    <button onClick={() => updateField(selectedField.id, "columns", [...selectedField.columns, `Column ${selectedField.columns.length + 1}`])}>
+                                        ➕ Add Column
+                                    </button>
+                                </>
+                            )}
+                        </>
+                    )}
+                </div>
+            )}
 
         </div >
     );

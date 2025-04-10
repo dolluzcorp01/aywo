@@ -11,7 +11,6 @@
     display: flex;
     flex: 1;
     width: 100%;
-    gap: 20px;
     overflow: hidden;
     box-sizing: border-box;
 }
@@ -35,25 +34,40 @@
     display: flex;
     flex-direction: column;
     height: calc(100vh - 80px);
-    overflow-y: auto;
+    overflow: hidden;
     position: relative;
     background-color: white;
+    padding: 20px 20px 40px;
 }
 
-/* New Scrollable Inner Area */
-.form-scroll-area {
-    padding: 20px;
-    min-height: 100%;
+.form-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    position: relative;
+    border-radius: 15px;
+    padding: 50px 80px;
+    border: 2px solid #e5e7eb;
+    height: auto;
+    max-height: 100%;
+}
+
+.form-content {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border-radius: 15px;
+    border: 2px solid #e5e7eb;
+    overflow-y: auto;
 }
 
 /* Customization panel */
 .form-builder .customize-section {
     background-color: #f8f9fa;
-    width: 250px;
-    min-width: 250px;
+    width: 300px;
     padding: 15px;
     border-left: 2px solid #e0e0e0;
-    border-radius: 8px;
     flex-shrink: 0;
     max-height: calc(100vh - 80px);
     overflow-y: auto;
@@ -78,7 +92,6 @@
 
 .sidebar .search-bar {
     padding: 8px 12px 8px 32px;
-    /* left padding for icon */
     border: 1px solid #ccc;
     border-radius: 5px;
     width: 100%;
@@ -163,15 +176,30 @@
     margin-left: 10px;
 }
 
+.sidebar-action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    justify-content: space-between;
+}
+
+.form-builder .update-form-btn,
+.form-builder .save-form-btn {
+    width: 100%;
+    flex: 1;
+    padding: 10px 12px;
+}
+
 /* Update button */
 .form-builder .update-form-btn {
     background: orangered;
     color: white;
-    padding: 10px 20px;
+    padding: 0px 20px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     margin-top: 10px;
+    white-space: nowrap;
 }
 
 /* Save button */
@@ -183,6 +211,7 @@
     border-radius: 5px;
     cursor: pointer;
     margin-top: 10px;
+    white-space: nowrap;
 }
 
 .form-builder .update-form-btn:hover {
@@ -228,6 +257,20 @@
 }
 
 /* Customization inputs */
+.form-builder .customize-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-builder .close-btn {
+    background: none;
+    border: none;
+    font-size: 15px;
+    cursor: pointer;
+    color: #333;
+}
+
 .form-builder .customize-section input {
     width: 100%;
     padding: 5px;

@@ -79,7 +79,7 @@ const PublishedForm = () => {
         <div
             className="public-form-container"
             style={{
-                backgroundColor: form.form_background,
+                backgroundColor: form.form_color,
                 width: "100%",
                 height: "100vh",
                 display: "flex",
