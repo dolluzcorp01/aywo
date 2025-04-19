@@ -25,8 +25,6 @@ const fieldIcons = {
     "Linear Scale": <FaRuler color="#ff5733" />,
     "Multiple Choice Grid": <FaTable color="#17a2b8" />,
 
-    "Picture choice": <FaImage color="#ffc107" />,
-    "Multiselect": <FaTh color="#ffc107" />,
     "Switch": <FaToggleOn color="#20c997" />,
     "Checkboxes": <FaBoxes color="#6c757d" />,
     "Choice matrix": <FaGripHorizontal color="#6c757d" />,
@@ -355,6 +353,65 @@ const FormBuilder = () => {
                         </tbody>
                     </table>
                 );
+            case "Switch":
+                return (
+                    <label className="switch" style={{ display: "inline-flex", alignItems: "center", gap: "10px" }}>
+                        <input type="checkbox" />
+                        <span style={{ fontSize: `${field.fontSize}px` }}>Toggle</span>
+                    </label>
+                );
+
+            case "Checkboxes":
+                return (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                        {options.map((opt, i) => (
+                            <label key={i} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                                <input type="checkbox" value={opt} />
+                                <span>{opt}</span>
+                            </label>
+                        ))}
+                    </div>
+                );
+
+            case "Choice matrix":
+                return (
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                        <thead>
+                            <tr>
+                                <th></th>
+                                {field.columns.map((col, i) => (
+                                    <th key={i} style={{ border: "1px solid #ddd", padding: "5px" }}>{col}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {field.rows.map((row, i) => (
+                                <tr key={i}>
+                                    <td style={{ border: "1px solid #ddd", padding: "5px" }}>{row}</td>
+                                    {field.columns.map((col, j) => (
+                                        <td key={j} style={{ border: "1px solid #ddd", padding: "5px", textAlign: "center" }}>
+                                            <input type="checkbox" name={`choice_matrix_${id}_row${i}_col${j}`} />
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                );
+
+            case "Heading":
+                return (
+                    <h3 style={{ fontSize: `${field.fontSize + 4}px`, margin: "10px 0" }}>
+                        {field.label || "Heading"}
+                    </h3>
+                );
+
+            case "Banner":
+                return (
+                    <div style={{ backgroundColor: "#f1f1f1", padding: "10px", borderRadius: "5px", textAlign: "center" }}>
+                        <strong style={{ fontSize: `${field.fontSize + 2}px` }}>{field.label || "Banner Title"}</strong>
+                    </div>
+                );
             default:
                 return <input type="text" style={inputStyle} />;
         }
@@ -516,6 +573,15 @@ const FormBuilder = () => {
                     </div>
 
                     <div className="field-group mt-1">
+                        <h4>Input Fields</h4>
+                        <div className="field-grid">
+                            {["Text Only", "Number", "Date", "Document Type", "Linear Scale"]
+                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(type => <FieldButton key={type} type={type} />)}
+                        </div>
+                    </div>
+
+                    <div className="field-group mt-1">
                         <h4>Display text</h4>
                         <div className="field-grid">
                             {["Heading", "Paragraph", "Banner"]
@@ -528,8 +594,8 @@ const FormBuilder = () => {
                         <h4>Choices</h4>
                         <div className="field-grid">
                             {[
-                                "Dropdown", "Picture choice", "Multiselect", "Switch",
-                                "Multiple choice", "Checkbox", "Checkboxes", "Choice matrix"
+                                "Dropdown", "Switch", "Multiple Choice Grid", "Checkbox",
+                                "Checkboxes", "Choice matrix"
                             ]
                                 .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
                                 .map(type => <FieldButton key={type} type={type} />)}
@@ -547,12 +613,11 @@ const FormBuilder = () => {
                         Save Form
                     </button>
                 </div>
-
             </div>
 
             <div className="form-container">
                 <div className="form-body" style={{ backgroundColor: formBgColor }}>
-                    <div className="form-content" style={{ backgroundColor: formColor }}>
+                    <div className="form-content" style={{ backgroundColor: formColor }} onClick={() => setShowCustomize(true)}>
                         <Rnd
                             default={{ x: formTitleX, y: formTitleY, width: formTitleWidth, height: formTitleHeight }}
                             bounds="parent"
