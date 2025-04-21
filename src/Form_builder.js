@@ -6,78 +6,129 @@ import Swal from "sweetalert2";
 import { useNotification } from "./NotificationContext";
 import {
     FaFont, FaEnvelope, FaHashtag, FaList, FaCheckSquare, FaCaretDown,
-    FaCalendarAlt, FaAlignLeft, FaFileAlt, FaTrash, FaRuler, FaTable,
-    FaToggleOn, FaTh, FaCheck, FaImage, FaBoxes, FaGripHorizontal, FaSearch
+    FaCalendarAlt, FaAlignLeft, FaFileAlt, FaRegTrashAlt, FaRuler, FaTable,
+    FaToggleOn, FaTh, FaCheck, FaImage, FaBoxes, FaGripHorizontal, FaSearch,
+    FaGripVertical, FaCog, FaClone, FaExchangeAlt, FaHeading, FaChevronUp, FaChevronDown,
+    FaClock, FaRegClock, FaCalendarCheck, FaSortNumericDown, FaStar, FaSlidersH, FaSmile,
+    FaEquals, FaBars, FaMapMarkerAlt
 } from "react-icons/fa";
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import "./Form_builder.css";
 
 const fieldIcons = {
-    "Text Only": <FaFont color="#6c757d" />,
-    "Short Answer": <FaFont color="#007bff" />,
-    "Email": <FaEnvelope color="#28a745" />,
-    "Number": <FaHashtag color="#17a2b8" />,
-    "Multiple Choice": <FaList color="#ffc107" />,
-    "Checkbox": <FaCheckSquare color="#dc3545" />,
-    "Dropdown": <FaCaretDown color="#6610f2" />,
-    "Date": <FaCalendarAlt color="#e83e8c" />,
-    "Paragraph": <FaAlignLeft color="#fd7e14" />,
-    "Document Type": <FaFileAlt color="#6f42c1" />,
-    "Linear Scale": <FaRuler color="#ff5733" />,
-    "Multiple Choice Grid": <FaTable color="#17a2b8" />,
+    "Heading": <FaHeading />,
+    "Paragraph": <FaAlignLeft />,
+    "Banner": <FaFileAlt />,
 
-    "Switch": <FaToggleOn color="#20c997" />,
-    "Checkboxes": <FaBoxes color="#6c757d" />,
-    "Choice matrix": <FaGripHorizontal color="#6c757d" />,
-    "Heading": <FaFont color="#007bff" />,
-    "Banner": <FaFileAlt color="#17a2b8" />
+    "Dropdown": <FaCaretDown />,
+    "Picture": <FaImage />,
+    "Multiple Select": (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: "#F59E0B" }}>
+            <FaChevronUp style={{ height: '0.45rem', width: '0.65rem' }} />
+            <FaChevronDown style={{ height: '0.45rem', width: '0.65rem' }} />
+        </div>
+    ),
+    "Switch": <FaToggleOn />,
+    "Multiple Choice": <FaList />,
+    "Checkboxes": <FaBoxes />,
+    "Choice matrix": <FaGripHorizontal />,
+    "Checkbox": <FaCheckSquare />,
+
+    "Date Picker": <FaCalendarAlt />,
+    "Date Time Picker": <FaClock />,
+    "Time Picker": <FaRegClock />,
+    "Date Range": <FaCalendarCheck />,
+
+    "Ranking": <FaSortNumericDown />,
+    "Star Rating": <FaStar />,
+    "Slider": <FaSlidersH />,
+    "Opinion Scale": <FaSmile />,
+
+    "Short Answer": <FaEquals />,
+    "Long Answer": <FaBars />,
+
+    "Email": <FaEnvelope />,
+    "Number": <FaHashtag />,
+    "Location": <FaMapMarkerAlt />,
+    "Document Type": <FaFileAlt />,
 };
 
 const FormBuilder = () => {
+    const [fieldTypeMenu, setFieldTypeMenu] = useState(null); // stores id of field and position
+
     const [formBgColor, setFormBgColor] = useState("lightgray");
     const [formColor, setformColor] = useState("white");
 
     const [searchTerm, setSearchTerm] = useState("");
     const [fields, setFields] = useState([]);
-    const [selectedField, setSelectedField] = useState(null);
     const [lastPosition, setLastPosition] = useState({ x: 50, y: 80 });
+    const location = useLocation();
 
-    const [formTitle, setFormTitle] = useState("Untitled Form");
-    const [formTitleX, setFormTitleX] = useState(50);
-    const [formTitleY, setFormTitleY] = useState(20);
-    const [formTitleWidth, setFormTitleWidth] = useState(300);
-    const [formTitleHeight, setFormTitleHeight] = useState(50);
-    const [formTitleColor, setFormTitleColor] = useState("#000000");
-    const [formTitleBgColor, setFormTitleBgColor] = useState("#ffffff");
-    const [formTitleFontSize, setFormTitleFontSize] = useState(24);
-
-    const [submitBtnX, setSubmitBtnX] = useState(260);
     const [submitBtnY, setSubmitBtnY] = useState(500);
-    const [submitBtnWidth, setSubmitBtnWidth] = useState(150);
     const [submitBtnHeight, setSubmitBtnHeight] = useState(50);
-    const [submitBtnBgColor, setSubmitBtnBgColor] = useState("#28a745");
-    const [submitBtnTextColor, setSubmitBtnTextColor] = useState("#ffffff");
-    const [submitBtnFontSize, setSubmitBtnFontSize] = useState(16);
 
     const [showCustomize, setShowCustomize] = useState(true);
-
-    const location = useLocation();
     const isEditableForm = /^\/form-builder\/form-\d+$/.test(location.pathname); // Checks if URL matches /form-builder/form-{number}
-
-    // State for Global Customization
-    const [globalSettings, setGlobalSettings] = useState({
-        bgColor: "#ffffff",
-        labelColor: "#000000",
-        fontSize: 16,
-        width: 200,
-        height: 50,
-    });
     const [lastFieldSize, setLastFieldSize] = useState({ width: 200, height: 50 });
 
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const { formId } = useParams();
-    const { setShowNotification } = useNotification();
+
+
+    const [selectedFieldId, setSelectedFieldId] = useState(null);
+
+
+    useEffect(() => {
+        const handleClickOutside = () => setFieldTypeMenu(null);
+        window.addEventListener("click", handleClickOutside);
+        return () => window.removeEventListener("click", handleClickOutside);
+    }, []);
+
+    const handleFieldClick = (id) => {
+        setSelectedFieldId(id === selectedFieldId ? null : id);
+    };
+
+    const openSettings = (id) => {
+        console.log("Open settings for", id);
+    };
+
+    const changeFieldType = (id, event) => {
+        event.stopPropagation(); // Prevent field selection
+        const rect = event.currentTarget.getBoundingClientRect();
+        setFieldTypeMenu({ id, top: rect.bottom + 8, left: rect.left });
+    };
+
+    const handleTypeChange = (fieldId, newType) => {
+        setFields(prev =>
+            prev.map(field =>
+                field.id === fieldId ? { ...field, type: newType } : field
+            )
+        );
+        setFieldTypeMenu(null); // close menu
+    };
+
+    const duplicateField = (id) => {
+        setFields(prevFields => {
+            const index = prevFields.findIndex(field => field.id === id);
+            if (index === -1) return prevFields;
+
+            const original = prevFields[index];
+            const newField = {
+                ...original,
+                id: Date.now(), // Or use uuid() for more robust id
+            };
+
+            const updated = [...prevFields];
+            updated.splice(index + 1, 0, newField); // insert after original
+            return updated;
+        });
+    };
+
+    const deleteField = (id) => {
+        setFields(prevFields => prevFields.filter(field => field.id !== id));
+    };
 
     useEffect(() => {
         axios.get("http://localhost:5000/api/leftnavbar/get-user-profile", { withCredentials: true })
@@ -88,66 +139,6 @@ const FormBuilder = () => {
             .catch(() => navigate("/login"))
             .finally(() => setLoading(false));
     }, [navigate]);
-
-    useEffect(() => {
-        let isMounted = true; // Track if component is mounted
-
-        if (formId) {
-            axios.get(`http://localhost:5000/api/form_builder/get-specific-form/${formId}`, { withCredentials: true })
-                .then((res) => {
-                    if (isMounted) {
-                        console.log(`Fetched form data:`, res.data);
-
-                        setFormBgColor(res.data.form_background_color || "lightgray");
-                        setformColor(res.data.form_color || "#ffffff");
-                        setFormTitleColor(res.data.title_color || "#000000");
-                        setFormTitleBgColor(res.data.title_background || "#ffffff");
-                        setFormTitle(res.data.title || "Untitled Form");
-                        setFormTitleFontSize(res.data.title_font_size ?? 24);
-                        setFormTitleX(res.data.title_x ?? 50);
-                        setFormTitleY(res.data.title_y ?? 20);
-                        setFormTitleWidth(res.data.title_width ?? 300);
-                        setFormTitleHeight(res.data.title_height ?? 50);
-
-                        // ✅ Ensure that field types & options are properly set
-                        setFields(res.data.fields ? res.data.fields.map(field => {
-                            if (field.field_type === "Linear Scale") {
-                                return {
-                                    ...field,
-                                    type: "Linear Scale",
-                                    min: field.min_value,
-                                    max: field.max_value
-                                };
-                            }
-
-                            if (field.field_type === "Multiple Choice Grid") {
-                                return {
-                                    ...field,
-                                    type: "Multiple Choice Grid",
-                                    rows: field.grid_options ? field.grid_options.map(option => option.row_label) : [],
-                                    columns: field.grid_options ? field.grid_options.map(option => option.column_label) : []
-                                };
-                            }
-
-                            return field;
-                        }) : []);
-
-                        setSubmitBtnX(res.data.submit_button_x ?? 50);
-                        setSubmitBtnY(res.data.submit_button_y ?? 400);
-                        setSubmitBtnWidth(res.data.submit_button_width ?? 150);
-                        setSubmitBtnHeight(res.data.submit_button_height ?? 50);
-                        setSubmitBtnTextColor(res.data.submit_button_color || "#ffffff");
-                        setSubmitBtnBgColor(res.data.submit_button_background || "#007bff");
-                    }
-                })
-                .catch((err) => {
-                    console.error("Error fetching form:", err);
-                    Swal.fire("Error", "Failed to load form.", "error");
-                });
-        }
-
-        return () => { isMounted = false; }; // Cleanup function
-    }, [formId]);
 
     useEffect(() => {
         const updateFormHeight = () => {
@@ -189,53 +180,8 @@ const FormBuilder = () => {
         scrollToBottom();
     }, [fields]);
 
-    // Function to check if a new field overlaps with existing fields
-    const isOverlapping = (x, y, width, height, excludeId = null, isTitle = false) => {
-        if (!isTitle) {
-            return fields.some(field => (
-                field.id !== excludeId &&
-                !(x + width < field.x || x > field.x + field.width ||
-                    y + height < field.y || y > field.y + field.height)
-            ));
-        }
-        return false; // Don't check overlap when dragging the title
-    };
-
-    // Adjust position to avoid overlap
-    const getValidPosition = (x, y, width, height, excludeId = null) => {
-        let newX = x, newY = y;
-        let attempts = 0;
-        const maxAttempts = 50; // Prevent infinite loops
-
-        while (isOverlapping(newX, newY, width, height, excludeId) && attempts < maxAttempts) {
-            // Try shifting right first
-            if (newX + width + 20 < 600) {
-                newX += 20;
-            }
-            // If no space, move down
-            else {
-                newX = 50;
-                newY += 60;
-            }
-            attempts++;
-        }
-
-        return { x: newX, y: newY };
-    };
-
-    // Add new field with no overlap
+    // Add new field 
     const addField = (type) => {
-        let newX = 50;
-        let newY = lastPosition.y + lastFieldSize.height + 30; // Maintain spacing
-
-        if (fields.length > 0) {
-            const lastField = fields[fields.length - 1];
-            newX = lastField.x;
-            newY = lastField.y + lastFieldSize.height + 30;
-        }
-
-        const { x: validX, y: validY } = getValidPosition(newX, newY, lastFieldSize.width, lastFieldSize.height);
-
         const newField = {
             id: Date.now(),
             type,
@@ -244,310 +190,282 @@ const FormBuilder = () => {
             bgColor: "#FFFFFF",
             labelColor: "#000000",
             fontSize: 16,
-            width: lastFieldSize.width,
-            height: lastFieldSize.height,
-            x: validX,
-            y: validY,
-            options: type === "Dropdown" || type === "Multiple Choice" ? ["Option 1", "Option 2"] : [],
+            options: ["Option 1", "Option 2"], // default for types with options
             customized: {}
         };
 
-        if (type === "Linear Scale") {
-            newField.min = 1;
-            newField.max = 5;
-        } else if (type === "Multiple Choice Grid") {
-            newField.rows = ["Row 1", "Row 2"];
-            newField.columns = ["Column 1", "Column 2"];
-            newField.options = {
-                "Row 1": { "Column 1": "", "Column 2": "" },
-                "Row 2": { "Column 1": "", "Column 2": "" }
-            };
+        switch (type) {
+            case "Dropdown":
+            case "Multiple Choice":
+            case "Multiple Select":
+            case "Checkbox":
+            case "Checkboxes":
+                newField.options = ["Option 1", "Option 2"];
+                break;
+            case "Opinion Scale":
+            case "Slider":
+                newField.min = 1;
+                newField.max = 5;
+                break;
+            case "Choice matrix":
+                newField.rows = ["Row 1", "Row 2"];
+                newField.columns = ["Column 1", "Column 2"];
+                newField.options = {
+                    "Row 1": { "Column 1": "", "Column 2": "" },
+                    "Row 2": { "Column 1": "", "Column 2": "" }
+                };
+                break;
+            case "Ranking":
+            case "Star Rating":
+                newField.max = 5;
+                break;
+            case "Date Range":
+                newField.range = { from: "", to: "" };
+                break;
+            case "Picture":
+                newField.file = null;
+                break;
+            default:
+                break;
         }
 
         setFields([...fields, newField]);
-        setLastPosition({ x: validX, y: validY });
     };
 
-    const getInputType = (type, id) => {
-        if (!fields || !Array.isArray(fields)) return null;
-
-        const field = fields.find(f => f.id === id);
-        if (!field) return null;
-
-        const options = Array.isArray(field.options) ? field.options : [];
-
-        const inputStyle = {
-            width: "100%",
-            height: "100%",
-            fontSize: `${field.fontSize}px`,
-            padding: "5px",
-            boxSizing: "border-box",
+    const renderField = (field) => {
+        const commonProps = {
+            className: "form-control",
+            placeholder: field.label
         };
 
-        switch (type) {
+        switch (field.type) {
+            case "Short Answer":
+                return <input type="text" {...commonProps} />;
+            case "Email":
+                return <input type="email" {...commonProps} />;
             case "Number":
-                return <input type="number" style={inputStyle} inputMode="numeric" onKeyDown={(e) => e.key === 'e' && e.preventDefault()} />;
-            case "Date":
-                return <input type="date" style={inputStyle} />;
-            case "Checkbox":
-                return <input type="checkbox" style={{ width: "20px", height: "20px" }} />;
-            case "Multiple Choice":
+                return <input type="number" {...commonProps} />;
+            case "Date Picker":
+                return <input type="date" {...commonProps} />;
+            case "Time Picker":
+                return <input type="time" {...commonProps} />;
+            case "Date Time Picker":
+                return <input type="datetime-local" {...commonProps} />;
+            case "Date Range":
                 return (
-                    <div className="multiple-choice-container" style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                        {options.map((opt, index) => (
-                            <div key={index} className="multiple-choice-option">
-                                <input type="radio" name={`multiple_choice_${id}`} value={opt} />
-                                <span>{opt}</span>
-                            </div>
-                        ))}
+                    <div className="d-flex gap-2">
+                        <input type="date" className="form-control" placeholder="From" />
+                        <input type="date" className="form-control" placeholder="To" />
                     </div>
                 );
+            case "Paragraph":
+            case "Long Answer":
+                return <textarea {...commonProps}></textarea>;
             case "Dropdown":
                 return (
-                    <select style={inputStyle}>
-                        <option value="">Select an option</option>
-                        {options.map((opt, i) => (
-                            <option key={i} value={opt}>{opt}</option>
+                    <select {...commonProps}>
+                        {field.options.map((opt, idx) => (
+                            <option key={idx}>{opt}</option>
                         ))}
                     </select>
                 );
-            case "Document Type":
+            case "Multiple Select":
                 return (
-                    <input type="file" style={inputStyle} accept=".pdf,.doc,.docx" />
-                );
-            case "Text Only":
-                return null;
-            case "Linear Scale":
-                return (
-                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                        {Array.from({ length: field.max - field.min + 1 }, (_, i) => i + field.min).map((val) => (
-                            <label key={val} style={{ display: "flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
-                                <input type="radio" name={`linear_${id}`} value={val} style={{ appearance: "none", width: "20px", height: "20px", borderRadius: "50%", border: "1px solid #000", display: "inline-block", cursor: "pointer" }} />
-                                <span>{val}</span>
-                            </label>
+                    <select {...commonProps} multiple>
+                        {(field.options || []).map((opt, idx) => (
+                            <option key={idx}>{opt}</option>
                         ))}
-                    </div>
-                );
-            case "Multiple Choice Grid":
-                return (
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                        <thead>
-                            <tr>
-                                <th></th>
-                                {field.columns.map((col, i) => (
-                                    <th key={i} style={{ border: "1px solid #ddd", padding: "5px" }}>{col}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {field.rows.map((row, i) => (
-                                <tr key={i}>
-                                    <td style={{ border: "1px solid #ddd", padding: "5px" }}>{row}</td>
-                                    {field.columns.map((col, j) => (
-                                        <td key={j} style={{ border: "1px solid #ddd", padding: "5px", textAlign: "center" }}>
-                                            <input type="radio" name={`grid_${id}_row${i}`} value={col} />
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                    </select>
                 );
             case "Switch":
                 return (
-                    <label className="switch" style={{ display: "inline-flex", alignItems: "center", gap: "10px" }}>
-                        <input type="checkbox" />
-                        <span style={{ fontSize: `${field.fontSize}px` }}>Toggle</span>
-                    </label>
+                    <div className="form-check form-switch">
+                        <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id={`switch-${field.id}`}
+                            name={`switch-${field.id}`}
+                        />
+                    </div>
                 );
-
-            case "Checkboxes":
+            case "Choice Matrix":
                 return (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                        {options.map((opt, i) => (
-                            <label key={i} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                                <input type="checkbox" value={opt} />
-                                <span>{opt}</span>
-                            </label>
+                    <div className="table-responsive">
+                        <table className="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    {field.columns && field.columns.length > 0 ? field.columns.map((col, colIdx) => (
+                                        <th key={colIdx}>{col}</th>
+                                    )) : null}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {field.rows && field.rows.length > 0 ? field.rows.map((row, rowIdx) => (
+                                    <tr key={rowIdx}>
+                                        <td>{row}</td>
+                                        {field.columns && field.columns.length > 0 ? field.columns.map((col, colIdx) => (
+                                            <td key={colIdx}>
+                                                <input
+                                                    type="radio"
+                                                    name={`matrix_${field.id}_row_${rowIdx}`}
+                                                    value={col}
+                                                />
+                                            </td>
+                                        )) : null}
+                                    </tr>
+                                )) : null}
+                            </tbody>
+                        </table>
+                    </div>
+                );
+            case "Checkbox":
+                return (
+                    <div className="form-check">
+                        <input
+                            type="checkbox"
+                            className="form-check-input"
+                            id={`checkbox-${field.id}`}
+                        />
+                    </div>
+                );
+            case "Checkboxes":
+                return field.options.map((opt, idx) => (
+                    <div key={idx} className="form-check">
+                        <input type="checkbox" className="form-check-input" id={`checkbox-${field.id}-${idx}`} />
+                        <label className="form-check-label" htmlFor={`checkbox-${field.id}-${idx}`}>{opt}</label>
+                    </div>
+                ));
+            case "Multiple Choice":
+                return field.options.map((opt, idx) => (
+                    <div key={idx} className="form-check">
+                        <input
+                            type="radio"
+                            className="form-check-input"
+                            name={`field_${field.id}`}
+                            id={`radio-${field.id}-${idx}`}
+                        />
+                        <label className="form-check-label" htmlFor={`radio-${field.id}-${idx}`}>{opt}</label>
+                    </div>
+                ));
+            case "Picture":
+                return <input type="file" accept="image/*" className="form-control-file" />;
+            case "Ranking":
+                return (
+                    <ol>
+                        {field.options.map((opt, idx) => (
+                            <li key={idx}>{opt}</li>
+                        ))}
+                    </ol>
+                );
+            case "Star Rating":
+                return (
+                    <div>
+                        {[...Array(field.max || 5)].map((_, i) => (
+                            <span key={i} style={{ fontSize: "20px", color: "#f5c518" }}>★</span>
                         ))}
                     </div>
                 );
-
-            case "Choice matrix":
+            case "Slider":
                 return (
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                        <thead>
-                            <tr>
-                                <th></th>
-                                {field.columns.map((col, i) => (
-                                    <th key={i} style={{ border: "1px solid #ddd", padding: "5px" }}>{col}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {field.rows.map((row, i) => (
-                                <tr key={i}>
-                                    <td style={{ border: "1px solid #ddd", padding: "5px" }}>{row}</td>
-                                    {field.columns.map((col, j) => (
-                                        <td key={j} style={{ border: "1px solid #ddd", padding: "5px", textAlign: "center" }}>
-                                            <input type="checkbox" name={`choice_matrix_${id}_row${i}_col${j}`} />
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                    <input type="range" min={field.min} max={field.max} className="form-range" />
                 );
-
-            case "Heading":
+            case "Opinion Scale":
                 return (
-                    <h3 style={{ fontSize: `${field.fontSize + 4}px`, margin: "10px 0" }}>
-                        {field.label || "Heading"}
-                    </h3>
-                );
-
-            case "Banner":
-                return (
-                    <div style={{ backgroundColor: "#f1f1f1", padding: "10px", borderRadius: "5px", textAlign: "center" }}>
-                        <strong style={{ fontSize: `${field.fontSize + 2}px` }}>{field.label || "Banner Title"}</strong>
+                    <div className="d-flex gap-2 align-items-center">
+                        {[...Array((field?.max ?? 5) - (field?.min ?? 1) + 1)].map((_, i) => {
+                            const val = field.min + i;
+                            return (
+                                <label key={val}>
+                                    <input type="radio" name={`opinion_${field.id}`} /> {val}
+                                </label>
+                            );
+                        })}
                     </div>
                 );
+            case "Heading":
+                return <h3>{field.label}</h3>;
+            case "Banner":
+                return <div className="banner">{field.label}</div>;
             default:
-                return <input type="text" style={inputStyle} />;
-        }
-    };
-
-    const updateGlobalSettings = (key, value) => {
-        setGlobalSettings(prev => ({ ...prev, [key]: value }));
-        setFields(prevFields =>
-            prevFields.map(field =>
-                !field.customized?.[key] ? { ...field, [key]: value } : field
-            )
-        );
-    };
-
-    const updateField = (id, key, value) => {
-        if (key === "label" && !value.trim()) return;
-
-        setFields(prevFields =>
-            prevFields.map(field =>
-                field.id === id ? { ...field, [key]: value, customized: { ...field.customized, [key]: true } } : field
-            )
-        );
-
-        setSelectedField(prev => (prev?.id === id ? { ...prev, [key]: value } : prev));
-    };
-
-    const deleteField = (id) => {
-        console.log("Deleting field with ID:", id);
-        console.log("Before deletion:", fields);
-        setFields(prevFields => prevFields.filter(field => field.id !== id));
-        console.log("After deletion:", fields);
-        if (selectedField && selectedField.id === id) {
-            setSelectedField(null);
-        }
-    };
-
-    const saveOrUpdateForm = async (isNew = false) => {
-        if (!formTitle.trim()) {
-            Swal.fire("Error", "Form title cannot be empty.", "error");
-            return;
-        }
-
-        if (fields.length === 0) {
-            Swal.fire("Error", "At least one field is required.", "error");
-            return;
-        }
-
-        if (fields.some(field => !field.label.trim())) {
-            Swal.fire("Error", "Field labels cannot be empty.", "error");
-            return;
-        }
-
-        // Prepare fields with linear scale values and grid options
-        const updatedFields = fields.map(field => {
-            if (field.type === "Linear Scale") {
-                return {
-                    ...field,
-                    min_value: field.min || 1, // Ensure min_value is set
-                    max_value: field.max || 5  // Ensure max_value is set
-                };
-            }
-
-            if (field.type === "Multiple Choice Grid") {
-                return {
-                    ...field,
-                    grid_options: field.rows.map((row, rowIndex) => ({
-                        row_label: row,
-                        column_label: field.columns[rowIndex] || field.columns[0]  // Match row with correct column
-                    }))
-                };
-            }
-
-            return field;
-        });
-
-        const formData = {
-            form_background_color: formBgColor,
-            form_color: formColor,
-            title_color: formTitleColor,
-            title_background: formTitleBgColor,
-            title: formTitle,
-            title_font_size: formTitleFontSize,
-            title_x: formTitleX,
-            title_y: formTitleY,
-            title_width: formTitleWidth,
-            title_height: formTitleHeight,
-            fields: updatedFields,
-            submit_button_x: submitBtnX,
-            submit_button_y: submitBtnY,
-            submit_button_width: submitBtnWidth,
-            submit_button_height: submitBtnHeight,
-            submit_button_color: submitBtnTextColor,
-            submit_button_background: submitBtnBgColor
-        };
-
-        try {
-            if (!isNew && formId) {
-                console.log("Updating form with fields:", fields);
-                const cleanFormId = formId.replace("form-", "");
-                const response = await axios.put(
-                    `http://localhost:5000/api/form_builder/update-form/${cleanFormId}`,
-                    formData,
-                    { withCredentials: true }
-                );
-                Swal.fire("Success!", response.data.message, "success");
-            } else {
-                console.log("Saving form with fields:", fields);
-                const response = await axios.post(
-                    "http://localhost:5000/api/form_builder/save-form",
-                    formData,
-                    { withCredentials: true }
-                );
-                Swal.fire("Success!", response.data.message, "success");
-
-                // ✅ Navigate to the newly created form page using the returned formId
-                if (response.data.formId) {
-                    navigate(`/form-builder/form-${response.data.formId}`);
-                }
-            }
-
-            setShowNotification(true);
-        } catch (error) {
-            console.error("Error saving/updating form:", error);
-            const errorMessage = error.response?.data?.error || "An error occurred";
-            Swal.fire("Error", errorMessage, "error");
+                return <input type="text" {...commonProps} />;
         }
     };
 
     if (loading) return <p>Loading...</p>;
 
-    const FieldButton = ({ type }) => (
-        <button className="field-btn" onClick={() => addField(type)}>
-            <div className="field-icon">{fieldIcons[type] || <FaCheck />}</div>
-            <div className="field-label">{type}</div>
-        </button>
-    );
+    const FieldButton = ({ type, section }) => {
+        const getColor = () => {
+            if (section === "Frequently used") return "#28a745";
+            if (section === "Display text") return "#6c757d";
+            if (section === "Choices") return "#F59E0B";
+            if (section === "Time") return "#A855F7";
+            if (section === "Rating & Ranking") return "#e83e8c";
+            if (section === "Text") return "#28a745";
+            if (section === "Contact Info") return "rgb(20, 184, 166)";
+            return "#F59E0B";
+        };
+
+        const baseColor = getColor();
+
+        const backgroundColor = `${baseColor}20`;
+        const borderColor = baseColor;
+
+        const icon = fieldIcons[type] || <FaCheck />;
+        const modifiedIcon = React.cloneElement(icon, { color: baseColor, size: 12 }); // 👈 Smaller icon
+
+        return (
+            <button
+                className="field-btn"
+                onClick={() => addField(type)}
+                style={{
+                    backgroundColor: "#fff",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "10px",
+                    padding: "12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    width: "80px",
+                    height: "80px",
+                    boxSizing: "border-box"
+                }}
+            >
+                <div
+                    className="field-icon"
+                    style={{
+                        backgroundColor,
+                        border: `1.5px solid ${borderColor}`,
+                        borderRadius: "3px",
+                        padding: "5px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginTop: "5px"
+                    }}
+                >
+                    {modifiedIcon}
+                </div>
+                <div className="field-label" style={{ color: "#1f2937", fontWeight: 500, fontSize: "0.65rem" }}>{type}</div>
+            </button>
+        );
+    };
+
+    // Function to reorder items
+    const reorder = (list, startIndex, endIndex) => {
+        const result = Array.from(list);
+        const [removed] = result.splice(startIndex, 1);
+        result.splice(endIndex, 0, removed);
+        return result;
+    };
+
+    const onDragEnd = (result) => {
+        if (!result.destination) return;
+        const newFields = reorder(fields, result.source.index, result.destination.index);
+        setFields(newFields);
+    };
 
     return (
         <div className="form-builder">
@@ -568,16 +486,7 @@ const FormBuilder = () => {
                         <div className="field-grid">
                             {["Short Answer", "Multiple Choice", "Email"]
                                 .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map(type => <FieldButton key={type} type={type} />)}
-                        </div>
-                    </div>
-
-                    <div className="field-group mt-1">
-                        <h4>Input Fields</h4>
-                        <div className="field-grid">
-                            {["Text Only", "Number", "Date", "Document Type", "Linear Scale"]
-                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map(type => <FieldButton key={type} type={type} />)}
+                                .map(type => <FieldButton key={type} type={type} section="Frequently used" />)}
                         </div>
                     </div>
 
@@ -586,7 +495,7 @@ const FormBuilder = () => {
                         <div className="field-grid">
                             {["Heading", "Paragraph", "Banner"]
                                 .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map(type => <FieldButton key={type} type={type} />)}
+                                .map(type => <FieldButton key={type} type={type} section="Display text" />)}
                         </div>
                     </div>
 
@@ -594,361 +503,197 @@ const FormBuilder = () => {
                         <h4>Choices</h4>
                         <div className="field-grid">
                             {[
-                                "Dropdown", "Switch", "Multiple Choice Grid", "Checkbox",
-                                "Checkboxes", "Choice matrix"
+                                "Dropdown", "Picture", "Multiple Select", "Switch", "Multiple Choice", "Checkbox",
+                                "Checkboxes", "Choice Matrix"
                             ]
                                 .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map(type => <FieldButton key={type} type={type} />)}
+                                .map(type => <FieldButton key={type} type={type} section="Choices" />)}
                         </div>
                     </div>
-                </div>
 
-                <div className="sidebar-action-buttons">
-                    {isEditableForm && (
-                        <button className="update-form-btn" onClick={() => saveOrUpdateForm(false)}>
-                            Update Form
-                        </button>
-                    )}
-                    <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)}>
-                        Save Form
-                    </button>
+                    <div className="field-group mt-1">
+                        <h4>Time</h4>
+                        <div className="field-grid">
+                            {["Date Picker", "Date Time Picker", "Time Picker", "Date Range"]
+                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(type => <FieldButton key={type} type={type} section="Time" />)}
+                        </div>
+                    </div>
+
+                    <div className="field-group mt-1">
+                        <h4>Rating & Ranking</h4>
+                        <div className="field-grid">
+                            {["Ranking", "Star Rating", "Slider", "Opinion Scale"]
+                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(type => <FieldButton key={type} type={type} section="Rating & Ranking" />)}
+                        </div>
+                    </div>
+
+                    <div className="field-group mt-1">
+                        <h4>Text</h4>
+                        <div className="field-grid">
+                            {["Short Answer", "Long Answer"]
+                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(type => <FieldButton key={type} type={type} section="Text" />)}
+                        </div>
+                    </div>
+
+                    <div className="field-group mt-1">
+                        <h4>Contact Info</h4>
+                        <div className="field-grid">
+                            {["Email", "Phone Number", "Location"]
+                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(type => <FieldButton key={type} type={type} section="Contact Info" />)}
+                        </div>
+                    </div>
+
+                    <div className="field-group mt-1">
+                        <h4>Contact Info</h4>
+                        <div className="field-grid">
+                            {["Email", "Number", "Location", "Document Type"]
+                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(type => <FieldButton key={type} type={type} section="Contact Info" />)}
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
             <div className="form-container">
+
                 <div className="form-body" style={{ backgroundColor: formBgColor }}>
                     <div className="form-content" style={{ backgroundColor: formColor }} onClick={() => setShowCustomize(true)}>
-                        <Rnd
-                            default={{ x: formTitleX, y: formTitleY, width: formTitleWidth, height: formTitleHeight }}
-                            bounds="parent"
-                            enableResizing={{
-                                top: true,
-                                right: true,
-                                bottom: true,
-                                left: true,
-                                topRight: true,
-                                bottomRight: true,
-                                bottomLeft: true,
-                                topLeft: true
-                            }}
-                            onDragStop={(e, d) => {
-                                const { x, y } = getValidPosition(d.x, d.y, formTitleWidth, formTitleHeight, null, true);
-                                setFormTitleX(x);
-                                setFormTitleY(y);
-                            }}
-                            onResizeStop={(e, direction, ref, delta, position) => {
-                                setFormTitleWidth(ref.offsetWidth);
-                                setFormTitleHeight(ref.offsetHeight);
-                                setFormTitleX(position.x);
-                                setFormTitleY(position.y);
-                            }}
-                        >
+                        <DragDropContext onDragEnd={onDragEnd}>
+                            <Droppable droppableId="fields">
+                                {(provided) => (
+                                    <div ref={provided.innerRef} {...provided.droppableProps}>
+                                        {fields.map((field, index) => (
+                                            <Draggable key={field.id} draggableId={field.id.toString()} index={index}>
+                                                {(provided) => (
+                                                    <div
+                                                        className="form-field-wrapper"
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        onClick={() => handleFieldClick(field.id)}
+                                                    >
+                                                        <div className="drag-handle" {...provided.dragHandleProps}>
+                                                            <FaGripVertical />
+                                                        </div>
 
-                            <input
-                                type="text"
-                                value={formTitle}
-                                onChange={(e) => setFormTitle(e.target.value)}
-                                className="form-title"
-                                style={{
-                                    color: formTitleColor,
-                                    backgroundColor: formTitleBgColor,
-                                    fontSize: `${formTitleFontSize}px`,
-                                    width: `${formTitleWidth}px`, // Change this from "100%" to dynamic width
-                                    height: `${formTitleHeight}px`, // Ensure height is dynamic too
-                                }}
-                            />
-                        </Rnd>
+                                                        <div className="form-field-content">
+                                                            <label>{field.label}</label>
+                                                            {renderField(field)}
+                                                        </div>
 
-                        {fields.map((field) => (
-                            <Rnd
-                                key={field.id}
-                                position={{ x: field.x, y: field.y }}
-                                size={{ width: field.width, height: field.height }}
-                                bounds="parent"
-                                enableResizing={{
-                                    top: true,
-                                    right: true,
-                                    bottom: true,
-                                    left: true,
-                                    topRight: true,
-                                    bottomRight: true,
-                                    bottomLeft: true,
-                                    topLeft: true
-                                }}
-                                onDragStop={(e, d) => {
-                                    let { x, y } = d;
-                                    const { x: validX, y: validY } = getValidPosition(x, y, field.width, field.height, field.id);
+                                                        {selectedFieldId === field.id && (
+                                                            <div className="field-actions">
+                                                                <button
+                                                                    onClick={() => openSettings(field.id)}
+                                                                    data-tooltip-title="Open field settings"
+                                                                >
+                                                                    <FaCog />
+                                                                </button>
 
-                                    setFields((prevFields) =>
-                                        prevFields.map(f =>
-                                            f.id === field.id ? { ...f, x: validX, y: validY } : f
-                                        )
-                                    );
-                                }}
-                                onResizeStop={(e, direction, ref, delta, position) => {
-                                    const updatedWidth = ref.offsetWidth;
-                                    const updatedHeight = ref.offsetHeight;
+                                                                <button
+                                                                    className="change-type"
+                                                                    onClick={(e) => changeFieldType(field.id, e)}
+                                                                    data-tooltip-title={`Change field type\A${field.type}`}
+                                                                >
+                                                                    <FaExchangeAlt />
+                                                                </button>
 
-                                    setFields(prevFields =>
-                                        prevFields.map(f =>
-                                            f.id === field.id
-                                                ? { ...f, width: updatedWidth, height: updatedHeight }
-                                                : f
-                                        )
-                                    );
+                                                                <button
+                                                                    onClick={() => duplicateField(field.id)}
+                                                                    data-tooltip-title="Duplicate field"
+                                                                >
+                                                                    <FaClone />
+                                                                </button>
 
-                                    setLastFieldSize({ width: updatedWidth, height: updatedHeight }); // Update global last field size
-                                }}
-                            >
+                                                                <button
+                                                                    className="delete"
+                                                                    onClick={() => deleteField(field.id)}
+                                                                    data-tooltip-title="Delete field"
+                                                                >
+                                                                    <FaRegTrashAlt />
+                                                                </button>
+                                                            </div>
+                                                        )}
 
-                                <div className="field" style={{
-                                    backgroundColor: field.bgColor,
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    alignItems: "flex-start",
-                                    padding: "5px",
-                                    borderRadius: "5px",
-                                    width: "100%",  // Makes it fully resizable
-                                    height: "100%", // Ensures height is taken from `Rnd`
-                                    minHeight: "40px" // Prevents collapsing
-                                }} onClick={() => setSelectedField(field)}>
-                                    <span style={{ color: field.labelColor, fontSize: `${field.fontSize}px`, fontWeight: "bold", marginRight: "10px", marginBottom: "10px" }}>{field.label}</span>
-                                    <div style={{ display: "flex", alignItems: "center", flexGrow: 1, width: "100%" }}>
-                                        {getInputType(field.type, field.id)}
-                                        <button className="delete-btn" onClick={() => deleteField(field.id)} style={{ background: "red", color: "white", border: "none", borderRadius: "50%", width: "30px", height: "30px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginLeft: "10px" }}>
-                                            <FaTrash size={13} />
-                                        </button>
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))}
+                                        {provided.placeholder}
                                     </div>
-                                </div>
-
-                            </Rnd>
-                        ))}
-
-                        <Rnd
-                            default={{
-                                x: submitBtnX,
-                                y: submitBtnY,
-                                width: submitBtnWidth,
-                                height: submitBtnHeight
-                            }}
-                            bounds="parent"
-                            enableResizing={{ bottomRight: true }}
-                            onDragStop={(e, d) => {
-                                let newY = d.y;
-                                setSubmitBtnX(d.x);
-                                setSubmitBtnY(newY);
-                            }}
-                            onResizeStop={(e, direction, ref, delta, position) => {
-                                setSubmitBtnWidth(ref.offsetWidth);
-                                setSubmitBtnHeight(ref.offsetHeight);
-                                setSubmitBtnX(position.x);
-                                setSubmitBtnY(position.y);
-                            }}
-                        >
-                            <button
-                                className="submit-form-btn"
-                                style={{
-                                    backgroundColor: submitBtnBgColor,
-                                    color: submitBtnTextColor,
-                                    fontSize: `${submitBtnFontSize}px`,
-                                    width: "100%",
-                                    height: "100%",
-                                    border: "none",
-                                    borderRadius: "5px",
-                                    cursor: "pointer"
-                                }}
-                            >
-                                Submit
-                            </button>
-                        </Rnd>
+                                )}
+                            </Droppable>
+                        </DragDropContext>
                     </div>
+
                 </div>
+                {fieldTypeMenu && (
+                    <div
+                        className="field-type-menu"
+                        style={{
+                            position: "absolute",
+                            top: "calc(var(--menu-top, 155px))",
+                            left: "calc(var(--menu-left, 70%) + 50px)",
+                            background: "#fff",
+                            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                            borderRadius: "10px",
+                            padding: "16px",
+                            zIndex: 9999,
+                        }}
+                    >
+                        <h4 style={{ marginBottom: 20, color: "rgb(156 163 175)", fontWeight: "400", fontSize: ".875rem" }}>Change to similar field:</h4>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+                            {[
+                                { type: "Paragraph", label: "Long answer", icon: <FaAlignLeft /> },
+                                { type: "Email", label: "Email input", icon: <FaEnvelope /> },
+                                { type: "Date Picker", label: "Date", icon: <FaCalendarAlt /> },
+                                { type: "Number", label: "Phone number", icon: <FaHashtag /> },
+                                { type: "Dropdown", label: "Dropdown", icon: <FaCaretDown /> },
+                                { type: "Checkbox", label: "Checkbox", icon: <FaCheckSquare /> },
+                            ].map((opt) => (
+                                <button
+                                    key={opt.type}
+                                    onClick={() => handleTypeChange(fieldTypeMenu.id, opt.type)}
+                                    style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        border: "1px solid #e5e7eb",
+                                        borderRadius: "10px",
+                                        padding: "5px 7px",
+                                        background: "#f9f9f9",
+                                        cursor: "pointer",
+                                        width: "70px",
+                                        Height: "60px",
+                                        overflow: "hidden",
+                                        textAlign: "center",
+                                        boxSizing: "border-box",
+                                    }}
+                                >
+                                    <div style={{ fontSize: "15px", color: "#0ea5e9" }}>{opt.icon}</div>
+                                    <span
+                                        style={{
+                                            fontSize: "12px",
+                                            marginTop: "6px",
+                                            color: "#1f2937",
+                                            lineHeight: "1.2",
+                                            wordWrap: "break-word",
+                                            whiteSpace: "normal",
+                                        }}
+                                    >
+                                        {opt.label}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
-
-            {showCustomize && (
-                <div className="customize-section">
-                    <div className="customize-header">
-                        <button className="close-btn" onClick={() => setShowCustomize(false)}><i class="fa-solid fa-x"></i></button>
-                        <h2>Customize</h2>
-                    </div>
-
-                    <label>Form Background Color:</label>
-                    <input type="color" value={formBgColor} onChange={(e) => setFormBgColor(e.target.value)} />
-
-                    <label>Form Background Color:</label>
-                    <input type="color" value={formColor} onChange={(e) => setformColor(e.target.value)} />
-
-                    <label>Form Title:</label>
-                    <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} />
-
-                    <label>Title Color:</label>
-                    <input type="color" value={formTitleColor} onChange={(e) => setFormTitleColor(e.target.value)} />
-
-                    <label>Title Background Color:</label>
-                    <input type="color" value={formTitleBgColor} onChange={(e) => setFormTitleBgColor(e.target.value)} />
-
-                    <label>Title Font Size:</label>
-                    <input type="number" value={formTitleFontSize} onChange={(e) => setFormTitleFontSize(parseInt(e.target.value))} />
-
-                    <label>Submit Button Background:</label>
-                    <input
-                        type="color"
-                        value={submitBtnBgColor}
-                        onChange={(e) => setSubmitBtnBgColor(e.target.value)}
-                    />
-
-                    <label>Submit Button Text Color:</label>
-                    <input
-                        type="color"
-                        value={submitBtnTextColor}
-                        onChange={(e) => setSubmitBtnTextColor(e.target.value)}
-                    />
-                    <label>Submit Button Font Size</label>
-                    <input type="number" value={submitBtnFontSize} onChange={(e) => setSubmitBtnFontSize(parseInt(e.target.value, 10) || 16)} />
-
-                    <h2>Global Customization</h2>
-
-                    <label>Global Background Color:</label>
-                    <input
-                        type="color"
-                        value={globalSettings.bgColor}
-                        onChange={(e) => updateGlobalSettings("bgColor", e.target.value)}
-                    />
-
-                    <label>Global Label Color:</label>
-                    <input
-                        type="color"
-                        value={globalSettings.labelColor}
-                        onChange={(e) => updateGlobalSettings("labelColor", e.target.value)}
-                    />
-
-                    <label>Global Font Size:</label>
-                    <input
-                        type="number"
-                        value={globalSettings.fontSize}
-                        onChange={(e) => updateGlobalSettings("fontSize", parseInt(e.target.value, 10))}
-                    />
-
-                    <label>Global Width:</label>
-                    <input
-                        type="number"
-                        value={globalSettings.width}
-                        onChange={(e) => updateGlobalSettings("width", parseInt(e.target.value, 10))}
-                    />
-
-                    <label>Global Height:</label>
-                    <input
-                        type="number"
-                        value={globalSettings.height}
-                        onChange={(e) => updateGlobalSettings("height", parseInt(e.target.value, 10))}
-                    />
-
-                    {selectedField && (
-                        <>
-                            <h3>Field Settings</h3>
-                            <label>Label Text:</label>
-                            <input type="text" value={selectedField.label} onChange={(e) => updateField(selectedField.id, "label", e.target.value)} />
-
-                            <label>Label Background Color:</label>
-                            <input type="color" value={selectedField.bgColor} onChange={(e) => updateField(selectedField.id, "bgColor", e.target.value)} />
-
-                            <label>Label Color:</label>
-                            <input type="color" value={selectedField.labelColor} onChange={(e) => updateField(selectedField.id, "labelColor", e.target.value)} />
-
-                            <label>Label Font Size:</label>
-                            <input type="number" value={selectedField.fontSize} onChange={(e) => updateField(selectedField.id, "fontSize", parseInt(e.target.value))} />
-
-                            {/* Option Editing for Dropdown & Multiple Choice */}
-                            {(selectedField.type === "Dropdown" || selectedField.type === "Multiple Choice") && (
-                                <>
-                                    <h4>Options</h4>
-                                    {selectedField.options.map((option, index) => (
-                                        <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
-                                            <input
-                                                type="text"
-                                                value={option}
-                                                onChange={(e) => {
-                                                    const newOptions = [...selectedField.options];
-                                                    newOptions[index] = e.target.value;
-                                                    updateField(selectedField.id, "options", newOptions);
-                                                }}
-                                            />
-                                            <button onClick={() => {
-                                                const newOptions = selectedField.options.filter((_, i) => i !== index);
-                                                updateField(selectedField.id, "options", newOptions);
-                                            }}>❌</button>
-                                        </div>
-                                    ))}
-                                    <button onClick={() => updateField(selectedField.id, "options", [...selectedField.options, `Option ${selectedField.options.length + 1}`])}>
-                                        ➕ Add Option
-                                    </button>
-                                </>
-                            )}
-
-                            {selectedField?.type === "Linear Scale" && (
-                                <>
-                                    <label>Min Value:</label>
-                                    <input type="number" value={selectedField.min} onChange={(e) => updateField(selectedField.id, "min", parseInt(e.target.value))} />
-                                    <label>Max Value:</label>
-                                    <input type="number" value={selectedField.max} onChange={(e) => updateField(selectedField.id, "max", parseInt(e.target.value))} />
-                                </>
-                            )}
-
-                            {selectedField && selectedField.type === "Multiple Choice Grid" && (
-                                <>
-                                    <h3>Field Settings</h3>
-
-                                    {/* Customize Rows */}
-                                    <h4>Rows</h4>
-                                    {selectedField.rows.map((row, index) => (
-                                        <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
-                                            <input
-                                                type="text"
-                                                value={row}
-                                                onChange={(e) => {
-                                                    const newRows = [...selectedField.rows];
-                                                    newRows[index] = e.target.value;
-                                                    updateField(selectedField.id, "rows", newRows);
-                                                }}
-                                            />
-                                            <button onClick={() => {
-                                                const newRows = selectedField.rows.filter((_, i) => i !== index);
-                                                updateField(selectedField.id, "rows", newRows);
-                                            }}>❌</button>
-                                        </div>
-                                    ))}
-                                    <button onClick={() => updateField(selectedField.id, "rows", [...selectedField.rows, `Row ${selectedField.rows.length + 1}`])}>
-                                        ➕ Add Row
-                                    </button>
-
-                                    {/* Customize Columns */}
-                                    <h4>Columns</h4>
-                                    {selectedField.columns.map((col, index) => (
-                                        <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
-                                            <input
-                                                type="text"
-                                                value={col}
-                                                onChange={(e) => {
-                                                    const newColumns = [...selectedField.columns];
-                                                    newColumns[index] = e.target.value;
-                                                    updateField(selectedField.id, "columns", newColumns);
-                                                }}
-                                            />
-                                            <button onClick={() => {
-                                                const newColumns = selectedField.columns.filter((_, i) => i !== index);
-                                                updateField(selectedField.id, "columns", newColumns);
-                                            }}>❌</button>
-                                        </div>
-                                    ))}
-                                    <button onClick={() => updateField(selectedField.id, "columns", [...selectedField.columns, `Column ${selectedField.columns.length + 1}`])}>
-                                        ➕ Add Column
-                                    </button>
-                                </>
-                            )}
-                        </>
-                    )}
-                </div>
-            )}
 
         </div >
     );

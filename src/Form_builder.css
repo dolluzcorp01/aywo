@@ -40,39 +40,6 @@
     padding: 20px 20px 40px;
 }
 
-.form-body {
-    display: flex;
-    justify-content: center;
-    overflow-y: auto;
-    padding: 50px 20px;
-    height: 100%;
-    border-radius: 15px;
-    border: 2px solid #e5e7eb;
-}
-
-.form-content {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    border-radius: 15px;
-    overflow: visible;
-    max-width: 700px;
-    width: 100%;
-}
-
-/* Customization panel */
-.form-builder .customize-section {
-    background-color: #f8f9fa;
-    width: 300px;
-    padding: 15px;
-    border-left: 2px solid #e0e0e0;
-    flex-shrink: 0;
-    max-height: calc(100vh - 80px);
-    overflow-y: auto;
-    position: sticky;
-    top: 0;
-}
-
 /* Sidebar buttons */
 .search-wrapper {
     position: relative;
@@ -220,38 +187,17 @@
     background: #0056b3;
 }
 
-/* Form Title */
-.form-builder .form-title {
-    width: auto;
-    height: auto;
-    resize: none;
-    overflow: hidden;
-}
-
-/* Labels */
-.form-builder .field label {
-    flex-grow: 1;
-}
-
-.form-builder .field input {
-    flex: 1;
-    min-width: 100px;
-    padding: 5px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-/* Prevent number field issues */
-.form-builder .field input[type="number"]::-webkit-inner-spin-button,
-.form-builder .field input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-.form-builder .field textarea {
-    width: 100%;
-    min-height: 40px;
-    resize: vertical;
+/* Customization panel */
+.form-builder .customize-section {
+    background-color: #f8f9fa;
+    width: 300px;
+    padding: 15px;
+    border-left: 2px solid #e0e0e0;
+    flex-shrink: 0;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    position: sticky;
+    top: 0;
 }
 
 /* Customization inputs */
@@ -275,12 +221,136 @@
     margin-bottom: 10px;
 }
 
-/* Resizable elements inside RND */
-.rnd-resizable {
+.form-body {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 50px 20px;
+    height: 100%;
+    border-radius: 15px;
+    border: 2px solid #e5e7eb;
+    z-index: 0;
+}
+
+.form-content {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border-radius: 15px;
+    overflow: visible;
+    max-width: 700px;
+    width: 100%;
+    z-index: 0;
+}
+
+.form-field-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: white;
+}
+
+.field-actions {
+    position: absolute;
+    right: -50px;
+    top: 110%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: white;
+    padding: 10px 5px;
+    border-radius: 30px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+
+.field-actions button {
+    position: relative;
+    background: none;
+    border: none;
+    padding: 6px;
+    color: #555;
+    font-size: 16px;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: white;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+}
+
+.field-actions button:hover {
+    background-color: #e5e5e5;
+}
+
+/* Tooltip container */
+.field-actions button::after {
+    content: attr(data-tooltip-title);
+    position: absolute;
+    left: 130%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #333;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 100;
+}
+
+/* Style second line (after |) inside tooltip using a pseudo-element trick */
+.field-actions button[data-tooltip-title*="|"]::after {
+    content: attr(data-tooltip-title);
+    white-space: pre-line;
+    font-weight: 500;
+    font-size: 13px;
+    color: #fff;
+    background: #333;
+    padding: 6px 12px;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Show tooltip on hover */
+.field-actions button:hover::after {
+    opacity: 1;
+}
+
+/* Tooltip with line break */
+.field-actions button[data-tooltip-title*="\A"]::after {
+    white-space: pre-line;
+}
+
+.field-actions button.change-type::after {
+    white-space: pre-line;
+}
+
+.field-actions button.delete {
+    color: red;
+}
+
+.drag-handle {
+    cursor: grab;
+    padding-right: 10px;
+    font-size: 18px;
+    color: #888;
+}
+
+.form-field-content {
+    flex: 1;
 }
