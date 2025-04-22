@@ -354,3 +354,116 @@
 .form-field-content {
     flex: 1;
 }
+
+.Matrix-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.Matrix-table th,
+.Matrix-table td {
+    border: 1px solid #ccc;
+    padding: 12px;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.Matrix-table th.Matrix-col {
+    background-color: #f2f2f2;
+    font-weight: 600;
+}
+
+.Matrix-table td.Matrix-row {
+    background-color: #fafafa;
+    font-weight: 500;
+    text-align: left;
+}
+
+.Matrix-radio {
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+.ranking-list {
+    list-style: decimal;
+    padding-left: 20px;
+}
+
+.ranking-item {
+    background: #f2f2f2;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    cursor: grab;
+    transition: background 0.2s;
+}
+
+.ranking-item:hover {
+    background: #e0e0e0;
+}
+
+.custom-slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 4px;
+    background: linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) 50%, #e5e7eb 50%, #e5e7eb 100%);
+    appearance: none;
+    outline: none;
+    transition: background 0.3s;
+}
+
+.custom-slider::-webkit-slider-thumb {
+    appearance: none;
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid rgb(59, 130, 246);
+    cursor: pointer;
+    margin-top: -6px;
+}
+
+.custom-slider::-moz-range-thumb {
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid rgb(59, 130, 246);
+    cursor: pointer;
+}
+
+.image-option-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.image-option-modal-box {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.media-preview-wrapper {
+    border: 1px solid #e5e7eb;
+    padding: 12px;
+    border-radius: 8px;
+    background-color: #f9fafb;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.media-upload-placeholder {
+    color: #9ca3af;
+    font-style: italic;
+    padding: 40px 0;
+}

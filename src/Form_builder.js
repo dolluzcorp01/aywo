@@ -10,8 +10,9 @@ import {
     FaToggleOn, FaTh, FaCheck, FaImage, FaBoxes, FaGripHorizontal, FaSearch,
     FaGripVertical, FaCog, FaClone, FaExchangeAlt, FaHeading, FaChevronUp, FaChevronDown,
     FaClock, FaRegClock, FaCalendarCheck, FaSortNumericDown, FaStar, FaSlidersH, FaSmile,
-    FaEquals, FaBars, FaMapMarkerAlt
+    FaEquals, FaBars, FaMapMarkerAlt, FaVideo, FaFilePdf, FaMinus, FaTimes
 } from "react-icons/fa";
+import Select from 'react-select';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import "./Form_builder.css";
 
@@ -31,7 +32,7 @@ const fieldIcons = {
     "Switch": <FaToggleOn />,
     "Multiple Choice": <FaList />,
     "Checkboxes": <FaBoxes />,
-    "Choice matrix": <FaGripHorizontal />,
+    "Choice Matrix": <FaGripHorizontal />,
     "Checkbox": <FaCheckSquare />,
 
     "Date Picker": <FaCalendarAlt />,
@@ -49,18 +50,26 @@ const fieldIcons = {
 
     "Email": <FaEnvelope />,
     "Number": <FaHashtag />,
-    "Location": <FaMapMarkerAlt />,
+    "Address": <FaMapMarkerAlt />,
     "Document Type": <FaFileAlt />,
+
+    "Image": <FaImage />,
+    "Video": <FaVideo />,
+    "PDF": <FaFilePdf />,
+
+    "Divider": <FaMinus />
 };
 
 const FormBuilder = () => {
+    const [fields, setFields] = useState([]);
     const [fieldTypeMenu, setFieldTypeMenu] = useState(null); // stores id of field and position
+    const [hovered, setHovered] = useState(null);
+    const [editImageOption, setEditImageOption] = useState(null);
 
     const [formBgColor, setFormBgColor] = useState("lightgray");
     const [formColor, setformColor] = useState("white");
 
     const [searchTerm, setSearchTerm] = useState("");
-    const [fields, setFields] = useState([]);
     const [lastPosition, setLastPosition] = useState({ x: 50, y: 80 });
     const location = useLocation();
 
@@ -76,8 +85,8 @@ const FormBuilder = () => {
     const navigate = useNavigate();
     const { formId } = useParams();
 
-
     const [selectedFieldId, setSelectedFieldId] = useState(null);
+    const [customizeVisible, setCustomizeVisible] = useState(false);
 
 
     useEffect(() => {
@@ -88,10 +97,17 @@ const FormBuilder = () => {
 
     const handleFieldClick = (id) => {
         setSelectedFieldId(id === selectedFieldId ? null : id);
+        setCustomizeVisible(true);
     };
 
-    const openSettings = (id) => {
-        console.log("Open settings for", id);
+    const openSettings = (fieldId) => {
+        if (selectedFieldId === fieldId) {
+            // Toggle customize if already selected
+            setCustomizeVisible(!customizeVisible);
+        } else {
+            setSelectedFieldId(fieldId);
+            setCustomizeVisible(true); // Show customize on new field
+        }
     };
 
     const changeFieldType = (id, event) => {
@@ -166,20 +182,6 @@ const FormBuilder = () => {
         setTimeout(updateFormHeight, 0);
     }, [fields, submitBtnY, submitBtnHeight]);
 
-    useEffect(() => {
-        const scrollToBottom = () => {
-            const body = document.querySelector('.form-body');
-            if (body) {
-                body.scrollTo({
-                    top: body.scrollHeight,
-                    behavior: 'smooth'
-                });
-            }
-        };
-
-        scrollToBottom();
-    }, [fields]);
-
     // Add new field 
     const addField = (type) => {
         const newField = {
@@ -203,11 +205,14 @@ const FormBuilder = () => {
                 newField.options = ["Option 1", "Option 2"];
                 break;
             case "Opinion Scale":
+                newField.min = 1;
+                newField.max = 10; // ✅ set only 10 values for Opinion Scale
+                break;
             case "Slider":
                 newField.min = 1;
-                newField.max = 5;
+                newField.max = 100;
                 break;
-            case "Choice matrix":
+            case "Choice Matrix":
                 newField.rows = ["Row 1", "Row 2"];
                 newField.columns = ["Column 1", "Column 2"];
                 newField.options = {
@@ -218,13 +223,30 @@ const FormBuilder = () => {
             case "Ranking":
             case "Star Rating":
                 newField.max = 5;
+                newField.value = 0;
                 break;
             case "Date Range":
                 newField.range = { from: "", to: "" };
                 break;
-            case "Picture":
+            case "Document Type":
                 newField.file = null;
                 break;
+            case "Address":
+                newField.address = "";
+                newField.city = "";
+                newField.state = "";
+                newField.zip = "";
+                break;
+            case "Picture":
+                newField.options = [
+                    { id: Date.now(), label: "Option 1", image: null },
+                    { id: Date.now() + 1, label: "Option 2", image: null }
+                ];
+                break;
+            case "Divider":
+            case "Image":
+            case "Video":
+            case "PDF":
             default:
                 break;
         }
@@ -271,11 +293,13 @@ const FormBuilder = () => {
                 );
             case "Multiple Select":
                 return (
-                    <select {...commonProps} multiple>
-                        {(field.options || []).map((opt, idx) => (
-                            <option key={idx}>{opt}</option>
-                        ))}
-                    </select>
+                    <Select
+                        isMulti
+                        options={field.options.map(opt => ({ value: opt, label: opt }))}
+                        className="basic-multi-select"
+                        classNamePrefix="select"
+                        placeholder={field.label}
+                    />
                 );
             case "Switch":
                 return (
@@ -290,31 +314,32 @@ const FormBuilder = () => {
                 );
             case "Choice Matrix":
                 return (
-                    <div className="table-responsive">
-                        <table className="table table-bordered">
+                    <div className="Matrix-grid-wrapper">
+                        <table className="table Matrix-table text-center">
                             <thead>
                                 <tr>
                                     <th></th>
-                                    {field.columns && field.columns.length > 0 ? field.columns.map((col, colIdx) => (
-                                        <th key={colIdx}>{col}</th>
-                                    )) : null}
+                                    {field.columns?.map((col, colIdx) => (
+                                        <th key={colIdx} className="Matrix-col">{col}</th>
+                                    ))}
                                 </tr>
                             </thead>
                             <tbody>
-                                {field.rows && field.rows.length > 0 ? field.rows.map((row, rowIdx) => (
+                                {field.rows?.map((row, rowIdx) => (
                                     <tr key={rowIdx}>
-                                        <td>{row}</td>
-                                        {field.columns && field.columns.length > 0 ? field.columns.map((col, colIdx) => (
+                                        <td className="Matrix-row">{row}</td>
+                                        {field.columns.map((col, colIdx) => (
                                             <td key={colIdx}>
                                                 <input
                                                     type="radio"
-                                                    name={`matrix_${field.id}_row_${rowIdx}`}
+                                                    name={`Matrix_${field.id}_row_${rowIdx}`}
                                                     value={col}
+                                                    className="Matrix-radio"
                                                 />
                                             </td>
-                                        )) : null}
+                                        ))}
                                     </tr>
-                                )) : null}
+                                ))}
                             </tbody>
                         </table>
                     </div>
@@ -348,27 +373,126 @@ const FormBuilder = () => {
                         <label className="form-check-label" htmlFor={`radio-${field.id}-${idx}`}>{opt}</label>
                     </div>
                 ));
-            case "Picture":
-                return <input type="file" accept="image/*" className="form-control-file" />;
+            case "Document Type":
+                return (
+                    <input
+                        type="file"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,image/*"
+                        className="form-control-file"
+                    />
+                );
             case "Ranking":
                 return (
-                    <ol>
-                        {field.options.map((opt, idx) => (
-                            <li key={idx}>{opt}</li>
-                        ))}
-                    </ol>
+                    <DragDropContext
+                        onDragEnd={(result) => {
+                            if (!result.destination) return;
+
+                            const reordered = reorder(
+                                field.options,
+                                result.source.index,
+                                result.destination.index
+                            );
+
+                            // Update options for the current field
+                            const updatedFields = fields.map(f =>
+                                f.id === field.id ? { ...f, options: reordered } : f
+                            );
+                            setFields(updatedFields);
+                        }}
+                    >
+                        <Droppable droppableId={`ranking-${field.id}`}>
+                            {(provided) => (
+                                <ol {...provided.droppableProps} ref={provided.innerRef} className="ranking-list">
+                                    {field.options.map((opt, idx) => (
+                                        <Draggable key={opt} draggableId={opt} index={idx}>
+                                            {(provided) => (
+                                                <li
+                                                    ref={provided.innerRef}
+                                                    {...provided.draggableProps}
+                                                    {...provided.dragHandleProps}
+                                                    className="ranking-item"
+                                                >
+                                                    {opt}
+                                                </li>
+                                            )}
+                                        </Draggable>
+                                    ))}
+                                    {provided.placeholder}
+                                </ol>
+                            )}
+                        </Droppable>
+                    </DragDropContext>
                 );
             case "Star Rating":
                 return (
-                    <div>
+                    <div
+                        onMouseLeave={() => setHovered(null)} // reset on mouse leave
+                    >
                         {[...Array(field.max || 5)].map((_, i) => (
-                            <span key={i} style={{ fontSize: "20px", color: "#f5c518" }}>★</span>
+                            <span
+                                key={i}
+                                style={{
+                                    fontSize: "24px",
+                                    color:
+                                        hovered != null
+                                            ? i <= hovered
+                                                ? "rgb(59, 130, 246)"
+                                                : "#ccc"
+                                            : i < field.value
+                                                ? "rgb(59, 130, 246)"
+                                                : "#ccc",
+                                    cursor: "pointer",
+                                    transition: "color 0.2s"
+                                }}
+                                onClick={() => {
+                                    const newValue = field.value === i + 1 ? 0 : i + 1;
+                                    const updatedFields = fields.map(f =>
+                                        f.id === field.id ? { ...f, value: newValue } : f
+                                    );
+                                    setFields(updatedFields);
+                                }}
+                                onMouseEnter={() => setHovered(i)}
+                            >
+                                <FaStar />
+                            </span>
                         ))}
                     </div>
                 );
             case "Slider":
+                const currentValue = field.value ?? field.min;
+                const percentage = ((currentValue - field.min) / (field.max - field.min)) * 100;
+
+                const sliderStyle = {
+                    background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${percentage}%, #e5e7eb ${percentage}%, #e5e7eb 100%)`
+                };
+
                 return (
-                    <input type="range" min={field.min} max={field.max} className="form-range" />
+                    <div style={{ width: "100%" }}>
+                        <div style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            fontSize: "14px",
+                            marginBottom: "4px"
+                        }}>
+                            <span></span>
+                            <span style={{ color: "#6b7280" }}>{currentValue} / {field.max}</span>
+                        </div>
+                        <input
+                            type="range"
+                            min={field.min}
+                            max={field.max}
+                            value={currentValue}
+                            className="custom-slider"
+                            style={sliderStyle}  // ← THIS updates the fill color dynamically
+                            onChange={(e) => {
+                                const updatedFields = fields.map(f =>
+                                    f.id === field.id ? { ...f, value: parseInt(e.target.value) } : f
+                                );
+                                setFields(updatedFields);
+                            }}
+                        />
+                    </div>
                 );
             case "Opinion Scale":
                 return (
@@ -387,6 +511,289 @@ const FormBuilder = () => {
                 return <h3>{field.label}</h3>;
             case "Banner":
                 return <div className="banner">{field.label}</div>;
+            case "Address":
+                return (
+                    <div className="address-field-wrapper">
+                        <input
+                            type="text"
+                            className="form-control mb-2"
+                            placeholder="Address"
+                            value={field.address || ""}
+                            onChange={(e) => {
+                                const updatedFields = fields.map(f =>
+                                    f.id === field.id ? { ...f, address: e.target.value } : f
+                                );
+                                setFields(updatedFields);
+                            }}
+                        />
+
+                        <div className="d-flex gap-2">
+                            <input
+                                type="text"
+                                className="form-control"
+                                placeholder="City"
+                                value={field.city || ""}
+                                onChange={(e) => {
+                                    const updatedFields = fields.map(f =>
+                                        f.id === field.id ? { ...f, city: e.target.value } : f
+                                    );
+                                    setFields(updatedFields);
+                                }}
+                            />
+                            <select
+                                className="form-control"
+                                value={field.state || ""}
+                                onChange={(e) => {
+                                    const updatedFields = fields.map(f =>
+                                        f.id === field.id ? { ...f, state: e.target.value } : f
+                                    );
+                                    setFields(updatedFields);
+                                }}
+                            >
+                                <option value="">State / Province</option>
+                                <option value="CA">California</option>
+                                <option value="TX">Texas</option>
+                                <option value="NY">New York</option>
+                                {/* Add more states as needed */}
+                            </select>
+                            <input
+                                type="text"
+                                className="form-control"
+                                placeholder="ZIP / Postal code"
+                                value={field.zip || ""}
+                                onChange={(e) => {
+                                    const updatedFields = fields.map(f =>
+                                        f.id === field.id ? { ...f, zip: e.target.value } : f
+                                    );
+                                    setFields(updatedFields);
+                                }}
+                            />
+                        </div>
+                    </div>
+                );
+            case "Picture":
+                return (
+                    <div>
+                        <div style={{ display: "flex", gap: "12px" }}>
+                            {field.options.map((opt, idx) => (
+                                <div key={opt.id} style={{ border: "1px solid #ddd", borderRadius: "8px", padding: "8px", position: "relative" }}>
+                                    <div
+                                        style={{
+                                            width: "150px",
+                                            height: "100px",
+                                            backgroundColor: "#f3f3f3",
+                                            backgroundImage: opt.image ? `url(${opt.image})` : undefined,
+                                            backgroundSize: "cover",
+                                            backgroundPosition: "center",
+                                            borderRadius: "4px",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            position: "relative"
+                                        }}
+                                    >
+                                        <button
+                                            onClick={() => setEditImageOption({ fieldId: field.id, index: idx })}
+                                            style={{
+                                                background: "rgba(0,0,0,0.5)",
+                                                color: "white",
+                                                border: "none",
+                                                padding: "6px 12px",
+                                                borderRadius: "4px",
+                                                cursor: "pointer"
+                                            }}
+                                        >
+                                            ✎ Edit
+                                        </button>
+                                    </div>
+                                    <div style={{ textAlign: "center", marginTop: "8px" }}>
+                                        <input type="radio" name={`pic_${field.id}`} />
+                                        <span style={{ marginLeft: "6px" }}>{opt.label}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <button
+                            onClick={() => {
+                                const updatedFields = fields.map(f =>
+                                    f.id === field.id
+                                        ? {
+                                            ...f,
+                                            options: [...f.options, { id: Date.now(), label: `Option ${f.options.length + 1}`, image: null }]
+                                        }
+                                        : f
+                                );
+                                setFields(updatedFields);
+                            }}
+                            style={{ marginTop: "10px", color: "#2563eb", textDecoration: "underline", background: "none", border: "none" }}
+                        >
+                            Add option
+                        </button>
+                    </div>
+                );
+            case "Divider":
+                return (
+                    <div
+                        onClick={() => {
+                            // You can add any behavior here on click if necessary
+                        }}
+                        style={{
+                            borderTop: "1px solid lightgray",
+                            margin: "20px 0"
+                        }}
+                    ></div>
+                );
+            case "Image":
+                return (
+                    <div className="media-preview-wrapper">
+                        {field.file ? (
+                            <img
+                                src={URL.createObjectURL(field.file)}
+                                alt="Uploaded"
+                                style={{
+                                    width: `${field.previewSize}px`,
+                                    maxHeight: `${field.previewSize}px`,
+                                    objectFit: "contain",
+                                    borderRadius: "8px"
+                                }}
+                            />
+                        ) : (
+                            <div className="media-upload-placeholder">No image uploaded</div>
+                        )}
+
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                    const updatedFields = fields.map(f =>
+                                        f.id === field.id ? { ...f, file } : f
+                                    );
+                                    setFields(updatedFields);
+                                }
+                            }}
+                            className="form-control mt-2"
+                        />
+
+                        <div className="mt-2">
+                            <label>Size: {field.previewSize}px</label>
+                            <input
+                                type="range"
+                                min="100"
+                                max="600"
+                                step="10"
+                                value={field.previewSize || 200}
+                                onChange={(e) => {
+                                    const updatedFields = fields.map(f =>
+                                        f.id === field.id ? { ...f, previewSize: parseInt(e.target.value) } : f
+                                    );
+                                    setFields(updatedFields);
+                                }}
+                                className="form-range"
+                            />
+                        </div>
+                    </div>
+                );
+            case "Video":
+                return (
+                    <div className="media-preview-wrapper">
+                        {field.file ? (
+                            <video
+                                controls
+                                style={{
+                                    width: `${field.previewSize}px`,
+                                    height: `${field.previewSize * 0.6}px`,
+                                    borderRadius: "8px",
+                                    objectFit: "contain"
+                                }}
+                                src={URL.createObjectURL(field.file)}
+                            />
+                        ) : (
+                            <div className="media-upload-placeholder">No video uploaded</div>
+                        )}
+                        <input
+                            type="file"
+                            accept="video/*"
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                    const updatedFields = fields.map(f =>
+                                        f.id === field.id ? { ...f, file } : f
+                                    );
+                                    setFields(updatedFields);
+                                }
+                            }}
+                            className="form-control mt-2"
+                        />
+
+                        <div className="mt-2">
+                            <label>Size: {field.previewSize}px</label>
+                            <input
+                                type="range"
+                                min="100"
+                                max="600"
+                                step="10"
+                                value={field.previewSize || 200}
+                                onChange={(e) => {
+                                    const updatedFields = fields.map(f =>
+                                        f.id === field.id ? { ...f, previewSize: parseInt(e.target.value) } : f
+                                    );
+                                    setFields(updatedFields);
+                                }}
+                                className="form-range"
+                            />
+                        </div>
+                    </div>
+                );
+            case "PDF":
+                return (
+                    <div className="media-preview-wrapper">
+                        {field.file ? (
+                            <embed
+                                src={URL.createObjectURL(field.file)}
+                                type="application/pdf"
+                                width={`${field.previewSize}px`}
+                                height={`${field.previewSize * 1.2}px`}
+                                style={{ border: "1px solid #ccc", borderRadius: "8px" }}
+                            />
+                        ) : (
+                            <div className="media-upload-placeholder">No PDF uploaded</div>
+                        )}
+                        <input
+                            type="file"
+                            accept="application/pdf"
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                    const updatedFields = fields.map(f =>
+                                        f.id === field.id ? { ...f, file } : f
+                                    );
+                                    setFields(updatedFields);
+                                }
+                            }}
+                            className="form-control mt-2"
+                        />
+
+                        <div className="mt-2">
+                            <label>Size: {field.previewSize}px</label>
+                            <input
+                                type="range"
+                                min="100"
+                                max="600"
+                                step="10"
+                                value={field.previewSize || 200}
+                                onChange={(e) => {
+                                    const updatedFields = fields.map(f =>
+                                        f.id === field.id ? { ...f, previewSize: parseInt(e.target.value) } : f
+                                    );
+                                    setFields(updatedFields);
+                                }}
+                                className="form-range"
+                            />
+                        </div>
+                    </div>
+                );
             default:
                 return <input type="text" {...commonProps} />;
         }
@@ -400,9 +807,11 @@ const FormBuilder = () => {
             if (section === "Display text") return "#6c757d";
             if (section === "Choices") return "#F59E0B";
             if (section === "Time") return "#A855F7";
-            if (section === "Rating & Ranking") return "#e83e8c";
+            if (section === "Rating & Ranking") return "rgb(239, 68, 68)";
             if (section === "Text") return "#28a745";
             if (section === "Contact Info") return "rgb(20, 184, 166)";
+            if (section === "Navigation & Layout") return "#e83e8c";
+            if (section === "Media") return "#3498db";
             return "#F59E0B";
         };
 
@@ -541,18 +950,27 @@ const FormBuilder = () => {
                     <div className="field-group mt-1">
                         <h4>Contact Info</h4>
                         <div className="field-grid">
-                            {["Email", "Phone Number", "Location"]
+                            {["Email", "Number", "Address", "Document Type"]
                                 .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
                                 .map(type => <FieldButton key={type} type={type} section="Contact Info" />)}
                         </div>
                     </div>
 
                     <div className="field-group mt-1">
-                        <h4>Contact Info</h4>
+                        <h4>Navigation & Layout</h4>
                         <div className="field-grid">
-                            {["Email", "Number", "Location", "Document Type"]
+                            {["Divider"]
                                 .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map(type => <FieldButton key={type} type={type} section="Contact Info" />)}
+                                .map(type => <FieldButton key={type} type={type} section="Navigation & Layout" />)}
+                        </div>
+                    </div>
+
+                    <div className="field-group mt-1">
+                        <h4>Media</h4>
+                        <div className="field-grid">
+                            {["Image", "Video", "PDF"]
+                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map(type => <FieldButton key={type} type={type} section="Media" />)}
                         </div>
                     </div>
 
@@ -560,7 +978,6 @@ const FormBuilder = () => {
             </div>
 
             <div className="form-container">
-
                 <div className="form-body" style={{ backgroundColor: formBgColor }}>
                     <div className="form-content" style={{ backgroundColor: formColor }} onClick={() => setShowCustomize(true)}>
                         <DragDropContext onDragEnd={onDragEnd}>
@@ -693,7 +1110,158 @@ const FormBuilder = () => {
                         </div>
                     </div>
                 )}
+
+                {editImageOption && (
+                    <div className="image-option-modal-backdrop">
+                        <div className="image-option-modal-box">
+                            <h5 style={{ fontWeight: "600", fontSize: "1.125rem", marginBottom: "20px" }}>Edit image option</h5>
+                            <span style={{ fontWeight: "500", fontSize: ".875rem" }}>Lable</span>
+                            <input
+                                style={{ marginBottom: "20px" }}
+                                type="text"
+                                className="form-control"
+                                value={fields.find(f => f.id === editImageOption.fieldId).options[editImageOption.index].label}
+                                onChange={(e) => {
+                                    const updatedFields = fields.map(f => {
+                                        if (f.id !== editImageOption.fieldId) return f;
+                                        const updatedOptions = [...f.options];
+                                        updatedOptions[editImageOption.index].label = e.target.value;
+                                        return { ...f, options: updatedOptions };
+                                    });
+                                    setFields(updatedFields);
+                                }}
+                            />
+                            <span style={{ fontWeight: "500", fontSize: ".875rem" }}>Image</span>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="form-control mt-2"
+                                onChange={(e) => {
+                                    const file = e.target.files[0];
+                                    if (!file) return;
+                                    const reader = new FileReader();
+                                    reader.onload = () => {
+                                        const updatedFields = fields.map(f => {
+                                            if (f.id !== editImageOption.fieldId) return f;
+                                            const updatedOptions = [...f.options];
+                                            updatedOptions[editImageOption.index].image = reader.result;
+                                            return { ...f, options: updatedOptions };
+                                        });
+                                        setFields(updatedFields);
+                                    };
+                                    reader.readAsDataURL(file);
+                                }}
+                            />
+                            <div className="modal-actions text-end mt-3">
+                                <button onClick={() => setEditImageOption(null)} className="btn btn-primary">
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
+
+            {customizeVisible && selectedFieldId && (
+                <div className="customize-section" style={{ color: 'gray' }}>
+                    <div className="customize-header" style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginBottom: '20px' }}>
+                        <button
+                            onClick={() => setCustomizeVisible(false)}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '1rem',
+                                marginRight: '10px',
+                                cursor: 'pointer',
+                                color: 'black',
+                            }}
+                            aria-label="Close"
+                        >
+                            <FaTimes />
+                        </button>
+                        <h4 style={{ fontWeight: '500', fontSize: '1.125rem', margin: 0 }}>
+                            {fields.find(f => f.id === selectedFieldId)?.type} settings
+                        </h4>
+                    </div>
+
+                    <div>
+                        <label>Label</label>
+                        <div style={{ color: "#aaa", fontSize: ".875rem", marginBottom: "10px" }}>
+                            Click text on page to modify
+                        </div>
+
+                        <label>Caption</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            value={fields.find(f => f.id === selectedFieldId)?.caption || ""}
+                            onChange={(e) => {
+                                const updatedFields = fields.map(f =>
+                                    f.id === selectedFieldId ? { ...f, caption: e.target.value } : f
+                                );
+                                setFields(updatedFields);
+                            }}
+                        />
+
+                        <label>Placeholder</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            value={fields.find(f => f.id === selectedFieldId)?.placeholder || ""}
+                            onChange={(e) => {
+                                const updatedFields = fields.map(f =>
+                                    f.id === selectedFieldId ? { ...f, placeholder: e.target.value } : f
+                                );
+                                setFields(updatedFields);
+                            }}
+                        />
+
+                        <label>Default value <span title="Initial value" style={{ cursor: "help" }}>🛈</span></label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            value={fields.find(f => f.id === selectedFieldId)?.defaultValue || ""}
+                            onChange={(e) => {
+                                const updatedFields = fields.map(f =>
+                                    f.id === selectedFieldId ? { ...f, defaultValue: e.target.value } : f
+                                );
+                                setFields(updatedFields);
+                            }}
+                        />
+
+                        <div className="form-check form-switch mt-2">
+                            <input
+                                className="form-check-input"
+                                type="checkbox"
+                                checked={fields.find(f => f.id === selectedFieldId)?.required || false}
+                                onChange={() => {
+                                    const updatedFields = fields.map(f =>
+                                        f.id === selectedFieldId ? { ...f, required: !f.required } : f
+                                    );
+                                    setFields(updatedFields);
+                                }}
+                            />
+                            <label className="form-check-label">Required</label>
+                        </div>
+
+                        <div className="form-check form-switch">
+                            <input
+                                className="form-check-input"
+                                type="checkbox"
+                                checked={fields.find(f => f.id === selectedFieldId)?.halfWidth || false}
+                                onChange={() => {
+                                    const updatedFields = fields.map(f =>
+                                        f.id === selectedFieldId ? { ...f, halfWidth: !f.halfWidth } : f
+                                    );
+                                    setFields(updatedFields);
+                                }}
+                            />
+                            <label className="form-check-label">Half width</label>
+                        </div>
+                    </div>
+                </div>
+            )
+            }
 
         </div >
     );
