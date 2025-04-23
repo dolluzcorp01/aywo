@@ -77,13 +77,10 @@ const FormBuilder = () => {
     const [submitBtnHeight, setSubmitBtnHeight] = useState(50);
 
     const [showCustomize, setShowCustomize] = useState(true);
-    const isEditableForm = /^\/form-builder\/form-\d+$/.test(location.pathname); // Checks if URL matches /form-builder/form-{number}
-    const [lastFieldSize, setLastFieldSize] = useState({ width: 200, height: 50 });
 
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
-    const { formId } = useParams();
 
     const [selectedFieldId, setSelectedFieldId] = useState(null);
     const [customizeVisible, setCustomizeVisible] = useState(false);
@@ -96,8 +93,10 @@ const FormBuilder = () => {
     }, []);
 
     const handleFieldClick = (id) => {
-        setSelectedFieldId(id === selectedFieldId ? null : id);
-        setCustomizeVisible(true);
+        if (selectedFieldId !== id) {
+            setSelectedFieldId(id);
+            setCustomizeVisible(true);
+        }
     };
 
     const openSettings = (fieldId) => {
@@ -257,14 +256,171 @@ const FormBuilder = () => {
     const renderField = (field) => {
         const commonProps = {
             className: "form-control",
-            placeholder: field.label
+            placeholder: field.placeholder || "",
+            defaultValue: field.defaultValue || "",
+            style: { width: field.halfWidth ? "50%" : "100%" }
         };
 
         switch (field.type) {
+            case "text":
+                return <input type="text" {...commonProps} />;
             case "Short Answer":
                 return <input type="text" {...commonProps} />;
+            case "Heading":
+                return (
+                    <input
+                        type="text"
+                        value={field.label}
+                        onChange={(e) => {
+                            const updatedFields = fields.map(f =>
+                                f.id === field.id ? { ...f, label: e.target.value } : f
+                            );
+                            setFields(updatedFields);
+                        }}
+                        style={{
+                            fontSize: field.fontSize || "24px",
+                            fontWeight: "bold",
+                            border: "none",
+                            background: "transparent",
+                            width: "100%",
+                            margin: "8px 0"
+                        }}
+                    />
+                );
             case "Email":
-                return <input type="email" {...commonProps} />;
+                return (
+                    <div style={{ position: "relative", width: field.halfWidth ? "50%" : "100%" }}>
+                        <input
+                            type="email"
+                            {...commonProps}
+                            style={{
+                                ...commonProps.style,
+                                paddingLeft: "35px" // space for icon
+                            }}
+                        />
+                        <span
+                            style={{
+                                position: "absolute",
+                                top: "50%",
+                                left: "10px",
+                                transform: "translateY(-50%)",
+                                color: "#999"
+                            }}
+                        >
+                            <i class="fa-solid fa-envelope"></i>
+                        </span>
+                    </div>
+                );
+            case "Paragraph":
+                return (
+                    <textarea
+                        {...commonProps}
+                        rows={4}
+                        style={{
+                            ...commonProps.style,
+                            resize: "vertical", // Allows the user to resize vertically
+                            minHeight: "80px",
+                            fontSize: "1rem",
+                            padding: "8px",
+                            border: "1px solid #ccc",
+                            borderRadius: "6px"
+                        }}
+                    />
+                );
+            case "Banner":
+                const alertType = field.alertType || "info"; // Default to 'info'
+
+                const alertStyles = {
+                    warning: {
+                        backgroundColor: "#fff8e1",
+                        border: "1px solid #fbc02d",
+                        icon: "fa-exclamation-triangle",
+                        iconColor: "#fbc02d",
+                        textColor: "#f57f17"
+                    },
+                    error: {
+                        backgroundColor: "#fdecea",
+                        border: "1px solid #f44336",
+                        icon: "fa-times-circle",
+                        iconColor: "#f44336",
+                        textColor: "#d32f2f"
+                    },
+                    info: {
+                        backgroundColor: "#e3f2fd",
+                        border: "1px solid #2196f3",
+                        icon: "fa-info-circle",
+                        iconColor: "#2196f3",
+                        textColor: "#1565c0"
+                    },
+                    success: {
+                        backgroundColor: "#e8f5e9",
+                        border: "1px solid #4caf50",
+                        icon: "fa-check-circle",
+                        iconColor: "#4caf50",
+                        textColor: "#2e7d32"
+                    }
+                };
+
+                const style = alertStyles[alertType.toLowerCase()] || alertStyles.info;
+
+                return (
+                    <div
+                        style={{
+                            backgroundColor: style.backgroundColor,
+                            border: style.border,
+                            borderRadius: "10px",
+                            padding: "16px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "12px",
+                            width: "100%",
+                            boxSizing: "border-box"
+                        }}
+                    >
+                        <i className={`fa ${style.icon}`} style={{ fontSize: "20px", color: style.iconColor }}></i>
+                        <div style={{ backgroundColor: "#f5f5f5", padding: "8px 12px", borderRadius: "4px", width: "100%" }}>
+                            <input
+                                type="text"
+                                value={field.label || "Banner title"}
+                                onChange={(e) => {
+                                    const updatedFields = fields.map(f =>
+                                        f.id === field.id ? { ...f, label: e.target.value } : f
+                                    );
+                                    setFields(updatedFields);
+                                }}
+                                style={{
+                                    fontWeight: "bold",
+                                    color: style.textColor,
+                                    border: "none",
+                                    background: "transparent",
+                                    width: "100%",
+                                    fontSize: "18px",
+                                    marginBottom: "8px"
+                                }}
+                            />
+                            <textarea
+                                value={field.description || "Some description"}
+                                onChange={(e) => {
+                                    const updatedFields = fields.map(f =>
+                                        f.id === field.id ? { ...f, description: e.target.value } : f
+                                    );
+                                    setFields(updatedFields);
+                                }}
+                                rows={4}
+                                style={{
+                                    color: style.textColor,
+                                    width: "100%",
+                                    resize: "vertical", // Allows the user to resize vertically
+                                    minHeight: "80px",
+                                    fontSize: "1rem",
+                                    padding: "8px",
+                                    border: "1px solid #ccc",
+                                    borderRadius: "6px"
+                                }}
+                            />
+                        </div>
+                    </div>
+                );
             case "Number":
                 return <input type="number" {...commonProps} />;
             case "Date Picker":
@@ -280,7 +436,6 @@ const FormBuilder = () => {
                         <input type="date" className="form-control" placeholder="To" />
                     </div>
                 );
-            case "Paragraph":
             case "Long Answer":
                 return <textarea {...commonProps}></textarea>;
             case "Dropdown":
@@ -362,17 +517,152 @@ const FormBuilder = () => {
                     </div>
                 ));
             case "Multiple Choice":
-                return field.options.map((opt, idx) => (
-                    <div key={idx} className="form-check">
-                        <input
-                            type="radio"
-                            className="form-check-input"
-                            name={`field_${field.id}`}
-                            id={`radio-${field.id}-${idx}`}
-                        />
-                        <label className="form-check-label" htmlFor={`radio-${field.id}-${idx}`}>{opt}</label>
-                    </div>
-                ));
+                return (
+                    <>
+                        {field.options.map((opt, idx) => (
+                            field.bubble ? (
+                                // Bubble Style
+                                <div
+                                    key={idx}
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        border: "1px solid #ccc",
+                                        borderRadius: "12px",
+                                        padding: "4px 8px",
+                                        margin: "4px 0",
+                                        backgroundColor: "#f1f1f1",
+                                        position: "relative",
+                                        width: "fit-content",
+                                        minWidth: "200px",
+                                    }}
+                                >
+                                    <input
+                                        type="radio"
+                                        className="form-check-input"
+                                        name={`field_${field.id}`}
+                                        id={`bubble-radio-${field.id}-${idx}`}
+                                        style={{ marginRight: "8px" }}
+                                    />
+                                    <input
+                                        type="text"
+                                        value={opt}
+                                        onChange={(e) => {
+                                            const newOptions = [...field.options];
+                                            newOptions[idx] = e.target.value;
+
+                                            const updatedFields = fields.map(f =>
+                                                f.id === field.id ? { ...f, options: newOptions } : f
+                                            );
+                                            setFields(updatedFields);
+                                        }}
+                                        style={{
+                                            border: "none",
+                                            background: "transparent",
+                                            outline: "none",
+                                            flexGrow: 1,
+                                            minWidth: "50px",
+                                        }}
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            const newOptions = field.options.filter((_, i) => i !== idx);
+                                            const updatedFields = fields.map(f =>
+                                                f.id === field.id ? { ...f, options: newOptions } : f
+                                            );
+                                            setFields(updatedFields);
+                                        }}
+                                        style={{
+                                            background: "transparent",
+                                            border: "none",
+                                            color: "#666",
+                                            fontWeight: "bold",
+                                            fontSize: "16px",
+                                            marginLeft: "8px",
+                                            cursor: "pointer",
+                                        }}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ) : (
+                                // Standard Style
+                                <div
+                                    key={idx}
+                                    className="form-check d-flex align-items-center gap-2"
+                                    style={{ position: "relative" }}
+                                >
+                                    <input
+                                        type="radio"
+                                        className="form-check-input"
+                                        name={`field_${field.id}`}
+                                        id={`standard-radio-${field.id}-${idx}`}
+                                    />
+                                    <input
+                                        type="text"
+                                        value={opt}
+                                        onChange={(e) => {
+                                            const newOptions = [...field.options];
+                                            newOptions[idx] = e.target.value;
+
+                                            const updatedFields = fields.map(f =>
+                                                f.id === field.id ? { ...f, options: newOptions } : f
+                                            );
+                                            setFields(updatedFields);
+                                        }}
+                                        style={{
+                                            border: "none",
+                                            borderBottom: "1px solid #ccc",
+                                            width: "auto",
+                                            minWidth: "50px",
+                                            padding: "2px 4px",
+                                            background: "transparent"
+                                        }}
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            const newOptions = field.options.filter((_, i) => i !== idx);
+                                            const updatedFields = fields.map(f =>
+                                                f.id === field.id ? { ...f, options: newOptions } : f
+                                            );
+                                            setFields(updatedFields);
+                                        }}
+                                        style={{
+                                            background: "transparent",
+                                            border: "none",
+                                            color: "#666",
+                                            fontWeight: "bold",
+                                            fontSize: "16px",
+                                            marginLeft: "8px",
+                                            cursor: "pointer",
+                                        }}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            )
+                        ))}
+                        <button
+                            onClick={() => {
+                                const updatedFields = fields.map(f =>
+                                    f.id === field.id
+                                        ? { ...f, options: [...f.options, `Option ${f.options.length + 1}`] }
+                                        : f
+                                );
+                                setFields(updatedFields);
+                            }}
+                            style={{
+                                marginTop: "10px",
+                                color: "#2563eb",
+                                textDecoration: "underline",
+                                background: "none",
+                                border: "none"
+                            }}
+                        >
+                            Add option
+                        </button>
+                    </>
+                );
             case "Document Type":
                 return (
                     <input
@@ -507,10 +797,6 @@ const FormBuilder = () => {
                         })}
                     </div>
                 );
-            case "Heading":
-                return <h3>{field.label}</h3>;
-            case "Banner":
-                return <div className="banner">{field.label}</div>;
             case "Address":
                 return (
                     <div className="address-field-wrapper">
@@ -668,7 +954,13 @@ const FormBuilder = () => {
                                 const file = e.target.files[0];
                                 if (file) {
                                     const updatedFields = fields.map(f =>
-                                        f.id === field.id ? { ...f, file } : f
+                                        f.id === field.id
+                                            ? {
+                                                ...f,
+                                                file,
+                                                previewSize: f.previewSize || 300 // set to 300 only if it's not already set
+                                            }
+                                            : f
                                     );
                                     setFields(updatedFields);
                                 }
@@ -681,9 +973,9 @@ const FormBuilder = () => {
                             <input
                                 type="range"
                                 min="100"
-                                max="600"
+                                max="600" // allow bigger range
                                 step="10"
-                                value={field.previewSize || 200}
+                                value={field.previewSize}
                                 onChange={(e) => {
                                     const updatedFields = fields.map(f =>
                                         f.id === field.id ? { ...f, previewSize: parseInt(e.target.value) } : f
@@ -719,7 +1011,13 @@ const FormBuilder = () => {
                                 const file = e.target.files[0];
                                 if (file) {
                                     const updatedFields = fields.map(f =>
-                                        f.id === field.id ? { ...f, file } : f
+                                        f.id === field.id
+                                            ? {
+                                                ...f,
+                                                file,
+                                                previewSize: f.previewSize || 300 // default to 300
+                                            }
+                                            : f
                                     );
                                     setFields(updatedFields);
                                 }
@@ -767,7 +1065,13 @@ const FormBuilder = () => {
                                 const file = e.target.files[0];
                                 if (file) {
                                     const updatedFields = fields.map(f =>
-                                        f.id === field.id ? { ...f, file } : f
+                                        f.id === field.id
+                                            ? {
+                                                ...f,
+                                                file,
+                                                previewSize: f.previewSize || 300 // default to 300
+                                            }
+                                            : f
                                     );
                                     setFields(updatedFields);
                                 }
@@ -798,8 +1102,6 @@ const FormBuilder = () => {
                 return <input type="text" {...commonProps} />;
         }
     };
-
-    if (loading) return <p>Loading...</p>;
 
     const FieldButton = ({ type, section }) => {
         const getColor = () => {
@@ -875,6 +1177,8 @@ const FormBuilder = () => {
         const newFields = reorder(fields, result.source.index, result.destination.index);
         setFields(newFields);
     };
+
+    if (loading) return <p>Loading...</p>;
 
     return (
         <div className="form-builder">
@@ -998,17 +1302,55 @@ const FormBuilder = () => {
                                                         </div>
 
                                                         <div className="form-field-content">
-                                                            <label>{field.label}</label>
+                                                            {!["Heading", "Banner"].includes(field.type) ? (
+                                                                <>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={field.label}
+                                                                        onChange={(e) => {
+                                                                            e.stopPropagation(); // Prevent field click from firing
+                                                                            const updatedFields = fields.map(f =>
+                                                                                f.id === field.id ? { ...f, label: e.target.value } : f
+                                                                            );
+                                                                            setFields(updatedFields);
+                                                                        }}
+                                                                        style={{
+                                                                            fontSize: "1rem",
+                                                                            border: "none",
+                                                                            background: "transparent",
+                                                                            width: "fit-content",
+                                                                            marginBottom: "2px"
+                                                                        }}
+                                                                    />
+                                                                    {field.required && <span style={{ color: 'red' }}>*</span>}
+                                                                    {field.caption && (
+                                                                        <small style={{ color: 'gray', display: 'block', marginBottom: '6px' }}>
+                                                                            {field.caption}
+                                                                        </small>
+                                                                    )}
+                                                                </>
+                                                            ) : null}
+
                                                             {renderField(field)}
                                                         </div>
 
                                                         {selectedFieldId === field.id && (
                                                             <div className="field-actions">
                                                                 <button
-                                                                    onClick={() => openSettings(field.id)}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation(); // Prevent field click from firing
+                                                                        openSettings(field.id);
+                                                                    }}
                                                                     data-tooltip-title="Open field settings"
                                                                 >
-                                                                    <FaCog />
+                                                                    <FaCog
+                                                                        style={{
+                                                                            color:
+                                                                                customizeVisible && selectedFieldId === field.id
+                                                                                    ? 'rgb(59, 130, 246)'
+                                                                                    : 'inherit'
+                                                                        }}
+                                                                    />
                                                                 </button>
 
                                                                 <button
@@ -1203,65 +1545,146 @@ const FormBuilder = () => {
                             }}
                         />
 
-                        <label>Placeholder</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={fields.find(f => f.id === selectedFieldId)?.placeholder || ""}
-                            onChange={(e) => {
-                                const updatedFields = fields.map(f =>
-                                    f.id === selectedFieldId ? { ...f, placeholder: e.target.value } : f
-                                );
-                                setFields(updatedFields);
-                            }}
-                        />
+                        {/* Show only Specific Fields */}
+                        {!["Heading", "Banner", "Multiple Choice"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                            <>
+                                <label>Placeholder</label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={fields.find(f => f.id === selectedFieldId)?.placeholder || ""}
+                                    onChange={(e) => {
+                                        const updatedFields = fields.map(f =>
+                                            f.id === selectedFieldId ? { ...f, placeholder: e.target.value } : f
+                                        );
+                                        setFields(updatedFields);
+                                    }}
+                                />
 
-                        <label>Default value <span title="Initial value" style={{ cursor: "help" }}>🛈</span></label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={fields.find(f => f.id === selectedFieldId)?.defaultValue || ""}
-                            onChange={(e) => {
-                                const updatedFields = fields.map(f =>
-                                    f.id === selectedFieldId ? { ...f, defaultValue: e.target.value } : f
-                                );
-                                setFields(updatedFields);
-                            }}
-                        />
+                                <label>Default value <span title="Initial value" style={{ cursor: "help" }}>🛈</span></label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={fields.find(f => f.id === selectedFieldId)?.defaultValue || ""}
+                                    onChange={(e) => {
+                                        const updatedFields = fields.map(f =>
+                                            f.id === selectedFieldId ? { ...f, defaultValue: e.target.value } : f
+                                        );
+                                        setFields(updatedFields);
+                                    }}
+                                />
+                            </>
+                        )}
 
-                        <div className="form-check form-switch mt-2">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={fields.find(f => f.id === selectedFieldId)?.required || false}
-                                onChange={() => {
-                                    const updatedFields = fields.map(f =>
-                                        f.id === selectedFieldId ? { ...f, required: !f.required } : f
-                                    );
-                                    setFields(updatedFields);
-                                }}
-                            />
-                            <label className="form-check-label">Required</label>
+                        {/* ✅ Style section for Heading */}
+                        {fields.find(f => f.id === selectedFieldId)?.type === "Heading" && (
+                            <>
+                                <label>Font Size (px)</label>
+                                <input
+                                    type="number"
+                                    min={12}
+                                    max={48}
+                                    className="form-control"
+                                    value={parseInt(fields.find(f => f.id === selectedFieldId)?.fontSize || "24")}
+                                    onChange={(e) => {
+                                        const updatedFields = fields.map(f =>
+                                            f.id === selectedFieldId ? { ...f, fontSize: `${e.target.value}px` } : f
+                                        );
+                                        setFields(updatedFields);
+                                    }}
+                                />
+                            </>
+                        )}
+
+                        {/* ✅ Style section for Banner */}
+                        {fields.find(f => f.id === selectedFieldId)?.type === "Banner" && (
+                            <div style={{ marginTop: "20px" }}>
+                                <label>Alert type</label>
+                                <select
+                                    className="form-control"
+                                    value={fields.find(f => f.id === selectedFieldId)?.alertType || "info"}
+                                    onChange={(e) => {
+                                        const updatedFields = fields.map(f =>
+                                            f.id === selectedFieldId ? { ...f, alertType: e.target.value } : f
+                                        );
+                                        setFields(updatedFields);
+                                    }}
+                                >
+                                    <option value="warning">🟨 Warning</option>
+                                    <option value="error">🟥 Error</option>
+                                    <option value="info">🟦 Info</option>
+                                    <option value="success">🟩 Success</option>
+                                </select>
+                            </div>
+                        )}
+
+                        {/* ✅ Style section for Multiple Choice */}
+                        {fields.find(f => f.id === selectedFieldId)?.type === "Multiple Choice" && (
+                            <div style={{ marginTop: "20px" }}>
+                                <label style={{ fontWeight: 'bold' }}>Style</label>
+                                <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+                                    <div
+                                        onClick={() => {
+                                            const updatedFields = fields.map(f =>
+                                                f.id === selectedFieldId ? { ...f, bubble: true } : f
+                                            );
+                                            setFields(updatedFields);
+                                        }}
+                                        style={{
+                                            border: fields.find(f => f.id === selectedFieldId)?.bubble ? '2px solid #2563eb' : '1px solid #ccc',
+                                            padding: '10px',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            flex: '1',
+                                            textAlign: 'center'
+                                        }}
+                                    >
+                                        <div style={{ fontSize: '20px', marginBottom: '5px' }}>☰</div>
+                                        Bubble
+                                    </div>
+
+                                    <div
+                                        onClick={() => {
+                                            const updatedFields = fields.map(f =>
+                                                f.id === selectedFieldId ? { ...f, bubble: false } : f
+                                            );
+                                            setFields(updatedFields);
+                                        }}
+                                        style={{
+                                            border: !fields.find(f => f.id === selectedFieldId)?.bubble ? '2px solid #2563eb' : '1px solid #ccc',
+                                            padding: '10px',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            flex: '1',
+                                            textAlign: 'center'
+                                        }}
+                                    >
+                                        <div style={{ fontSize: '18px', marginBottom: '5px' }}>◯</div>
+                                        Standard
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
+                            {/* Required Row */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <label className="form-check-label">Required</label>
+                                <span
+                                    className={`custom-toggle ${fields.find(f => f.id === selectedFieldId)?.required ? 'active' : ''}`}
+                                    onClick={() => {
+                                        const updatedFields = fields.map(f =>
+                                            f.id === selectedFieldId ? { ...f, required: !f.required } : f
+                                        );
+                                        setFields(updatedFields);
+                                    }}
+                                ></span>
+                            </div>
                         </div>
 
-                        <div className="form-check form-switch">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                checked={fields.find(f => f.id === selectedFieldId)?.halfWidth || false}
-                                onChange={() => {
-                                    const updatedFields = fields.map(f =>
-                                        f.id === selectedFieldId ? { ...f, halfWidth: !f.halfWidth } : f
-                                    );
-                                    setFields(updatedFields);
-                                }}
-                            />
-                            <label className="form-check-label">Half width</label>
-                        </div>
                     </div>
                 </div>
-            )
-            }
+            )}
 
         </div >
     );

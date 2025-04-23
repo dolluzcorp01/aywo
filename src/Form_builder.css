@@ -40,6 +40,45 @@
     padding: 20px 20px 40px;
 }
 
+/* Form body */
+.form-body {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 50px 20px;
+    height: 100%;
+    border-radius: 15px;
+    border: 2px solid #e5e7eb;
+    z-index: 0;
+}
+
+/* Form content */
+.form-content {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    position: relative;
+    border-radius: 15px;
+    overflow: visible;
+    max-width: 700px;
+    width: 100%;
+    z-index: 0;
+}
+
+/* Customization panel */
+.form-builder .customize-section {
+    background-color: #f8f9fa;
+    width: 300px;
+    padding: 15px;
+    border-left: 2px solid #e0e0e0;
+    flex-shrink: 0;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    position: sticky;
+    top: 0;
+}
+
 /* Sidebar buttons */
 .search-wrapper {
     position: relative;
@@ -187,19 +226,6 @@
     background: #0056b3;
 }
 
-/* Customization panel */
-.form-builder .customize-section {
-    background-color: #f8f9fa;
-    width: 300px;
-    padding: 15px;
-    border-left: 2px solid #e0e0e0;
-    flex-shrink: 0;
-    max-height: calc(100vh - 80px);
-    overflow-y: auto;
-    position: sticky;
-    top: 0;
-}
-
 /* Customization inputs */
 .form-builder .customize-header {
     display: flex;
@@ -221,29 +247,7 @@
     margin-bottom: 10px;
 }
 
-.form-body {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    overflow-y: auto;
-    padding: 50px 20px;
-    height: 100%;
-    border-radius: 15px;
-    border: 2px solid #e5e7eb;
-    z-index: 0;
-}
-
-.form-content {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    border-radius: 15px;
-    overflow: visible;
-    max-width: 700px;
-    width: 100%;
-    z-index: 0;
-}
-
+/* Form wrapper */
 .form-field-wrapper {
     position: relative;
     display: flex;
@@ -466,4 +470,35 @@
     color: #9ca3af;
     font-style: italic;
     padding: 40px 0;
+}
+
+.custom-toggle {
+    width: 40px;
+    height: 20px;
+    background-color: #ccc;
+    border-radius: 25px;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: inline-block;
+}
+
+.custom-toggle::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background-color: white;
+    border-radius: 50%;
+    top: 2.0px;
+    left: 2.5px;
+    transition: transform 0.3s ease;
+}
+
+.custom-toggle.active {
+    background-color: rgb(59, 130, 246);
+}
+
+.custom-toggle.active::before {
+    transform: translateX(20px);
 }
