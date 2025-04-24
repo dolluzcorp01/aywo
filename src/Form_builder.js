@@ -85,6 +85,8 @@ const FormBuilder = () => {
     const [selectedFieldId, setSelectedFieldId] = useState(null);
     const [customizeVisible, setCustomizeVisible] = useState(false);
 
+    const pictureBgColors = ["#ffb3ba", "#bae1ff", "#baffc9", "#ffffba", "#e3baff", "#ffdfba"];
+    const [hoveredOption, setHoveredOption] = useState(null);
 
     useEffect(() => {
         const handleClickOutside = () => setFieldTypeMenu(null);
@@ -122,6 +124,16 @@ const FormBuilder = () => {
             )
         );
         setFieldTypeMenu(null); // close menu
+    };
+
+    const handleChange = (id, newValue) => {
+        const updatedFields = fields.map(f => {
+            if (f.id === id) {
+                return { ...f, value: newValue };
+            }
+            return f;
+        });
+        setFields(updatedFields);
     };
 
     const duplicateField = (id) => {
@@ -422,82 +434,23 @@ const FormBuilder = () => {
                     </div>
                 );
             case "Number":
-                return <input type="number" {...commonProps} />;
-            case "Date Picker":
-                return <input type="date" {...commonProps} />;
-            case "Time Picker":
-                return <input type="time" {...commonProps} />;
-            case "Date Time Picker":
-                return <input type="datetime-local" {...commonProps} />;
-            case "Date Range":
                 return (
-                    <div className="d-flex gap-2">
-                        <input type="date" className="form-control" placeholder="From" />
-                        <input type="date" className="form-control" placeholder="To" />
-                    </div>
-                );
-            case "Long Answer":
-                return <textarea {...commonProps}></textarea>;
-            case "Dropdown":
-                return (
-                    <select {...commonProps}>
-                        {field.options.map((opt, idx) => (
-                            <option key={idx}>{opt}</option>
-                        ))}
-                    </select>
-                );
-            case "Multiple Select":
-                return (
-                    <Select
-                        isMulti
-                        options={field.options.map(opt => ({ value: opt, label: opt }))}
-                        className="basic-multi-select"
-                        classNamePrefix="select"
-                        placeholder={field.label}
+                    <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        {...commonProps}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            if (/^\d*$/.test(value)) {
+                                const updatedFields = fields.map(f =>
+                                    f.id === field.id ? { ...f, value } : f
+                                );
+                                setFields(updatedFields);
+                            }
+                        }}
+                        value={field.value || field.defaultValue || ""}  // Use defaultValue if value is not set
                     />
-                );
-            case "Switch":
-                return (
-                    <div className="form-check form-switch">
-                        <input
-                            className="form-check-input"
-                            type="checkbox"
-                            id={`switch-${field.id}`}
-                            name={`switch-${field.id}`}
-                        />
-                    </div>
-                );
-            case "Choice Matrix":
-                return (
-                    <div className="Matrix-grid-wrapper">
-                        <table className="table Matrix-table text-center">
-                            <thead>
-                                <tr>
-                                    <th></th>
-                                    {field.columns?.map((col, colIdx) => (
-                                        <th key={colIdx} className="Matrix-col">{col}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {field.rows?.map((row, rowIdx) => (
-                                    <tr key={rowIdx}>
-                                        <td className="Matrix-row">{row}</td>
-                                        {field.columns.map((col, colIdx) => (
-                                            <td key={colIdx}>
-                                                <input
-                                                    type="radio"
-                                                    name={`Matrix_${field.id}_row_${rowIdx}`}
-                                                    value={col}
-                                                    className="Matrix-radio"
-                                                />
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
                 );
             case "Checkbox":
                 return (
@@ -512,10 +465,68 @@ const FormBuilder = () => {
             case "Checkboxes":
                 return field.options.map((opt, idx) => (
                     <div key={idx} className="form-check">
-                        <input type="checkbox" className="form-check-input" id={`checkbox-${field.id}-${idx}`} />
+                        <input
+                            type="checkbox"
+                            className="form-check-input"
+                            id={`checkbox-${field.id}-${idx}`}
+                        />
                         <label className="form-check-label" htmlFor={`checkbox-${field.id}-${idx}`}>{opt}</label>
                     </div>
                 ));
+            case "Dropdown":
+                const optionsList = field.options.map(opt => ({ value: opt, label: opt }));
+
+                return (
+                    <Select
+                        options={optionsList}
+                        isClearable
+                        placeholder={field.placeholder || "Select an option..."}
+                        onChange={(selectedOption) => {
+                            const updatedFields = fields.map(f => {
+                                if (f.id === field.id) {
+                                    return { ...f, value: selectedOption ? selectedOption.value : "" };
+                                }
+                                return f;
+                            });
+                            setFields(updatedFields);
+                        }}
+                        value={
+                            field.value
+                                ? { value: field.value, label: field.value }
+                                : null
+                        }
+                    />
+                );
+            case "Multiple Select":
+                return (
+                    <Select
+                        isMulti
+                        options={field.options.map(opt => ({ value: opt, label: opt }))}
+                        className="basic-multi-select"
+                        classNamePrefix="select"
+                        placeholder={field.placeholder || "Select an option..."}
+                    />
+                );
+            case "Switch":
+                return (
+                    <div className="form-check form-switch">
+                        <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id={`switch-${field.id}`}
+                            name={`switch-${field.id}`}
+                            checked={field.defaultValue === "true"}
+                            onChange={(e) => {
+                                const updatedFields = fields.map(f =>
+                                    f.id === field.id
+                                        ? { ...f, defaultValue: e.target.checked.toString() }
+                                        : f
+                                );
+                                setFields(updatedFields);
+                            }}
+                        />
+                    </div>
+                );
             case "Multiple Choice":
                 return (
                     <>
@@ -663,6 +674,174 @@ const FormBuilder = () => {
                         </button>
                     </>
                 );
+            case "Checkbox":
+                return (
+                    <div className="form-check">
+                        <input
+                            type="checkbox"
+                            className="form-check-input"
+                            id={`checkbox-${field.id}`}
+                            checked={field.defaultValue === "true"}
+                            onChange={(e) => {
+                                const updatedFields = fields.map(f =>
+                                    f.id === field.id
+                                        ? { ...f, defaultValue: e.target.checked.toString() }
+                                        : f
+                                );
+                                setFields(updatedFields);
+                            }}
+                        />
+                    </div>
+                );
+            case "Choice Matrix":
+                return (
+                    <div className="Matrix-grid-wrapper">
+                        <table className="table Matrix-table text-center">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    {field.columns.map((col, colIdx) => (
+                                        <th key={colIdx}>
+                                            <input
+                                                type="text"
+                                                className="form-control text-center"
+                                                value={col}
+                                                onChange={(e) => {
+                                                    const updatedFields = fields.map(f => {
+                                                        if (f.id === field.id) {
+                                                            const newCols = [...f.columns];
+                                                            newCols[colIdx] = e.target.value;
+                                                            return { ...f, columns: newCols };
+                                                        }
+                                                        return f;
+                                                    });
+                                                    setFields(updatedFields);
+                                                }}
+                                                placeholder={`Col ${colIdx + 1}`}
+                                            />
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {field.rows.map((row, rowIdx) => (
+                                    <tr key={rowIdx}>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                value={row}
+                                                onChange={(e) => {
+                                                    const updatedFields = fields.map(f => {
+                                                        if (f.id === field.id) {
+                                                            const newRows = [...f.rows];
+                                                            newRows[rowIdx] = e.target.value;
+                                                            return { ...f, rows: newRows };
+                                                        }
+                                                        return f;
+                                                    });
+                                                    setFields(updatedFields);
+                                                }}
+                                                placeholder={`Row ${rowIdx + 1}`}
+                                            />
+                                        </td>
+                                        {field.columns.map((col, colIdx) => (
+                                            <td key={colIdx}>
+                                                <input
+                                                    type="radio"
+                                                    name={`Matrix_${field.id}_row_${rowIdx}`}
+                                                    value={col}
+                                                    className="Matrix-radio"
+                                                />
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+
+                        {/* Add Row / Add Column Buttons */}
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                            <button
+                                className="btn btn-sm btn-link"
+                                onClick={() => {
+                                    const updatedFields = fields.map(f =>
+                                        f.id === field.id
+                                            ? { ...f, rows: [...f.rows, `Row ${f.rows.length + 1}`] }
+                                            : f
+                                    );
+                                    setFields(updatedFields);
+                                }}
+                            >
+                                Add row
+                            </button>
+                            <button
+                                className="btn btn-sm btn-link"
+                                onClick={() => {
+                                    const updatedFields = fields.map(f =>
+                                        f.id === field.id
+                                            ? { ...f, columns: [...f.columns, `Col ${f.columns.length + 1}`] }
+                                            : f
+                                    );
+                                    setFields(updatedFields);
+                                }}
+                            >
+                                Add column
+                            </button>
+                        </div>
+                    </div>
+                );
+            case "Date Picker":
+                return (
+                    <input
+                        type="date"
+                        {...commonProps}
+                        value={field.defaultValue || ""}
+                        onChange={(e) => {
+                            const updatedFields = fields.map(f =>
+                                f.id === field.id ? { ...f, defaultValue: e.target.value } : f
+                            );
+                            setFields(updatedFields);
+                        }}
+                    />
+                );
+            case "Time Picker":
+                return (
+                    <input
+                        type="time"
+                        {...commonProps}
+                        value={field.defaultValue || ""}
+                        onChange={(e) => {
+                            const updatedFields = fields.map(f =>
+                                f.id === field.id ? { ...f, defaultValue: e.target.value } : f
+                            );
+                            setFields(updatedFields);
+                        }}
+                    />
+                );
+            case "Date Time Picker":
+                return (
+                    <input
+                        type="datetime-local"
+                        {...commonProps}
+                        value={field.defaultValue || ""}
+                        onChange={(e) => {
+                            const updatedFields = fields.map(f =>
+                                f.id === field.id ? { ...f, defaultValue: e.target.value } : f
+                            );
+                            setFields(updatedFields);
+                        }}
+                    />
+                );
+            case "Date Range":
+                return (
+                    <div className="d-flex gap-2">
+                        <input type="date" className="form-control" placeholder="From" />
+                        <input type="date" className="form-control" placeholder="To" />
+                    </div>
+                );
+            case "Long Answer":
+                return <textarea {...commonProps}></textarea>;
             case "Document Type":
                 return (
                     <input
@@ -683,7 +862,6 @@ const FormBuilder = () => {
                                 result.destination.index
                             );
 
-                            // Update options for the current field
                             const updatedFields = fields.map(f =>
                                 f.id === field.id ? { ...f, options: reordered } : f
                             );
@@ -692,60 +870,149 @@ const FormBuilder = () => {
                     >
                         <Droppable droppableId={`ranking-${field.id}`}>
                             {(provided) => (
-                                <ol {...provided.droppableProps} ref={provided.innerRef} className="ranking-list">
-                                    {field.options.map((opt, idx) => (
-                                        <Draggable key={opt} draggableId={opt} index={idx}>
-                                            {(provided) => (
-                                                <li
-                                                    ref={provided.innerRef}
-                                                    {...provided.draggableProps}
-                                                    {...provided.dragHandleProps}
-                                                    className="ranking-item"
-                                                >
-                                                    {opt}
-                                                </li>
-                                            )}
-                                        </Draggable>
-                                    ))}
-                                    {provided.placeholder}
-                                </ol>
+                                <div>
+                                    <ol
+                                        {...provided.droppableProps}
+                                        ref={provided.innerRef}
+                                        className="ranking-list"
+                                    >
+                                        {field.options.map((opt, idx) => (
+                                            <Draggable
+                                                key={idx}
+                                                draggableId={`ranking-${field.id}-option-${idx}`}
+                                                index={idx}
+                                            >
+                                                {(provided) => (
+                                                    <li
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        className="ranking-item d-flex align-items-center"
+                                                        style={{
+                                                            gap: "10px",
+                                                            padding: "8px",
+                                                            border: "1px solid #ddd",
+                                                            borderRadius: "5px",
+                                                            marginBottom: "6px",
+                                                            ...provided.draggableProps.style
+                                                        }}
+                                                    >
+                                                        {/* Ranking number */}
+                                                        <span style={{ width: "20px", textAlign: "center" }}>{idx + 1}</span>
+
+                                                        {/* Editable input */}
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            value={opt}
+                                                            onChange={(e) => {
+                                                                const updatedOptions = [...field.options];
+                                                                updatedOptions[idx] = e.target.value;
+
+                                                                const updatedFields = fields.map(f =>
+                                                                    f.id === field.id ? { ...f, options: updatedOptions } : f
+                                                                );
+                                                                setFields(updatedFields);
+                                                            }}
+                                                            style={{ flex: 1 }}
+                                                        />
+
+                                                        {/* Drag handle */}
+                                                        <span {...provided.dragHandleProps} style={{ cursor: "grab", color: "gray" }}>
+                                                            <i className="fas fa-grip-vertical"></i>
+                                                        </span>
+
+                                                        {/* Delete option */}
+                                                        <span
+                                                            style={{ color: "red", cursor: "pointer" }}
+                                                            onClick={() => {
+                                                                const updatedOptions = [...field.options];
+                                                                updatedOptions.splice(idx, 1);
+                                                                const updatedFields = fields.map(f =>
+                                                                    f.id === field.id ? { ...f, options: updatedOptions } : f
+                                                                );
+                                                                setFields(updatedFields);
+                                                            }}
+                                                        >
+                                                            <i className="fas fa-trash-alt"></i>
+                                                        </span>
+                                                    </li>
+                                                )}
+                                            </Draggable>
+                                        ))}
+                                        {provided.placeholder}
+                                    </ol>
+
+                                    {/* Add Option Button */}
+                                    <button
+                                        onClick={() => {
+                                            const updatedFields = fields.map(f =>
+                                                f.id === field.id
+                                                    ? {
+                                                        ...f,
+                                                        options: [...f.options, `Option ${f.options.length + 1}`]
+                                                    }
+                                                    : f
+                                            );
+                                            setFields(updatedFields);
+                                        }}
+                                        style={{
+                                            marginTop: "10px",
+                                            color: "#2563eb",
+                                            textDecoration: "underline",
+                                            background: "none",
+                                            border: "none"
+                                        }}
+                                    >
+                                        Add option
+                                    </button>
+                                </div>
                             )}
                         </Droppable>
                     </DragDropContext>
                 );
             case "Star Rating":
                 return (
-                    <div
-                        onMouseLeave={() => setHovered(null)} // reset on mouse leave
-                    >
-                        {[...Array(field.max || 5)].map((_, i) => (
-                            <span
-                                key={i}
-                                style={{
-                                    fontSize: "24px",
-                                    color:
-                                        hovered != null
-                                            ? i <= hovered
-                                                ? "rgb(59, 130, 246)"
-                                                : "#ccc"
-                                            : i < field.value
-                                                ? "rgb(59, 130, 246)"
-                                                : "#ccc",
-                                    cursor: "pointer",
-                                    transition: "color 0.2s"
-                                }}
-                                onClick={() => {
-                                    const newValue = field.value === i + 1 ? 0 : i + 1;
-                                    const updatedFields = fields.map(f =>
-                                        f.id === field.id ? { ...f, value: newValue } : f
-                                    );
-                                    setFields(updatedFields);
-                                }}
-                                onMouseEnter={() => setHovered(i)}
-                            >
-                                <FaStar />
-                            </span>
-                        ))}
+                    <div>
+                        <div
+                            style={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: "4px",
+                                maxWidth: "400px", // 15 stars * 26px per star (adjust if needed)
+                            }}
+                            onMouseLeave={() => setHovered(null)}
+                        >
+                            {[...Array(field.max || 5)].map((_, i) => (
+                                <span
+                                    key={i}
+                                    style={{
+                                        fontSize: "24px",
+                                        color:
+                                            hovered != null
+                                                ? i <= hovered
+                                                    ? "rgb(59, 130, 246)"
+                                                    : "#ccc"
+                                                : i < field.value
+                                                    ? "rgb(59, 130, 246)"
+                                                    : "#ccc",
+                                        cursor: "pointer",
+                                        transition: "color 0.2s",
+                                        width: "24px",
+                                        textAlign: "center"
+                                    }}
+                                    onClick={() => {
+                                        const newValue = field.value === i + 1 ? 0 : i + 1;
+                                        const updatedFields = fields.map(f =>
+                                            f.id === field.id ? { ...f, value: newValue } : f
+                                        );
+                                        setFields(updatedFields);
+                                    }}
+                                    onMouseEnter={() => setHovered(i)}
+                                >
+                                    <FaStar />
+                                </span>
+                            ))}
+                        </div>
                     </div>
                 );
             case "Slider":
@@ -786,12 +1053,30 @@ const FormBuilder = () => {
                 );
             case "Opinion Scale":
                 return (
-                    <div className="d-flex gap-2 align-items-center">
-                        {[...Array((field?.max ?? 5) - (field?.min ?? 1) + 1)].map((_, i) => {
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(auto-fill, minmax(40px, 1fr))",
+                            gap: "8px",
+                            maxWidth: "640px", // 15 * 40px + gaps
+                        }}
+                    >
+                        {[...Array((field?.max ?? 10) - (field?.min ?? 1) + 1)].map((_, i) => {
                             const val = field.min + i;
                             return (
-                                <label key={val}>
-                                    <input type="radio" name={`opinion_${field.id}`} /> {val}
+                                <label key={val} style={{ textAlign: "center" }}>
+                                    <input
+                                        type="radio"
+                                        name={`opinion_${field.id}`}
+                                        checked={field.value === val}
+                                        onChange={() => {
+                                            const updatedFields = fields.map(f =>
+                                                f.id === field.id ? { ...f, value: val } : f
+                                            );
+                                            setFields(updatedFields);
+                                        }}
+                                    />
+                                    <div>{val}</div>
                                 </label>
                             );
                         })}
@@ -826,8 +1111,10 @@ const FormBuilder = () => {
                                     setFields(updatedFields);
                                 }}
                             />
-                            <select
+                            <input
+                                type="text"
                                 className="form-control"
+                                placeholder="State"
                                 value={field.state || ""}
                                 onChange={(e) => {
                                     const updatedFields = fields.map(f =>
@@ -835,13 +1122,7 @@ const FormBuilder = () => {
                                     );
                                     setFields(updatedFields);
                                 }}
-                            >
-                                <option value="">State / Province</option>
-                                <option value="CA">California</option>
-                                <option value="TX">Texas</option>
-                                <option value="NY">New York</option>
-                                {/* Add more states as needed */}
-                            </select>
+                            />
                             <input
                                 type="text"
                                 className="form-control"
@@ -860,22 +1141,70 @@ const FormBuilder = () => {
             case "Picture":
                 return (
                     <div>
-                        <div style={{ display: "flex", gap: "12px" }}>
+                        <div
+                            style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(3, 1fr)",
+                                gap: "12px"
+                            }}
+                        >
                             {field.options.map((opt, idx) => (
-                                <div key={opt.id} style={{ border: "1px solid #ddd", borderRadius: "8px", padding: "8px", position: "relative" }}>
+                                <div
+                                    key={opt.id}
+                                    style={{
+                                        border: "1px solid #ddd",
+                                        borderRadius: "8px",
+                                        padding: "8px",
+                                        position: "relative"
+                                    }}
+                                    onMouseEnter={() => setHoveredOption(idx)}
+                                    onMouseLeave={() => setHoveredOption(null)}
+                                >
+                                    {/* Close Icon */}
+                                    <button
+                                        onClick={() => {
+                                            const updatedFields = fields.map(f =>
+                                                f.id === field.id
+                                                    ? {
+                                                        ...f,
+                                                        options: f.options.filter((_, i) => i !== idx)
+                                                    }
+                                                    : f
+                                            );
+                                            setFields(updatedFields);
+                                        }}
+                                        style={{
+                                            position: "absolute",
+                                            top: "-10px",
+                                            right: "-10px",
+                                            background: "rgb(107 114 128)",
+                                            color: "white",
+                                            border: "none",
+                                            borderRadius: "50%",
+                                            width: "24px",
+                                            height: "24px",
+                                            display: hoveredOption === idx ? "flex" : "none",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            cursor: "pointer",
+                                            zIndex: 10
+                                        }}
+                                    >
+                                        <FaTimes size={14} />
+                                    </button>
+
                                     <div
                                         style={{
-                                            width: "150px",
+                                            width: "100%",
                                             height: "100px",
-                                            backgroundColor: "#f3f3f3",
+                                            backgroundColor: opt.image ? "transparent" : pictureBgColors[idx % pictureBgColors.length],
                                             backgroundImage: opt.image ? `url(${opt.image})` : undefined,
                                             backgroundSize: "cover",
                                             backgroundPosition: "center",
                                             borderRadius: "4px",
                                             display: "flex",
                                             alignItems: "center",
-                                            justifyContent: "center",
-                                            position: "relative"
+                                            justifyContent: "center"
                                         }}
                                     >
                                         <button
@@ -899,6 +1228,7 @@ const FormBuilder = () => {
                                 </div>
                             ))}
                         </div>
+
                         <button
                             onClick={() => {
                                 const updatedFields = fields.map(f =>
@@ -911,7 +1241,13 @@ const FormBuilder = () => {
                                 );
                                 setFields(updatedFields);
                             }}
-                            style={{ marginTop: "10px", color: "#2563eb", textDecoration: "underline", background: "none", border: "none" }}
+                            style={{
+                                marginTop: "10px",
+                                color: "#2563eb",
+                                textDecoration: "underline",
+                                background: "none",
+                                border: "none"
+                            }}
                         >
                             Add option
                         </button>
@@ -919,19 +1255,36 @@ const FormBuilder = () => {
                 );
             case "Divider":
                 return (
-                    <div
-                        onClick={() => {
-                            // You can add any behavior here on click if necessary
-                        }}
-                        style={{
+                    <div style={{ position: "relative", margin: "20px 0", textAlign: "center" }}>
+                        <div style={{
                             borderTop: "1px solid lightgray",
-                            margin: "20px 0"
-                        }}
-                    ></div>
+                            position: "relative",
+                            height: "1px"
+                        }}></div>
+                        {field.label && (
+                            <span style={{
+                                position: "absolute",
+                                top: "-0.6em",
+                                left: "50%",
+                                transform: "translateX(-50%)",
+                                backgroundColor: "#fff", // or your form bg color
+                                padding: "0 5px",
+                                fontSize: "0.9rem",
+                                color: "#666"
+                            }}>
+                                {field.label}
+                            </span>
+                        )}
+                    </div>
                 );
             case "Image":
                 return (
-                    <div className="media-preview-wrapper">
+                    <div
+                        className="media-preview-wrapper"
+                        style={{
+                            textAlign: field.alignment || "center" // default to center
+                        }}
+                    >
                         {field.file ? (
                             <img
                                 src={URL.createObjectURL(field.file)}
@@ -958,7 +1311,7 @@ const FormBuilder = () => {
                                             ? {
                                                 ...f,
                                                 file,
-                                                previewSize: f.previewSize || 300 // set to 300 only if it's not already set
+                                                previewSize: f.previewSize || 300
                                             }
                                             : f
                                     );
@@ -967,35 +1320,20 @@ const FormBuilder = () => {
                             }}
                             className="form-control mt-2"
                         />
-
-                        <div className="mt-2">
-                            <label>Size: {field.previewSize}px</label>
-                            <input
-                                type="range"
-                                min="100"
-                                max="600" // allow bigger range
-                                step="10"
-                                value={field.previewSize}
-                                onChange={(e) => {
-                                    const updatedFields = fields.map(f =>
-                                        f.id === field.id ? { ...f, previewSize: parseInt(e.target.value) } : f
-                                    );
-                                    setFields(updatedFields);
-                                }}
-                                className="form-range"
-                            />
-                        </div>
                     </div>
                 );
             case "Video":
                 return (
-                    <div className="media-preview-wrapper">
+                    <div
+                        className="media-preview-wrapper"
+                        style={{ textAlign: field.alignment || "center" }}
+                    >
                         {field.file ? (
                             <video
                                 controls
                                 style={{
                                     width: `${field.previewSize}px`,
-                                    height: `${field.previewSize * 0.6}px`,
+                                    maxHeight: `${field.previewSize * 0.6}px`,
                                     borderRadius: "8px",
                                     objectFit: "contain"
                                 }}
@@ -1012,11 +1350,7 @@ const FormBuilder = () => {
                                 if (file) {
                                     const updatedFields = fields.map(f =>
                                         f.id === field.id
-                                            ? {
-                                                ...f,
-                                                file,
-                                                previewSize: f.previewSize || 300 // default to 300
-                                            }
+                                            ? { ...f, file, previewSize: f.previewSize || 300 }
                                             : f
                                     );
                                     setFields(updatedFields);
@@ -1024,36 +1358,24 @@ const FormBuilder = () => {
                             }}
                             className="form-control mt-2"
                         />
-
-                        <div className="mt-2">
-                            <label>Size: {field.previewSize}px</label>
-                            <input
-                                type="range"
-                                min="100"
-                                max="600"
-                                step="10"
-                                value={field.previewSize || 200}
-                                onChange={(e) => {
-                                    const updatedFields = fields.map(f =>
-                                        f.id === field.id ? { ...f, previewSize: parseInt(e.target.value) } : f
-                                    );
-                                    setFields(updatedFields);
-                                }}
-                                className="form-range"
-                            />
-                        </div>
                     </div>
                 );
             case "PDF":
                 return (
-                    <div className="media-preview-wrapper">
+                    <div
+                        className="media-preview-wrapper"
+                        style={{ textAlign: field.alignment || "center" }}
+                    >
                         {field.file ? (
                             <embed
                                 src={URL.createObjectURL(field.file)}
                                 type="application/pdf"
                                 width={`${field.previewSize}px`}
                                 height={`${field.previewSize * 1.2}px`}
-                                style={{ border: "1px solid #ccc", borderRadius: "8px" }}
+                                style={{
+                                    border: "1px solid #ccc",
+                                    borderRadius: "8px"
+                                }}
                             />
                         ) : (
                             <div className="media-upload-placeholder">No PDF uploaded</div>
@@ -1066,11 +1388,7 @@ const FormBuilder = () => {
                                 if (file) {
                                     const updatedFields = fields.map(f =>
                                         f.id === field.id
-                                            ? {
-                                                ...f,
-                                                file,
-                                                previewSize: f.previewSize || 300 // default to 300
-                                            }
+                                            ? { ...f, file, previewSize: f.previewSize || 300 }
                                             : f
                                     );
                                     setFields(updatedFields);
@@ -1078,24 +1396,6 @@ const FormBuilder = () => {
                             }}
                             className="form-control mt-2"
                         />
-
-                        <div className="mt-2">
-                            <label>Size: {field.previewSize}px</label>
-                            <input
-                                type="range"
-                                min="100"
-                                max="600"
-                                step="10"
-                                value={field.previewSize || 200}
-                                onChange={(e) => {
-                                    const updatedFields = fields.map(f =>
-                                        f.id === field.id ? { ...f, previewSize: parseInt(e.target.value) } : f
-                                    );
-                                    setFields(updatedFields);
-                                }}
-                                className="form-range"
-                            />
-                        </div>
                     </div>
                 );
             default:
@@ -1176,6 +1476,20 @@ const FormBuilder = () => {
         if (!result.destination) return;
         const newFields = reorder(fields, result.source.index, result.destination.index);
         setFields(newFields);
+    };
+
+    const reorderOptions = (fieldId, sourceIndex, destinationIndex) => {
+        const updatedFields = fields.map(field => {
+            if (field.id === fieldId) {
+                const options = Array.from(field.options);
+                const [removed] = options.splice(sourceIndex, 1);
+                options.splice(destinationIndex, 0, removed);
+                return { ...field, options };
+            }
+            return field;
+        });
+
+        setFields(updatedFields);
     };
 
     if (loading) return <p>Loading...</p>;
@@ -1302,7 +1616,7 @@ const FormBuilder = () => {
                                                         </div>
 
                                                         <div className="form-field-content">
-                                                            {!["Heading", "Banner"].includes(field.type) ? (
+                                                            {!["Heading", "Banner", "Divider", "Image"].includes(field.type) ? (
                                                                 <>
                                                                     <input
                                                                         type="text"
@@ -1527,26 +1841,35 @@ const FormBuilder = () => {
                     </div>
 
                     <div>
-                        <label>Label</label>
-                        <div style={{ color: "#aaa", fontSize: ".875rem", marginBottom: "10px" }}>
-                            Click text on page to modify
-                        </div>
 
-                        <label>Caption</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={fields.find(f => f.id === selectedFieldId)?.caption || ""}
-                            onChange={(e) => {
-                                const updatedFields = fields.map(f =>
-                                    f.id === selectedFieldId ? { ...f, caption: e.target.value } : f
-                                );
-                                setFields(updatedFields);
-                            }}
-                        />
+                        {!["Divider", "Image", "Video", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                            <>
+                                <label>Label</label>
+                                <div style={{ color: "#aaa", fontSize: ".875rem", marginBottom: "10px" }}>
+                                    Click text on page to modify
+                                </div>
+                            </>
+                        )}
 
                         {/* Show only Specific Fields */}
-                        {!["Heading", "Banner", "Multiple Choice"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                        {!["Divider", "Image", "Video", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                            <>
+                                <label>Caption</label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={fields.find(f => f.id === selectedFieldId)?.caption || ""}
+                                    onChange={(e) => {
+                                        const updatedFields = fields.map(f =>
+                                            f.id === selectedFieldId ? { ...f, caption: e.target.value } : f
+                                        );
+                                        setFields(updatedFields);
+                                    }}
+                                />
+                            </>
+                        )}
+
+                        {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "Document Type"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                             <>
                                 <label>Placeholder</label>
                                 <input
@@ -1560,7 +1883,11 @@ const FormBuilder = () => {
                                         setFields(updatedFields);
                                     }}
                                 />
+                            </>
+                        )}
 
+                        {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "Document Type"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                            <>
                                 <label>Default value <span title="Initial value" style={{ cursor: "help" }}>🛈</span></label>
                                 <input
                                     type="text"
@@ -1574,6 +1901,38 @@ const FormBuilder = () => {
                                     }}
                                 />
                             </>
+                        )}
+
+                        {["Switch", "Checkbox"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    marginBottom: "10px"
+                                }}
+                            >
+                                <label style={{ marginBottom: 0 }}>
+                                    Default value{" "}
+                                    <span title="Switch on to make this field true" style={{ cursor: "help" }}>🛈</span>
+                                </label>
+
+                                <span
+                                    className={`custom-toggle ${fields.find(f => f.id === selectedFieldId)?.defaultValue === "true" ? 'active' : ''}`}
+                                    onClick={() => {
+                                        const updatedFields = fields.map(f =>
+                                            f.id === selectedFieldId
+                                                ? {
+                                                    ...f,
+                                                    defaultValue: f.defaultValue === "true" ? "false" : "true"
+                                                }
+                                                : f
+                                        );
+                                        setFields(updatedFields);
+                                    }}
+                                    style={{ cursor: "pointer" }}
+                                ></span>
+                            </div>
                         )}
 
                         {/* ✅ Style section for Heading */}
@@ -1615,6 +1974,95 @@ const FormBuilder = () => {
                                     <option value="info">🟦 Info</option>
                                     <option value="success">🟩 Success</option>
                                 </select>
+                            </div>
+                        )}
+
+                        {["Dropdown", "Multiple Choice", "Multiple Select", "Checkboxes"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                            <div style={{ marginTop: "20px" }}>
+                                <label>Options</label>
+
+                                <DragDropContext onDragEnd={(result) => {
+                                    const { source, destination } = result;
+                                    if (!destination) return;
+                                    reorderOptions(selectedFieldId, source.index, destination.index);
+                                }}>
+                                    <Droppable droppableId="optionsList">
+                                        {(provided) => (
+                                            <div ref={provided.innerRef} {...provided.droppableProps}>
+                                                {fields.find(f => f.id === selectedFieldId)?.options.map((opt, index) => (
+                                                    <Draggable key={index} draggableId={`option-${index}`} index={index}>
+                                                        {(provided) => (
+                                                            <div
+                                                                ref={provided.innerRef}
+                                                                {...provided.draggableProps}
+                                                                style={{
+                                                                    display: "flex",
+                                                                    alignItems: "center",
+                                                                    background: "#f9f9f9",
+                                                                    padding: "8px",
+                                                                    borderRadius: "6px",
+                                                                    marginBottom: "6px",
+                                                                    ...provided.draggableProps.style
+                                                                }}
+                                                            >
+                                                                <input
+                                                                    type="text"
+                                                                    value={opt}
+                                                                    className="form-control"
+                                                                    onChange={(e) => {
+                                                                        const updatedFields = fields.map(field => {
+                                                                            if (field.id === selectedFieldId) {
+                                                                                const newOptions = [...field.options];
+                                                                                newOptions[index] = e.target.value;
+                                                                                return { ...field, options: newOptions };
+                                                                            }
+                                                                            return field;
+                                                                        });
+                                                                        setFields(updatedFields);
+                                                                    }}
+                                                                    style={{ flex: 1, marginRight: "10px" }}
+                                                                />
+                                                                <span {...provided.dragHandleProps} style={{ cursor: "grab", marginRight: "10px" }}>
+                                                                    <i className="fas fa-grip-vertical"></i>
+                                                                </span>
+                                                                <span
+                                                                    style={{ color: "red", cursor: "pointer" }}
+                                                                    onClick={() => {
+                                                                        const updatedFields = fields.map(field => {
+                                                                            if (field.id === selectedFieldId) {
+                                                                                const newOptions = [...field.options];
+                                                                                newOptions.splice(index, 1); // remove the option
+                                                                                return { ...field, options: newOptions };
+                                                                            }
+                                                                            return field;
+                                                                        });
+                                                                        setFields(updatedFields);
+                                                                    }}
+                                                                >
+                                                                    <i className="fas fa-trash-alt"></i>
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </Draggable>
+                                                ))}
+                                                {provided.placeholder}
+                                            </div>
+                                        )}
+                                    </Droppable>
+                                </DragDropContext>
+
+                                <button
+                                    className="btn btn-sm btn-outline-primary"
+                                    onClick={() => {
+                                        const updatedFields = fields.map(f =>
+                                            f.id === selectedFieldId ? { ...f, options: [...f.options, `Option ${f.options.length + 1}`] } : f
+                                        );
+                                        setFields(updatedFields);
+                                    }}
+                                    style={{ marginTop: "10px" }}
+                                >
+                                    + Add Option
+                                </button>
                             </div>
                         )}
 
@@ -1666,21 +2114,213 @@ const FormBuilder = () => {
                             </div>
                         )}
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
-                            {/* Required Row */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <label className="form-check-label">Required</label>
-                                <span
-                                    className={`custom-toggle ${fields.find(f => f.id === selectedFieldId)?.required ? 'active' : ''}`}
-                                    onClick={() => {
+                        {["Date Picker", "Time Picker", "Date Time Picker"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                            <div style={{ marginBottom: "10px" }}>
+                                <label>
+                                    Default value{" "}
+                                    <span title="Set a default date/time for this field" style={{ cursor: "help" }}>🛈</span>
+                                </label>
+                                <input
+                                    type={
+                                        fields.find(f => f.id === selectedFieldId)?.type === "Date Picker" ? "date" :
+                                            fields.find(f => f.id === selectedFieldId)?.type === "Time Picker" ? "time" : "datetime-local"
+                                    }
+                                    className="form-control"
+                                    value={fields.find(f => f.id === selectedFieldId)?.defaultValue || ""}
+                                    onChange={(e) => {
                                         const updatedFields = fields.map(f =>
-                                            f.id === selectedFieldId ? { ...f, required: !f.required } : f
+                                            f.id === selectedFieldId ? { ...f, defaultValue: e.target.value } : f
                                         );
                                         setFields(updatedFields);
                                     }}
-                                ></span>
+                                />
                             </div>
-                        </div>
+                        )}
+
+                        {fields.find(f => f.id === selectedFieldId)?.type === "Star Rating" && (
+                            <div style={{ marginBottom: "10px" }}>
+                                <label>
+                                    Max Stars{" "}
+                                    <span title="Maximum number of stars to display (Max 50)" style={{ cursor: "help" }}>🛈</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="50"
+                                    className="form-control"
+                                    value={fields.find(f => f.id === selectedFieldId)?.max || 5}
+                                    onChange={(e) => {
+                                        const value = Math.min(50, parseInt(e.target.value, 10));
+                                        const updatedFields = fields.map(f =>
+                                            f.id === selectedFieldId ? { ...f, max: value } : f
+                                        );
+                                        setFields(updatedFields);
+                                    }}
+                                />
+                            </div>
+                        )}
+
+                        {fields.find(f => f.id === selectedFieldId)?.type === "Slider" && (
+                            <div style={{ marginBottom: "10px" }}>
+                                <label>
+                                    Max Slider Value{" "}
+                                    <span title="Set the maximum value for the slider (between 10 and 100)" style={{ cursor: "help" }}>🛈</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    min="10"
+                                    max="100"
+                                    className="form-control"
+                                    value={fields.find(f => f.id === selectedFieldId)?.max || 100}
+                                    onChange={(e) => {
+                                        let value = parseInt(e.target.value, 10);
+                                        value = Math.max(10, Math.min(100, value)); // clamp to 10–100
+
+                                        const updatedFields = fields.map(f =>
+                                            f.id === selectedFieldId ? { ...f, max: value } : f
+                                        );
+                                        setFields(updatedFields);
+                                    }}
+                                />
+                            </div>
+                        )}
+
+                        {fields.find(f => f.id === selectedFieldId)?.type === "Opinion Scale" && (
+                            <>
+                                <div style={{ marginBottom: "10px" }}>
+                                    <label>
+                                        Max Opinion
+                                        <span title="Maximum scale value (Max 100)" style={{ cursor: "help" }}> 🛈</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min={fields.find(f => f.id === selectedFieldId)?.min + 1 || 2}
+                                        max="100"
+                                        className="form-control"
+                                        value={fields.find(f => f.id === selectedFieldId)?.max || 10}
+                                        onChange={(e) => {
+                                            const value = Math.min(100, parseInt(e.target.value, 10));
+                                            const updatedFields = fields.map(f =>
+                                                f.id === selectedFieldId ? { ...f, max: value } : f
+                                            );
+                                            setFields(updatedFields);
+                                        }}
+                                    />
+                                </div>
+                            </>
+                        )}
+
+                        {fields.find(f => f.id === selectedFieldId)?.type === "Number" && (
+                            <>
+                                <label>
+                                    Default value{" "}
+                                    <span title="Initial value" style={{ cursor: "help" }}>🛈</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    value={fields.find(f => f.id === selectedFieldId)?.defaultValue || ""}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (/^\d*$/.test(value)) { // Only digits
+                                            const updatedFields = fields.map(f =>
+                                                f.id === selectedFieldId ? { ...f, defaultValue: value } : f
+                                            );
+                                            setFields(updatedFields);
+                                        }
+                                    }}
+                                />
+                            </>
+                        )}
+
+                        {fields.find(f => f.id === selectedFieldId)?.type === "Divider" && (
+                            <>
+                                <label>
+                                    Label{" "}
+                                    <span title="This text appears in the center of the divider" style={{ cursor: "help" }}>🛈</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Enter divider text"
+                                    value={fields.find(f => f.id === selectedFieldId)?.label || ""}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        const updatedFields = fields.map(f =>
+                                            f.id === selectedFieldId ? { ...f, label: value } : f
+                                        );
+                                        setFields(updatedFields);
+                                    }}
+                                />
+                            </>
+                        )}
+
+                        {["Image", "Vedio", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                            <>
+                                <label>Max Height</label>
+                                {/* Max Height UI can go here if you plan to add one */}
+
+                                {/* Image Resize Slider */}
+                                <div className="mt-2">
+                                    <label>Size: {fields.find(f => f.id === selectedFieldId)?.previewSize}px</label>
+                                    <input
+                                        type="range"
+                                        min="100"
+                                        max="600"
+                                        step="10"
+                                        value={fields.find(f => f.id === selectedFieldId)?.previewSize || 300}
+                                        onChange={(e) => {
+                                            const updatedFields = fields.map(f =>
+                                                f.id === selectedFieldId
+                                                    ? { ...f, previewSize: parseInt(e.target.value) }
+                                                    : f
+                                            );
+                                            setFields(updatedFields);
+                                        }}
+                                        className="form-range"
+                                    />
+                                </div>
+
+                                {/* Alignment Controls */}
+                                <div className="mt-3">
+                                    <label>Alignment</label>
+                                    <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+                                        {["left", "center", "right"].map((align) => {
+                                            const icons = {
+                                                left: "⬅️",
+                                                center: "↔️",
+                                                right: "➡️"
+                                            };
+                                            return (
+                                                <button
+                                                    key={align}
+                                                    onClick={() => {
+                                                        const updatedFields = fields.map(f =>
+                                                            f.id === selectedFieldId ? { ...f, alignment: align } : f
+                                                        );
+                                                        setFields(updatedFields);
+                                                    }}
+                                                    style={{
+                                                        padding: "6px 10px",
+                                                        fontSize: "1.2rem",
+                                                        border: fields.find(f => f.id === selectedFieldId)?.alignment === align
+                                                            ? "2px solid #007bff"
+                                                            : "1px solid lightgray",
+                                                        borderRadius: "5px",
+                                                        background: "white",
+                                                        cursor: "pointer"
+                                                    }}
+                                                >
+                                                    {icons[align]}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </>
+                        )}
 
                     </div>
                 </div>
