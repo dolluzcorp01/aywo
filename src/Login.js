@@ -87,6 +87,7 @@ function Login() {
     setShowChangePasswordSection(false);
     setShowSignUpSection(true);
     setShowLoginbtn(false);
+    setShowOTPSection(false);
   };
 
   const handleSignUpbtn = () => {
@@ -99,6 +100,7 @@ function Login() {
     setShowChangePasswordSection(false);
     setShowSignUpSection(false);
     setShowLoginbtn(true);
+    setShowOTPSection(false);
   };
 
   const handleGoogleSignUp = async () => {

@@ -15,8 +15,21 @@
     box-sizing: border-box;
 }
 
-/* Sidebar styles */
-.form-builder .sidebar {
+/* Form fields Sidebar styles */
+.form-builder .form-fields-sidebar {
+    width: 300px;
+    background: #f8f9fa;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 80px);
+    padding: 15px;
+}
+
+/* Form designs Sidebar styles */
+.form-builder .form-designs-sidebar {
     width: 300px;
     background: #f8f9fa;
     border-right: 1px solid #ddd;
@@ -79,7 +92,7 @@
     top: 0;
 }
 
-/* Sidebar buttons */
+/* Form fields Sidebar buttons */
 .search-wrapper {
     position: relative;
     margin-bottom: 15px;
@@ -94,7 +107,7 @@
     font-size: 14px;
 }
 
-.sidebar .search-bar {
+.form-fields-sidebar .search-bar {
     padding: 8px 12px 8px 32px;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -493,4 +506,22 @@
 
 .Matrix-radio {
     cursor: pointer;
+}
+
+.theme-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 8px 16px;
+    background-color: white;
+    color: rgb(107 114 128);
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.theme-button:hover {
+    background-color: #f0f0f0;
 }

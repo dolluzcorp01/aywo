@@ -61,6 +61,10 @@ const fieldIcons = {
 };
 
 const FormBuilder = () => {
+    const [showDesignSidebar, setShowDesignSidebar] = useState(false);
+    const [showFieldSidebar, setShowFieldSidebar] = useState(true);
+    const [activeTab, setActiveTab] = useState("current");
+
     const [fields, setFields] = useState([]);
     const [fieldTypeMenu, setFieldTypeMenu] = useState(null); // stores id of field and position
     const [hovered, setHovered] = useState(null);
@@ -1496,107 +1500,237 @@ const FormBuilder = () => {
 
     return (
         <div className="form-builder">
-            <div className="sidebar">
-                <div className="search-wrapper">
-                    <FaSearch className="search-icon" />
-                    <input
-                        type="text"
-                        placeholder="Search fields"
-                        className="search-bar"
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+            {showFieldSidebar && (
+                <div className="form-fields-sidebar">
+                    <div className="search-wrapper">
+                        <FaSearch className="search-icon" />
+                        <input
+                            type="text"
+                            placeholder="Search fields"
+                            className="search-bar"
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="field-group-scrollable mt-2">
+                        <div className="field-group mt-1">
+                            <h4>Frequently used</h4>
+                            <div className="field-grid">
+                                {["Short Answer", "Multiple Choice", "Email"]
+                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .map(type => <FieldButton key={type} type={type} section="Frequently used" />)}
+                            </div>
+                        </div>
+
+                        <div className="field-group mt-1">
+                            <h4>Display text</h4>
+                            <div className="field-grid">
+                                {["Heading", "Paragraph", "Banner"]
+                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .map(type => <FieldButton key={type} type={type} section="Display text" />)}
+                            </div>
+                        </div>
+
+                        <div className="field-group mt-1">
+                            <h4>Choices</h4>
+                            <div className="field-grid">
+                                {[
+                                    "Dropdown", "Picture", "Multiple Select", "Switch", "Multiple Choice", "Checkbox",
+                                    "Checkboxes", "Choice Matrix"
+                                ]
+                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .map(type => <FieldButton key={type} type={type} section="Choices" />)}
+                            </div>
+                        </div>
+
+                        <div className="field-group mt-1">
+                            <h4>Time</h4>
+                            <div className="field-grid">
+                                {["Date Picker", "Date Time Picker", "Time Picker", "Date Range"]
+                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .map(type => <FieldButton key={type} type={type} section="Time" />)}
+                            </div>
+                        </div>
+
+                        <div className="field-group mt-1">
+                            <h4>Rating & Ranking</h4>
+                            <div className="field-grid">
+                                {["Ranking", "Star Rating", "Slider", "Opinion Scale"]
+                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .map(type => <FieldButton key={type} type={type} section="Rating & Ranking" />)}
+                            </div>
+                        </div>
+
+                        <div className="field-group mt-1">
+                            <h4>Text</h4>
+                            <div className="field-grid">
+                                {["Short Answer", "Long Answer"]
+                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .map(type => <FieldButton key={type} type={type} section="Text" />)}
+                            </div>
+                        </div>
+
+                        <div className="field-group mt-1">
+                            <h4>Contact Info</h4>
+                            <div className="field-grid">
+                                {["Email", "Number", "Address", "Document Type"]
+                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .map(type => <FieldButton key={type} type={type} section="Contact Info" />)}
+                            </div>
+                        </div>
+
+                        <div className="field-group mt-1">
+                            <h4>Navigation & Layout</h4>
+                            <div className="field-grid">
+                                {["Divider"]
+                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .map(type => <FieldButton key={type} type={type} section="Navigation & Layout" />)}
+                            </div>
+                        </div>
+
+                        <div className="field-group mt-1">
+                            <h4>Media</h4>
+                            <div className="field-grid">
+                                {["Image", "Video", "PDF"]
+                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                    .map(type => <FieldButton key={type} type={type} section="Media" />)}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            )}
+
+            {showDesignSidebar && (
+                <div className="form-designs-sidebar" style={{ color: "gray" }}>
+                    <div
+                        className="designbar-header"
+                        style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            padding: "5px",
+                            paddingLeft: "15px",
+                            paddingRight: "15px",
+                            paddingBottom: "20px",
+                            borderBottom: "1px solid #ccc",
+                            marginLeft: "-12px",
+                            marginRight: "-12px",
+                        }}
+                    >
+                        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
+                            Form Designer
+                        </span>
+                        <i
+                            className="fa-solid fa-xmark"
+                            style={{ fontSize: "20px", cursor: "pointer", color: "black" }}
+                            onClick={() => {
+                                setShowDesignSidebar(false);
+                                setShowFieldSidebar(true);
+                            }}
+                        ></i>
+                    </div>
+
+                    {/* Tabs for Current / All themes */}
+                    <div style={{ display: "flex", margin: "14px" }}>
+                        <button
+                            style={{
+                                flex: 1,
+                                padding: "5px 10px",
+                                backgroundColor: "#374151",
+                                color: "white",
+                                fontWeight: "bold",
+                                border: "1px solid #ccc",
+                                borderRight: "none",
+                                borderTopLeftRadius: "6px",
+                                borderBottomLeftRadius: "6px",
+                                cursor: "pointer"
+                            }}
+                            onClick={() => setActiveTab("current")}
+                        >
+                            Current
+                        </button>
+                        <button
+                            style={{
+                                flex: 1,
+                                padding: "5px 10px",
+                                backgroundColor: "white",
+                                color: "#374151",
+                                fontWeight: "500",
+                                border: "1px solid #ccc",
+                                borderLeft: "none",
+                                borderTopRightRadius: "6px",
+                                borderBottomRightRadius: "6px",
+                                cursor: "pointer"
+                            }}
+                            onClick={() => setActiveTab("themes")}
+                        >
+                            All themes
+                        </button>
+                    </div>
+
+                    {/* Content based on tab */}
+                    <div style={{ padding: "14px" }}>
+                        {activeTab === "current" ? (
+                            <>
+                                {/* Light Theme */}
+                                <div style={{ fontWeight: "bold", marginBottom: "10px" }}>Light</div>
+
+                                {/* Options */}
+                                <div style={{ marginBottom: "10px" }}>
+                                    <div>Background</div>
+                                    <input type="color" style={{ width: "100%" }} />
+                                </div>
+
+                                <div style={{ marginBottom: "10px" }}>
+                                    <div>Questions Background</div>
+                                    <input type="color" style={{ width: "100%" }} />
+                                </div>
+
+                                <div style={{ marginBottom: "10px" }}>
+                                    <div>Primary</div>
+                                    <input type="color" style={{ width: "100%" }} />
+                                </div>
+
+                                <div style={{ marginBottom: "10px" }}>
+                                    <div>Questions</div>
+                                    <input type="color" style={{ width: "100%" }} />
+                                </div>
+
+                                <div style={{ marginBottom: "10px" }}>
+                                    <div>Answers</div>
+                                    <input type="color" style={{ width: "100%" }} />
+                                </div>
+
+                                <div style={{ marginBottom: "10px" }}>
+                                    <div>Font</div>
+                                    <input type="text" placeholder="Default" style={{ width: "100%", padding: "5px" }} />
+                                </div>
+                            </>
+                        ) : (
+                            <div>
+                                {/* Empty div for now */}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                <div className="field-group-scrollable mt-2">
-                    <div className="field-group mt-1">
-                        <h4>Frequently used</h4>
-                        <div className="field-grid">
-                            {["Short Answer", "Multiple Choice", "Email"]
-                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map(type => <FieldButton key={type} type={type} section="Frequently used" />)}
-                        </div>
-                    </div>
-
-                    <div className="field-group mt-1">
-                        <h4>Display text</h4>
-                        <div className="field-grid">
-                            {["Heading", "Paragraph", "Banner"]
-                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map(type => <FieldButton key={type} type={type} section="Display text" />)}
-                        </div>
-                    </div>
-
-                    <div className="field-group mt-1">
-                        <h4>Choices</h4>
-                        <div className="field-grid">
-                            {[
-                                "Dropdown", "Picture", "Multiple Select", "Switch", "Multiple Choice", "Checkbox",
-                                "Checkboxes", "Choice Matrix"
-                            ]
-                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map(type => <FieldButton key={type} type={type} section="Choices" />)}
-                        </div>
-                    </div>
-
-                    <div className="field-group mt-1">
-                        <h4>Time</h4>
-                        <div className="field-grid">
-                            {["Date Picker", "Date Time Picker", "Time Picker", "Date Range"]
-                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map(type => <FieldButton key={type} type={type} section="Time" />)}
-                        </div>
-                    </div>
-
-                    <div className="field-group mt-1">
-                        <h4>Rating & Ranking</h4>
-                        <div className="field-grid">
-                            {["Ranking", "Star Rating", "Slider", "Opinion Scale"]
-                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map(type => <FieldButton key={type} type={type} section="Rating & Ranking" />)}
-                        </div>
-                    </div>
-
-                    <div className="field-group mt-1">
-                        <h4>Text</h4>
-                        <div className="field-grid">
-                            {["Short Answer", "Long Answer"]
-                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map(type => <FieldButton key={type} type={type} section="Text" />)}
-                        </div>
-                    </div>
-
-                    <div className="field-group mt-1">
-                        <h4>Contact Info</h4>
-                        <div className="field-grid">
-                            {["Email", "Number", "Address", "Document Type"]
-                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map(type => <FieldButton key={type} type={type} section="Contact Info" />)}
-                        </div>
-                    </div>
-
-                    <div className="field-group mt-1">
-                        <h4>Navigation & Layout</h4>
-                        <div className="field-grid">
-                            {["Divider"]
-                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map(type => <FieldButton key={type} type={type} section="Navigation & Layout" />)}
-                        </div>
-                    </div>
-
-                    <div className="field-group mt-1">
-                        <h4>Media</h4>
-                        <div className="field-grid">
-                            {["Image", "Video", "PDF"]
-                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map(type => <FieldButton key={type} type={type} section="Media" />)}
-                        </div>
-                    </div>
-
-                </div>
-            </div>
+            )}
 
             <div className="form-container">
                 <div className="form-body" style={{ backgroundColor: formBgColor }}>
+
+                    {/* Theme Button */}
+                    <button
+                        className="theme-button"
+                        onClick={() => {
+                            setShowDesignSidebar(true);
+                            setShowFieldSidebar(false);
+                        }}
+                    >
+                        <i class="fa-solid fa-paintbrush" style={{ marginRight: "3px" }}></i> Theme
+                    </button>
+
                     <div className="form-content" style={{ backgroundColor: formColor }} onClick={() => setShowCustomize(true)}>
                         <DragDropContext onDragEnd={onDragEnd}>
                             <Droppable droppableId="fields">
@@ -1821,20 +1955,11 @@ const FormBuilder = () => {
             {customizeVisible && selectedFieldId && (
                 <div className="customize-section" style={{ color: 'gray' }}>
                     <div className="customize-header" style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginBottom: '20px' }}>
-                        <button
+                        <i
+                            className="fa-solid fa-xmark"
+                            style={{ fontSize: "20px", cursor: "pointer", color: "black", marginRight: '20px' }}
                             onClick={() => setCustomizeVisible(false)}
-                            style={{
-                                background: 'none',
-                                border: 'none',
-                                fontSize: '1rem',
-                                marginRight: '10px',
-                                cursor: 'pointer',
-                                color: 'black',
-                            }}
-                            aria-label="Close"
-                        >
-                            <FaTimes />
-                        </button>
+                        ></i>
                         <h4 style={{ fontWeight: '500', fontSize: '1.125rem', margin: 0 }}>
                             {fields.find(f => f.id === selectedFieldId)?.type} settings
                         </h4>
