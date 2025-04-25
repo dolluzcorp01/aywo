@@ -12,6 +12,7 @@ router.use(cookieParser());
 // 🔹 Middleware to verify JWT
 const verifyJWT = (req, res, next) => {
   const token = req.cookies?.token;
+  console.log('Token:', token);
   if (!token) {
     return res.status(403).json({ message: 'Access Denied. No Token Provided!' });
   }

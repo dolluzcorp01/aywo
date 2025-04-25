@@ -1,4 +1,5 @@
 import { useNotification } from "./NotificationContext";
+import { apiFetch } from "./utils/api";
 import styled from 'styled-components';
 import Swal from 'sweetalert2';
 import React, { useEffect, useState, useRef } from 'react';
@@ -98,7 +99,7 @@ const LeftNavBar = () => {
     const populateProfileDetails = async () => {
         try {
 
-            const response = await fetch('/api/leftnavbar/get-user-profile', {
+            const response = await apiFetch('/api/leftnavbar/get-user-profile', {
                 method: 'GET',
                 credentials: 'include',
             });
@@ -121,7 +122,7 @@ const LeftNavBar = () => {
 
     const handleLogout = async () => {
         try {
-            const response = await fetch('/api/leftnavbar/logout', {
+            const response = await apiFetch('/api/leftnavbar/logout', {
                 method: 'POST',
                 credentials: 'include',
             });

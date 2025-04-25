@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { apiFetch } from "./utils/api";
 import { auth, provider, signInWithPopup } from "./firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { FaCreditCard, FaShieldAlt, FaUserCheck, FaPaintBrush, FaRobot } from "react-icons/fa";
@@ -110,7 +111,7 @@ function Login() {
       console.log("User Info:", user);
 
       // Send user details to backend
-      const response = await fetch("/api/login/google-signup", {
+      const response = await apiFetch("/api/login/google-signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email, username: user.displayName || "", password: "" }),
@@ -136,7 +137,7 @@ function Login() {
       console.log("Google Sign-In User Info:", user);
 
       // Send user details to backend for verification
-      const response = await fetch("/api/login/google-signin", {
+      const response = await apiFetch("/api/login/google-signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email }),
@@ -163,7 +164,7 @@ function Login() {
     }
 
     try {
-      const response = await fetch("/api/login/signup", {
+      const response = await apiFetch("/api/login/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),
@@ -192,7 +193,7 @@ function Login() {
     }
 
     try {
-      const response = await fetch("/api/login/verifyLogin", {  // this is correct if the proxy is set up
+      const response = await apiFetch("/api/login/verifyLogin", {  // this is correct if the proxy is set up
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -248,7 +249,7 @@ function Login() {
     }
 
     try {
-      const response = await fetch("/api/login/checkUserExists", {
+      const response = await apiFetch("/api/login/checkUserExists", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userInput: otpInput }),
@@ -277,7 +278,7 @@ function Login() {
     }
 
     try {
-      const response = await fetch("/api/login/VerifyOrValidate", {
+      const response = await apiFetch("/api/login/VerifyOrValidate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ validationType: "OTP", userInput: otpInput, enteredValue: otpCode }),
@@ -304,7 +305,7 @@ function Login() {
 
   const validateOldPassword = async () => {
     try {
-      const response = await fetch("/api/login/VerifyOrValidate", {
+      const response = await apiFetch("/api/login/VerifyOrValidate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -338,7 +339,7 @@ function Login() {
     }
 
     try {
-      const response = await fetch("/api/login/updatePassword", {
+      const response = await apiFetch("/api/login/updatePassword", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // Ensure cookies are sent with the request

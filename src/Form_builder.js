@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Rnd } from "react-rnd";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import axios from "axios";
+import { apiFetch } from "./utils/api";
 import Swal from "sweetalert2";
 import { useNotification } from "./NotificationContext";
 import {
@@ -162,13 +162,27 @@ const FormBuilder = () => {
     };
 
     useEffect(() => {
-        axios.get("/api/leftnavbar/get-user-profile", { withCredentials: true })
-            .then((res) => {
-                if (!res.data?.user_id) throw new Error("Unauthorized");
-                setProfile(res.data);
-            })
-            .catch(() => navigate("/login"))
-            .finally(() => setLoading(false));
+        const fetchProfile = async () => {
+            try {
+                const response = await apiFetch("/api/leftnavbar/get-user-profile", {
+                    method: "GET",
+                });
+
+                if (!response.ok) throw new Error("Unauthorized");
+
+                const data = await response.json();
+
+                if (!data?.user_id) throw new Error("Unauthorized");
+
+                setProfile(data);
+            } catch (error) {
+                navigate("/login");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProfile();
     }, [navigate]);
 
     useEffect(() => {

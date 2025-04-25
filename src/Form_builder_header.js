@@ -1,5 +1,5 @@
 import Swal from "sweetalert2";
-import axios from "axios";
+import { apiFetch } from "./utils/api";
 import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
@@ -55,7 +55,7 @@ const Form_builder_header = () => {
     const populateProfileDetails = async () => {
         try {
 
-            const response = await fetch('/api/leftnavbar/get-user-profile', {
+            const response = await apiFetch('/api/leftnavbar/get-user-profile', {
                 method: 'GET',
                 credentials: 'include',
             });
@@ -79,7 +79,7 @@ const Form_builder_header = () => {
     useEffect(() => {
         let isMounted = true;
         if (formId) {
-            fetch(`/api/form_builder/get-forms?formId=${formId}`, {
+            apiFetch(`/api/form_builder/get-forms?formId=${formId}`, {
                 method: "GET",
                 credentials: "include",
             })
@@ -109,7 +109,7 @@ const Form_builder_header = () => {
         const newStarredStatus = !starred;
 
         try {
-            const response = await fetch(`/api/form_builder/toggle-star/${formId}`, {
+            const response = await apiFetch(`/api/form_builder/toggle-star/${formId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -140,11 +140,18 @@ const Form_builder_header = () => {
 
         try {
             const cleanFormId = formId.replace("form-", "");
-            const response = await axios.put(
-                `/api/form_builder/publish-form/${cleanFormId}`,
-                { published: true },
-                { withCredentials: true }
-            );
+            const response = await apiFetch(`/api/form_builder/publish-form/${cleanFormId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ published: true }),
+                credentials: 'same-origin'  // Ensures credentials are sent
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to publish form');
+            }
 
             const publicUrl = `${window.location.origin}/forms/${cleanFormId}`;
 

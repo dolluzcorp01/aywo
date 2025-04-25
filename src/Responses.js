@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { apiFetch } from "./utils/api";
 import { useParams } from "react-router-dom";
 import $ from "jquery";
 import "datatables.net";
@@ -34,7 +35,7 @@ const Responses = () => {
     }, []);
 
     useEffect(() => {
-        fetch(`/api/responses/get-responses/${formId}`, {
+        apiFetch(`/api/responses/get-responses/${formId}`, {
             method: "GET",
             credentials: "include",
         })

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
+import { apiFetch } from "./utils/api";
 import Swal from "sweetalert2";
 
 const PublishedForm = () => {
@@ -48,14 +48,26 @@ const PublishedForm = () => {
     }, []);
 
     useEffect(() => {
-        axios.get(`/api/published_form/get-published-form/${formId}`)
-            .then(res => {
-                console.log("📥 Fetched published form:", res.data);
-                setForm(res.data.form);
-                setFields(res.data.fields);
-                console.log("📌 Parsed Fields:", res.data.fields);
-            })
-            .catch(() => Swal.fire("Error", "Form not found or unpublished.", "error"));
+        const fetchPublishedForm = async () => {
+            try {
+                const response = await apiFetch(`/api/published_form/get-published-form/${formId}`, {
+                    method: 'GET',
+                });
+
+                if (!response.ok) throw new Error("Failed to fetch form");
+
+                const data = await response.json();
+
+                console.log("📥 Fetched published form:", data);
+                setForm(data.form);
+                setFields(data.fields);
+                console.log("📌 Parsed Fields:", data.fields);
+            } catch (error) {
+                Swal.fire("Error", "Form not found or unpublished.", "error");
+            }
+        };
+
+        fetchPublishedForm();
     }, [formId]);
 
     useEffect(() => {
@@ -83,7 +95,7 @@ const PublishedForm = () => {
         setTimeout(updateFormHeight, 0);
     }, [fields, form]);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!form || fields.length === 0) {
             Swal.fire("Error", "Form data is missing.", "error");
             return;
@@ -97,43 +109,48 @@ const PublishedForm = () => {
         const formData = new FormData();
         formData.append("form_id", form.form_id);
 
-        const responsesObject = {}; // Store responses in an object
+        const responsesObject = {};
 
         Object.entries(responses).forEach(([key, value]) => {
             if (value instanceof File) {
                 formData.append("document", value);
-                responsesObject[key] = "file_attached"; // Placeholder, backend handles file separately
+                responsesObject[key] = "file_attached";
             } else {
                 responsesObject[key] = value;
             }
         });
 
-        // Append stringified JSON of responses
         formData.append("responses", JSON.stringify(responsesObject));
 
-        console.log("Final FormData:", Object.fromEntries(formData.entries())); // Debugging
+        console.log("Final FormData:", Object.fromEntries(formData.entries()));
 
-        axios.post("/api/published_form/submit-form", formData, {
-            headers: { "Content-Type": "multipart/form-data" },
-        })
-            .then(() => {
-                Swal.fire("Success!", "Form submitted successfully!", "success");
-
-                // Clear all input fields
-                setResponses({});
-                document.querySelectorAll("input, textarea, select").forEach((element) => {
-                    if (element.type === "checkbox" || element.type === "radio") {
-                        element.checked = false;
-                    } else if (element.type === "file") {
-                        element.value = "";
-                    } else {
-                        element.value = "";
-                    }
-                });
-            })
-            .catch(() => {
-                Swal.fire("Error", "Failed to submit form.", "error");
+        try {
+            const response = await fetch("/api/published_form/submit-form", {
+                method: "POST",
+                body: formData,
             });
+
+            if (!response.ok) {
+                throw new Error("Form submission failed");
+            }
+
+            Swal.fire("Success!", "Form submitted successfully!", "success");
+
+            // Clear input fields
+            setResponses({});
+            document.querySelectorAll("input, textarea, select").forEach((element) => {
+                if (element.type === "checkbox" || element.type === "radio") {
+                    element.checked = false;
+                } else if (element.type === "file") {
+                    element.value = "";
+                } else {
+                    element.value = "";
+                }
+            });
+        } catch (error) {
+            Swal.fire("Error", "Failed to submit form.", "error");
+            console.error("Submit Error:", error);
+        }
     };
 
     if (!form) return <p>Loading...</p>;
