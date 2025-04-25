@@ -6,10 +6,19 @@ const app = express();
 const port = 5000;
 
 // ✅ Middleware
+const allowedOrigins = ['http://localhost:3000', 'https://app.dforms.in'];
+
 app.use(cors({
-    origin: 'http://localhost:3000',
-    credentials: true  // ✅ Allows frontend to send cookies
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
 }));
+
 app.use(express.json());
 app.use(cookieParser()); // ✅ Allows reading HTTP-only cookies
 

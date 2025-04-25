@@ -257,7 +257,7 @@ function Home() {
   useEffect(() => {
     setProfileLoading(true);
     setFormsLoading(true);
-
+    
     const fetchProfile = fetch("http://localhost:5000/api/leftnavbar/get-user-profile", {
       method: "GET",
       credentials: "include",
