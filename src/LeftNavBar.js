@@ -97,8 +97,8 @@ const LeftNavBar = () => {
 
     const populateProfileDetails = async () => {
         try {
-            
-            const response = await fetch('http://localhost:5000/api/leftnavbar/get-user-profile', {
+
+            const response = await fetch('/api/leftnavbar/get-user-profile', {
                 method: 'GET',
                 credentials: 'include',
             });
@@ -121,11 +121,11 @@ const LeftNavBar = () => {
 
     const handleLogout = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/leftnavbar/logout', {
+            const response = await fetch('/api/leftnavbar/logout', {
                 method: 'POST',
                 credentials: 'include',
             });
-            
+
             if (response.ok) {
                 navigate('/login');
             } else {

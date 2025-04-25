@@ -55,7 +55,7 @@ const Form_builder_header = () => {
     const populateProfileDetails = async () => {
         try {
 
-            const response = await fetch('http://localhost:5000/api/leftnavbar/get-user-profile', {
+            const response = await fetch('/api/leftnavbar/get-user-profile', {
                 method: 'GET',
                 credentials: 'include',
             });
@@ -79,7 +79,7 @@ const Form_builder_header = () => {
     useEffect(() => {
         let isMounted = true;
         if (formId) {
-            fetch(`http://localhost:5000/api/form_builder/get-forms?formId=${formId}`, {
+            fetch(`/api/form_builder/get-forms?formId=${formId}`, {
                 method: "GET",
                 credentials: "include",
             })
@@ -109,7 +109,7 @@ const Form_builder_header = () => {
         const newStarredStatus = !starred;
 
         try {
-            const response = await fetch(`http://localhost:5000/api/form_builder/toggle-star/${formId}`, {
+            const response = await fetch(`/api/form_builder/toggle-star/${formId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -141,7 +141,7 @@ const Form_builder_header = () => {
         try {
             const cleanFormId = formId.replace("form-", "");
             const response = await axios.put(
-                `http://localhost:5000/api/form_builder/publish-form/${cleanFormId}`,
+                `/api/form_builder/publish-form/${cleanFormId}`,
                 { published: true },
                 { withCredentials: true }
             );

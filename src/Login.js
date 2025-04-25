@@ -110,7 +110,7 @@ function Login() {
       console.log("User Info:", user);
 
       // Send user details to backend
-      const response = await fetch("http://localhost:5000/api/login/google-signup", {
+      const response = await fetch("/api/login/google-signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email, username: user.displayName || "", password: "" }),
@@ -136,7 +136,7 @@ function Login() {
       console.log("Google Sign-In User Info:", user);
 
       // Send user details to backend for verification
-      const response = await fetch("http://localhost:5000/api/login/google-signin", {
+      const response = await fetch("/api/login/google-signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email }),
@@ -163,7 +163,7 @@ function Login() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/login/signup", {
+      const response = await fetch("/api/login/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),
@@ -185,14 +185,14 @@ function Login() {
   };
 
   const verifyLogin = async () => {
-    
+
     if (!email.trim() || !password.trim()) {
       showErrorMessage("Please enter your email and password.");
       return;
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/login/verifyLogin", {
+      const response = await fetch("/api/login/verifyLogin", {  // this is correct if the proxy is set up
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -248,7 +248,7 @@ function Login() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/login/checkUserExists", {
+      const response = await fetch("/api/login/checkUserExists", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userInput: otpInput }),
@@ -277,7 +277,7 @@ function Login() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/login/VerifyOrValidate", {
+      const response = await fetch("/api/login/VerifyOrValidate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ validationType: "OTP", userInput: otpInput, enteredValue: otpCode }),
@@ -304,7 +304,7 @@ function Login() {
 
   const validateOldPassword = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/login/VerifyOrValidate", {
+      const response = await fetch("/api/login/VerifyOrValidate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -338,7 +338,7 @@ function Login() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/login/updatePassword", {
+      const response = await fetch("/api/login/updatePassword", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // Ensure cookies are sent with the request
@@ -582,7 +582,14 @@ function Login() {
 
                   <div className="text-center mt-3">
                     <small>
-                      <a href="#" onClick={showOTPForm} className="Forgot_password">Forgot password?</a>
+                      <div className="text-center mt-3">
+                        <small>
+                          <button onClick={showOTPForm} className="Forgot_password" style={{ background: "none", border: "none" }}>
+                            Forgot password?
+                          </button>
+                        </small>
+                      </div>
+
                     </small>
                   </div>
                 </div>
@@ -690,7 +697,7 @@ function Login() {
 
         {/* Right side image content */}
         <div className="login-image">
-          <img src={Login_pg_pg_intro} alt="Login Background" />
+          <img src={Login_pg_pg_intro} alt="Login_Background" />
 
           {/* White Div with Dynamic Text */}
           <div className="dynamic-text-container" style={{ color: currentMessage.color }}>
@@ -703,7 +710,7 @@ function Login() {
 
           {/* Second image inside a div */}
           <div className="bottom-image-container">
-            <img src={Login_intro_bottom_img} alt="Bottom Image" className="bottom-image" />
+            <img src={Login_intro_bottom_img} alt="Bottom_Image" className="bottom-image" />
           </div>
         </div>
 

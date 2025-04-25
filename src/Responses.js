@@ -34,7 +34,7 @@ const Responses = () => {
     }, []);
 
     useEffect(() => {
-        fetch(`http://localhost:5000/api/responses/get-responses/${formId}`, {
+        fetch(`/api/responses/get-responses/${formId}`, {
             method: "GET",
             credentials: "include",
         })
@@ -70,7 +70,7 @@ const Responses = () => {
 
                                 if (answer.filePath) {
                                     // ✅ Make file name clickable
-                                    return `<a href="http://localhost:5000/${answer.filePath.replace(/^\/?uploads\//, 'uploads/')}" target="_blank">${answer.answer}</a>`;
+                                    return `<a href="/${answer.filePath.replace(/^\/?uploads\//, 'uploads/')}" target="_blank">${answer.answer}</a>`;
                                 }
 
                                 return answer.answer;

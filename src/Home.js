@@ -257,8 +257,8 @@ function Home() {
   useEffect(() => {
     setProfileLoading(true);
     setFormsLoading(true);
-    
-    const fetchProfile = fetch("http://localhost:5000/api/leftnavbar/get-user-profile", {
+
+    const fetchProfile = fetch("/api/leftnavbar/get-user-profile", {
       method: "GET",
       credentials: "include",
     })
@@ -284,7 +284,7 @@ function Home() {
 
   const fetchForms = () => {
     setFormsLoading(true);
-    fetch(`http://localhost:5000/api/form_builder/get-forms?sortBy=${sortBy}`, {
+    fetch(`/api/form_builder/get-forms?sortBy=${sortBy}`, {
       method: "GET",
       credentials: "include",
     })
@@ -307,7 +307,7 @@ function Home() {
 
   const handleDuplicateForm = async (formId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/form_builder/duplicate-form/${formId}`, {
+      const response = await fetch(`/api/form_builder/duplicate-form/${formId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: renameTitle }),
@@ -343,7 +343,7 @@ function Home() {
 
   const handleSaveNote = async (formId, note) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/form_builder/save-note/${formId}`, {
+      const response = await fetch(`/api/form_builder/save-note/${formId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ note }),
@@ -396,7 +396,7 @@ function Home() {
     const action = isCurrentlyClosed ? "re-open" : "close";
 
     try {
-      const response = await fetch(`http://localhost:5000/api/form_builder/close-form/${formId}`, {
+      const response = await fetch(`/api/form_builder/close-form/${formId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_closed: !isCurrentlyClosed }), // Toggle value
@@ -441,7 +441,7 @@ function Home() {
     const newStarredStatus = !starred;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/form_builder/toggle-star/${formId}`, {
+      const response = await fetch(`/api/form_builder/toggle-star/${formId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -487,7 +487,7 @@ function Home() {
       confirmButtonText: "Yes, delete it!",
     }).then((result) => {
       if (result.isConfirmed) {
-        fetch(`http://localhost:5000/api/form_builder/delete-form/${formId}`, {
+        fetch(`/api/form_builder/delete-form/${formId}`, {
           method: "DELETE",
           credentials: "include",
         })
@@ -534,7 +534,7 @@ function Home() {
       cancelButtonText: "Cancel",
     }).then((result) => {
       if (result.isConfirmed) {
-        fetch(`http://localhost:5000/api/form_builder/rename-form/${formId}`, {
+        fetch(`/api/form_builder/rename-form/${formId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: renameTitle }),

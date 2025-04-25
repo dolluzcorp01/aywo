@@ -48,7 +48,7 @@ const PublishedForm = () => {
     }, []);
 
     useEffect(() => {
-        axios.get(`http://localhost:5000/api/published_form/get-published-form/${formId}`)
+        axios.get(`/api/published_form/get-published-form/${formId}`)
             .then(res => {
                 console.log("📥 Fetched published form:", res.data);
                 setForm(res.data.form);
@@ -113,7 +113,7 @@ const PublishedForm = () => {
 
         console.log("Final FormData:", Object.fromEntries(formData.entries())); // Debugging
 
-        axios.post("http://localhost:5000/api/published_form/submit-form", formData, {
+        axios.post("/api/published_form/submit-form", formData, {
             headers: { "Content-Type": "multipart/form-data" },
         })
             .then(() => {

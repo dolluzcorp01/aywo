@@ -5,7 +5,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import { useNotification } from "./NotificationContext";
 import {
-    FaFont, FaEnvelope, FaHashtag, FaList, FaCheckSquare, FaCaretDown,
+    FaEnvelope, FaHashtag, FaList, FaCheckSquare, FaCaretDown,
     FaCalendarAlt, FaAlignLeft, FaFileAlt, FaRegTrashAlt, FaRuler, FaTable,
     FaToggleOn, FaTh, FaCheck, FaImage, FaBoxes, FaGripHorizontal, FaSearch,
     FaGripVertical, FaCog, FaClone, FaExchangeAlt, FaHeading, FaChevronUp, FaChevronDown,
@@ -162,7 +162,7 @@ const FormBuilder = () => {
     };
 
     useEffect(() => {
-        axios.get("http://localhost:5000/api/leftnavbar/get-user-profile", { withCredentials: true })
+        axios.get("/api/leftnavbar/get-user-profile", { withCredentials: true })
             .then((res) => {
                 if (!res.data?.user_id) throw new Error("Unauthorized");
                 setProfile(res.data);
