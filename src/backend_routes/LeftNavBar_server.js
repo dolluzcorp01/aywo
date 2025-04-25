@@ -48,7 +48,7 @@ router.get('/get-user-profile', verifyJWT, (req, res) => {
 
 // ✅ Logout API
 router.post('/logout', (req, res) => {
-    res.clearCookie('token', { httpOnly: true, secure: true, sameSite: 'Strict' });
+    res.clearCookie('token', { httpOnly: true, secure: true, sameSite: 'None' });
     res.json({ success: true, message: 'Logged out successfully' });
 });
 

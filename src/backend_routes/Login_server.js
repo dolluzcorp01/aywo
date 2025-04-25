@@ -211,7 +211,7 @@ router.post('/verifyLogin', (req, res) => {
       const isPasswordCorrect = bcrypt.compareSync(password, storedHashedPassword);
       if (isPasswordCorrect) {
         const token = jwt.sign({ user_id }, JWT_SECRET, { expiresIn: '1h' });
-        res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
+        res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'None' });
         return res.json({ success: true, token });
       }
     }
@@ -284,7 +284,7 @@ router.post('/VerifyOrValidate', (req, res) => {
             const token = jwt.sign({ user_id }, JWT_SECRET, { expiresIn: "1h" });
 
             // ✅ Set JWT token in secure cookie
-            res.cookie("token", token, { httpOnly: true, secure: true, sameSite: "Strict" });
+            res.cookie("token", token, { httpOnly: true, secure: true, sameSite: "None" });
             return res.json({ success: true, message: "OTP Verified", token });
           } else {
             return res.json({ success: false, message: "Invalid or Expired OTP" });
