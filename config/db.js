@@ -7,13 +7,13 @@ const pools = {};
 function getDBConnection(database) {
     if (!pools[database]) {
         pools[database] = mysql.createPool({
-            connectionLimit: 100,
-            host: '127.0.0.1', // ✅ Force IPv4
+            connectionLimit: 100,  // Increase if needed
+            host: 'localhost',
             user: 'root',
             password: 'pavithran@123',
-            database: database,
+            database: database,  // ✅ Use the actual database name
             waitForConnections: true,
-            queueLimit: 1000,
+            queueLimit: 1000, // Limit waiting queries
         });
 
         console.log(`🔗 Created new connection pool for database: ${database}`);

@@ -1,12 +1,7 @@
-let API_BASE = "";
+const API_BASE = process.env.REACT_APP_API || "http://localhost:5000";
 
-if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-    API_BASE = "http://localhost:5000"; // Local backend
-} else {
-    API_BASE = "https://app.dforms.in"; // Production backend
-}
-
-console.log("Base API URL:", API_BASE);
+console.log("Base API URL:", API_BASE); // ✅ This will help you debug if .env is being read
+console.log(process.env.REACT_APP_API);
 
 export async function apiFetch(endpoint, options = {}) {
     return fetch(`${API_BASE}${endpoint}`, {
