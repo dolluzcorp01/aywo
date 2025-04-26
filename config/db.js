@@ -8,7 +8,7 @@ function getDBConnection(database) {
     if (!pools[database]) {
         pools[database] = mysql.createPool({
             connectionLimit: 100,  // Increase if needed
-            host: 'localhost',
+            host: '127.0.0.1',
             user: 'root',
             password: 'pavithran@123',
             database: database,  // ✅ Use the actual database name
