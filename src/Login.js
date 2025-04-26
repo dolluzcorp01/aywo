@@ -414,7 +414,7 @@ function Login() {
     alertBox.style.border = "1px solid lightgray"; // No border
 
     alertBox.innerHTML = `
-      <i class="fa fa-exclamation-triangle" style="color: #856404; margin-right: 10px;"></i>
+      <i className="fa fa-exclamation-triangle" style="color: #856404; margin-right: 10px;"></i>
       <span id="alert-message-text" style="font-weight: 50; font-family: Arial, sans-serif;">${message}</span>
     `;
 
@@ -437,7 +437,7 @@ function Login() {
     alertBox.style.marginTop = "10px";
     alertBox.style.lineHeight = "1.5"; // Improve text spacing
     alertBox.innerHTML = `
-      <i class="fa fa-check-circle" style="color: #155724; margin-right: 10px;"></i>
+      <i className="fa fa-check-circle" style="color: #155724; margin-right: 10px;"></i>
       <span id="alert-message-text">${message}</span>
     `;
 

@@ -337,7 +337,7 @@ const FormBuilder = () => {
                                 color: "#999"
                             }}
                         >
-                            <i class="fa-solid fa-envelope"></i>
+                            <i className="fa-solid fa-envelope"></i>
                         </span>
                     </div>
                 );
@@ -1742,7 +1742,7 @@ const FormBuilder = () => {
                             setShowFieldSidebar(false);
                         }}
                     >
-                        <i class="fa-solid fa-paintbrush" style={{ marginRight: "3px" }}></i> Theme
+                        <i className="fa-solid fa-paintbrush" style={{ marginRight: "3px" }}></i> Theme
                     </button>
 
                     <div className="form-content" style={{ backgroundColor: formColor }} onClick={() => setShowCustomize(true)}>

@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import "./Header.css";
 
+// Fix 1: Tell styled-components not to pass 'isHome' to the DOM
 const Navbar = styled.nav`
   background-color: #fff !important;
   display: flex;
@@ -13,6 +14,7 @@ const Navbar = styled.nav`
   position: relative;
 `;
 
+// Fix 2: Prevent 'isHome' from reaching DOM using transient props ($isHome)
 const CenteredContainer = styled.div`
   position: absolute;
   left: 50%;
@@ -22,7 +24,7 @@ const CenteredContainer = styled.div`
   gap: 10px;
   font-size: 1.2rem;
   font-weight: 500;
-  color: ${(props) => (props.isHome ? "blue" : "gray")}; 
+  color: ${(props) => (props.$isHome ? "blue" : "gray")};
   cursor: pointer;
 
   &:hover {
@@ -35,18 +37,18 @@ const Underline = styled.div`
   bottom: -18px;
   left: 50%;
   transform: translateX(-50%);
-  width: 80px; /* Increased underline width */
+  width: 80px;
   height: 2px;
-  background-color: ${(props) => (props.isHome ? "blue" : "gray")}; 
+  background-color: ${(props) => (props.$isHome ? "blue" : "gray")};
   border-radius: 5px;
 
-   ${CenteredContainer}:hover & {
+  ${CenteredContainer}:hover & {
     background-color: blue;
   }
 `;
 
 const Header = () => {
-  const isHome = window.location.pathname === "/home"; // Check if the page is 'home'
+  const isHome = window.location.pathname === "/home";
   const navigate = useNavigate();
 
   return (
@@ -56,10 +58,10 @@ const Header = () => {
           dFroms
         </a>
       </div>
-      <CenteredContainer isHome={isHome} onClick={() => navigate("/home")}>
+      <CenteredContainer $isHome={isHome} onClick={() => navigate("/home")}>
         <i className="fa-solid fa-file-alt form-icon"></i>
         <span>Forms</span>
-        <Underline isHome={isHome} />
+        <Underline $isHome={isHome} />
       </CenteredContainer>
     </Navbar>
   );
