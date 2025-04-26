@@ -16,14 +16,13 @@ const allowedOrigins = [
 // Enable CORS with the allowed origins and credentials
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (mobile apps, Postman, etc.)
         if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ''))) {
-            callback(null, true);
+            callback(null, origin); // <-- ✅ return origin instead of true
         } else {
             callback(new Error('Not allowed by CORS'));
         }
     },
-    credentials: true  // Allow cookies to be sent across origins
+    credentials: true
 }));
 
 // ✅ Middleware for parsing JSON and reading HTTP-only cookies

@@ -1,4 +1,7 @@
-const API_BASE = process.env.REACT_APP_API || "http://localhost:5000";
+const API_BASE =
+    process.env.NODE_ENV === "production"
+        ? process.env.REACT_APP_API
+        : "http://localhost:5000";
 
 console.log("Base API URL:", API_BASE); // ✅ This will help you debug if .env is being read
 console.log(process.env.REACT_APP_API);
