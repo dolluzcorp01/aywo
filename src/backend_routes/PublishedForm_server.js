@@ -43,8 +43,6 @@ router.post("/submit-form", upload.single("document"), async (req, res) => {
         responses = req.body.responses || {};
     }
 
-    console.log("Received responses:", responses); // Debugging
-
     const file = req.file;
     if (!form_id || !responses || Object.keys(responses).length === 0) {
         return res.status(400).json({ error: "Form ID and responses are required." });
@@ -66,8 +64,6 @@ router.post("/submit-form", upload.single("document"), async (req, res) => {
         const responseResult = await queryPromise(connection, responseInsertQuery, [form_id]);
         const response_id = responseResult.insertId;
 
-        console.log("Inserted response_id:", response_id); // Debugging
-
         // ✅ Insert individual field responses
         for (const [field_id, answer] of Object.entries(responses)) {
             let finalAnswer = answer;
@@ -82,8 +78,6 @@ router.post("/submit-form", upload.single("document"), async (req, res) => {
                 console.warn(`Skipping field_id ${field_id} because answer is empty.`);
                 continue;
             }
-
-            console.log(`Inserting field_id ${field_id} with value:`, finalAnswer); // Debugging
 
             const responseFieldQuery = `
                 INSERT INTO response_fields (response_id, field_id, answer) 
@@ -120,8 +114,6 @@ router.get("/get-published-form/:formId", async (req, res) => {
         const fieldsQuery = "SELECT * FROM form_fields WHERE form_id = ?";
         const fieldsResult = await queryPromise(db, fieldsQuery, [formId]);
 
-        console.log("🗄️ Raw Fields Data from DB:", fieldsResult);
-
         // ✅ Fetch options for fields
         const fieldIds = fieldsResult.map(field => field.field_id);
         let optionsResult = [];
@@ -131,8 +123,6 @@ router.get("/get-published-form/:formId", async (req, res) => {
             optionsResult = await queryPromise(db, optionsQuery);
         }
 
-        console.log("🎯 Raw Options Data from DB:", optionsResult);
-
         // ✅ Structure the fields with their respective options
         const fieldsWithOptions = fieldsResult.map(field => ({
             ...field,
@@ -140,8 +130,6 @@ router.get("/get-published-form/:formId", async (req, res) => {
                 .filter(option => option.field_id === field.field_id)
                 .map(option => option.option_text) // Extract only option text
         }));
-
-        console.log("✅ Parsed Fields with Options:", fieldsWithOptions);
 
         res.json({ form: formResult[0], fields: fieldsWithOptions });
     } catch (error) {

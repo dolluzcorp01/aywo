@@ -108,7 +108,6 @@ function Login() {
     try {
       const result = await signInWithPopup(auth, provider); // Call sign-in only inside onClick
       const user = result.user;
-      console.log("User Info:", user);
 
       // Send user details to backend
       const response = await apiFetch("/api/login/google-signup", {
@@ -134,7 +133,6 @@ function Login() {
     try {
       const result = await signInWithPopup(auth, provider); // Sign in with Google
       const user = result.user;
-      console.log("Google Sign-In User Info:", user);
 
       // Send user details to backend for verification
       const response = await apiFetch("/api/login/google-signin", {
@@ -318,7 +316,6 @@ function Login() {
       });
 
       const data = await response.json();
-      console.log("API Response:", data);
 
       if (data.message === "Password Verified") {
         setShowNewPasswordSection(true);

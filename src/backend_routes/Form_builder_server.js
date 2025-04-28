@@ -37,8 +37,6 @@ const checkDuplicateFormTitle = async (userId, title, formId = null) => {
 
 // ✅ Save a new form (Protected Route)
 router.post("/save-form", verifyJWT, async (req, res) => {
-    console.log("✅ Received request at /api/form_builder/save-form");
-
     const { title, title_font_size, title_x, title_y, title_width, title_height, form_background_color, form_color, title_color, title_background,
         submit_button_x, submit_button_y, submit_button_width, submit_button_height, submit_button_color, submit_button_background,
         fields } = req.body;
@@ -92,8 +90,6 @@ router.post("/save-form", verifyJWT, async (req, res) => {
             submit_button_background || "#007bff"
         ]);
         const formId = formResult.insertId;
-
-        console.log("✅ Form saved with ID:", formId);
 
         // ✅ Insert form fields (validate fields before inserting)
         for (const field of fields) {
@@ -359,8 +355,6 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
 
 // ✅ Update form (Protected Route)
 router.put("/update-form/:formId", verifyJWT, async (req, res) => {
-    console.log("✅ Received request at /api/form_builder/update-form");
-
     const { formId } = req.params;
     const { title, title_font_size, title_x, title_y, title_width, title_height, form_background_color, form_color, title_color, title_background,
         submit_button_x, submit_button_y, submit_button_width, submit_button_height, submit_button_color, submit_button_background, fields } = req.body;

@@ -203,7 +203,6 @@ function Home() {
   }, []);
 
   const handleFormClick = (form_id, title, response_count, published, internal_note, is_closed, starred) => {
-    debugger
     // Navigate to form builder
     navigate(`/form-builder/form-${form_id}`);
 

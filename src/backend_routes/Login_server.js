@@ -12,7 +12,6 @@ router.use(cookieParser());
 // 🔹 Middleware to verify JWT
 const verifyJWT = (req, res, next) => {
   const token = req.cookies?.token;
-  console.log('Token:', token);
   if (!token) {
     return res.status(403).json({ message: 'Access Denied. No Token Provided!' });
   }
@@ -298,7 +297,6 @@ router.post('/VerifyOrValidate', (req, res) => {
   } else if (validationType === "OldPassword") {
     // ✅ Verify Old Password
     verifyJWT(req, res, () => {
-      console.log("✅ Extracted user_id:", req.user_id);
       const user_id = req.user_id;
 
       if (!user_id) return res.status(401).json({ message: "Unauthorized" });

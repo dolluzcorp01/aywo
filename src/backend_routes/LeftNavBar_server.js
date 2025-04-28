@@ -15,9 +15,6 @@ function generateColorFromText(text) {
 
 // ✅ Get user profile details
 router.get('/get-user-profile', verifyJWT, (req, res) => {
-    console.log('POST /api/leftnavbar called');
-    console.log('Decoded user_id from JWT:', req.user_id);
-
     if (!req.user_id) {
         return res.status(401).json({ error: 'Unauthorized access' });
     }

@@ -14,9 +14,7 @@ body {
     position: relative;
     width: 100%;
     max-width: 420px;
-    /* Max limit for big screens */
     padding: 0 20px;
-    /* Padding to make it nice on small screens */
     box-sizing: border-box;
 }
 

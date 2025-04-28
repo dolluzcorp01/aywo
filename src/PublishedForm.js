@@ -58,10 +58,8 @@ const PublishedForm = () => {
 
                 const data = await response.json();
 
-                console.log("📥 Fetched published form:", data);
                 setForm(data.form);
                 setFields(data.fields);
-                console.log("📌 Parsed Fields:", data.fields);
             } catch (error) {
                 Swal.fire("Error", "Form not found or unpublished.", "error");
             }
@@ -121,8 +119,6 @@ const PublishedForm = () => {
         });
 
         formData.append("responses", JSON.stringify(responsesObject));
-
-        console.log("Final FormData:", Object.fromEntries(formData.entries()));
 
         try {
             const response = await fetch("/api/published_form/submit-form", {
