@@ -176,7 +176,7 @@ function Home() {
   const [isOrderByOpen, setIsOrderByOpen] = useState(false);
   const orderByRef = useRef(null);
 
-  const [viewType, setViewType] = useState("grid"); // or "list"
+  const [formCardViewType, setformCardViewType] = useState("grid"); // or "list"
   const [dropdownDirection, setDropdownDirection] = useState('below'); // or 'above'
   const [isDuplicateMode, setIsDuplicateMode] = useState(false);
 
@@ -1039,7 +1039,7 @@ function Home() {
           <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
             {/* Grid Icon */}
             <div
-              onClick={() => setViewType("grid")}
+              onClick={() => setformCardViewType("grid")}
               style={{
                 backgroundColor: "#E5E7EB",
                 padding: "6px",
@@ -1065,7 +1065,7 @@ function Home() {
             </div>
             {/* four line Icon */}
             <div
-              onClick={() => setViewType("list")}
+              onClick={() => setformCardViewType("list")}
               style={{
                 display: "flex",
                 flexDirection: "column",
@@ -1109,8 +1109,8 @@ function Home() {
 
         <div className="forms-list"
           style={{
-            display: viewType === "grid" ? "flex" : "block",
-            gap: viewType === "grid" ? "20px" : "0",
+            display: formCardViewType === "grid" ? "flex" : "block",
+            gap: formCardViewType === "grid" ? "20px" : "0",
             width: "100%",
           }}>
           {formsLoading ? (
@@ -1122,7 +1122,7 @@ function Home() {
           ) : (
             forms.map((form) => (
               <div
-                className={`form-card ${viewType === "list" ? "list-view" : ""} ${menuOpen === form.form_id ? "no-transform" : ""}`}
+                className={`form-card ${formCardViewType === "list" ? "list-view" : ""} ${menuOpen === form.form_id ? "no-transform" : ""}`}
                 key={form.form_id}
                 ref={menuRef}
                 title={form.is_closed ? "This form is closed" : ""}
@@ -1143,9 +1143,6 @@ function Home() {
 
                 <div
                   className="form-card-content"
-                  style={{
-                    ...(viewType === "list" && { marginLeft: "-12%" }), // apply only in list view
-                  }}
                   onClick={() => handleFormClick(form.form_id, form.title, form.response_count, form.published, form.internal_note, form.is_closed, form.starred)}
                 >
 
@@ -1163,7 +1160,7 @@ function Home() {
                   </div>
 
                   {/* Only show response count inside form-card-content in grid view */}
-                  {viewType !== "list" && (
+                  {formCardViewType !== "list" && (
                     <p
                       className="response-count"
                       style={{
@@ -1184,7 +1181,7 @@ function Home() {
                 </div>
 
                 {/* Response count in list view goes here */}
-                {viewType === "list" && (
+                {formCardViewType === "list" && (
                   <p
                     className="response-count list-response"
                     style={{
@@ -1534,8 +1531,6 @@ function Home() {
           </div>
         </div>
       </div>
-
-      <div className="bottom-spacing"></div>
     </div >
   );
 }

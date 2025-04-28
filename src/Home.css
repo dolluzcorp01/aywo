@@ -9,7 +9,6 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    /* Push content to the top */
     align-items: flex-start;
 }
 
@@ -18,15 +17,16 @@ body {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    padding: 20px;
-    margin-left: 100px;
+    padding: 10px;
+    margin-top: 20px;
+    margin-left: 130px;
     transition: margin-left 0.3s ease-in-out;
+    width: calc(100% - 150px);
 }
 
 /* Welcome Section */
 .home-container .welcome-section {
     width: 100%;
-    max-width: 1200px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -57,7 +57,6 @@ body {
 /* My Forms Section */
 .home-container .section {
     width: 100%;
-    max-width: 1200px;
     margin-bottom: 50px;
 }
 
@@ -79,14 +78,22 @@ body {
     border: none;
     border-radius: 10px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-
-    /* ADD THIS 👇 */
     display: flex;
     justify-content: space-between;
 }
 
 .home-container .form-card.list-view:hover {
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.home-container .form-card.list-view .form-card-content {
+    flex: 1;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 100%;
+    margin-left: -1%;
 }
 
 .home-container .form-card.list-view .form-icon-container {
@@ -114,7 +121,6 @@ body {
 
 .home-container .form-card.no-transform {
     transform: none !important;
-    /* Disable transform when dropdown is open */
 }
 
 .home-container .form-card {
@@ -359,9 +365,7 @@ body {
 .home-container .modal-options {
     display: flex;
     justify-content: center;
-    /* Center them properly */
     gap: 60px;
-    /* Reduce the gap slightly */
     padding: 20px;
 }
 
@@ -412,7 +416,7 @@ body {
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    max-width: 1200px;
+    max-width: 90vw;
     margin-bottom: 20px;
 }
 
@@ -447,7 +451,6 @@ body {
 .home-container .orderby-dropdown-menu {
     position: absolute;
     top: 42px;
-    /* Push it slightly below */
     left: -50px;
     background: white;
     color: gray;
@@ -625,9 +628,7 @@ body {
     border-radius: 12px;
     box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
     width: 500px;
-    /* Increased width */
     text-align: left;
-    /* Align text to left */
     position: relative;
 }
 

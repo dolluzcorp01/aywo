@@ -27,7 +27,6 @@ body,
   top: 0;
   left: 0;
   z-index: 1000;
-  /* Remove shadow */
   box-shadow: none;
 }
 
@@ -37,30 +36,23 @@ body,
   flex: 1;
   width: 100%;
   height: calc(100vh - 60px);
-  /* Ensure it accounts for the header */
   overflow: hidden;
-  /* Push content below the header */
 }
 
 /* Left navbar Styling */
 .left-navbar {
   width: 200px;
-  /* Adjust as needed */
   background-color: #fff;
   height: calc(100vh - 60px);
-  /* Ensure it doesn't overlap the header */
   display: flex;
   flex-direction: column;
   padding: 10px;
-  /* Remove shadow */
   box-shadow: none;
   position: fixed;
   left: 0;
   top: 60px;
-  /* Push it below the header */
   bottom: 0;
   overflow-y: auto;
-  /* Allows sidebar to scroll if needed */
 }
 
 
@@ -74,6 +66,18 @@ body,
   padding: 20px;
   overflow-y: auto;
   height: calc(100vh - 60px);
-  margin-left: 200px; /* Ensure content does not overlap sidebar */
-  width: calc(100% - 200px); /* Prevent overflow by accounting for sidebar width */
+  margin-left: 200px;
+  width: calc(100% - 200px);
+}
+
+/* Hide left navbar for portrait mobile view */
+@media (max-width: 768px) {
+  .left-navbar {
+    display: none;
+  }
+
+  .content {
+    margin-left: 0;
+    width: 100%;
+  }
 }
