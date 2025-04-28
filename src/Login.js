@@ -492,7 +492,7 @@ function Login() {
                   <div className="input-group mt-2">
                     <label htmlFor="username">Username</label>
                     <div className="input-container">
-                      <input type="text" id="username" className="form-control" placeholder="e.g. Jane Doe"
+                      <input type="text" id="username" className="form-control" 
                         value={username} onChange={(e) => setUsername(e.target.value)}
                       />
                     </div>
@@ -501,7 +501,7 @@ function Login() {
                   <div className="input-group">
                     <label htmlFor="email">Email</label>
                     <div className="input-container">
-                      <input type="email" id="email" className="form-control" placeholder="e.g. jane.doe@acme.com"
+                      <input type="email" id="email" className="form-control" 
                         value={email} onChange={(e) => setEmail(e.target.value)}
                       />
                     </div>
@@ -510,7 +510,7 @@ function Login() {
                   <div className="input-group">
                     <label htmlFor="password">Password</label>
                     <div className="input-container">
-                      <input type={showPassword ? "text" : "password"} id="password" className="form-control" placeholder="Create a strong password"
+                      <input type={showPassword ? "text" : "password"} id="password" className="form-control"
                         value={password} onChange={(e) => setPassword(e.target.value)}
                       />
                       <button
@@ -552,7 +552,7 @@ function Login() {
                   <div className="input-group">
                     <label htmlFor="email">Email</label>
                     <div className="input-container">
-                      <input type="text" id="email" name="email" className="form-control" placeholder="e.g. jane.doe@acme.com"
+                      <input type="text" id="email" name="email" className="form-control"
                         value={email} onChange={(e) => setEmail(e.target.value)} />
                     </div>
                   </div>
@@ -560,7 +560,7 @@ function Login() {
                   <div className="input-group">
                     <label htmlFor="password">Password</label>
                     <div className="input-container">
-                      <input type={showPassword ? "text" : "password"} id="password" name="password" className="form-control" placeholder="Use alphanumeric characters"
+                      <input type={showPassword ? "text" : "password"} id="password" name="password" className="form-control"
                         value={password} onChange={(e) => setPassword(e.target.value)} />
                       <button
                         type="button"

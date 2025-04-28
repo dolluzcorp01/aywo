@@ -12,7 +12,12 @@ body {
 
 .container {
     position: relative;
-    width: 420px;
+    width: 100%;
+    max-width: 420px;
+    /* Max limit for big screens */
+    padding: 0 20px;
+    /* Padding to make it nice on small screens */
+    box-sizing: border-box;
 }
 
 .navbtns {
@@ -154,7 +159,8 @@ body {
 }
 
 .card {
-    width: 60%;
+    width: 100%;
+    max-width: 400px;
     padding: 20px;
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -211,6 +217,21 @@ body {
     text-decoration: underline;
 }
 
+.googleauthbtn {
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 16px;
+    width: 100%;
+    border: 1px solid #ced4da;
+    background-color: transparent;
+    color: #3B82F6;
+}
+
 .alert-box {
     display: none;
     align-items: center;
@@ -248,5 +269,30 @@ body {
     .login-card {
         width: 100%;
         padding: 2rem;
+        max-width: 420px;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 900px) {
+    .login-container {
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+    }
+
+    .login-image {
+        display: none;
+    }
+
+    .login-card {
+        width: 100%;
+        padding: 1rem;
+    }
+
+    .dynamic-text-container,
+    .overlay-text {
+        font-size: 1.5rem;
+        padding: 10px;
     }
 }
