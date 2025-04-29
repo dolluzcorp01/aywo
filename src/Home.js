@@ -1033,8 +1033,8 @@ function Home() {
           </>
         )}
 
-        <div className="forms-header" style={{ marginTop: "50px" }}>
-          <h4 className="section-title">My Forms</h4>
+        <div className="forms-header" style={{ marginTop: "50px", whiteSpace: "nowrap" }}>
+          <h4 className="section-title" style={{ marginRight: "10px" }}>My Forms</h4>
 
           <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
             {/* Grid Icon */}
@@ -1190,6 +1190,7 @@ function Home() {
                       textDecoration: form.response_count > 0 ? "underline" : "none",
                       marginRight: "12px",
                       marginTop: "12px",
+                      whiteSpace: "nowrap",
                     }}
                     onClick={(e) => {
                       if (form.response_count > 0) {

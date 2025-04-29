@@ -5,13 +5,6 @@ body {
     background-color: #f8f9fa;
 }
 
-.content {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
-}
-
 /* Main Container */
 .home-container {
     display: flex;
@@ -19,9 +12,8 @@ body {
     align-items: flex-start;
     padding: 10px;
     margin-top: 20px;
-    margin-left: 130px;
     transition: margin-left 0.3s ease-in-out;
-    width: calc(100% - 150px);
+    width: 100%;
 }
 
 /* Welcome Section */
@@ -48,6 +40,8 @@ body {
     border-radius: 5px;
     cursor: pointer;
     font-size: 15px;
+    white-space: nowrap;
+    margin-left: 15px;
 }
 
 .home-container .make-form-btn:hover {
@@ -68,18 +62,20 @@ body {
 }
 
 .home-container .form-card.list-view {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
     width: 100%;
-    height: 64px;
+    height: auto;
+    position: relative;
+    overflow: hidden;
     padding: 10px 16px;
     margin-bottom: 12px;
-    flex-direction: row;
-    align-items: center;
     background-color: #f5f7fb;
     border: none;
     border-radius: 10px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    display: flex;
-    justify-content: space-between;
 }
 
 .home-container .form-card.list-view:hover {
@@ -91,7 +87,7 @@ body {
     padding: 0 16px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: left;
     max-width: 100%;
     margin-left: -1%;
 }
@@ -154,7 +150,6 @@ body {
     flex-shrink: 0;
 }
 
-
 .home-container .form-icon {
     font-size: 20px;
     color: #1a73e8;
@@ -168,6 +163,7 @@ body {
     justify-content: center;
     position: relative;
     max-width: 60%;
+    min-width: 10%;
 }
 
 .home-container .form-title-row {
@@ -273,7 +269,6 @@ body {
 
 .home-container .dropdown-menu.below {
     top: 10px;
-    /* show below the 3-dot icon */
 }
 
 .home-container .dropdown-menu button {
@@ -712,4 +707,10 @@ body {
 .rename-modal-close:hover {
     background: #f8f9fa;
     color: gray;
+}
+
+@media (max-width: 768px) {
+    .home-container .note_icon {
+        display: none;
+    }
 }
