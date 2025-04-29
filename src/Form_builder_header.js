@@ -217,7 +217,7 @@ const Form_builder_header = () => {
                 </span>
             </div>
 
-            <div className="form_builder_header-right" style={{ display: 'flex' }}>
+            <div className="form_builder_header-right">
                 <div
                     className="form_builder_header-profile-section"
                     style={{ marginRight: "5px" }}
@@ -240,7 +240,7 @@ const Form_builder_header = () => {
                         "Loading..."
                     )}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <div className="action-btns">
                     {window.location.pathname.includes("form-builder") && (
                         <>
                             <button className="form_builder_header-clock-btn" style={{ marginLeft: "-5px" }}>

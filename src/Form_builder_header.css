@@ -1,3 +1,21 @@
+.form_builder_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-bottom: 1px solid #ddd;
+    background-color: #f8f9fa;
+    min-height: 60px;
+}
+
+.form_builder_header-left,
+.form_builder_header-center,
+.form_builder_header-right {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
 .form_builder_header .home-icon {
     font-size: 1rem;
     color: rgb(107 114 128);
@@ -10,11 +28,10 @@
 }
 
 .form_builder_header-left {
-    display: flex;
-    align-items: center;
+    justify-content: flex-start;
     gap: 10px;
-    max-width: 100%;
     overflow: hidden;
+    min-width: 0;
 }
 
 .form_builder_header-form-title-row {
@@ -37,18 +54,13 @@
     margin: 0;
     flex: 1;
     min-width: 0;
-    max-width: 300px;
+    max-width: 160px;
 }
 
 .form_builder_header-center {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
+    justify-content: center;
     gap: 10px;
-    font-size: 1.2rem;
-    font-weight: 500;
+    min-width: 0;
 }
 
 .center-nav-btn {
@@ -69,6 +81,11 @@
 .center-nav-btn.active {
     background-color: #E4EFFE;
     color: #3B82F6;
+}
+
+.form_builder_header-right {
+    justify-content: flex-end;
+    gap: 10px;
 }
 
 .form_builder_header-profile-img {
@@ -96,6 +113,12 @@
     color: gray;
 }
 
+.action-btns {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
 .form_builder_header-preview-btn {
     background-color: #FFFFFF;
     border: 1px solid rgb(209 213 219);
@@ -112,4 +135,10 @@
     color: rgb(243 244 246);
     border-radius: 5px;
     padding: 5px 20.5px
+}
+
+@media (max-width: 768px) {
+    .form_builder_header-right {
+        display: none;
+    }
 }

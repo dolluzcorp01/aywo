@@ -92,6 +92,54 @@ const FormBuilder = () => {
     const pictureBgColors = ["#ffb3ba", "#bae1ff", "#baffc9", "#ffffba", "#e3baff", "#ffdfba"];
     const [hoveredOption, setHoveredOption] = useState(null);
 
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            const zoom = window.devicePixelRatio || 1;
+            const screenWidth = window.innerWidth;
+
+            // Consider as "mobile" if screen is small OR zoom is above 150%
+            const isMobileCondition = screenWidth < 768 || (screenWidth / window.outerWidth) < 0.67;
+
+            setIsMobile(isMobileCondition);
+        };
+
+        handleResize(); // run once on mount
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    const MobileWarning = () => (
+        <div
+            style={{
+                padding: "10px",
+                borderRadius: "12px",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                backgroundColor: "#fff",
+                maxWidth: "700px",
+                width: "100%",
+                margin: "20px auto",
+                boxSizing: "border-box",
+                overflowWrap: "break-word",
+                wordBreak: "break-word",
+                overflow: "hidden"
+            }}
+        >
+            <div className="mobile-warning">
+                <div className="icon" style={{ color: "#6B7280", fontSize: "1rem" }}>
+                    <i className="fa-solid fa-desktop"></i>
+                </div>
+                <h2 style={{ fontWeight: "700", color: "#374151" }}>
+                    The dForms editor works best on larger screens
+                </h2>
+                <p style={{ color: "#6B7280", fontWeight: "bolder" }}>
+                    Note that the forms you build <u>will work</u> on mobile devices!
+                </p>
+            </div>
+        </div>
+    );
+
     useEffect(() => {
         const handleClickOutside = () => setFieldTypeMenu(null);
         window.addEventListener("click", handleClickOutside);
@@ -1514,672 +1562,336 @@ const FormBuilder = () => {
 
     return (
         <div className="form-builder">
-            {showFieldSidebar && (
-                <div className="form-fields-sidebar">
-                    <div className="search-wrapper">
-                        <FaSearch className="search-icon" />
-                        <input
-                            type="text"
-                            placeholder="Search fields"
-                            className="search-bar"
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="field-group-scrollable mt-2">
-                        <div className="field-group mt-1">
-                            <h4>Frequently used</h4>
-                            <div className="field-grid">
-                                {["Short Answer", "Multiple Choice", "Email"]
-                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                    .map(type => <FieldButton key={type} type={type} section="Frequently used" />)}
+            {isMobile ? (
+                <MobileWarning />
+            ) : (
+                <>
+                    {showFieldSidebar && (
+                        <div className="form-fields-sidebar">
+                            <div className="search-wrapper">
+                                <FaSearch className="search-icon" />
+                                <input
+                                    type="text"
+                                    placeholder="Search fields"
+                                    className="search-bar"
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
                             </div>
-                        </div>
 
-                        <div className="field-group mt-1">
-                            <h4>Display text</h4>
-                            <div className="field-grid">
-                                {["Heading", "Paragraph", "Banner"]
-                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                    .map(type => <FieldButton key={type} type={type} section="Display text" />)}
-                            </div>
-                        </div>
-
-                        <div className="field-group mt-1">
-                            <h4>Choices</h4>
-                            <div className="field-grid">
-                                {[
-                                    "Dropdown", "Picture", "Multiple Select", "Switch", "Multiple Choice", "Checkbox",
-                                    "Checkboxes", "Choice Matrix"
-                                ]
-                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                    .map(type => <FieldButton key={type} type={type} section="Choices" />)}
-                            </div>
-                        </div>
-
-                        <div className="field-group mt-1">
-                            <h4>Time</h4>
-                            <div className="field-grid">
-                                {["Date Picker", "Date Time Picker", "Time Picker", "Date Range"]
-                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                    .map(type => <FieldButton key={type} type={type} section="Time" />)}
-                            </div>
-                        </div>
-
-                        <div className="field-group mt-1">
-                            <h4>Rating & Ranking</h4>
-                            <div className="field-grid">
-                                {["Ranking", "Star Rating", "Slider", "Opinion Scale"]
-                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                    .map(type => <FieldButton key={type} type={type} section="Rating & Ranking" />)}
-                            </div>
-                        </div>
-
-                        <div className="field-group mt-1">
-                            <h4>Text</h4>
-                            <div className="field-grid">
-                                {["Short Answer", "Long Answer"]
-                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                    .map(type => <FieldButton key={type} type={type} section="Text" />)}
-                            </div>
-                        </div>
-
-                        <div className="field-group mt-1">
-                            <h4>Contact Info</h4>
-                            <div className="field-grid">
-                                {["Email", "Number", "Address", "Document Type"]
-                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                    .map(type => <FieldButton key={type} type={type} section="Contact Info" />)}
-                            </div>
-                        </div>
-
-                        <div className="field-group mt-1">
-                            <h4>Navigation & Layout</h4>
-                            <div className="field-grid">
-                                {["Divider"]
-                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                    .map(type => <FieldButton key={type} type={type} section="Navigation & Layout" />)}
-                            </div>
-                        </div>
-
-                        <div className="field-group mt-1">
-                            <h4>Media</h4>
-                            <div className="field-grid">
-                                {["Image", "Video", "PDF"]
-                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                    .map(type => <FieldButton key={type} type={type} section="Media" />)}
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            )}
-
-            {showDesignSidebar && (
-                <div className="form-designs-sidebar" style={{ color: "gray" }}>
-                    <div
-                        className="designbar-header"
-                        style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            padding: "5px",
-                            paddingLeft: "15px",
-                            paddingRight: "15px",
-                            paddingBottom: "20px",
-                            borderBottom: "1px solid #ccc",
-                            marginLeft: "-12px",
-                            marginRight: "-12px",
-                        }}
-                    >
-                        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
-                            Form Designer
-                        </span>
-                        <i
-                            className="fa-solid fa-xmark"
-                            style={{ fontSize: "20px", cursor: "pointer", color: "black" }}
-                            onClick={() => {
-                                setShowDesignSidebar(false);
-                                setShowFieldSidebar(true);
-                            }}
-                        ></i>
-                    </div>
-
-                    {/* Tabs for Current / All themes */}
-                    <div style={{ display: "flex", margin: "14px" }}>
-                        <button
-                            style={{
-                                flex: 1,
-                                padding: "5px 10px",
-                                backgroundColor: "#374151",
-                                color: "white",
-                                fontWeight: "bold",
-                                border: "1px solid #ccc",
-                                borderRight: "none",
-                                borderTopLeftRadius: "6px",
-                                borderBottomLeftRadius: "6px",
-                                cursor: "pointer"
-                            }}
-                            onClick={() => setActiveTab("current")}
-                        >
-                            Current
-                        </button>
-                        <button
-                            style={{
-                                flex: 1,
-                                padding: "5px 10px",
-                                backgroundColor: "white",
-                                color: "#374151",
-                                fontWeight: "500",
-                                border: "1px solid #ccc",
-                                borderLeft: "none",
-                                borderTopRightRadius: "6px",
-                                borderBottomRightRadius: "6px",
-                                cursor: "pointer"
-                            }}
-                            onClick={() => setActiveTab("themes")}
-                        >
-                            All themes
-                        </button>
-                    </div>
-
-                    {/* Content based on tab */}
-                    <div style={{ padding: "14px" }}>
-                        {activeTab === "current" ? (
-                            <>
-                                {/* Light Theme */}
-                                <div style={{ fontWeight: "bold", marginBottom: "10px" }}>Light</div>
-
-                                {/* Options */}
-                                <div style={{ marginBottom: "10px" }}>
-                                    <div>Background</div>
-                                    <input type="color" style={{ width: "100%" }} />
-                                </div>
-
-                                <div style={{ marginBottom: "10px" }}>
-                                    <div>Questions Background</div>
-                                    <input type="color" style={{ width: "100%" }} />
-                                </div>
-
-                                <div style={{ marginBottom: "10px" }}>
-                                    <div>Primary</div>
-                                    <input type="color" style={{ width: "100%" }} />
-                                </div>
-
-                                <div style={{ marginBottom: "10px" }}>
-                                    <div>Questions</div>
-                                    <input type="color" style={{ width: "100%" }} />
-                                </div>
-
-                                <div style={{ marginBottom: "10px" }}>
-                                    <div>Answers</div>
-                                    <input type="color" style={{ width: "100%" }} />
-                                </div>
-
-                                <div style={{ marginBottom: "10px" }}>
-                                    <div>Font</div>
-                                    <input type="text" placeholder="Default" style={{ width: "100%", padding: "5px" }} />
-                                </div>
-                            </>
-                        ) : (
-                            <div>
-                                {/* Empty div for now */}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-            )}
-
-            <div className="form-container">
-                <div className="form-body" style={{ backgroundColor: formBgColor }}>
-
-                    {/* Theme Button */}
-                    <button
-                        className="theme-button"
-                        onClick={() => {
-                            setShowDesignSidebar(true);
-                            setShowFieldSidebar(false);
-                        }}
-                    >
-                        <i className="fa-solid fa-paintbrush" style={{ marginRight: "3px" }}></i> Theme
-                    </button>
-
-                    <div className="form-content" style={{ backgroundColor: formColor }} onClick={() => setShowCustomize(true)}>
-                        <DragDropContext onDragEnd={onDragEnd}>
-                            <Droppable droppableId="fields">
-                                {(provided) => (
-                                    <div ref={provided.innerRef} {...provided.droppableProps}>
-                                        {fields.map((field, index) => (
-                                            <Draggable key={field.id} draggableId={field.id.toString()} index={index}>
-                                                {(provided) => (
-                                                    <div
-                                                        className="form-field-wrapper"
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        onClick={() => handleFieldClick(field.id)}
-                                                    >
-                                                        <div className="drag-handle" {...provided.dragHandleProps}>
-                                                            <FaGripVertical />
-                                                        </div>
-
-                                                        <div className="form-field-content">
-                                                            {!["Heading", "Banner", "Divider", "Image"].includes(field.type) ? (
-                                                                <>
-                                                                    <input
-                                                                        type="text"
-                                                                        value={field.label}
-                                                                        onChange={(e) => {
-                                                                            e.stopPropagation(); // Prevent field click from firing
-                                                                            const updatedFields = fields.map(f =>
-                                                                                f.id === field.id ? { ...f, label: e.target.value } : f
-                                                                            );
-                                                                            setFields(updatedFields);
-                                                                        }}
-                                                                        style={{
-                                                                            fontSize: "1rem",
-                                                                            border: "none",
-                                                                            background: "transparent",
-                                                                            width: "fit-content",
-                                                                            marginBottom: "2px"
-                                                                        }}
-                                                                    />
-                                                                    {field.required && <span style={{ color: 'red' }}>*</span>}
-                                                                    {field.caption && (
-                                                                        <small style={{ color: 'gray', display: 'block', marginBottom: '6px' }}>
-                                                                            {field.caption}
-                                                                        </small>
-                                                                    )}
-                                                                </>
-                                                            ) : null}
-
-                                                            {renderField(field)}
-                                                        </div>
-
-                                                        {selectedFieldId === field.id && (
-                                                            <div className="field-actions">
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation(); // Prevent field click from firing
-                                                                        openSettings(field.id);
-                                                                    }}
-                                                                    data-tooltip-title="Open field settings"
-                                                                >
-                                                                    <FaCog
-                                                                        style={{
-                                                                            color:
-                                                                                customizeVisible && selectedFieldId === field.id
-                                                                                    ? 'rgb(59, 130, 246)'
-                                                                                    : 'inherit'
-                                                                        }}
-                                                                    />
-                                                                </button>
-
-                                                                <button
-                                                                    className="change-type"
-                                                                    onClick={(e) => changeFieldType(field.id, e)}
-                                                                    data-tooltip-title={`Change field type\A${field.type}`}
-                                                                >
-                                                                    <FaExchangeAlt />
-                                                                </button>
-
-                                                                <button
-                                                                    onClick={() => duplicateField(field.id)}
-                                                                    data-tooltip-title="Duplicate field"
-                                                                >
-                                                                    <FaClone />
-                                                                </button>
-
-                                                                <button
-                                                                    className="delete"
-                                                                    onClick={() => deleteField(field.id)}
-                                                                    data-tooltip-title="Delete field"
-                                                                >
-                                                                    <FaRegTrashAlt />
-                                                                </button>
-                                                            </div>
-                                                        )}
-
-                                                    </div>
-                                                )}
-                                            </Draggable>
-                                        ))}
-                                        {provided.placeholder}
+                            <div className="field-group-scrollable mt-2">
+                                <div className="field-group mt-1">
+                                    <h4>Frequently used</h4>
+                                    <div className="field-grid">
+                                        {["Short Answer", "Multiple Choice", "Email"]
+                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                            .map(type => <FieldButton key={type} type={type} section="Frequently used" />)}
                                     </div>
-                                )}
-                            </Droppable>
-                        </DragDropContext>
-                    </div>
+                                </div>
 
-                </div>
-                {fieldTypeMenu && (
-                    <div
-                        className="field-type-menu"
-                        style={{
-                            position: "absolute",
-                            top: "calc(var(--menu-top, 155px))",
-                            left: "calc(var(--menu-left, 70%) + 50px)",
-                            background: "#fff",
-                            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                            borderRadius: "10px",
-                            padding: "16px",
-                            zIndex: 9999,
-                        }}
-                    >
-                        <h4 style={{ marginBottom: 20, color: "rgb(156 163 175)", fontWeight: "400", fontSize: ".875rem" }}>Change to similar field:</h4>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-                            {[
-                                { type: "Paragraph", label: "Long answer", icon: <FaAlignLeft /> },
-                                { type: "Email", label: "Email input", icon: <FaEnvelope /> },
-                                { type: "Date Picker", label: "Date", icon: <FaCalendarAlt /> },
-                                { type: "Number", label: "Phone number", icon: <FaHashtag /> },
-                                { type: "Dropdown", label: "Dropdown", icon: <FaCaretDown /> },
-                                { type: "Checkbox", label: "Checkbox", icon: <FaCheckSquare /> },
-                            ].map((opt) => (
-                                <button
-                                    key={opt.type}
-                                    onClick={() => handleTypeChange(fieldTypeMenu.id, opt.type)}
-                                    style={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        border: "1px solid #e5e7eb",
-                                        borderRadius: "10px",
-                                        padding: "5px 7px",
-                                        background: "#f9f9f9",
-                                        cursor: "pointer",
-                                        width: "70px",
-                                        Height: "60px",
-                                        overflow: "hidden",
-                                        textAlign: "center",
-                                        boxSizing: "border-box",
-                                    }}
-                                >
-                                    <div style={{ fontSize: "15px", color: "#0ea5e9" }}>{opt.icon}</div>
-                                    <span
-                                        style={{
-                                            fontSize: "12px",
-                                            marginTop: "6px",
-                                            color: "#1f2937",
-                                            lineHeight: "1.2",
-                                            wordWrap: "break-word",
-                                            whiteSpace: "normal",
-                                        }}
-                                    >
-                                        {opt.label}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                                <div className="field-group mt-1">
+                                    <h4>Display text</h4>
+                                    <div className="field-grid">
+                                        {["Heading", "Paragraph", "Banner"]
+                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                            .map(type => <FieldButton key={type} type={type} section="Display text" />)}
+                                    </div>
+                                </div>
 
-                {editImageOption && (
-                    <div className="image-option-modal-backdrop">
-                        <div className="image-option-modal-box">
-                            <h5 style={{ fontWeight: "600", fontSize: "1.125rem", marginBottom: "20px" }}>Edit image option</h5>
-                            <span style={{ fontWeight: "500", fontSize: ".875rem" }}>Lable</span>
-                            <input
-                                style={{ marginBottom: "20px" }}
-                                type="text"
-                                className="form-control"
-                                value={fields.find(f => f.id === editImageOption.fieldId).options[editImageOption.index].label}
-                                onChange={(e) => {
-                                    const updatedFields = fields.map(f => {
-                                        if (f.id !== editImageOption.fieldId) return f;
-                                        const updatedOptions = [...f.options];
-                                        updatedOptions[editImageOption.index].label = e.target.value;
-                                        return { ...f, options: updatedOptions };
-                                    });
-                                    setFields(updatedFields);
-                                }}
-                            />
-                            <span style={{ fontWeight: "500", fontSize: ".875rem" }}>Image</span>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                className="form-control mt-2"
-                                onChange={(e) => {
-                                    const file = e.target.files[0];
-                                    if (!file) return;
-                                    const reader = new FileReader();
-                                    reader.onload = () => {
-                                        const updatedFields = fields.map(f => {
-                                            if (f.id !== editImageOption.fieldId) return f;
-                                            const updatedOptions = [...f.options];
-                                            updatedOptions[editImageOption.index].image = reader.result;
-                                            return { ...f, options: updatedOptions };
-                                        });
-                                        setFields(updatedFields);
-                                    };
-                                    reader.readAsDataURL(file);
-                                }}
-                            />
-                            <div className="modal-actions text-end mt-3">
-                                <button onClick={() => setEditImageOption(null)} className="btn btn-primary">
-                                    Save
-                                </button>
+                                <div className="field-group mt-1">
+                                    <h4>Choices</h4>
+                                    <div className="field-grid">
+                                        {[
+                                            "Dropdown", "Picture", "Multiple Select", "Switch", "Multiple Choice", "Checkbox",
+                                            "Checkboxes", "Choice Matrix"
+                                        ]
+                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                            .map(type => <FieldButton key={type} type={type} section="Choices" />)}
+                                    </div>
+                                </div>
+
+                                <div className="field-group mt-1">
+                                    <h4>Time</h4>
+                                    <div className="field-grid">
+                                        {["Date Picker", "Date Time Picker", "Time Picker", "Date Range"]
+                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                            .map(type => <FieldButton key={type} type={type} section="Time" />)}
+                                    </div>
+                                </div>
+
+                                <div className="field-group mt-1">
+                                    <h4>Rating & Ranking</h4>
+                                    <div className="field-grid">
+                                        {["Ranking", "Star Rating", "Slider", "Opinion Scale"]
+                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                            .map(type => <FieldButton key={type} type={type} section="Rating & Ranking" />)}
+                                    </div>
+                                </div>
+
+                                <div className="field-group mt-1">
+                                    <h4>Text</h4>
+                                    <div className="field-grid">
+                                        {["Short Answer", "Long Answer"]
+                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                            .map(type => <FieldButton key={type} type={type} section="Text" />)}
+                                    </div>
+                                </div>
+
+                                <div className="field-group mt-1">
+                                    <h4>Contact Info</h4>
+                                    <div className="field-grid">
+                                        {["Email", "Number", "Address", "Document Type"]
+                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                            .map(type => <FieldButton key={type} type={type} section="Contact Info" />)}
+                                    </div>
+                                </div>
+
+                                <div className="field-group mt-1">
+                                    <h4>Navigation & Layout</h4>
+                                    <div className="field-grid">
+                                        {["Divider"]
+                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                            .map(type => <FieldButton key={type} type={type} section="Navigation & Layout" />)}
+                                    </div>
+                                </div>
+
+                                <div className="field-group mt-1">
+                                    <h4>Media</h4>
+                                    <div className="field-grid">
+                                        {["Image", "Video", "PDF"]
+                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                            .map(type => <FieldButton key={type} type={type} section="Media" />)}
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )}
 
-            {customizeVisible && selectedFieldId && (
-                <div className="customize-section" style={{ color: 'gray' }}>
-                    <div className="customize-header" style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginBottom: '20px' }}>
-                        <i
-                            className="fa-solid fa-xmark"
-                            style={{ fontSize: "20px", cursor: "pointer", color: "black", marginRight: '20px' }}
-                            onClick={() => setCustomizeVisible(false)}
-                        ></i>
-                        <h4 style={{ fontWeight: '500', fontSize: '1.125rem', margin: 0 }}>
-                            {fields.find(f => f.id === selectedFieldId)?.type} settings
-                        </h4>
-                    </div>
-
-                    <div>
-
-                        {!["Divider", "Image", "Video", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                            <>
-                                <label>Label</label>
-                                <div style={{ color: "#aaa", fontSize: ".875rem", marginBottom: "10px" }}>
-                                    Click text on page to modify
-                                </div>
-                            </>
-                        )}
-
-                        {/* Show only Specific Fields */}
-                        {!["Divider", "Image", "Video", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                            <>
-                                <label>Caption</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    value={fields.find(f => f.id === selectedFieldId)?.caption || ""}
-                                    onChange={(e) => {
-                                        const updatedFields = fields.map(f =>
-                                            f.id === selectedFieldId ? { ...f, caption: e.target.value } : f
-                                        );
-                                        setFields(updatedFields);
-                                    }}
-                                />
-                            </>
-                        )}
-
-                        {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "Document Type"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                            <>
-                                <label>Placeholder</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    value={fields.find(f => f.id === selectedFieldId)?.placeholder || ""}
-                                    onChange={(e) => {
-                                        const updatedFields = fields.map(f =>
-                                            f.id === selectedFieldId ? { ...f, placeholder: e.target.value } : f
-                                        );
-                                        setFields(updatedFields);
-                                    }}
-                                />
-                            </>
-                        )}
-
-                        {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "Document Type"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                            <>
-                                <label>Default value <span title="Initial value" style={{ cursor: "help" }}>🛈</span></label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    value={fields.find(f => f.id === selectedFieldId)?.defaultValue || ""}
-                                    onChange={(e) => {
-                                        const updatedFields = fields.map(f =>
-                                            f.id === selectedFieldId ? { ...f, defaultValue: e.target.value } : f
-                                        );
-                                        setFields(updatedFields);
-                                    }}
-                                />
-                            </>
-                        )}
-
-                        {["Switch", "Checkbox"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                    {showDesignSidebar && (
+                        <div className="form-designs-sidebar" style={{ color: "gray" }}>
                             <div
+                                className="designbar-header"
                                 style={{
                                     display: "flex",
-                                    alignItems: "center",
                                     justifyContent: "space-between",
-                                    marginBottom: "10px"
+                                    alignItems: "center",
+                                    padding: "5px",
+                                    paddingLeft: "15px",
+                                    paddingRight: "15px",
+                                    paddingBottom: "20px",
+                                    borderBottom: "1px solid #ccc",
+                                    marginLeft: "-12px",
+                                    marginRight: "-12px",
                                 }}
                             >
-                                <label style={{ marginBottom: 0 }}>
-                                    Default value{" "}
-                                    <span title="Switch on to make this field true" style={{ cursor: "help" }}>🛈</span>
-                                </label>
-
-                                <span
-                                    className={`custom-toggle ${fields.find(f => f.id === selectedFieldId)?.defaultValue === "true" ? 'active' : ''}`}
+                                <span style={{ fontWeight: "bold", fontSize: "16px" }}>
+                                    Form Designer
+                                </span>
+                                <i
+                                    className="fa-solid fa-xmark"
+                                    style={{ fontSize: "20px", cursor: "pointer", color: "black" }}
                                     onClick={() => {
-                                        const updatedFields = fields.map(f =>
-                                            f.id === selectedFieldId
-                                                ? {
-                                                    ...f,
-                                                    defaultValue: f.defaultValue === "true" ? "false" : "true"
-                                                }
-                                                : f
-                                        );
-                                        setFields(updatedFields);
+                                        setShowDesignSidebar(false);
+                                        setShowFieldSidebar(true);
                                     }}
-                                    style={{ cursor: "pointer" }}
-                                ></span>
+                                ></i>
                             </div>
-                        )}
 
-                        {/* ✅ Style section for Heading */}
-                        {fields.find(f => f.id === selectedFieldId)?.type === "Heading" && (
-                            <>
-                                <label>Font Size (px)</label>
-                                <input
-                                    type="number"
-                                    min={12}
-                                    max={48}
-                                    className="form-control"
-                                    value={parseInt(fields.find(f => f.id === selectedFieldId)?.fontSize || "24")}
-                                    onChange={(e) => {
-                                        const updatedFields = fields.map(f =>
-                                            f.id === selectedFieldId ? { ...f, fontSize: `${e.target.value}px` } : f
-                                        );
-                                        setFields(updatedFields);
+                            {/* Tabs for Current / All themes */}
+                            <div style={{ display: "flex", margin: "14px" }}>
+                                <button
+                                    style={{
+                                        flex: 1,
+                                        padding: "5px 10px",
+                                        backgroundColor: "#374151",
+                                        color: "white",
+                                        fontWeight: "bold",
+                                        border: "1px solid #ccc",
+                                        borderRight: "none",
+                                        borderTopLeftRadius: "6px",
+                                        borderBottomLeftRadius: "6px",
+                                        cursor: "pointer"
                                     }}
-                                />
-                            </>
-                        )}
-
-                        {/* ✅ Style section for Banner */}
-                        {fields.find(f => f.id === selectedFieldId)?.type === "Banner" && (
-                            <div style={{ marginTop: "20px" }}>
-                                <label>Alert type</label>
-                                <select
-                                    className="form-control"
-                                    value={fields.find(f => f.id === selectedFieldId)?.alertType || "info"}
-                                    onChange={(e) => {
-                                        const updatedFields = fields.map(f =>
-                                            f.id === selectedFieldId ? { ...f, alertType: e.target.value } : f
-                                        );
-                                        setFields(updatedFields);
-                                    }}
+                                    onClick={() => setActiveTab("current")}
                                 >
-                                    <option value="warning">🟨 Warning</option>
-                                    <option value="error">🟥 Error</option>
-                                    <option value="info">🟦 Info</option>
-                                    <option value="success">🟩 Success</option>
-                                </select>
+                                    Current
+                                </button>
+                                <button
+                                    style={{
+                                        flex: 1,
+                                        padding: "5px 10px",
+                                        backgroundColor: "white",
+                                        color: "#374151",
+                                        fontWeight: "500",
+                                        border: "1px solid #ccc",
+                                        borderLeft: "none",
+                                        borderTopRightRadius: "6px",
+                                        borderBottomRightRadius: "6px",
+                                        cursor: "pointer"
+                                    }}
+                                    onClick={() => setActiveTab("themes")}
+                                >
+                                    All themes
+                                </button>
                             </div>
-                        )}
 
-                        {["Dropdown", "Multiple Choice", "Multiple Select", "Checkboxes"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                            <div style={{ marginTop: "20px" }}>
-                                <label>Options</label>
+                            {/* Content based on tab */}
+                            <div style={{ padding: "14px" }}>
+                                {activeTab === "current" ? (
+                                    <>
+                                        {/* Light Theme */}
+                                        <div style={{ fontWeight: "bold", marginBottom: "10px" }}>Light</div>
 
-                                <DragDropContext onDragEnd={(result) => {
-                                    const { source, destination } = result;
-                                    if (!destination) return;
-                                    reorderOptions(selectedFieldId, source.index, destination.index);
-                                }}>
-                                    <Droppable droppableId="optionsList">
+                                        {/* Options */}
+                                        <div style={{ marginBottom: "10px" }}>
+                                            <div>Background</div>
+                                            <input type="color" style={{ width: "100%" }} />
+                                        </div>
+
+                                        <div style={{ marginBottom: "10px" }}>
+                                            <div>Questions Background</div>
+                                            <input type="color" style={{ width: "100%" }} />
+                                        </div>
+
+                                        <div style={{ marginBottom: "10px" }}>
+                                            <div>Primary</div>
+                                            <input type="color" style={{ width: "100%" }} />
+                                        </div>
+
+                                        <div style={{ marginBottom: "10px" }}>
+                                            <div>Questions</div>
+                                            <input type="color" style={{ width: "100%" }} />
+                                        </div>
+
+                                        <div style={{ marginBottom: "10px" }}>
+                                            <div>Answers</div>
+                                            <input type="color" style={{ width: "100%" }} />
+                                        </div>
+
+                                        <div style={{ marginBottom: "10px" }}>
+                                            <div>Font</div>
+                                            <input type="text" placeholder="Default" style={{ width: "100%", padding: "5px" }} />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div>
+                                        {/* Empty div for now */}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                    )}
+
+                    <div className="form-container">
+                        <div className="form-body" style={{ backgroundColor: formBgColor }}>
+
+                            {/* Theme Button */}
+                            <button
+                                className="theme-button"
+                                onClick={() => {
+                                    setShowDesignSidebar(true);
+                                    setShowFieldSidebar(false);
+                                }}
+                            >
+                                <i className="fa-solid fa-paintbrush" style={{ marginRight: "3px" }}></i> Theme
+                            </button>
+
+                            <div className="form-content" style={{ backgroundColor: formColor }} onClick={() => setShowCustomize(true)}>
+                                <DragDropContext onDragEnd={onDragEnd}>
+                                    <Droppable droppableId="fields">
                                         {(provided) => (
                                             <div ref={provided.innerRef} {...provided.droppableProps}>
-                                                {fields.find(f => f.id === selectedFieldId)?.options.map((opt, index) => (
-                                                    <Draggable key={index} draggableId={`option-${index}`} index={index}>
+                                                {fields.map((field, index) => (
+                                                    <Draggable key={field.id} draggableId={field.id.toString()} index={index}>
                                                         {(provided) => (
                                                             <div
+                                                                className="form-field-wrapper"
                                                                 ref={provided.innerRef}
                                                                 {...provided.draggableProps}
-                                                                style={{
-                                                                    display: "flex",
-                                                                    alignItems: "center",
-                                                                    background: "#f9f9f9",
-                                                                    padding: "8px",
-                                                                    borderRadius: "6px",
-                                                                    marginBottom: "6px",
-                                                                    ...provided.draggableProps.style
-                                                                }}
+                                                                onClick={() => handleFieldClick(field.id)}
                                                             >
-                                                                <input
-                                                                    type="text"
-                                                                    value={opt}
-                                                                    className="form-control"
-                                                                    onChange={(e) => {
-                                                                        const updatedFields = fields.map(field => {
-                                                                            if (field.id === selectedFieldId) {
-                                                                                const newOptions = [...field.options];
-                                                                                newOptions[index] = e.target.value;
-                                                                                return { ...field, options: newOptions };
-                                                                            }
-                                                                            return field;
-                                                                        });
-                                                                        setFields(updatedFields);
-                                                                    }}
-                                                                    style={{ flex: 1, marginRight: "10px" }}
-                                                                />
-                                                                <span {...provided.dragHandleProps} style={{ cursor: "grab", marginRight: "10px" }}>
-                                                                    <i className="fas fa-grip-vertical"></i>
-                                                                </span>
-                                                                <span
-                                                                    style={{ color: "red", cursor: "pointer" }}
-                                                                    onClick={() => {
-                                                                        const updatedFields = fields.map(field => {
-                                                                            if (field.id === selectedFieldId) {
-                                                                                const newOptions = [...field.options];
-                                                                                newOptions.splice(index, 1); // remove the option
-                                                                                return { ...field, options: newOptions };
-                                                                            }
-                                                                            return field;
-                                                                        });
-                                                                        setFields(updatedFields);
-                                                                    }}
-                                                                >
-                                                                    <i className="fas fa-trash-alt"></i>
-                                                                </span>
+                                                                <div className="drag-handle" {...provided.dragHandleProps}>
+                                                                    <FaGripVertical />
+                                                                </div>
+
+                                                                <div className="form-field-content">
+                                                                    {!["Heading", "Banner", "Divider", "Image"].includes(field.type) ? (
+                                                                        <>
+                                                                            <input
+                                                                                type="text"
+                                                                                value={field.label}
+                                                                                onChange={(e) => {
+                                                                                    e.stopPropagation(); // Prevent field click from firing
+                                                                                    const updatedFields = fields.map(f =>
+                                                                                        f.id === field.id ? { ...f, label: e.target.value } : f
+                                                                                    );
+                                                                                    setFields(updatedFields);
+                                                                                }}
+                                                                                style={{
+                                                                                    fontSize: "1rem",
+                                                                                    border: "none",
+                                                                                    background: "transparent",
+                                                                                    width: "fit-content",
+                                                                                    marginBottom: "2px"
+                                                                                }}
+                                                                            />
+                                                                            {field.required && <span style={{ color: 'red' }}>*</span>}
+                                                                            {field.caption && (
+                                                                                <small style={{ color: 'gray', display: 'block', marginBottom: '6px' }}>
+                                                                                    {field.caption}
+                                                                                </small>
+                                                                            )}
+                                                                        </>
+                                                                    ) : null}
+
+                                                                    {renderField(field)}
+                                                                </div>
+
+                                                                {selectedFieldId === field.id && (
+                                                                    <div className="field-actions">
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation(); // Prevent field click from firing
+                                                                                openSettings(field.id);
+                                                                            }}
+                                                                            data-tooltip-title="Open field settings"
+                                                                        >
+                                                                            <FaCog
+                                                                                style={{
+                                                                                    color:
+                                                                                        customizeVisible && selectedFieldId === field.id
+                                                                                            ? 'rgb(59, 130, 246)'
+                                                                                            : 'inherit'
+                                                                                }}
+                                                                            />
+                                                                        </button>
+
+                                                                        <button
+                                                                            className="change-type"
+                                                                            onClick={(e) => changeFieldType(field.id, e)}
+                                                                            data-tooltip-title={`Change field type\A${field.type}`}
+                                                                        >
+                                                                            <FaExchangeAlt />
+                                                                        </button>
+
+                                                                        <button
+                                                                            onClick={() => duplicateField(field.id)}
+                                                                            data-tooltip-title="Duplicate field"
+                                                                        >
+                                                                            <FaClone />
+                                                                        </button>
+
+                                                                        <button
+                                                                            className="delete"
+                                                                            onClick={() => deleteField(field.id)}
+                                                                            data-tooltip-title="Delete field"
+                                                                        >
+                                                                            <FaRegTrashAlt />
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+
                                                             </div>
                                                         )}
                                                     </Draggable>
@@ -2189,282 +1901,623 @@ const FormBuilder = () => {
                                         )}
                                     </Droppable>
                                 </DragDropContext>
-
-                                <button
-                                    className="btn btn-sm btn-outline-primary"
-                                    onClick={() => {
-                                        const updatedFields = fields.map(f =>
-                                            f.id === selectedFieldId ? { ...f, options: [...f.options, `Option ${f.options.length + 1}`] } : f
-                                        );
-                                        setFields(updatedFields);
-                                    }}
-                                    style={{ marginTop: "10px" }}
-                                >
-                                    + Add Option
-                                </button>
                             </div>
-                        )}
 
-                        {/* ✅ Style section for Multiple Choice */}
-                        {fields.find(f => f.id === selectedFieldId)?.type === "Multiple Choice" && (
-                            <div style={{ marginTop: "20px" }}>
-                                <label style={{ fontWeight: 'bold' }}>Style</label>
-                                <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
-                                    <div
-                                        onClick={() => {
-                                            const updatedFields = fields.map(f =>
-                                                f.id === selectedFieldId ? { ...f, bubble: true } : f
-                                            );
-                                            setFields(updatedFields);
-                                        }}
-                                        style={{
-                                            border: fields.find(f => f.id === selectedFieldId)?.bubble ? '2px solid #2563eb' : '1px solid #ccc',
-                                            padding: '10px',
-                                            borderRadius: '8px',
-                                            cursor: 'pointer',
-                                            flex: '1',
-                                            textAlign: 'center'
-                                        }}
-                                    >
-                                        <div style={{ fontSize: '20px', marginBottom: '5px' }}>☰</div>
-                                        Bubble
-                                    </div>
-
-                                    <div
-                                        onClick={() => {
-                                            const updatedFields = fields.map(f =>
-                                                f.id === selectedFieldId ? { ...f, bubble: false } : f
-                                            );
-                                            setFields(updatedFields);
-                                        }}
-                                        style={{
-                                            border: !fields.find(f => f.id === selectedFieldId)?.bubble ? '2px solid #2563eb' : '1px solid #ccc',
-                                            padding: '10px',
-                                            borderRadius: '8px',
-                                            cursor: 'pointer',
-                                            flex: '1',
-                                            textAlign: 'center'
-                                        }}
-                                    >
-                                        <div style={{ fontSize: '18px', marginBottom: '5px' }}>◯</div>
-                                        Standard
-                                    </div>
+                        </div>
+                        {fieldTypeMenu && (
+                            <div
+                                className="field-type-menu"
+                                style={{
+                                    position: "absolute",
+                                    top: "calc(var(--menu-top, 155px))",
+                                    left: "calc(var(--menu-left, 70%) + 50px)",
+                                    background: "#fff",
+                                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                                    borderRadius: "10px",
+                                    padding: "16px",
+                                    zIndex: 9999,
+                                }}
+                            >
+                                <h4 style={{ marginBottom: 20, color: "rgb(156 163 175)", fontWeight: "400", fontSize: ".875rem" }}>Change to similar field:</h4>
+                                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+                                    {[
+                                        { type: "Paragraph", label: "Long answer", icon: <FaAlignLeft /> },
+                                        { type: "Email", label: "Email input", icon: <FaEnvelope /> },
+                                        { type: "Date Picker", label: "Date", icon: <FaCalendarAlt /> },
+                                        { type: "Number", label: "Phone number", icon: <FaHashtag /> },
+                                        { type: "Dropdown", label: "Dropdown", icon: <FaCaretDown /> },
+                                        { type: "Checkbox", label: "Checkbox", icon: <FaCheckSquare /> },
+                                    ].map((opt) => (
+                                        <button
+                                            key={opt.type}
+                                            onClick={() => handleTypeChange(fieldTypeMenu.id, opt.type)}
+                                            style={{
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                border: "1px solid #e5e7eb",
+                                                borderRadius: "10px",
+                                                padding: "5px 7px",
+                                                background: "#f9f9f9",
+                                                cursor: "pointer",
+                                                width: "70px",
+                                                Height: "60px",
+                                                overflow: "hidden",
+                                                textAlign: "center",
+                                                boxSizing: "border-box",
+                                            }}
+                                        >
+                                            <div style={{ fontSize: "15px", color: "#0ea5e9" }}>{opt.icon}</div>
+                                            <span
+                                                style={{
+                                                    fontSize: "12px",
+                                                    marginTop: "6px",
+                                                    color: "#1f2937",
+                                                    lineHeight: "1.2",
+                                                    wordWrap: "break-word",
+                                                    whiteSpace: "normal",
+                                                }}
+                                            >
+                                                {opt.label}
+                                            </span>
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                         )}
 
-                        {["Date Picker", "Time Picker", "Date Time Picker"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                            <div style={{ marginBottom: "10px" }}>
-                                <label>
-                                    Default value{" "}
-                                    <span title="Set a default date/time for this field" style={{ cursor: "help" }}>🛈</span>
-                                </label>
-                                <input
-                                    type={
-                                        fields.find(f => f.id === selectedFieldId)?.type === "Date Picker" ? "date" :
-                                            fields.find(f => f.id === selectedFieldId)?.type === "Time Picker" ? "time" : "datetime-local"
-                                    }
-                                    className="form-control"
-                                    value={fields.find(f => f.id === selectedFieldId)?.defaultValue || ""}
-                                    onChange={(e) => {
-                                        const updatedFields = fields.map(f =>
-                                            f.id === selectedFieldId ? { ...f, defaultValue: e.target.value } : f
-                                        );
-                                        setFields(updatedFields);
-                                    }}
-                                />
-                            </div>
-                        )}
-
-                        {fields.find(f => f.id === selectedFieldId)?.type === "Star Rating" && (
-                            <div style={{ marginBottom: "10px" }}>
-                                <label>
-                                    Max Stars{" "}
-                                    <span title="Maximum number of stars to display (Max 50)" style={{ cursor: "help" }}>🛈</span>
-                                </label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="50"
-                                    className="form-control"
-                                    value={fields.find(f => f.id === selectedFieldId)?.max || 5}
-                                    onChange={(e) => {
-                                        const value = Math.min(50, parseInt(e.target.value, 10));
-                                        const updatedFields = fields.map(f =>
-                                            f.id === selectedFieldId ? { ...f, max: value } : f
-                                        );
-                                        setFields(updatedFields);
-                                    }}
-                                />
-                            </div>
-                        )}
-
-                        {fields.find(f => f.id === selectedFieldId)?.type === "Slider" && (
-                            <div style={{ marginBottom: "10px" }}>
-                                <label>
-                                    Max Slider Value{" "}
-                                    <span title="Set the maximum value for the slider (between 10 and 100)" style={{ cursor: "help" }}>🛈</span>
-                                </label>
-                                <input
-                                    type="number"
-                                    min="10"
-                                    max="100"
-                                    className="form-control"
-                                    value={fields.find(f => f.id === selectedFieldId)?.max || 100}
-                                    onChange={(e) => {
-                                        let value = parseInt(e.target.value, 10);
-                                        value = Math.max(10, Math.min(100, value)); // clamp to 10–100
-
-                                        const updatedFields = fields.map(f =>
-                                            f.id === selectedFieldId ? { ...f, max: value } : f
-                                        );
-                                        setFields(updatedFields);
-                                    }}
-                                />
-                            </div>
-                        )}
-
-                        {fields.find(f => f.id === selectedFieldId)?.type === "Opinion Scale" && (
-                            <>
-                                <div style={{ marginBottom: "10px" }}>
-                                    <label>
-                                        Max Opinion
-                                        <span title="Maximum scale value (Max 100)" style={{ cursor: "help" }}> 🛈</span>
-                                    </label>
+                        {editImageOption && (
+                            <div className="image-option-modal-backdrop">
+                                <div className="image-option-modal-box">
+                                    <h5 style={{ fontWeight: "600", fontSize: "1.125rem", marginBottom: "20px" }}>Edit image option</h5>
+                                    <span style={{ fontWeight: "500", fontSize: ".875rem" }}>Lable</span>
                                     <input
-                                        type="number"
-                                        min={fields.find(f => f.id === selectedFieldId)?.min + 1 || 2}
-                                        max="100"
+                                        style={{ marginBottom: "20px" }}
+                                        type="text"
                                         className="form-control"
-                                        value={fields.find(f => f.id === selectedFieldId)?.max || 10}
+                                        value={fields.find(f => f.id === editImageOption.fieldId).options[editImageOption.index].label}
                                         onChange={(e) => {
-                                            const value = Math.min(100, parseInt(e.target.value, 10));
-                                            const updatedFields = fields.map(f =>
-                                                f.id === selectedFieldId ? { ...f, max: value } : f
-                                            );
+                                            const updatedFields = fields.map(f => {
+                                                if (f.id !== editImageOption.fieldId) return f;
+                                                const updatedOptions = [...f.options];
+                                                updatedOptions[editImageOption.index].label = e.target.value;
+                                                return { ...f, options: updatedOptions };
+                                            });
                                             setFields(updatedFields);
                                         }}
                                     />
-                                </div>
-                            </>
-                        )}
-
-                        {fields.find(f => f.id === selectedFieldId)?.type === "Number" && (
-                            <>
-                                <label>
-                                    Default value{" "}
-                                    <span title="Initial value" style={{ cursor: "help" }}>🛈</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    value={fields.find(f => f.id === selectedFieldId)?.defaultValue || ""}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        if (/^\d*$/.test(value)) { // Only digits
-                                            const updatedFields = fields.map(f =>
-                                                f.id === selectedFieldId ? { ...f, defaultValue: value } : f
-                                            );
-                                            setFields(updatedFields);
-                                        }
-                                    }}
-                                />
-                            </>
-                        )}
-
-                        {fields.find(f => f.id === selectedFieldId)?.type === "Divider" && (
-                            <>
-                                <label>
-                                    Label{" "}
-                                    <span title="This text appears in the center of the divider" style={{ cursor: "help" }}>🛈</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Enter divider text"
-                                    value={fields.find(f => f.id === selectedFieldId)?.label || ""}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        const updatedFields = fields.map(f =>
-                                            f.id === selectedFieldId ? { ...f, label: value } : f
-                                        );
-                                        setFields(updatedFields);
-                                    }}
-                                />
-                            </>
-                        )}
-
-                        {["Image", "Vedio", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                            <>
-                                <label>Max Height</label>
-                                {/* Max Height UI can go here if you plan to add one */}
-
-                                {/* Image Resize Slider */}
-                                <div className="mt-2">
-                                    <label>Size: {fields.find(f => f.id === selectedFieldId)?.previewSize}px</label>
+                                    <span style={{ fontWeight: "500", fontSize: ".875rem" }}>Image</span>
                                     <input
-                                        type="range"
-                                        min="100"
-                                        max="600"
-                                        step="10"
-                                        value={fields.find(f => f.id === selectedFieldId)?.previewSize || 300}
+                                        type="file"
+                                        accept="image/*"
+                                        className="form-control mt-2"
                                         onChange={(e) => {
-                                            const updatedFields = fields.map(f =>
-                                                f.id === selectedFieldId
-                                                    ? { ...f, previewSize: parseInt(e.target.value) }
-                                                    : f
-                                            );
-                                            setFields(updatedFields);
-                                        }}
-                                        className="form-range"
-                                    />
-                                </div>
-
-                                {/* Alignment Controls */}
-                                <div className="mt-3">
-                                    <label>Alignment</label>
-                                    <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
-                                        {["left", "center", "right"].map((align) => {
-                                            const icons = {
-                                                left: "⬅️",
-                                                center: "↔️",
-                                                right: "➡️"
+                                            const file = e.target.files[0];
+                                            if (!file) return;
+                                            const reader = new FileReader();
+                                            reader.onload = () => {
+                                                const updatedFields = fields.map(f => {
+                                                    if (f.id !== editImageOption.fieldId) return f;
+                                                    const updatedOptions = [...f.options];
+                                                    updatedOptions[editImageOption.index].image = reader.result;
+                                                    return { ...f, options: updatedOptions };
+                                                });
+                                                setFields(updatedFields);
                                             };
-                                            return (
-                                                <button
-                                                    key={align}
-                                                    onClick={() => {
-                                                        const updatedFields = fields.map(f =>
-                                                            f.id === selectedFieldId ? { ...f, alignment: align } : f
-                                                        );
-                                                        setFields(updatedFields);
-                                                    }}
-                                                    style={{
-                                                        padding: "6px 10px",
-                                                        fontSize: "1.2rem",
-                                                        border: fields.find(f => f.id === selectedFieldId)?.alignment === align
-                                                            ? "2px solid #007bff"
-                                                            : "1px solid lightgray",
-                                                        borderRadius: "5px",
-                                                        background: "white",
-                                                        cursor: "pointer"
-                                                    }}
-                                                >
-                                                    {icons[align]}
-                                                </button>
-                                            );
-                                        })}
+                                            reader.readAsDataURL(file);
+                                        }}
+                                    />
+                                    <div className="modal-actions text-end mt-3">
+                                        <button onClick={() => setEditImageOption(null)} className="btn btn-primary">
+                                            Save
+                                        </button>
                                     </div>
                                 </div>
-                            </>
+                            </div>
                         )}
-
                     </div>
-                </div>
-            )}
 
+                    {customizeVisible && selectedFieldId && (
+                        <div className="customize-section" style={{ color: 'gray' }}>
+                            <div className="customize-header" style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginBottom: '20px' }}>
+                                <i
+                                    className="fa-solid fa-xmark"
+                                    style={{ fontSize: "20px", cursor: "pointer", color: "black", marginRight: '20px' }}
+                                    onClick={() => setCustomizeVisible(false)}
+                                ></i>
+                                <h4 style={{ fontWeight: '500', fontSize: '1.125rem', margin: 0 }}>
+                                    {fields.find(f => f.id === selectedFieldId)?.type} settings
+                                </h4>
+                            </div>
+
+                            <div>
+
+                                {!["Divider", "Image", "Video", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                    <>
+                                        <label>Label</label>
+                                        <div style={{ color: "#aaa", fontSize: ".875rem", marginBottom: "10px" }}>
+                                            Click text on page to modify
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Show only Specific Fields */}
+                                {!["Divider", "Image", "Video", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                    <>
+                                        <label>Caption</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={fields.find(f => f.id === selectedFieldId)?.caption || ""}
+                                            onChange={(e) => {
+                                                const updatedFields = fields.map(f =>
+                                                    f.id === selectedFieldId ? { ...f, caption: e.target.value } : f
+                                                );
+                                                setFields(updatedFields);
+                                            }}
+                                        />
+                                    </>
+                                )}
+
+                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "Document Type"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                    <>
+                                        <label>Placeholder</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={fields.find(f => f.id === selectedFieldId)?.placeholder || ""}
+                                            onChange={(e) => {
+                                                const updatedFields = fields.map(f =>
+                                                    f.id === selectedFieldId ? { ...f, placeholder: e.target.value } : f
+                                                );
+                                                setFields(updatedFields);
+                                            }}
+                                        />
+                                    </>
+                                )}
+
+                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "Document Type"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                    <>
+                                        <label>Default value <span title="Initial value" style={{ cursor: "help" }}>🛈</span></label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={fields.find(f => f.id === selectedFieldId)?.defaultValue || ""}
+                                            onChange={(e) => {
+                                                const updatedFields = fields.map(f =>
+                                                    f.id === selectedFieldId ? { ...f, defaultValue: e.target.value } : f
+                                                );
+                                                setFields(updatedFields);
+                                            }}
+                                        />
+                                    </>
+                                )}
+
+                                {["Switch", "Checkbox"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "space-between",
+                                            marginBottom: "10px"
+                                        }}
+                                    >
+                                        <label style={{ marginBottom: 0 }}>
+                                            Default value{" "}
+                                            <span title="Switch on to make this field true" style={{ cursor: "help" }}>🛈</span>
+                                        </label>
+
+                                        <span
+                                            className={`custom-toggle ${fields.find(f => f.id === selectedFieldId)?.defaultValue === "true" ? 'active' : ''}`}
+                                            onClick={() => {
+                                                const updatedFields = fields.map(f =>
+                                                    f.id === selectedFieldId
+                                                        ? {
+                                                            ...f,
+                                                            defaultValue: f.defaultValue === "true" ? "false" : "true"
+                                                        }
+                                                        : f
+                                                );
+                                                setFields(updatedFields);
+                                            }}
+                                            style={{ cursor: "pointer" }}
+                                        ></span>
+                                    </div>
+                                )}
+
+                                {/* ✅ Style section for Heading */}
+                                {fields.find(f => f.id === selectedFieldId)?.type === "Heading" && (
+                                    <>
+                                        <label>Font Size (px)</label>
+                                        <input
+                                            type="number"
+                                            min={12}
+                                            max={48}
+                                            className="form-control"
+                                            value={parseInt(fields.find(f => f.id === selectedFieldId)?.fontSize || "24")}
+                                            onChange={(e) => {
+                                                const updatedFields = fields.map(f =>
+                                                    f.id === selectedFieldId ? { ...f, fontSize: `${e.target.value}px` } : f
+                                                );
+                                                setFields(updatedFields);
+                                            }}
+                                        />
+                                    </>
+                                )}
+
+                                {/* ✅ Style section for Banner */}
+                                {fields.find(f => f.id === selectedFieldId)?.type === "Banner" && (
+                                    <div style={{ marginTop: "20px" }}>
+                                        <label>Alert type</label>
+                                        <select
+                                            className="form-control"
+                                            value={fields.find(f => f.id === selectedFieldId)?.alertType || "info"}
+                                            onChange={(e) => {
+                                                const updatedFields = fields.map(f =>
+                                                    f.id === selectedFieldId ? { ...f, alertType: e.target.value } : f
+                                                );
+                                                setFields(updatedFields);
+                                            }}
+                                        >
+                                            <option value="warning">🟨 Warning</option>
+                                            <option value="error">🟥 Error</option>
+                                            <option value="info">🟦 Info</option>
+                                            <option value="success">🟩 Success</option>
+                                        </select>
+                                    </div>
+                                )}
+
+                                {["Dropdown", "Multiple Choice", "Multiple Select", "Checkboxes"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                    <div style={{ marginTop: "20px" }}>
+                                        <label>Options</label>
+
+                                        <DragDropContext onDragEnd={(result) => {
+                                            const { source, destination } = result;
+                                            if (!destination) return;
+                                            reorderOptions(selectedFieldId, source.index, destination.index);
+                                        }}>
+                                            <Droppable droppableId="optionsList">
+                                                {(provided) => (
+                                                    <div ref={provided.innerRef} {...provided.droppableProps}>
+                                                        {fields.find(f => f.id === selectedFieldId)?.options.map((opt, index) => (
+                                                            <Draggable key={index} draggableId={`option-${index}`} index={index}>
+                                                                {(provided) => (
+                                                                    <div
+                                                                        ref={provided.innerRef}
+                                                                        {...provided.draggableProps}
+                                                                        style={{
+                                                                            display: "flex",
+                                                                            alignItems: "center",
+                                                                            background: "#f9f9f9",
+                                                                            padding: "8px",
+                                                                            borderRadius: "6px",
+                                                                            marginBottom: "6px",
+                                                                            ...provided.draggableProps.style
+                                                                        }}
+                                                                    >
+                                                                        <input
+                                                                            type="text"
+                                                                            value={opt}
+                                                                            className="form-control"
+                                                                            onChange={(e) => {
+                                                                                const updatedFields = fields.map(field => {
+                                                                                    if (field.id === selectedFieldId) {
+                                                                                        const newOptions = [...field.options];
+                                                                                        newOptions[index] = e.target.value;
+                                                                                        return { ...field, options: newOptions };
+                                                                                    }
+                                                                                    return field;
+                                                                                });
+                                                                                setFields(updatedFields);
+                                                                            }}
+                                                                            style={{ flex: 1, marginRight: "10px" }}
+                                                                        />
+                                                                        <span {...provided.dragHandleProps} style={{ cursor: "grab", marginRight: "10px" }}>
+                                                                            <i className="fas fa-grip-vertical"></i>
+                                                                        </span>
+                                                                        <span
+                                                                            style={{ color: "red", cursor: "pointer" }}
+                                                                            onClick={() => {
+                                                                                const updatedFields = fields.map(field => {
+                                                                                    if (field.id === selectedFieldId) {
+                                                                                        const newOptions = [...field.options];
+                                                                                        newOptions.splice(index, 1); // remove the option
+                                                                                        return { ...field, options: newOptions };
+                                                                                    }
+                                                                                    return field;
+                                                                                });
+                                                                                setFields(updatedFields);
+                                                                            }}
+                                                                        >
+                                                                            <i className="fas fa-trash-alt"></i>
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                            </Draggable>
+                                                        ))}
+                                                        {provided.placeholder}
+                                                    </div>
+                                                )}
+                                            </Droppable>
+                                        </DragDropContext>
+
+                                        <button
+                                            className="btn btn-sm btn-outline-primary"
+                                            onClick={() => {
+                                                const updatedFields = fields.map(f =>
+                                                    f.id === selectedFieldId ? { ...f, options: [...f.options, `Option ${f.options.length + 1}`] } : f
+                                                );
+                                                setFields(updatedFields);
+                                            }}
+                                            style={{ marginTop: "10px" }}
+                                        >
+                                            + Add Option
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* ✅ Style section for Multiple Choice */}
+                                {fields.find(f => f.id === selectedFieldId)?.type === "Multiple Choice" && (
+                                    <div style={{ marginTop: "20px" }}>
+                                        <label style={{ fontWeight: 'bold' }}>Style</label>
+                                        <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+                                            <div
+                                                onClick={() => {
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId ? { ...f, bubble: true } : f
+                                                    );
+                                                    setFields(updatedFields);
+                                                }}
+                                                style={{
+                                                    border: fields.find(f => f.id === selectedFieldId)?.bubble ? '2px solid #2563eb' : '1px solid #ccc',
+                                                    padding: '10px',
+                                                    borderRadius: '8px',
+                                                    cursor: 'pointer',
+                                                    flex: '1',
+                                                    textAlign: 'center'
+                                                }}
+                                            >
+                                                <div style={{ fontSize: '20px', marginBottom: '5px' }}>☰</div>
+                                                Bubble
+                                            </div>
+
+                                            <div
+                                                onClick={() => {
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId ? { ...f, bubble: false } : f
+                                                    );
+                                                    setFields(updatedFields);
+                                                }}
+                                                style={{
+                                                    border: !fields.find(f => f.id === selectedFieldId)?.bubble ? '2px solid #2563eb' : '1px solid #ccc',
+                                                    padding: '10px',
+                                                    borderRadius: '8px',
+                                                    cursor: 'pointer',
+                                                    flex: '1',
+                                                    textAlign: 'center'
+                                                }}
+                                            >
+                                                <div style={{ fontSize: '18px', marginBottom: '5px' }}>◯</div>
+                                                Standard
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {["Date Picker", "Time Picker", "Date Time Picker"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                    <div style={{ marginBottom: "10px" }}>
+                                        <label>
+                                            Default value{" "}
+                                            <span title="Set a default date/time for this field" style={{ cursor: "help" }}>🛈</span>
+                                        </label>
+                                        <input
+                                            type={
+                                                fields.find(f => f.id === selectedFieldId)?.type === "Date Picker" ? "date" :
+                                                    fields.find(f => f.id === selectedFieldId)?.type === "Time Picker" ? "time" : "datetime-local"
+                                            }
+                                            className="form-control"
+                                            value={fields.find(f => f.id === selectedFieldId)?.defaultValue || ""}
+                                            onChange={(e) => {
+                                                const updatedFields = fields.map(f =>
+                                                    f.id === selectedFieldId ? { ...f, defaultValue: e.target.value } : f
+                                                );
+                                                setFields(updatedFields);
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
+                                {fields.find(f => f.id === selectedFieldId)?.type === "Star Rating" && (
+                                    <div style={{ marginBottom: "10px" }}>
+                                        <label>
+                                            Max Stars{" "}
+                                            <span title="Maximum number of stars to display (Max 50)" style={{ cursor: "help" }}>🛈</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="50"
+                                            className="form-control"
+                                            value={fields.find(f => f.id === selectedFieldId)?.max || 5}
+                                            onChange={(e) => {
+                                                const value = Math.min(50, parseInt(e.target.value, 10));
+                                                const updatedFields = fields.map(f =>
+                                                    f.id === selectedFieldId ? { ...f, max: value } : f
+                                                );
+                                                setFields(updatedFields);
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
+                                {fields.find(f => f.id === selectedFieldId)?.type === "Slider" && (
+                                    <div style={{ marginBottom: "10px" }}>
+                                        <label>
+                                            Max Slider Value{" "}
+                                            <span title="Set the maximum value for the slider (between 10 and 100)" style={{ cursor: "help" }}>🛈</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="10"
+                                            max="100"
+                                            className="form-control"
+                                            value={fields.find(f => f.id === selectedFieldId)?.max || 100}
+                                            onChange={(e) => {
+                                                let value = parseInt(e.target.value, 10);
+                                                value = Math.max(10, Math.min(100, value)); // clamp to 10–100
+
+                                                const updatedFields = fields.map(f =>
+                                                    f.id === selectedFieldId ? { ...f, max: value } : f
+                                                );
+                                                setFields(updatedFields);
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
+                                {fields.find(f => f.id === selectedFieldId)?.type === "Opinion Scale" && (
+                                    <>
+                                        <div style={{ marginBottom: "10px" }}>
+                                            <label>
+                                                Max Opinion
+                                                <span title="Maximum scale value (Max 100)" style={{ cursor: "help" }}> 🛈</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min={fields.find(f => f.id === selectedFieldId)?.min + 1 || 2}
+                                                max="100"
+                                                className="form-control"
+                                                value={fields.find(f => f.id === selectedFieldId)?.max || 10}
+                                                onChange={(e) => {
+                                                    const value = Math.min(100, parseInt(e.target.value, 10));
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId ? { ...f, max: value } : f
+                                                    );
+                                                    setFields(updatedFields);
+                                                }}
+                                            />
+                                        </div>
+                                    </>
+                                )}
+
+                                {fields.find(f => f.id === selectedFieldId)?.type === "Number" && (
+                                    <>
+                                        <label>
+                                            Default value{" "}
+                                            <span title="Initial value" style={{ cursor: "help" }}>🛈</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
+                                            value={fields.find(f => f.id === selectedFieldId)?.defaultValue || ""}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                if (/^\d*$/.test(value)) { // Only digits
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId ? { ...f, defaultValue: value } : f
+                                                    );
+                                                    setFields(updatedFields);
+                                                }
+                                            }}
+                                        />
+                                    </>
+                                )}
+
+                                {fields.find(f => f.id === selectedFieldId)?.type === "Divider" && (
+                                    <>
+                                        <label>
+                                            Label{" "}
+                                            <span title="This text appears in the center of the divider" style={{ cursor: "help" }}>🛈</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Enter divider text"
+                                            value={fields.find(f => f.id === selectedFieldId)?.label || ""}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                const updatedFields = fields.map(f =>
+                                                    f.id === selectedFieldId ? { ...f, label: value } : f
+                                                );
+                                                setFields(updatedFields);
+                                            }}
+                                        />
+                                    </>
+                                )}
+
+                                {["Image", "Vedio", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                    <>
+                                        <label>Max Height</label>
+                                        {/* Max Height UI can go here if you plan to add one */}
+
+                                        {/* Image Resize Slider */}
+                                        <div className="mt-2">
+                                            <label>Size: {fields.find(f => f.id === selectedFieldId)?.previewSize}px</label>
+                                            <input
+                                                type="range"
+                                                min="100"
+                                                max="600"
+                                                step="10"
+                                                value={fields.find(f => f.id === selectedFieldId)?.previewSize || 300}
+                                                onChange={(e) => {
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId
+                                                            ? { ...f, previewSize: parseInt(e.target.value) }
+                                                            : f
+                                                    );
+                                                    setFields(updatedFields);
+                                                }}
+                                                className="form-range"
+                                            />
+                                        </div>
+
+                                        {/* Alignment Controls */}
+                                        <div className="mt-3">
+                                            <label>Alignment</label>
+                                            <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+                                                {["left", "center", "right"].map((align) => {
+                                                    const icons = {
+                                                        left: "⬅️",
+                                                        center: "↔️",
+                                                        right: "➡️"
+                                                    };
+                                                    return (
+                                                        <button
+                                                            key={align}
+                                                            onClick={() => {
+                                                                const updatedFields = fields.map(f =>
+                                                                    f.id === selectedFieldId ? { ...f, alignment: align } : f
+                                                                );
+                                                                setFields(updatedFields);
+                                                            }}
+                                                            style={{
+                                                                padding: "6px 10px",
+                                                                fontSize: "1.2rem",
+                                                                border: fields.find(f => f.id === selectedFieldId)?.alignment === align
+                                                                    ? "2px solid #007bff"
+                                                                    : "1px solid lightgray",
+                                                                borderRadius: "5px",
+                                                                background: "white",
+                                                                cursor: "pointer"
+                                                            }}
+                                                        >
+                                                            {icons[align]}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
         </div >
     );
 };
