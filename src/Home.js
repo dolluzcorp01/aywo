@@ -639,6 +639,7 @@ function Home() {
             <div className="recently-viewed-list">
               {recentlyViewed.map((form) => (
                 <div className="recently-viewed-card"
+                  key={form.form_id}
                   onClick={() => handleFormClick(form.form_id, form.title, form.response_count, form.published, form.internal_note, form.is_closed)}
                   onMouseEnter={() => setHoveredFormId(form.form_id)}
                   onMouseLeave={() => setHoveredFormId(null)}
