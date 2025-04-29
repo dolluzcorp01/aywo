@@ -1,3 +1,4 @@
+/* Header container */
 .header {
     display: flex;
     align-items: center;
@@ -5,9 +6,9 @@
     background-color: white;
     padding: 10px 20px;
     border-bottom: 1px solid #ddd;
-    /* Border added */
 }
 
+/* Brand (dFroms) title styling */
 .header .header-left {
     flex: 1;
     text-align: left;
@@ -19,4 +20,30 @@
     color: black;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     margin-left: 5px;
+}
+
+/* ✅ Rename header profile class to avoid conflict */
+.profile-toggle-button {
+    background: none;
+    box-shadow: none;
+    border: none;
+    cursor: pointer;
+}
+
+/* Show/hide + responsive tweaks */
+@media (max-width: 768px) {
+    .header .navbar-brand {
+        display: none;
+    }
+
+    .profile-toggle-button {
+        display: block;
+        margin-right: -15px;
+    }
+}
+
+@media (min-width: 769px) {
+    .profile-toggle-button {
+        display: none;
+    }
 }

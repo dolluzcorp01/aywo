@@ -157,69 +157,66 @@ const LeftNavBar = () => {
             </div>
 
             {/* Profile Section - Sticks at the Bottom */}
-            <div className="profile-section" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-                {profileDetails ? (
-                    <>
-                        <RoundedCircle
-                            className="profile-img"
-                            style={{
-                                backgroundColor: profileDetails.profile_color,
-                                color: 'white',
-                                fontSize: '18px',
-                                fontWeight: 'bold',
-                            }}
-                        >
-                            {profileDetails.profile_letters}
-                        </RoundedCircle>
+            <div ref={dropdownRef} style={{ marginTop: "auto" }}>
+                <div className="profile-section" onClick={() => setIsDropdownOpen((prev) => !prev)}>
+                    {profileDetails ? (
+                        <>
+                            <RoundedCircle
+                                className="profile-img"
+                                style={{
+                                    backgroundColor: profileDetails.profile_color,
+                                    color: 'white',
+                                    fontSize: '18px',
+                                    fontWeight: 'bold',
+                                }}
+                            >
+                                {profileDetails.profile_letters}
+                            </RoundedCircle>
 
-                        {/* Profile Text */}
-                        <div className="profile-text">
-                            <span className="profile-name">{profileDetails.user_name}</span>
-                            <span className="profile-org">{profileDetails.user_name}'s organization</span>
-                        </div>
+                            <div className="profile-text">
+                                <span className="profile-name">{profileDetails.user_name}</span>
+                                <span className="profile-org">{profileDetails.user_name}'s organization</span>
+                            </div>
 
-                        {/* Dropdown Arrows - Stacked */}
-                        <div className="profile-arrow-wrapper">
-                            <i className="fa fa-chevron-up profile-arrow"></i>
-                            <i className="fa fa-chevron-down profile-arrow"></i>
-                        </div>
-                    </>
-                ) : (
-                    "Loading..."
+                            <div className="profile-arrow-wrapper">
+                                <i className="fa fa-chevron-up profile-arrow"></i>
+                                <i className="fa fa-chevron-down profile-arrow"></i>
+                            </div>
+                        </>
+                    ) : (
+                        "Loading..."
+                    )}
+                </div>
+
+                {isDropdownOpen && (
+                    <DropdownMenu className="dropdown-menu" $isOpen={isDropdownOpen}>
+                        <DropdownProfile>
+                            <RoundedCircle
+                                className="profile-img"
+                                style={{
+                                    backgroundColor: profileDetails.profile_color,
+                                    color: 'white',
+                                    fontSize: '18px',
+                                    fontWeight: 'bold',
+                                }}
+                            >
+                                {profileDetails.profile_letters}
+                            </RoundedCircle>
+                            <div className="profile-text" style={{ display: "flex", flexDirection: "column" }}>
+                                <DropdownProfileName>{profileDetails.user_name}</DropdownProfileName>
+                                <DropdownProfileOrg>{profileDetails.user_name}'s organization</DropdownProfileOrg>
+                            </div>
+                        </DropdownProfile>
+
+                        <DropdownItem href="#"><i className="fa fa-hands-helping"></i> Help center</DropdownItem>
+                        <DropdownItem href="/login?changePassword"><i className="fa fa-key"></i> Change Password</DropdownItem>
+                        <DropdownDivider />
+                        <DropdownItem onClick={handleLogout} style={{ color: "red" }}>Logout</DropdownItem>
+                    </DropdownMenu>
                 )}
             </div>
 
-            {/* Profile Dropdown Menu */}
-            {isDropdownOpen && (
-                <DropdownMenu className="dropdown-menu" ref={dropdownRef} $isOpen={isDropdownOpen}>
-                    {/* Profile Section inside Dropdown */}
-                    <DropdownProfile>
-                        <RoundedCircle
-                            className="profile-img"
-                            style={{
-                                backgroundColor: profileDetails.profile_color,
-                                color: 'white',
-                                fontSize: '18px',
-                                fontWeight: 'bold',
-                            }}
-                        >
-                            {profileDetails.profile_letters}
-                        </RoundedCircle>
-                        <div className="profile-text" style={{ display: "flex", flexDirection: "column" }}>
-                            <DropdownProfileName>{profileDetails.user_name}</DropdownProfileName>
-                            <DropdownProfileOrg>{profileDetails.user_name}'s organization</DropdownProfileOrg>
-                        </div>
-                    </DropdownProfile>
-
-                    {/* Options */}
-                    <DropdownItem href="#"><i className="fa fa-hands-helping"></i> Help center</DropdownItem>
-                    <DropdownItem href="/login?changePassword"><i className="fa fa-key"></i> Change Password</DropdownItem>
-                    <DropdownDivider />
-                    <DropdownItem onClick={handleLogout} style={{ color: "red" }}>Logout</DropdownItem>
-                </DropdownMenu>
-            )}
-
-        </div>
+        </div >
     );
 
 };
