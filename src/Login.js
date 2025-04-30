@@ -612,7 +612,7 @@ function Login() {
                       <button onClick={showLoginForm} id="Back_to_Login_btn" className="btn btn-secondary w-100 mt-2" style={{ border: "none", outline: "none" }}>Back to Login</button>
                     )}
                     {showBackToChangePassword && (
-                      <button onClick={showChangePassFrom} id="Back_to_Change_New_Password_btn" className="btn btn-secondary w-100 mt-2" style={{ border: "none", outline: "none" }}>Back to Change New Password</button>
+                      <button onClick={showChangePassFrom} id="Back_to_Change_New_Password_btn" className="btn btn-secondary w-100 mt-2" style={{ border: "none", outline: "none" }}>Back to Change Password</button>
                     )}
                   </div>
                 )}
