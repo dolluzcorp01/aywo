@@ -329,6 +329,10 @@ const FormBuilder = () => {
         }
 
         setFields([...fields, newField]);
+
+        // ✅ Make the new field selected and show the customize section
+        setSelectedFieldId(newField.id);
+        setCustomizeVisible(true);
     };
 
     const renderField = (field) => {
@@ -1816,7 +1820,7 @@ const FormBuilder = () => {
                                                                 </div>
 
                                                                 <div className="form-field-content">
-                                                                    {!["Heading", "Banner", "Divider", "Image"].includes(field.type) ? (
+                                                                    {!["Heading", "Banner", "Divider", "Image", "Video", "PDF"].includes(field.type) ? (
                                                                         <>
                                                                             <input
                                                                                 type="text"
@@ -2508,6 +2512,26 @@ const FormBuilder = () => {
                                                         </button>
                                                     );
                                                 })}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                {!["Heading", "Banner", "Divider", "Image", "Video", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                    <>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
+                                            {/* Required Row */}
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <label className="form-check-label">Required</label>
+                                                <span
+                                                    className={`custom-toggle ${fields.find(f => f.id === selectedFieldId)?.required ? 'active' : ''}`}
+                                                    onClick={() => {
+                                                        const updatedFields = fields.map(f =>
+                                                            f.id === selectedFieldId ? { ...f, required: !f.required } : f
+                                                        );
+                                                        setFields(updatedFields);
+                                                    }}
+                                                ></span>
                                             </div>
                                         </div>
                                     </>
