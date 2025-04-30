@@ -61,7 +61,7 @@
     align-items: center;
     width: 100%;
     padding: 8px;
-    border-radius: 5px;
+    border-radius: 10px;
     background-color: #f8f9fa;
     margin-bottom: 10px;
     height: 38px;
@@ -82,9 +82,10 @@
     padding: 5px 25px;
     border: none;
     outline: none;
-    border-radius: 5px;
+    border-radius: 10px;
     font-size: 14px;
     background-color: transparent;
+    cursor: pointer;
 }
 
 /* Profile Section - Stick to the Bottom */

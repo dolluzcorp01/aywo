@@ -34,13 +34,7 @@ const CenteredContainer = styled.div`
   }
 
   @media (max-width: 768px) {
-    position: absolute;
-    left: 5%;
-    transform: none;
-    color: gray;
     font-size: 1rem;
-    padding-left: 5px;
-    padding-right: 10px;
   }
 `;
 
@@ -197,7 +191,7 @@ const Header = () => {
     <Navbar className="header">
       <div className="header-left">
         <a className="navbar-brand" href="#">
-          dFroms
+          dForms
         </a>
       </div>
       <CenteredContainer $isHome={isHome} onClick={() => navigate("/home")}>

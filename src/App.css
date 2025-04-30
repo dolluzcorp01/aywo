@@ -63,6 +63,13 @@ body,
   height: 100%;
 }
 
+input,
+button,
+textarea,
+select {
+  border-radius: 10px !important;
+}
+
 /* Hide left navbar for portrait mobile view */
 @media (max-width: 768px) {
   .left-navbar {

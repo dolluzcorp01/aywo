@@ -143,7 +143,7 @@ const LeftNavBar = () => {
             {/* Search Bar */}
             <div className="search-container">
                 <i className="fa fa-search search-icon"></i>
-                <input type="text" className="search-input" placeholder="Search..." readOnly style={{ cursor: "pointer" }} onClick={() => window.dispatchEvent(new Event('openSearchPopup'))} />
+                <input type="text" className="search-input" placeholder="Search..." readOnly onClick={() => window.dispatchEvent(new Event('openSearchPopup'))} />
             </div>
             {/* Navigation Items */}
             <div className="nav-content">

@@ -489,7 +489,7 @@ function Login() {
                   <div className="input-group mt-2">
                     <label htmlFor="username">Username</label>
                     <div className="input-container">
-                      <input type="text" id="username" className="form-control" 
+                      <input type="text" id="username" className="form-control"
                         value={username} onChange={(e) => setUsername(e.target.value)}
                       />
                     </div>
@@ -498,7 +498,7 @@ function Login() {
                   <div className="input-group">
                     <label htmlFor="email">Email</label>
                     <div className="input-container">
-                      <input type="email" id="email" className="form-control" 
+                      <input type="email" id="email" className="form-control"
                         value={email} onChange={(e) => setEmail(e.target.value)}
                       />
                     </div>
@@ -534,7 +534,7 @@ function Login() {
 
             {showLoginSection && (
               <div id="login-section">
-                <h4 className="card-title text-center my-3 font-weight-bold">Sign in to dFroms</h4>
+                <h4 className="card-title text-center my-3 font-weight-bold">Sign in to dForms</h4>
                 <button onClick={handleGoogleSignIp} className="googleauthbtn">
                   <img src={Google_icon} alt="Google" style={{ width: "30px", height: "30px" }} className="google-icon" />
                   Sign in with Google
@@ -601,7 +601,7 @@ function Login() {
                     <h4 className="text-center my-3 font-weight-bold">Login via OTP</h4>
                     <div className="form-group mt-4">
                       <label htmlFor="otp-input">Enter your Email</label>
-                      <input type="text" id="otp-input" className="form-control" placeholder="Email" value={otpInput} onChange={(e) => setOtpInput(e.target.value)} />
+                      <input type="text" id="otp-input" className="form-control" value={otpInput} onChange={(e) => setOtpInput(e.target.value)} />
                     </div>
 
                     {/* alert messages */}
@@ -621,7 +621,7 @@ function Login() {
                   <div id="otp-verification-section">
                     <div className="form-group mt-3">
                       <label htmlFor="otp-code">Enter OTP</label>
-                      <input type="text" id="otp-code" className="form-control" placeholder="Enter OTP" value={otpCode} onChange={handleOtpInputChange} />
+                      <input type="text" id="otp-code" className="form-control" value={otpCode} onChange={handleOtpInputChange} />
                       <small id="otp-timer" style={{ display: timeLeft > 0 ? "block" : "none", color: "red", fontWeight: "bold" }}>{`Time left: ${timeLeft} sec`}</small>
                     </div>
 
@@ -635,10 +635,10 @@ function Login() {
 
                 {showChangePasswordSection && (
                   <div id="change-password-section">
-                    <h4 className="text-center my-3 font-weight-bold">Change New Password</h4>
+                    <h4 className="text-center my-3 font-weight-bold">Change Password</h4>
                     <div className="form-group mt-4">
                       <label htmlFor="old-password">Enter Old Password</label>
-                      <input type="password" id="old-password" className="form-control" placeholder="Enter Old Password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
+                      <input type="password" id="old-password" className="form-control" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
                     </div>
 
                     {/* alert messages */}
@@ -654,7 +654,7 @@ function Login() {
                   <div id="new-password-section">
                     <div className="form-group mt-3">
                       <label htmlFor="new-password">Enter New Password</label>
-                      <input type="password" id="new-password" className="form-control" placeholder="Enter New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                      <input type="password" id="new-password" className="form-control" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                     </div>
 
                     {/* alert messages */}
@@ -670,7 +670,7 @@ function Login() {
 
           <div style={{ textAlign: "center" }}>
             <span style={{ color: "gray", fontSize: "0.7rem", display: "block", marginTop: "-20px" }}>
-              By using dFroms, you are agreeing to our{" "}
+              By using dForms, you are agreeing to our{" "}
               <a
                 href="#"
                 style={{ color: "gray", textDecoration: "underline" }}

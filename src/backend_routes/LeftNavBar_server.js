@@ -22,7 +22,7 @@ router.get('/get-user-profile', verifyJWT, (req, res) => {
     const db = getDBConnection('form_builder');
 
     const query = `
-        SELECT user_id, user_name, LEFT(user_name, 1) AS profile_letters
+        SELECT user_id, user_name
         FROM form_builder.users WHERE user_id = ?;
     `;
 
@@ -34,13 +34,25 @@ router.get('/get-user-profile', verifyJWT, (req, res) => {
 
         if (results.length > 0) {
             let user = results[0];
-            user.profile_color = generateColorFromText(user.user_name); // ✅ Generate color dynamically
+
+            // 🟢 Capitalize and limit to first two words
+            let nameParts = user.user_name
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+
+            user.user_name = nameParts.slice(0, 2).join(' '); // Only keep first two names
+
+            // 🟡 First letter only for profile display
+            user.profile_letters = user.user_name.charAt(0).toUpperCase();
+
+            // ✅ Generate profile color
+            user.profile_color = generateColorFromText(user.user_name);
+
             return res.json(user);
         } else {
             return res.status(404).json({ error: 'Profile not found' });
         }
     });
-
 });
 
 // ✅ Logout API
