@@ -12,6 +12,7 @@ import {
     FaClock, FaRegClock, FaCalendarCheck, FaSortNumericDown, FaStar, FaSlidersH, FaSmile,
     FaEquals, FaBars, FaMapMarkerAlt, FaVideo, FaFilePdf, FaMinus, FaTimes
 } from "react-icons/fa";
+import { ChromePicker } from 'react-color';
 import Select from 'react-select';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import "./Form_builder.css";
@@ -64,6 +65,8 @@ const FormBuilder = () => {
     const [showDesignSidebar, setShowDesignSidebar] = useState(false);
     const [showFieldSidebar, setShowFieldSidebar] = useState(true);
     const [activeTab, setActiveTab] = useState("current");
+
+    const [activeColorPicker, setActiveColorPicker] = useState(null);
 
     const [fields, setFields] = useState([]);
     const [fieldTypeMenu, setFieldTypeMenu] = useState(null); // stores id of field and position
@@ -1562,6 +1565,29 @@ const FormBuilder = () => {
         setFields(updatedFields);
     };
 
+    const colorOptions = [
+        { label: "Background", key: "background" },
+        { label: "Questions background", key: "questionsBackground" },
+        { label: "Primary", key: "primary", info: "Border color for inputs, default color for buttons and other primary elements." },
+        { label: "Questions", key: "questions" },
+        { label: "Answers", key: "answers" }
+    ];
+
+    const [colors, setColors] = useState({
+        background: "#ffffff",
+        questionsBackground: "#f1f1f1",
+        primary: "#007bff",
+        questions: "#333333",
+        answers: "#000000",
+    });
+
+    const handleColorChange = (key, value) => {
+        setColors((prevColors) => ({
+            ...prevColors,
+            [key]: value,
+        }));
+    };
+
     if (loading) return <p>Loading...</p>;
 
     return (
@@ -1743,37 +1769,58 @@ const FormBuilder = () => {
                             <div style={{ padding: "14px" }}>
                                 {activeTab === "current" ? (
                                     <>
-                                        {/* Light Theme */}
-                                        <div style={{ fontWeight: "bold", marginBottom: "10px" }}>Light</div>
+                                        {colorOptions.map(({ label, key, info }) => (
+                                            <div key={key} style={{ position: "relative", marginBottom: "20px" }}>
+                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                                    <div>
+                                                        {label}
+                                                        {info && (
+                                                            <i
+                                                                className="fa-solid fa-circle-question"
+                                                                style={{
+                                                                    fontSize: "12px",
+                                                                    marginLeft: "6px",
+                                                                    color: "#555",
+                                                                    cursor: "pointer"
+                                                                }}
+                                                                title={info}
+                                                            ></i>
+                                                        )}
+                                                    </div>
+                                                    <div
+                                                        onClick={() => setActiveColorPicker(key)}
+                                                        style={{
+                                                            width: "30px",
+                                                            height: "25px",
+                                                            backgroundColor: colors[key],
+                                                            border: "1px solid #ccc",
+                                                            borderRadius: "4px",
+                                                            cursor: "pointer",
+                                                            marginLeft: "10px"
+                                                        }}
+                                                    />
+                                                </div>
 
-                                        {/* Options */}
-                                        <div style={{ marginBottom: "10px" }}>
-                                            <div>Background</div>
-                                            <input type="color" style={{ width: "100%" }} />
-                                        </div>
+                                                {/* Only show picker if this key is active */}
+                                                {activeColorPicker === key && (
+                                                    <div style={{ position: "absolute", zIndex: 1000 }}>
+                                                        <ChromePicker
+                                                            color={colors[key]}
+                                                            onChange={(updatedColor) => handleColorChange(key, updatedColor.hex)}
+                                                        />
+                                                        <div
+                                                            onClick={() => setActiveColorPicker(null)}
+                                                            style={{ marginTop: "5px", color: "#374151", cursor: "pointer", fontSize: "12px" }}
+                                                        >
+                                                            Close
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
 
                                         <div style={{ marginBottom: "10px" }}>
-                                            <div>Questions Background</div>
-                                            <input type="color" style={{ width: "100%" }} />
-                                        </div>
-
-                                        <div style={{ marginBottom: "10px" }}>
-                                            <div>Primary</div>
-                                            <input type="color" style={{ width: "100%" }} />
-                                        </div>
-
-                                        <div style={{ marginBottom: "10px" }}>
-                                            <div>Questions</div>
-                                            <input type="color" style={{ width: "100%" }} />
-                                        </div>
-
-                                        <div style={{ marginBottom: "10px" }}>
-                                            <div>Answers</div>
-                                            <input type="color" style={{ width: "100%" }} />
-                                        </div>
-
-                                        <div style={{ marginBottom: "10px" }}>
-                                            <div>Font</div>
+                                            <div style={{ marginBottom: "10px" }}>Font</div>
                                             <input type="text" placeholder="Default" style={{ width: "100%", padding: "5px" }} />
                                         </div>
                                     </>
