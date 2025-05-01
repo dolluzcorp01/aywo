@@ -1,4 +1,3 @@
-import React, { useState, useEffect } from "react";
 import { Rnd } from "react-rnd";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { apiFetch } from "./utils/api";
@@ -12,6 +11,7 @@ import {
     FaClock, FaRegClock, FaCalendarCheck, FaSortNumericDown, FaStar, FaSlidersH, FaSmile,
     FaEquals, FaBars, FaMapMarkerAlt, FaVideo, FaFilePdf, FaMinus, FaTimes
 } from "react-icons/fa";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { ChromePicker } from 'react-color';
 import Select from 'react-select';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
@@ -67,14 +67,21 @@ const FormBuilder = () => {
     const [activeTab, setActiveTab] = useState("current");
 
     const [activeColorPicker, setActiveColorPicker] = useState(null);
+    const pickerRef = useRef(null);
 
     const [fields, setFields] = useState([]);
     const [fieldTypeMenu, setFieldTypeMenu] = useState(null); // stores id of field and position
     const [hovered, setHovered] = useState(null);
     const [editImageOption, setEditImageOption] = useState(null);
 
+    const [focusedFieldId, setFocusedFieldId] = useState(null);
+
     const [formBgColor, setFormBgColor] = useState("lightgray");
     const [formColor, setformColor] = useState("white");
+    const [formPrimaryColor, setformPrimaryColor] = useState("#3B82F6");
+    const [isFocused, setIsFocused] = useState("rgba(75, 85, 99, 0.2)");
+    const [formQuestionColor, setformQuestionColor] = useState("black");
+    const [formAnswersColor, setformAnswersColor] = useState("black");
 
     const [searchTerm, setSearchTerm] = useState("");
     const [lastPosition, setLastPosition] = useState({ x: 50, y: 80 });
@@ -144,7 +151,13 @@ const FormBuilder = () => {
     );
 
     useEffect(() => {
-        const handleClickOutside = () => setFieldTypeMenu(null);
+        const handleClickOutside = (event) => {
+            if (pickerRef.current && !pickerRef.current.contains(event.target)) {
+                setActiveColorPicker(null);
+            }
+            setFieldTypeMenu(null);
+        };
+
         window.addEventListener("click", handleClickOutside);
         return () => window.removeEventListener("click", handleClickOutside);
     }, []);
@@ -338,12 +351,24 @@ const FormBuilder = () => {
         setCustomizeVisible(true);
     };
 
+    useEffect(() => {
+        document.documentElement.style.setProperty('--form-primary-color', formPrimaryColor);
+    }, [formPrimaryColor]);
+
     const renderField = (field) => {
         const commonProps = {
             className: "form-control",
             placeholder: field.placeholder || "",
             defaultValue: field.defaultValue || "",
-            style: { width: field.halfWidth ? "50%" : "100%" }
+            style: {
+                width: field.halfWidth ? "50%" : "100%",
+                color: formAnswersColor,
+                backgroundColor: inputfieldBgColor,
+                boxShadow: "none",
+                border: `1px solid ${focusedFieldId === field.id ? formPrimaryColor : "rgba(75, 85, 99, 0.2)"}`,
+            },
+            onFocus: () => setFocusedFieldId(field.id),
+            onBlur: () => setFocusedFieldId(null),
         };
 
         switch (field.type) {
@@ -407,7 +432,6 @@ const FormBuilder = () => {
                             minHeight: "80px",
                             fontSize: "1rem",
                             padding: "8px",
-                            border: "1px solid #ccc",
                             borderRadius: "6px"
                         }}
                     />
@@ -532,6 +556,7 @@ const FormBuilder = () => {
                             type="checkbox"
                             className="form-check-input"
                             id={`checkbox-${field.id}`}
+                            style={{ accentColor: formPrimaryColor }}
                         />
                     </div>
                 );
@@ -542,33 +567,61 @@ const FormBuilder = () => {
                             type="checkbox"
                             className="form-check-input"
                             id={`checkbox-${field.id}-${idx}`}
+                            style={{ accentColor: formPrimaryColor }}
                         />
                         <label className="form-check-label" htmlFor={`checkbox-${field.id}-${idx}`}>{opt}</label>
                     </div>
                 ));
             case "Dropdown":
                 const optionsList = field.options.map(opt => ({ value: opt, label: opt }));
-
                 return (
-                    <Select
-                        options={optionsList}
-                        isClearable
-                        placeholder={field.placeholder || "Select an option..."}
-                        onChange={(selectedOption) => {
-                            const updatedFields = fields.map(f => {
-                                if (f.id === field.id) {
-                                    return { ...f, value: selectedOption ? selectedOption.value : "" };
-                                }
-                                return f;
-                            });
-                            setFields(updatedFields);
-                        }}
-                        value={
-                            field.value
-                                ? { value: field.value, label: field.value }
-                                : null
-                        }
-                    />
+                    <div onFocus={() => setFocusedFieldId(field.id)} onBlur={() => setFocusedFieldId(null)}>
+                        <Select
+                            options={optionsList}
+                            isClearable
+                            placeholder={field.placeholder || "Select an option..."}
+                            onChange={(selectedOption) => {
+                                const updatedFields = fields.map(f => {
+                                    if (f.id === field.id) {
+                                        return { ...f, value: selectedOption ? selectedOption.value : "" };
+                                    }
+                                    return f;
+                                });
+                                setFields(updatedFields);
+                            }}
+                            value={
+                                field.value
+                                    ? { value: field.value, label: field.value }
+                                    : null
+                            }
+                            styles={{
+                                control: (base, state) => ({
+                                    ...base,
+                                    border: `1px solid ${focusedFieldId === field.id ? formPrimaryColor : "rgba(75, 85, 99, 0.2)"}`,
+                                    boxShadow: "none",
+                                    backgroundColor: inputfieldBgColor,
+                                    color: formAnswersColor,
+                                    "&:hover": {
+                                        border: `1px solid ${formPrimaryColor}`
+                                    }
+                                }),
+                                option: (base, state) => ({
+                                    ...base,
+                                    backgroundColor: state.isFocused || state.isSelected ? formPrimaryColor : "white",
+                                    color: state.isFocused || state.isSelected ? "white" : "black",
+                                    cursor: "pointer",
+                                }),
+                                singleValue: (base) => ({
+                                    ...base,
+                                    color: formAnswersColor,
+                                }),
+                                placeholder: (base) => ({
+                                    ...base,
+                                    color: "#888"
+                                })
+                            }}
+                        />
+                    </div>
                 );
             case "Multiple Select":
                 return (
@@ -578,6 +631,33 @@ const FormBuilder = () => {
                         className="basic-multi-select"
                         classNamePrefix="select"
                         placeholder={field.placeholder || "Select an option..."}
+                        styles={{
+                            multiValue: (base) => ({
+                                ...base,
+                                backgroundColor: formPrimaryColor,
+                            }),
+                            multiValueLabel: (base) => ({
+                                ...base,
+                                color: formAnswersColor, // <-- apply formAnswersColor here
+                            }),
+                            multiValueRemove: (base) => ({
+                                ...base,
+                                color: formAnswersColor,
+                                ':hover': {
+                                    backgroundColor: "#fff",
+                                    color: formPrimaryColor
+                                }
+                            }),
+                            option: (base, { isSelected, isFocused }) => ({
+                                ...base,
+                                color: formAnswersColor,
+                                backgroundColor: isSelected
+                                    ? formPrimaryColor
+                                    : isFocused
+                                        ? "#f0f0f0"
+                                        : "#fff",
+                            })
+                        }}
                     />
                 );
             case "Switch":
@@ -596,6 +676,11 @@ const FormBuilder = () => {
                                         : f
                                 );
                                 setFields(updatedFields);
+                            }}
+                            style={{
+                                backgroundColor: field.defaultValue === "true" ? formPrimaryColor : "",
+                                borderColor: formPrimaryColor,
+                                boxShadow: "none",
                             }}
                         />
                     </div>
@@ -626,8 +711,21 @@ const FormBuilder = () => {
                                         className="form-check-input"
                                         name={`field_${field.id}`}
                                         id={`bubble-radio-${field.id}-${idx}`}
-                                        style={{ marginRight: "8px" }}
+                                        checked={field.selectedOption === idx}
+                                        onChange={() => {
+                                            const updatedFields = fields.map(f =>
+                                                f.id === field.id ? { ...f, selectedOption: idx } : f
+                                            );
+                                            setFields(updatedFields);
+                                        }}
+                                        style={{
+                                            marginRight: "8px",
+                                            boxShadow: "none",
+                                            borderColor: field.selectedOption === idx ? formPrimaryColor : "#ccc",
+                                            backgroundColor: field.selectedOption === idx ? formPrimaryColor : "transparent",
+                                        }}
                                     />
+
                                     <input
                                         type="text"
                                         value={opt}
@@ -681,6 +779,19 @@ const FormBuilder = () => {
                                         className="form-check-input"
                                         name={`field_${field.id}`}
                                         id={`standard-radio-${field.id}-${idx}`}
+                                        checked={field.selectedOption === idx}
+                                        onChange={() => {
+                                            const updatedFields = fields.map(f =>
+                                                f.id === field.id ? { ...f, selectedOption: idx } : f
+                                            );
+                                            setFields(updatedFields);
+                                        }}
+                                        style={{
+                                            marginRight: "8px",
+                                            boxShadow: "none",
+                                            borderColor: field.selectedOption === idx ? formPrimaryColor : "#ccc",
+                                            backgroundColor: field.selectedOption === idx ? formPrimaryColor : "transparent",
+                                        }}
                                     />
                                     <input
                                         type="text"
@@ -824,7 +935,25 @@ const FormBuilder = () => {
                                                     type="radio"
                                                     name={`Matrix_${field.id}_row_${rowIdx}`}
                                                     value={col}
-                                                    className="Matrix-radio"
+                                                    checked={field.selectedMatrix?.[rowIdx] === colIdx}
+                                                    onChange={() => {
+                                                        const updatedFields = fields.map(f => {
+                                                            if (f.id === field.id) {
+                                                                const newMatrix = [...(f.selectedMatrix || [])];
+                                                                newMatrix[rowIdx] = colIdx;
+                                                                return { ...f, selectedMatrix: newMatrix };
+                                                            }
+                                                            return f;
+                                                        });
+                                                        setFields(updatedFields);
+                                                    }}
+                                                    className="form-check-input"
+                                                    style={{
+                                                        marginRight: "8px",
+                                                        boxShadow: "none",
+                                                        borderColor: (field.selectedMatrix?.[rowIdx] === colIdx) ? formPrimaryColor : "#ccc",
+                                                        backgroundColor: (field.selectedMatrix?.[rowIdx] === colIdx) ? formPrimaryColor : "transparent",
+                                                    }}
                                                 />
                                             </td>
                                         ))}
@@ -909,8 +1038,8 @@ const FormBuilder = () => {
             case "Date Range":
                 return (
                     <div className="d-flex gap-2">
-                        <input type="date" className="form-control" placeholder="From" />
-                        <input type="date" className="form-control" placeholder="To" />
+                        <input type="date"  {...commonProps} className="form-control" placeholder="From" />
+                        <input type="date"  {...commonProps} className="form-control" placeholder="To" />
                     </div>
                 );
             case "Long Answer":
@@ -919,6 +1048,7 @@ const FormBuilder = () => {
                 return (
                     <input
                         type="file"
+                        {...commonProps}
                         accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,image/*"
                         className="form-control-file"
                     />
@@ -1295,7 +1425,25 @@ const FormBuilder = () => {
                                         </button>
                                     </div>
                                     <div style={{ textAlign: "center", marginTop: "8px" }}>
-                                        <input type="radio" name={`pic_${field.id}`} />
+                                        <input
+                                            type="radio"
+                                            className="form-check-input"
+                                            name={`pic_${field.id}`}
+                                            id={`bubble-radio-${field.id}-${idx}`}
+                                            checked={field.selectedOption === idx}
+                                            onChange={() => {
+                                                const updatedFields = fields.map(f =>
+                                                    f.id === field.id ? { ...f, selectedOption: idx } : f
+                                                );
+                                                setFields(updatedFields);
+                                            }}
+                                            style={{
+                                                marginRight: "8px",
+                                                boxShadow: "none",
+                                                borderColor: field.selectedOption === idx ? formPrimaryColor : "#ccc",
+                                                backgroundColor: field.selectedOption === idx ? formPrimaryColor : "transparent",
+                                            }}
+                                        />
                                         <span style={{ marginLeft: "6px" }}>{opt.label}</span>
                                     </div>
                                 </div>
@@ -1581,11 +1729,54 @@ const FormBuilder = () => {
         answers: "#000000",
     });
 
+    const inputfieldBgColor = useMemo(() => getTextColor(formColor), [formColor]);
+
+    function getTextColor(bgColor, overlayOpacity = 0.09) {
+        if (!bgColor) return "#000000";
+
+        // Convert hex to RGB
+        const color = bgColor.startsWith("#") ? bgColor.slice(1) : bgColor;
+        const r = parseInt(color.substring(0, 2), 16);
+        const g = parseInt(color.substring(2, 4), 16);
+        const b = parseInt(color.substring(4, 6), 16);
+
+        // White color for blending
+        const whiteR = 255;
+        const whiteG = 255;
+        const whiteB = 255;
+
+        // Blend formula: result = (1 - alpha) * base + alpha * white
+        const mixedR = Math.round((1 - overlayOpacity) * r + overlayOpacity * whiteR);
+        const mixedG = Math.round((1 - overlayOpacity) * g + overlayOpacity * whiteG);
+        const mixedB = Math.round((1 - overlayOpacity) * b + overlayOpacity * whiteB);
+
+        // Convert back to hex
+        const toHex = (val) => val.toString(16).padStart(2, '0');
+        return `#${toHex(mixedR)}${toHex(mixedG)}${toHex(mixedB)}`;
+    }
+
     const handleColorChange = (key, value) => {
         setColors((prevColors) => ({
             ...prevColors,
             [key]: value,
         }));
+
+        // Apply to specific UI sections
+        if (key === "background") {
+            setFormBgColor(value);
+        }
+        if (key === "questionsBackground") {
+            setformColor(value);
+        }
+        if (key === "primary") {
+            setformPrimaryColor(value);
+        }
+        if (key === "questions") {
+            setformQuestionColor(value);
+        }
+        if (key === "answers") {
+            setformAnswersColor(value);
+        }
     };
 
     if (loading) return <p>Loading...</p>;
@@ -1771,7 +1962,13 @@ const FormBuilder = () => {
                                     <>
                                         {colorOptions.map(({ label, key, info }) => (
                                             <div key={key} style={{ position: "relative", marginBottom: "20px" }}>
-                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                                <div
+                                                    style={{
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "space-between"
+                                                    }}
+                                                >
                                                     <div>
                                                         {label}
                                                         {info && (
@@ -1788,7 +1985,10 @@ const FormBuilder = () => {
                                                         )}
                                                     </div>
                                                     <div
-                                                        onClick={() => setActiveColorPicker(key)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation(); // Prevent triggering outside click
+                                                            setActiveColorPicker(key);
+                                                        }}
                                                         style={{
                                                             width: "30px",
                                                             height: "25px",
@@ -1801,16 +2001,32 @@ const FormBuilder = () => {
                                                     />
                                                 </div>
 
-                                                {/* Only show picker if this key is active */}
                                                 {activeColorPicker === key && (
-                                                    <div style={{ position: "absolute", zIndex: 1000 }}>
+                                                    <div
+                                                        ref={pickerRef}
+                                                        style={{
+                                                            position: "absolute",
+                                                            top: "30px",
+                                                            right: "0%",
+                                                            marginLeft: "10px",
+                                                            zIndex: 9999,
+                                                        }}
+                                                        onClick={(e) => e.stopPropagation()} // Prevent closing on inner click
+                                                    >
                                                         <ChromePicker
                                                             color={colors[key]}
-                                                            onChange={(updatedColor) => handleColorChange(key, updatedColor.hex)}
+                                                            onChange={(updatedColor) =>
+                                                                handleColorChange(key, updatedColor.hex)
+                                                            }
                                                         />
                                                         <div
                                                             onClick={() => setActiveColorPicker(null)}
-                                                            style={{ marginTop: "5px", color: "#374151", cursor: "pointer", fontSize: "12px" }}
+                                                            style={{
+                                                                marginTop: "5px",
+                                                                color: "#374151",
+                                                                cursor: "pointer",
+                                                                fontSize: "12px"
+                                                            }}
                                                         >
                                                             Close
                                                         </div>
@@ -1860,6 +2076,7 @@ const FormBuilder = () => {
                                                                 className="form-field-wrapper"
                                                                 ref={provided.innerRef}
                                                                 {...provided.draggableProps}
+                                                                style={{ backgroundColor: formColor }}
                                                                 onClick={() => handleFieldClick(field.id)}
                                                             >
                                                                 <div className="drag-handle" {...provided.dragHandleProps}>
@@ -1884,7 +2101,8 @@ const FormBuilder = () => {
                                                                                     border: "none",
                                                                                     background: "transparent",
                                                                                     width: "fit-content",
-                                                                                    marginBottom: "2px"
+                                                                                    marginBottom: "2px",
+                                                                                    color: formQuestionColor,
                                                                                 }}
                                                                             />
                                                                             {field.required && <span style={{ color: 'red' }}>*</span>}
