@@ -75,6 +75,8 @@ const FormBuilder = () => {
     const [editImageOption, setEditImageOption] = useState(null);
 
     const [focusedFieldId, setFocusedFieldId] = useState(null);
+    const [focusedOptionId, setFocusedOptionId] = useState(null);
+    const [focusedSubField, setFocusedSubField] = useState(null);
 
     const [formBgColor, setFormBgColor] = useState("lightgray");
     const [formColor, setformColor] = useState("white");
@@ -569,7 +571,7 @@ const FormBuilder = () => {
                             id={`checkbox-${field.id}-${idx}`}
                             style={{ accentColor: formPrimaryColor }}
                         />
-                        <label className="form-check-label" htmlFor={`checkbox-${field.id}-${idx}`}>{opt}</label>
+                        <label className="form-check-label" style={{ color: formAnswersColor }} htmlFor={`checkbox-${field.id}-${idx}`}>{opt}</label>
                     </div>
                 ));
             case "Dropdown":
@@ -744,6 +746,7 @@ const FormBuilder = () => {
                                             outline: "none",
                                             flexGrow: 1,
                                             minWidth: "50px",
+                                            color: formPrimaryColor,
                                         }}
                                     />
                                     <button
@@ -811,7 +814,8 @@ const FormBuilder = () => {
                                             width: "auto",
                                             minWidth: "50px",
                                             padding: "2px 4px",
-                                            background: "transparent"
+                                            background: "transparent",
+                                            color: formAnswersColor,
                                         }}
                                     />
                                     <button
@@ -1105,7 +1109,7 @@ const FormBuilder = () => {
                                                         {/* Editable input */}
                                                         <input
                                                             type="text"
-                                                            className="form-control"
+                                                            {...commonProps}
                                                             value={opt}
                                                             onChange={(e) => {
                                                                 const updatedOptions = [...field.options];
@@ -1116,11 +1120,25 @@ const FormBuilder = () => {
                                                                 );
                                                                 setFields(updatedFields);
                                                             }}
-                                                            style={{ flex: 1 }}
+                                                            onFocus={() => setFocusedOptionId(idx)} // Focus on this specific option
+                                                            onBlur={() => setFocusedOptionId(null)} // Reset focus
+                                                            style={{
+                                                                flex: 1,
+                                                                width: field.halfWidth ? "50%" : "100%",
+                                                                color: formAnswersColor,
+                                                                backgroundColor: inputfieldBgColor,
+                                                                boxShadow: "none",
+                                                                border: `1px solid ${focusedOptionId === idx
+                                                                    ? formPrimaryColor
+                                                                    : "rgba(75, 85, 99, 0.2)"}`
+                                                            }}
                                                         />
 
                                                         {/* Drag handle */}
-                                                        <span {...provided.dragHandleProps} style={{ cursor: "grab", color: "gray" }}>
+                                                        <span
+                                                            {...provided.dragHandleProps}
+                                                            style={{ cursor: "grab", color: "gray" }}
+                                                        >
                                                             <i className="fas fa-grip-vertical"></i>
                                                         </span>
 
@@ -1152,7 +1170,10 @@ const FormBuilder = () => {
                                                 f.id === field.id
                                                     ? {
                                                         ...f,
-                                                        options: [...f.options, `Option ${f.options.length + 1}`]
+                                                        options: [
+                                                            ...f.options,
+                                                            `Option ${f.options.length + 1}`,
+                                                        ]
                                                     }
                                                     : f
                                             );
@@ -1163,7 +1184,7 @@ const FormBuilder = () => {
                                             color: "#2563eb",
                                             textDecoration: "underline",
                                             background: "none",
-                                            border: "none"
+                                            border: "none",
                                         }}
                                     >
                                         Add option
@@ -1193,10 +1214,10 @@ const FormBuilder = () => {
                                         color:
                                             hovered != null
                                                 ? i <= hovered
-                                                    ? "rgb(59, 130, 246)"
+                                                    ? formPrimaryColor
                                                     : "#ccc"
                                                 : i < field.value
-                                                    ? "rgb(59, 130, 246)"
+                                                    ? formPrimaryColor
                                                     : "#ccc",
                                         cursor: "pointer",
                                         transition: "color 0.2s",
@@ -1223,7 +1244,7 @@ const FormBuilder = () => {
                 const percentage = ((currentValue - field.min) / (field.max - field.min)) * 100;
 
                 const sliderStyle = {
-                    background: `linear-gradient(to right, rgb(59, 130, 246) 0%, rgb(59, 130, 246) ${percentage}%, #e5e7eb ${percentage}%, #e5e7eb 100%)`
+                    background: `linear-gradient(to right, ${formPrimaryColor} 0%, ${formPrimaryColor} ${percentage}%, #e5e7eb ${percentage}%, #e5e7eb 100%)`
                 };
 
                 return (
@@ -1244,7 +1265,10 @@ const FormBuilder = () => {
                             max={field.max}
                             value={currentValue}
                             className="custom-slider"
-                            style={sliderStyle}  // ← THIS updates the fill color dynamically
+                            style={{
+                                ...sliderStyle,
+                                '--slider-thumb-border': formPrimaryColor
+                            }}
                             onChange={(e) => {
                                 const updatedFields = fields.map(f =>
                                     f.id === field.id ? { ...f, value: parseInt(e.target.value) } : f
@@ -1278,6 +1302,9 @@ const FormBuilder = () => {
                                             );
                                             setFields(updatedFields);
                                         }}
+                                        style={{
+                                            accentColor: formPrimaryColor,
+                                        }}
                                     />
                                     <div>{val}</div>
                                 </label>
@@ -1299,6 +1326,21 @@ const FormBuilder = () => {
                                 );
                                 setFields(updatedFields);
                             }}
+                            onFocus={() => {
+                                setFocusedFieldId(field.id);
+                                setFocusedSubField("address");
+                            }}
+                            onBlur={() => setFocusedSubField(null)}
+                            style={{
+                                width: "100%",
+                                color: formAnswersColor,
+                                backgroundColor: inputfieldBgColor,
+                                boxShadow: "none",
+                                border: `1px solid ${focusedFieldId === field.id && focusedSubField === "address"
+                                    ? formPrimaryColor
+                                    : "rgba(75, 85, 99, 0.2)"
+                                    }`,
+                            }}
                         />
 
                         <div className="d-flex gap-2">
@@ -1313,6 +1355,20 @@ const FormBuilder = () => {
                                     );
                                     setFields(updatedFields);
                                 }}
+                                onFocus={() => {
+                                    setFocusedFieldId(field.id);
+                                    setFocusedSubField("city");
+                                }}
+                                onBlur={() => setFocusedSubField(null)}
+                                style={{
+                                    color: formAnswersColor,
+                                    backgroundColor: inputfieldBgColor,
+                                    boxShadow: "none",
+                                    border: `1px solid ${focusedFieldId === field.id && focusedSubField === "city"
+                                        ? formPrimaryColor
+                                        : "rgba(75, 85, 99, 0.2)"
+                                        }`,
+                                }}
                             />
                             <input
                                 type="text"
@@ -1325,6 +1381,20 @@ const FormBuilder = () => {
                                     );
                                     setFields(updatedFields);
                                 }}
+                                onFocus={() => {
+                                    setFocusedFieldId(field.id);
+                                    setFocusedSubField("state");
+                                }}
+                                onBlur={() => setFocusedSubField(null)}
+                                style={{
+                                    color: formAnswersColor,
+                                    backgroundColor: inputfieldBgColor,
+                                    boxShadow: "none",
+                                    border: `1px solid ${focusedFieldId === field.id && focusedSubField === "state"
+                                        ? formPrimaryColor
+                                        : "rgba(75, 85, 99, 0.2)"
+                                        }`,
+                                }}
                             />
                             <input
                                 type="text"
@@ -1336,6 +1406,20 @@ const FormBuilder = () => {
                                         f.id === field.id ? { ...f, zip: e.target.value } : f
                                     );
                                     setFields(updatedFields);
+                                }}
+                                onFocus={() => {
+                                    setFocusedFieldId(field.id);
+                                    setFocusedSubField("zip");
+                                }}
+                                onBlur={() => setFocusedSubField(null)}
+                                style={{
+                                    color: formAnswersColor,
+                                    backgroundColor: inputfieldBgColor,
+                                    boxShadow: "none",
+                                    border: `1px solid ${focusedFieldId === field.id && focusedSubField === "zip"
+                                        ? formPrimaryColor
+                                        : "rgba(75, 85, 99, 0.2)"
+                                        }`,
                                 }}
                             />
                         </div>
@@ -1514,7 +1598,8 @@ const FormBuilder = () => {
                                     width: `${field.previewSize}px`,
                                     maxHeight: `${field.previewSize}px`,
                                     objectFit: "contain",
-                                    borderRadius: "8px"
+                                    borderRadius: "8px",
+                                    boxShadow: "none",
                                 }}
                             />
                         ) : (
@@ -1524,6 +1609,7 @@ const FormBuilder = () => {
                         <input
                             type="file"
                             accept="image/*"
+                            {...commonProps}
                             onChange={(e) => {
                                 const file = e.target.files[0];
                                 if (file) {
@@ -1566,6 +1652,7 @@ const FormBuilder = () => {
                         <input
                             type="file"
                             accept="video/*"
+                            {...commonProps}
                             onChange={(e) => {
                                 const file = e.target.files[0];
                                 if (file) {
@@ -1604,6 +1691,7 @@ const FormBuilder = () => {
                         <input
                             type="file"
                             accept="application/pdf"
+                            {...commonProps}
                             onChange={(e) => {
                                 const file = e.target.files[0];
                                 if (file) {

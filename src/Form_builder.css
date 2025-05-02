@@ -519,6 +519,36 @@
     border-color: var(--formPrimaryColor, #2563eb);
 }
 
+.custom-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 5px;
+    outline: none;
+}
+
+/* Chrome, Safari, Edge */
+.custom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--slider-thumb-border);
+    cursor: pointer;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Firefox */
+.custom-slider::-moz-range-thumb {
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--slider-thumb-border);
+    cursor: pointer;
+}
+
 .theme-button {
     position: absolute;
     top: 10px;
