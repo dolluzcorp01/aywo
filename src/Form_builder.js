@@ -1821,6 +1821,8 @@ const FormBuilder = () => {
 
     function getTextColor(bgColor, overlayOpacity = 0.09) {
         if (!bgColor) return "#000000";
+        if (bgColor.toLowerCase() === "white") bgColor = "#ffffff";
+        if (bgColor.toLowerCase() === "#fff") bgColor = "#ffffff";
 
         // Convert hex to RGB
         const color = bgColor.startsWith("#") ? bgColor.slice(1) : bgColor;
@@ -2129,11 +2131,19 @@ const FormBuilder = () => {
                                         </div>
                                     </>
                                 ) : (
-                                    <div style={{ padding: "10px" }}>
+                                    <div className="themediv" style={{ padding: "10px", height: "calc(100vh - 200px)", overflowY: "auto", }}>
                                         {/* Themes list */}
                                         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                                             {/* Light Theme */}
-                                            <div style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#fff", position: "relative", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
+                                            <div
+                                                onClick={() => {
+                                                    setFormBgColor("#f8f9fa");
+                                                    setformColor("#fff");
+                                                    setformPrimaryColor("#3b82f6");
+                                                    setformQuestionColor("black");
+                                                    setformAnswersColor("black");
+                                                }}
+                                                style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#fff", position: "relative", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
                                                 <div style={{ fontWeight: "600", color: "gray", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Light</div>
                                                 <div style={{ display: "flex", alignItems: "center", padding: "10px", paddingBottom: "15px", paddingTop: "20px", justifyContent: "space-between" }}>
                                                     <div style={{ display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
@@ -2145,7 +2155,15 @@ const FormBuilder = () => {
                                             </div>
 
                                             {/* Dark Theme */}
-                                            <div style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#111827", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
+                                            <div
+                                                onClick={() => {
+                                                    setFormBgColor("#111827");
+                                                    setformColor("#111827");
+                                                    setformPrimaryColor("#3b82f6");
+                                                    setformQuestionColor("white");
+                                                    setformAnswersColor("white");
+                                                }}
+                                                style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#111827", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
                                                 <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(229, 231, 235, 0.2)" }}>Dark</div>
                                                 <div style={{ display: "flex", alignItems: "center", padding: "10px", paddingBottom: "15px", paddingTop: "20px", justifyContent: "space-between" }}>
                                                     <div style={{ display: "flex", alignItems: "center", border: "1px solid rgba(229, 231, 235, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
@@ -2157,21 +2175,77 @@ const FormBuilder = () => {
                                             </div>
 
                                             {/* Eco-friendly Theme */}
-                                            <div style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#f9fafb", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
+                                            <div
+                                                onClick={() => {
+                                                    setFormBgColor("#f9fafb");
+                                                    setformColor("white");
+                                                    setformPrimaryColor("#2f5f61");
+                                                    setformQuestionColor("#6b7280");
+                                                    setformAnswersColor("#6b7280");
+                                                }}
+                                                style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#f9fafb", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
                                                 <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Eco-friendly</div>
                                                 <div style={{ display: "flex", alignItems: "center", padding: "10px", paddingBottom: "15px", paddingTop: "20px", justifyContent: "space-between" }}>
                                                     <div style={{ display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
                                                         <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
                                                         <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>Text</span>
                                                     </div>
-                                                    <span style={{ backgroundColor: "#065f46", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
+                                                    <span style={{ backgroundColor: "#2f5f61", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
+                                                </div>
+                                            </div>
+
+                                            {/* Navy Pop Theme */}
+                                            <div
+                                                onClick={() => {
+                                                    setFormBgColor("#1e293b");
+                                                    setformColor("#1e293b");
+                                                    setformPrimaryColor("#fbbf24");
+                                                    setformQuestionColor("#cbd5e1");
+                                                    setformAnswersColor("#cbd5e1");
+                                                }}
+                                                style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#1e293b", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
+                                                <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Navy Pop</div>
+                                                <div style={{ backgroundColor: "#1e293b", padding: "10px", paddingBottom: "15px", paddingTop: "20px", borderBottomLeftRadius: "10px", borderBottomRightRadius: "10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                                    <div style={{ backgroundColor: "#334155", display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
+                                                        <i className="fa fa-envelope" style={{ color: "#cbd5e1", marginLeft: "10px" }}></i>
+                                                        <span style={{ color: "#cbd5e1", fontSize: "0.8rem" }}>Text</span>
+                                                    </div>
+                                                    <span style={{ backgroundColor: "#fbbf24", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
+                                                </div>
+                                            </div>
+
+                                            {/* Quiet Sands Theme */}
+                                            <div
+                                                onClick={() => {
+                                                    setFormBgColor("#fefcf8");
+                                                    setformColor("#fefcf8");
+                                                    setformPrimaryColor("#fbbf24");
+                                                    setformQuestionColor("#6b7280");
+                                                    setformAnswersColor("#6b7280");
+                                                }}
+                                                style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#fefcf8", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
+                                                <div style={{ backgroundColor: "#fdfaf5", color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Quiet Sands</div>
+                                                <div style={{ backgroundColor: "#fdfaf5", padding: "10px", paddingBottom: "15px", paddingTop: "20px", borderBottomLeftRadius: "10px", borderBottomRightRadius: "10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                                    <div style={{ backgroundColor: "white", display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
+                                                        <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
+                                                        <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>Text</span>
+                                                    </div>
+                                                    <span style={{ backgroundColor: "#fbbf24", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
                                                 </div>
                                             </div>
 
                                             {/* Charcoal Theme */}
-                                            <div style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#f9fafb", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
-                                                <div style={{ backgroundColor: "#e5e7eb", color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Eco-friendly</div>
-                                                <div style={{ backgroundColor: "#1f2937", padding: "10px", paddingBottom: "15px", paddingTop: "20px", borderBottomLeftRadius: "10px", borderBottomRightRadius: "10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                            <div
+                                                onClick={() => {
+                                                    setFormBgColor("#e5e7eb");
+                                                    setformColor("#2b2b2b");
+                                                    setformPrimaryColor("#000");
+                                                    setformQuestionColor("#e5e7eb");
+                                                    setformAnswersColor("#e5e7eb");
+                                                }}
+                                                style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#e5e7eb", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
+                                                <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Charcoal</div>
+                                                <div style={{ backgroundColor: "#2b2b2b", padding: "10px", paddingBottom: "15px", paddingTop: "20px", borderBottomLeftRadius: "10px", borderBottomRightRadius: "10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                                                     <div style={{ backgroundColor: "white", display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
                                                         <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
                                                         <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>Text</span>
