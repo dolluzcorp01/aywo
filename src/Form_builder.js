@@ -2012,14 +2012,14 @@ const FormBuilder = () => {
                                     style={{
                                         flex: 1,
                                         padding: "5px 10px",
-                                        backgroundColor: "#374151",
-                                        color: "white",
-                                        fontWeight: "bold",
+                                        backgroundColor: activeTab === "current" ? "#374151" : "white",
+                                        color: activeTab === "current" ? "white" : "#374151",
+                                        fontWeight: activeTab === "current" ? "bold" : "500",
                                         border: "1px solid #ccc",
                                         borderRight: "none",
                                         borderTopLeftRadius: "6px",
                                         borderBottomLeftRadius: "6px",
-                                        cursor: "pointer"
+                                        cursor: "pointer",
                                     }}
                                     onClick={() => setActiveTab("current")}
                                 >
@@ -2029,14 +2029,14 @@ const FormBuilder = () => {
                                     style={{
                                         flex: 1,
                                         padding: "5px 10px",
-                                        backgroundColor: "white",
-                                        color: "#374151",
-                                        fontWeight: "500",
+                                        backgroundColor: activeTab === "themes" ? "#374151" : "white",
+                                        color: activeTab === "themes" ? "white" : "#374151",
+                                        fontWeight: activeTab === "themes" ? "bold" : "500",
                                         border: "1px solid #ccc",
                                         borderLeft: "none",
                                         borderTopRightRadius: "6px",
                                         borderBottomRightRadius: "6px",
-                                        cursor: "pointer"
+                                        cursor: "pointer",
                                     }}
                                     onClick={() => setActiveTab("themes")}
                                 >
@@ -2129,8 +2129,58 @@ const FormBuilder = () => {
                                         </div>
                                     </>
                                 ) : (
-                                    <div>
-                                        {/* Empty div for now */}
+                                    <div style={{ padding: "10px" }}>
+                                        {/* Themes list */}
+                                        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                                            {/* Light Theme */}
+                                            <div style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#fff", position: "relative", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
+                                                <div style={{ fontWeight: "600", color: "gray", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Light</div>
+                                                <div style={{ display: "flex", alignItems: "center", padding: "10px", paddingBottom: "15px", paddingTop: "20px", justifyContent: "space-between" }}>
+                                                    <div style={{ display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
+                                                        <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
+                                                        <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>Text</span>
+                                                    </div>
+                                                    <span style={{ backgroundColor: "#3b82f6", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
+                                                </div>
+                                            </div>
+
+                                            {/* Dark Theme */}
+                                            <div style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#111827", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
+                                                <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(229, 231, 235, 0.2)" }}>Dark</div>
+                                                <div style={{ display: "flex", alignItems: "center", padding: "10px", paddingBottom: "15px", paddingTop: "20px", justifyContent: "space-between" }}>
+                                                    <div style={{ display: "flex", alignItems: "center", border: "1px solid rgba(229, 231, 235, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
+                                                        <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
+                                                        <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>Text</span>
+                                                    </div>
+                                                    <span style={{ backgroundColor: "#3b82f6", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
+                                                </div>
+                                            </div>
+
+                                            {/* Eco-friendly Theme */}
+                                            <div style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#f9fafb", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
+                                                <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Eco-friendly</div>
+                                                <div style={{ display: "flex", alignItems: "center", padding: "10px", paddingBottom: "15px", paddingTop: "20px", justifyContent: "space-between" }}>
+                                                    <div style={{ display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
+                                                        <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
+                                                        <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>Text</span>
+                                                    </div>
+                                                    <span style={{ backgroundColor: "#065f46", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
+                                                </div>
+                                            </div>
+
+                                            {/* Charcoal Theme */}
+                                            <div style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#f9fafb", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
+                                                <div style={{ backgroundColor: "#e5e7eb", color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Eco-friendly</div>
+                                                <div style={{ backgroundColor: "#1f2937", padding: "10px", paddingBottom: "15px", paddingTop: "20px", borderBottomLeftRadius: "10px", borderBottomRightRadius: "10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                                    <div style={{ backgroundColor: "white", display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
+                                                        <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
+                                                        <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>Text</span>
+                                                    </div>
+                                                    <span style={{ backgroundColor: "#000", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
+                                                </div>
+                                            </div>
+
+                                        </div>
                                     </div>
                                 )}
                             </div>
