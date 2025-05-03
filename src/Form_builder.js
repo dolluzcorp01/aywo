@@ -61,6 +61,11 @@ const fieldIcons = {
     "Divider": <FaMinus />
 };
 
+const fontsList = [
+    "Roboto", "Open Sans", "Noto Sans JP", "Montserrat", "Inter", "Poppins",
+    "Lato", "Raleway", "Ubuntu", "PT Sans", "Oswald", "Merriweather"
+];
+
 const FormBuilder = () => {
     const [showDesignSidebar, setShowDesignSidebar] = useState(false);
     const [showFieldSidebar, setShowFieldSidebar] = useState(true);
@@ -84,6 +89,10 @@ const FormBuilder = () => {
     const [isFocused, setIsFocused] = useState("rgba(75, 85, 99, 0.2)");
     const [formQuestionColor, setformQuestionColor] = useState("black");
     const [formAnswersColor, setformAnswersColor] = useState("black");
+
+    const [selectedFont, setSelectedFont] = useState("Roboto");
+    const [search, setSearch] = useState("");
+    const [tempFont, setTempFont] = useState(selectedFont);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [lastPosition, setLastPosition] = useState({ x: 50, y: 80 });
@@ -151,6 +160,19 @@ const FormBuilder = () => {
             </div>
         </div>
     );
+
+    const filteredFonts = fontsList.filter(font =>
+        font.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const handleFontSelect = (font) => {
+        setTempFont(font);
+    };
+
+    const handleDone = () => {
+        setSelectedFont(tempFont);
+        document.getElementById("fontCloseBtn")?.click();
+    };
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -2051,7 +2073,7 @@ const FormBuilder = () => {
                                 {activeTab === "current" ? (
                                     <>
                                         {colorOptions.map(({ label, key, info }) => (
-                                            <div key={key} style={{ position: "relative", marginBottom: "20px" }}>
+                                            <div key={key} style={{ position: "relative", marginBottom: "30px" }}>
                                                 <div
                                                     style={{
                                                         display: "flex",
@@ -2126,9 +2148,18 @@ const FormBuilder = () => {
                                         ))}
 
                                         <div style={{ marginBottom: "10px" }}>
-                                            <div style={{ marginBottom: "10px" }}>Font</div>
-                                            <input type="text" placeholder="Default" style={{ width: "100%", padding: "5px" }} />
+                                            <div style={{ marginBottom: "20px" }}>Font</div>
+                                            <input
+                                                type="text"
+                                                placeholder="Default"
+                                                value={selectedFont}
+                                                readOnly
+                                                style={{ width: "100%", padding: "5px", cursor: "pointer" }}
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#fontModal"
+                                            />
                                         </div>
+
                                     </>
                                 ) : (
                                     <div className="themediv" style={{ padding: "10px", height: "calc(100vh - 200px)", overflowY: "auto", }}>
@@ -2142,6 +2173,13 @@ const FormBuilder = () => {
                                                     setformPrimaryColor("#3b82f6");
                                                     setformQuestionColor("black");
                                                     setformAnswersColor("black");
+                                                    setColors({
+                                                        background: "#f8f9fa",
+                                                        questionsBackground: "#fff",
+                                                        primary: "#3b82f6",
+                                                        questions: "black",
+                                                        answers: "black",
+                                                    });
                                                 }}
                                                 style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#fff", position: "relative", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
                                                 <div style={{ fontWeight: "600", color: "gray", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Light</div>
@@ -2162,6 +2200,13 @@ const FormBuilder = () => {
                                                     setformPrimaryColor("#3b82f6");
                                                     setformQuestionColor("white");
                                                     setformAnswersColor("white");
+                                                    setColors({
+                                                        background: "#111827",
+                                                        questionsBackground: "#111827",
+                                                        primary: "#3b82f6",
+                                                        questions: "#white",
+                                                        answers: "#white",
+                                                    });
                                                 }}
                                                 style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#111827", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
                                                 <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(229, 231, 235, 0.2)" }}>Dark</div>
@@ -2182,6 +2227,13 @@ const FormBuilder = () => {
                                                     setformPrimaryColor("#2f5f61");
                                                     setformQuestionColor("#6b7280");
                                                     setformAnswersColor("#6b7280");
+                                                    setColors({
+                                                        background: "#f9fafb",
+                                                        questionsBackground: "#white",
+                                                        primary: "#2f5f61",
+                                                        questions: "#6b7280",
+                                                        answers: "#6b7280",
+                                                    });
                                                 }}
                                                 style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#f9fafb", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
                                                 <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Eco-friendly</div>
@@ -2202,6 +2254,13 @@ const FormBuilder = () => {
                                                     setformPrimaryColor("#fbbf24");
                                                     setformQuestionColor("#cbd5e1");
                                                     setformAnswersColor("#cbd5e1");
+                                                    setColors({
+                                                        background: "#1e293b",
+                                                        questionsBackground: "#1e293b",
+                                                        primary: "#fbbf24",
+                                                        questions: "#cbd5e1",
+                                                        answers: "#cbd5e1",
+                                                    });
                                                 }}
                                                 style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#1e293b", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
                                                 <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Navy Pop</div>
@@ -2222,6 +2281,13 @@ const FormBuilder = () => {
                                                     setformPrimaryColor("#fbbf24");
                                                     setformQuestionColor("#6b7280");
                                                     setformAnswersColor("#6b7280");
+                                                    setColors({
+                                                        background: "#fefcf8",
+                                                        questionsBackground: "#fefcf8",
+                                                        primary: "#fbbf24",
+                                                        questions: "#6b7280",
+                                                        answers: "#6b7280",
+                                                    });
                                                 }}
                                                 style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#fefcf8", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
                                                 <div style={{ backgroundColor: "#fdfaf5", color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Quiet Sands</div>
@@ -2242,6 +2308,13 @@ const FormBuilder = () => {
                                                     setformPrimaryColor("#000");
                                                     setformQuestionColor("#e5e7eb");
                                                     setformAnswersColor("#e5e7eb");
+                                                    setColors({
+                                                        background: "#e5e7eb",
+                                                        questionsBackground: "#2b2b2b",
+                                                        primary: "#000",
+                                                        questions: "#e5e7eb",
+                                                        answers: "#e5e7eb",
+                                                    });
                                                 }}
                                                 style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#e5e7eb", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
                                                 <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Charcoal</div>
@@ -3019,6 +3092,98 @@ const FormBuilder = () => {
                     )}
                 </>
             )}
+
+            <div className="modal fade" id="fontModal" tabIndex="-1" aria-hidden="true">
+                <div className="modal-dialog modal-lg modal-dialog-centered">
+                    <div className="modal-content p-0">
+                        <div className="modal-header updated-header">
+                            <h5 className="modal-title">Choose a Font</h5>
+                            <button
+                                id="fontCloseBtn"
+                                type="button"
+                                className="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"
+                            ></button>
+                        </div>
+                        <div className="modal-body">
+                            {/* Search Bar */}
+                            <div className="px-3 pb-2">
+                                <input
+                                    className="form-control"
+                                    placeholder="Search fonts"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                />
+                            </div>
+
+                            {/* Fonts Grid */}
+                            <div className="modal-options px-3 pb-3">
+                                <div style={{
+                                    display: "grid",
+                                    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                                    gap: "15px"
+                                }}>
+                                    {filteredFonts.map(font => (
+                                        <div
+                                            key={font}
+                                            onClick={() => handleFontSelect(font)}
+                                            style={{
+                                                fontFamily: `'${font}', sans-serif`,
+                                                border: tempFont === font ? "2px solid #1976d2" : "1px solid #ccc",
+                                                backgroundColor: tempFont === font ? "#e3f2fd" : "#fff",
+                                                padding: "15px",
+                                                borderRadius: "10px",
+                                                height: "120px",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                justifyContent: "center",
+                                                position: "relative",
+                                                cursor: "pointer",
+                                                transition: "all 0.2s ease-in-out"
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                if (tempFont !== font) e.currentTarget.style.backgroundColor = "#f0f8ff";
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                if (tempFont !== font) e.currentTarget.style.backgroundColor = "#fff";
+                                            }}
+                                        >
+                                            <div style={{ fontSize: "14px" }}>The quick brown fox jumped over the lazy dog</div>
+                                            <div style={{ fontSize: "12px", marginTop: "8px", color: "#555" }}>{font}</div>
+
+                                            {tempFont === font && (
+                                                <i
+                                                    className="fas fa-check-circle"
+                                                    style={{
+                                                        color: "#1976d2",
+                                                        position: "absolute",
+                                                        top: "10px",
+                                                        right: "10px",
+                                                        fontSize: "18px"
+                                                    }}
+                                                ></i>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer Buttons */}
+                        <div className="modal-footer justify-content-end">
+                            <button
+                                className="btn btn-primary"
+                                disabled={!tempFont}
+                                onClick={handleDone}
+                            >
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div >
     );
 };
