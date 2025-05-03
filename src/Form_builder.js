@@ -90,7 +90,7 @@ const FormBuilder = () => {
     const [formQuestionColor, setformQuestionColor] = useState("black");
     const [formAnswersColor, setformAnswersColor] = useState("black");
 
-    const [selectedFont, setSelectedFont] = useState("Roboto");
+    const [selectedFont, setSelectedFont] = useState("");
     const [search, setSearch] = useState("");
     const [tempFont, setTempFont] = useState(selectedFont);
 
@@ -390,6 +390,7 @@ const FormBuilder = () => {
                 backgroundColor: inputfieldBgColor,
                 boxShadow: "none",
                 border: `1px solid ${focusedFieldId === field.id ? formPrimaryColor : "rgba(75, 85, 99, 0.2)"}`,
+                fontFamily: selectedFont,
             },
             onFocus: () => setFocusedFieldId(field.id),
             onBlur: () => setFocusedFieldId(null),
@@ -417,7 +418,8 @@ const FormBuilder = () => {
                             border: "none",
                             background: "transparent",
                             width: "100%",
-                            margin: "8px 0"
+                            margin: "8px 0",
+                            fontFamily: selectedFont
                         }}
                     />
                 );
@@ -528,7 +530,8 @@ const FormBuilder = () => {
                                     background: "transparent",
                                     width: "100%",
                                     fontSize: "18px",
-                                    marginBottom: "8px"
+                                    marginBottom: "8px",
+                                    fontFamily: selectedFont
                                 }}
                             />
                             <textarea
@@ -548,7 +551,8 @@ const FormBuilder = () => {
                                     fontSize: "1rem",
                                     padding: "8px",
                                     border: "1px solid #ccc",
-                                    borderRadius: "6px"
+                                    borderRadius: "6px",
+                                    fontFamily: selectedFont
                                 }}
                             />
                         </div>
@@ -593,7 +597,7 @@ const FormBuilder = () => {
                             id={`checkbox-${field.id}-${idx}`}
                             style={{ accentColor: formPrimaryColor }}
                         />
-                        <label className="form-check-label" style={{ color: formAnswersColor }} htmlFor={`checkbox-${field.id}-${idx}`}>{opt}</label>
+                        <label className="form-check-label" style={{ color: formAnswersColor, fontFamily: selectedFont }} htmlFor={`checkbox-${field.id}-${idx}`}>{opt}</label>
                     </div>
                 ));
             case "Dropdown":
@@ -627,21 +631,25 @@ const FormBuilder = () => {
                                     color: formAnswersColor,
                                     "&:hover": {
                                         border: `1px solid ${formPrimaryColor}`
-                                    }
+                                    },
+                                    fontFamily: selectedFont
                                 }),
                                 option: (base, state) => ({
                                     ...base,
                                     backgroundColor: state.isFocused || state.isSelected ? formPrimaryColor : "white",
                                     color: state.isFocused || state.isSelected ? "white" : "black",
                                     cursor: "pointer",
+                                    fontFamily: selectedFont
                                 }),
                                 singleValue: (base) => ({
                                     ...base,
                                     color: formAnswersColor,
+                                    fontFamily: selectedFont
                                 }),
                                 placeholder: (base) => ({
                                     ...base,
-                                    color: "#888"
+                                    color: "#888",
+                                    fontFamily: selectedFont
                                 })
                             }}
                         />
@@ -659,10 +667,12 @@ const FormBuilder = () => {
                             multiValue: (base) => ({
                                 ...base,
                                 backgroundColor: formPrimaryColor,
+                                fontFamily: selectedFont
                             }),
                             multiValueLabel: (base) => ({
                                 ...base,
-                                color: formAnswersColor, // <-- apply formAnswersColor here
+                                color: formAnswersColor,
+                                fontFamily: selectedFont
                             }),
                             multiValueRemove: (base) => ({
                                 ...base,
@@ -670,7 +680,8 @@ const FormBuilder = () => {
                                 ':hover': {
                                     backgroundColor: "#fff",
                                     color: formPrimaryColor
-                                }
+                                },
+                                fontFamily: selectedFont
                             }),
                             option: (base, { isSelected, isFocused }) => ({
                                 ...base,
@@ -680,6 +691,11 @@ const FormBuilder = () => {
                                     : isFocused
                                         ? "#f0f0f0"
                                         : "#fff",
+                                fontFamily: selectedFont
+                            }),
+                            placeholder: (base) => ({
+                                ...base,
+                                fontFamily: selectedFont
                             })
                         }}
                     />
@@ -769,6 +785,7 @@ const FormBuilder = () => {
                                             flexGrow: 1,
                                             minWidth: "50px",
                                             color: formPrimaryColor,
+                                            fontFamily: selectedFont
                                         }}
                                     />
                                     <button
@@ -838,6 +855,7 @@ const FormBuilder = () => {
                                             padding: "2px 4px",
                                             background: "transparent",
                                             color: formAnswersColor,
+                                            fontFamily: selectedFont
                                         }}
                                     />
                                     <button
@@ -927,6 +945,7 @@ const FormBuilder = () => {
                                                     });
                                                     setFields(updatedFields);
                                                 }}
+                                                style={{ fontFamily: selectedFont }}
                                                 placeholder={`Col ${colIdx + 1}`}
                                             />
                                         </th>
@@ -952,6 +971,7 @@ const FormBuilder = () => {
                                                     });
                                                     setFields(updatedFields);
                                                 }}
+                                                style={{ fontFamily: selectedFont }}
                                                 placeholder={`Row ${rowIdx + 1}`}
                                             />
                                         </td>
@@ -1152,7 +1172,8 @@ const FormBuilder = () => {
                                                                 boxShadow: "none",
                                                                 border: `1px solid ${focusedOptionId === idx
                                                                     ? formPrimaryColor
-                                                                    : "rgba(75, 85, 99, 0.2)"}`
+                                                                    : "rgba(75, 85, 99, 0.2)"}`,
+                                                                fontFamily: selectedFont
                                                             }}
                                                         />
 
@@ -1390,6 +1411,7 @@ const FormBuilder = () => {
                                         ? formPrimaryColor
                                         : "rgba(75, 85, 99, 0.2)"
                                         }`,
+                                    fontFamily: selectedFont
                                 }}
                             />
                             <input
@@ -1416,6 +1438,7 @@ const FormBuilder = () => {
                                         ? formPrimaryColor
                                         : "rgba(75, 85, 99, 0.2)"
                                         }`,
+                                    fontFamily: selectedFont
                                 }}
                             />
                             <input
@@ -1442,6 +1465,7 @@ const FormBuilder = () => {
                                         ? formPrimaryColor
                                         : "rgba(75, 85, 99, 0.2)"
                                         }`,
+                                    fontFamily: selectedFont
                                 }}
                             />
                         </div>
@@ -1464,7 +1488,8 @@ const FormBuilder = () => {
                                         border: "1px solid #ddd",
                                         borderRadius: "8px",
                                         padding: "8px",
-                                        position: "relative"
+                                        position: "relative",
+                                        fontFamily: selectedFont
                                     }}
                                     onMouseEnter={() => setHoveredOption(idx)}
                                     onMouseLeave={() => setHoveredOption(null)}
@@ -2388,11 +2413,12 @@ const FormBuilder = () => {
                                                                                     width: "fit-content",
                                                                                     marginBottom: "2px",
                                                                                     color: formQuestionColor,
+                                                                                    fontFamily: selectedFont
                                                                                 }}
                                                                             />
                                                                             {field.required && <span style={{ color: 'red' }}>*</span>}
                                                                             {field.caption && (
-                                                                                <small style={{ color: 'gray', display: 'block', marginBottom: '6px' }}>
+                                                                                <small style={{ color: 'gray', display: 'block', marginBottom: '6px', fontFamily: selectedFont }}>
                                                                                     {field.caption}
                                                                                 </small>
                                                                             )}
@@ -3161,6 +3187,11 @@ const FormBuilder = () => {
                                                         top: "10px",
                                                         right: "10px",
                                                         fontSize: "18px"
+                                                    }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); 
+                                                        setSelectedFont(""); 
+                                                        setTempFont(""); 
                                                     }}
                                                 ></i>
                                             )}
