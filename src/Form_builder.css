@@ -588,3 +588,43 @@
 .form-check-input:focus {
     box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.1);
 }
+
+.custom-modal {
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+.custom-input {
+    border: 2px solid #2563eb;
+    /* blue border */
+    border-radius: 6px;
+    padding: 10px 12px;
+    outline: none;
+}
+
+.custom-input:focus {
+    border-color: #1d4ed8;
+    box-shadow: none;
+}
+
+.custom-continue-btn {
+    background-color: #2563eb;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-weight: 500;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    color: #6b7280;
+    cursor: pointer;
+}
+
+.btn-close:hover {
+    color: #111827;
+}

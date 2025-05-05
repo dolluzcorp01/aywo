@@ -1,5 +1,8 @@
 const express = require("express");
 const router = express.Router();
+const fs = require("fs");
+const path = require("path");
+const multer = require("multer");
 const getDBConnection = require("../../config/db"); // ✅ Use getDBConnection
 const { verifyJWT } = require("../backend_routes/Login_server");
 
@@ -22,12 +25,12 @@ const queryPromise = (db, sql, params) => {
 
 // ✅ Function to check if a form title already exists for a user
 const checkDuplicateFormTitle = async (userId, title, formId = null) => {
-    let query = `SELECT COUNT(*) AS count FROM forms WHERE user_id = ? AND title = ?`;
+    let query = `SELECT COUNT(*) AS count FROM dforms WHERE user_id = ? AND title = ?`;
     let params = [userId, title];
 
     if (formId) {
         // Exclude the current form ID when checking for duplicates
-        query += ` AND form_id != ?`;
+        query += ` AND id != ?`;
         params.push(formId);
     }
 
@@ -35,16 +38,88 @@ const checkDuplicateFormTitle = async (userId, title, formId = null) => {
     return result[0].count > 0;
 };
 
-// ✅ Save a new form (Protected Route)
-router.post("/save-form", verifyJWT, async (req, res) => {
-    const { title, title_font_size, title_x, title_y, title_width, title_height, form_background_color, form_color, title_color, title_background,
-        submit_button_x, submit_button_y, submit_button_width, submit_button_height, submit_button_color, submit_button_background,
-        fields } = req.body;
+router.post("/create", verifyJWT, async (req, res) => {
+    const { title } = req.body;
     const userId = req.user_id;
 
+    // Validate required fields
+    if (!userId) {
+        return res.status(401).json({ message: "User ID is missing. Unauthorized access." });
+    }
+
+    if (!title || title.trim() === "") {
+        return res.status(400).json({ message: "Form title is required" });
+    }
+
+    try {
+        const isDuplicate = await checkDuplicateFormTitle(userId, title);
+        if (isDuplicate) {
+            return res.status(409).json({ message: "Form title already exists" });
+        }
+
+        const query = `
+            INSERT INTO dforms (
+                user_id, title, internal_note, starred, is_closed,
+                published, background_color, questions_background_color,
+                primary_color, questions_color, answers_color, font, created_at
+            ) VALUES (?, ?, '', 0, 0, 0, '#ffffff', '#f1f1f1', '#007bff', '#333333', '#000000', '', NOW())
+        `;
+
+        const result = await queryPromise(db, query, [userId, title]);
+        res.status(200).json({ form_id: result.insertId });
+
+    } catch (error) {
+        console.error("❌ Insert error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+// Multer storage for field file uploads
+const fieldFileStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "field_file_uploads/");
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + "-" + file.originalname);
+    }
+});
+
+const fieldFileUpload = multer({ storage: fieldFileStorage });
+
+// ✅ Save or update a form
+router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => {
+    const userId = req.user_id;
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
-    if (!title.trim()) return res.status(400).json({ error: "Form title cannot be empty." });
-    if (!fields || !Array.isArray(fields) || fields.length === 0) return res.status(400).json({ error: "At least one field is required." });
+
+    const {
+        title = "Untitled Form",
+        form_id: existingFormId,
+        background_color = "#ffffff",
+        questions_background_color = "#f1f1f1",
+        primary_color = "#007bff",
+        questions_color = "#333333",
+        answers_color = "#000000",
+        font = "",
+        fields
+    } = req.body;
+
+    let parsedFields;
+    try {
+        parsedFields = JSON.parse(fields);
+    } catch (err) {
+        return res.status(400).json({ error: "Invalid fields format" });
+    }
+
+    if (!Array.isArray(parsedFields) || parsedFields.length === 0) {
+        return res.status(400).json({ error: "At least one field is required." });
+    }
+
+    const uploadedFilesMap = {};
+    if (req.files && Array.isArray(req.files)) {
+        for (const file of req.files) {
+            uploadedFilesMap[file.fieldname] = file.path;
+        }
+    }
 
     let connection;
     try {
@@ -57,95 +132,181 @@ router.post("/save-form", verifyJWT, async (req, res) => {
 
         await connection.beginTransaction();
 
-        // ✅ Check for duplicate form title
-        const isDuplicate = await checkDuplicateFormTitle(userId, title);
-        if (isDuplicate) {
-            await connection.rollback();
-            return res.status(409).json({ error: "A form with this title already exists." });
-        }
+        let formId = existingFormId;
 
-        // ✅ Insert form (including colors and button properties)
-        const formInsertQuery = `
-            INSERT INTO forms (user_id, title, title_font_size, title_x, title_y, title_width, title_height, form_background_color, form_color, title_color, title_background, 
-                               submit_button_x, submit_button_y, submit_button_width, submit_button_height, submit_button_color, submit_button_background) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        if (formId) {
+            // 🗑 Delete existing form's related files from disk
+            const [fileRows] = await new Promise((resolve, reject) => {
+                connection.query("SELECT file_path FROM dfield_file_uploads WHERE form_id = ?", [formId], (err, results) => {
+                    if (err) return reject(err);
+                    resolve([results]);
+                });
+            });
 
-        const formResult = await queryPromise(connection, formInsertQuery, [
-            userId,
-            title,
-            title_font_size,
-            title_x || 50,
-            title_y || 20,
-            title_width || 300,
-            title_height || 50,
-            form_background_color || "lightgray",
-            form_color || "#ffffff",
-            title_color || "#000000",
-            title_background || "#ffffff",
-            submit_button_x || 50,
-            submit_button_y || 400,
-            submit_button_width || 150,
-            submit_button_height || 50,
-            submit_button_color || "#ffffff",
-            submit_button_background || "#007bff"
-        ]);
-        const formId = formResult.insertId;
-
-        // ✅ Insert form fields (validate fields before inserting)
-        for (const field of fields) {
-            if (!field.label.trim()) {
-                await connection.rollback();
-                return res.status(400).json({ error: "Field labels cannot be empty." });
-            }
-
-            const formFieldsInsertQuery = `
-            INSERT INTO form_fields (form_id, field_type, label, x, y, width, height, bgColor, labelColor, fontSize, min_value, max_value) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-            const fieldResult = await queryPromise(connection, formFieldsInsertQuery, [
-                formId,
-                field.field_type,
-                field.label,
-                field.x || 50,
-                field.y || 80,
-                field.width || 200,
-                field.height || 50,
-                field.bgColor || "#8B5E5E",
-                field.labelColor || "#FFFFFF",
-                field.fontSize || 16,
-                field.min_value || 1, // Default value of 1
-                field.max_value || 5  // Default value of 5
-            ]);
-
-            const fieldId = fieldResult.insertId; // Get the newly inserted field ID
-
-            // ✅ Insert options if the field is Dropdown or Multiple Choice
-            if ((field.field_type === "Dropdown" || field.field_type === "Multiple Choice") && field.options && Array.isArray(field.options)) {
-                for (const option of field.options) {
-                    await queryPromise(connection, "INSERT INTO form_field_options (field_id, option_text) VALUES (?, ?)", [fieldId, option]);
+            for (const row of fileRows) {
+                const fullPath = path.join(__dirname, "..", row.file_path);
+                if (fs.existsSync(fullPath)) {
+                    fs.unlinkSync(fullPath);
                 }
             }
 
-            // ✅ Insert Multiple Choice Grid options
-            if (field.field_type === "Multiple Choice Grid" && field.grid_options) {
-                for (const { row_label, column_label } of field.grid_options) {
-                    await queryPromise(connection,
-                        "INSERT INTO form_field_grid_options (field_id, row_label, column_label) VALUES (?, ?, ?)",
-                        [fieldId, row_label, column_label]
-                    );
+            // 🗑 Delete related DB entries
+            const deleteQueries = [
+                "DELETE FROM dfield_file_uploads WHERE form_id = ?",
+                "DELETE dfm FROM dfield_matrix dfm JOIN dform_fields dff ON dfm.field_id = dff.id WHERE dff.form_id = ?",
+                "DELETE dfo FROM dfield_options dfo JOIN dform_fields dff ON dfo.field_id = dff.id WHERE dff.form_id = ?",
+                "DELETE FROM dfield_default_values WHERE form_id = ?",
+                "DELETE FROM dform_fields WHERE form_id = ?"
+            ];
+            for (const query of deleteQueries) {
+                await new Promise((resolve, reject) => {
+                    connection.query(query, [formId], (err) => {
+                        if (err) return reject(err);
+                        resolve();
+                    });
+                });
+            }
+
+            // 📝 Update form styling and title
+            await new Promise((resolve, reject) => {
+                connection.query(
+                    `UPDATE dforms SET
+                        title = ?, background_color = ?, questions_background_color = ?,
+                        primary_color = ?, questions_color = ?, answers_color = ?, font = ?, updated_at = NOW()
+                     WHERE id = ? AND user_id = ?`,
+                    [
+                        title,
+                        background_color,
+                        questions_background_color,
+                        primary_color,
+                        questions_color,
+                        answers_color,
+                        font,
+                        formId,
+                        userId
+                    ],
+                    (err) => {
+                        if (err) return reject(err);
+                        resolve();
+                    }
+                );
+            });
+
+        } else {
+            // ➕ Insert new form
+            const [formResult] = await new Promise((resolve, reject) => {
+                connection.query(`INSERT INTO dforms (
+                        user_id, form_title, internal_note, starred, is_closed, published,
+                        background_color, questions_background_color, primary_color,
+                        questions_color, answers_color, font, created_at
+                    ) VALUES (?, ?, '', 0, 0, 0, '#ffffff', '#f1f1f1', '#007bff', '#333333', '#000000', '', NOW())`,
+                    [userId, title], (err, result) => {
+                        if (err) return reject(err);
+                        resolve([result]);
+                    });
+            });
+
+            formId = formResult.insertId;
+        }
+
+        // Insert fields (same as before)
+        for (const field of parsedFields) {
+            const fieldResult = await new Promise((resolve, reject) => {
+                connection.query(
+                    `INSERT INTO dform_fields (
+                        form_id, type, label, placeholder, caption, default_value, font_size, required, sort_order,
+                        min_value, max_value
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        formId,
+                        field.type,
+                        field.label || "",
+                        field.placeholder || "",
+                        field.caption || "",
+                        typeof field.defaultValue === "object" ? JSON.stringify(field.defaultValue) : field.defaultValue || "",
+                        field.fontSize || 14,
+                        field.required ? "Yes" : "No",
+                        field.sortOrder || 0,
+                        field.minValue || null,
+                        field.maxValue || null
+                    ],
+                    (err, result) => {
+                        if (err) return reject(err);
+                        resolve(result);
+                    }
+                );
+            });
+
+            const fieldId = fieldResult.insertId;
+
+            // Insert options
+            if (field.options && Array.isArray(field.options)) {
+                for (const opt of field.options) {
+                    let savedFilePath = null;
+                    if (opt.imagePath && uploadedFilesMap[opt.imagePath]) {
+                        savedFilePath = uploadedFilesMap[opt.imagePath];
+                    } else if (opt.imagePath && typeof opt.imagePath === "string" && opt.imagePath.startsWith("field_file_uploads/")) {
+                        savedFilePath = opt.imagePath;
+                    }
+
+                    await connection.query(`
+                        INSERT INTO dfield_options (
+                            field_id, option_text, options_style, sort_order, image_path
+                        ) VALUES (?, ?, ?, ?, ?)
+                    `, [fieldId, opt.option_text || '', opt.options_style || '', opt.sortOrder || 0, savedFilePath]);
+
+                    if (field.type === "Picture" && savedFilePath) {
+                        await connection.query(`
+                            INSERT INTO dfield_file_uploads (
+                                field_id, form_id, file_type, file_path, uploaded_at
+                            ) VALUES (?, ?, 'image', ?, NOW())
+                        `, [fieldId, formId, savedFilePath]);
+                    }
                 }
+            }
+
+            // Insert matrix
+            if (field.matrix) {
+                const { rows = [], columns = [] } = field.matrix;
+
+                for (const row of rows) {
+                    await connection.query(`
+                        INSERT INTO dfield_matrix (field_id, row_label, column_label)
+                        VALUES (?, ?, NULL)
+                    `, [fieldId, row]);
+                }
+
+                for (const col of columns) {
+                    await connection.query(`
+                        INSERT INTO dfield_matrix (field_id, row_label, column_label)
+                        VALUES (?, NULL, ?)
+                    `, [fieldId, col]);
+                }
+            }
+
+            // Insert default values
+            if (field.defaultValue) {
+                await connection.query(`
+                    INSERT INTO dfield_default_values (
+                        form_id, field_id, field_value, submitted_at
+                    ) VALUES (?, ?, ?, NOW())
+                `, [formId, fieldId, typeof field.defaultValue === 'object' ? JSON.stringify(field.defaultValue) : field.defaultValue]);
             }
         }
 
-        await connection.commit(); // ✅ Commit transaction if everything is fine
-
-        res.json({ message: "Form saved successfully!", formId });
+        await connection.commit();
+        res.status(200).json({
+            success: true,
+            formId,
+            message: existingFormId ? "Form updated successfully!" : "Form saved successfully!"
+        });
 
     } catch (error) {
-        if (connection) await connection.rollback(); // ❌ Rollback on error
-        console.error("❌ Server error:", error);
-        res.status(500).json({ error: "Server error, please try again." });
+        console.error("Error saving form:", error);
+        if (connection) await new Promise((resolve) => connection.rollback(resolve));
+        res.status(500).json({ error: "Internal server error. Please try again." });
     } finally {
-        if (connection) connection.release(); // ✅ Release connection
+        if (connection) connection.release();
     }
 });
 
@@ -171,7 +332,7 @@ router.put("/rename-form/:formId", verifyJWT, async (req, res) => {
         }
 
         // ✅ Proceed with renaming if no duplicate is found
-        const result = await queryPromise(db, "UPDATE forms SET title = ? WHERE form_id = ? AND user_id = ?", [title, formId, userId]);
+        const result = await queryPromise(db, "UPDATE dforms SET title = ? WHERE id = ? AND user_id = ?", [title, formId, userId]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: "Form not found or unauthorized" });
@@ -188,7 +349,8 @@ router.put("/rename-form/:formId", verifyJWT, async (req, res) => {
 router.get("/get-forms", verifyJWT, async (req, res) => {
     try {
         const userId = req.user_id;
-        const formId = req.query.formId;
+        const rawFormId = req.query.formId;
+        const formId = rawFormId ? rawFormId.match(/\d+$/)?.[0] : null;
         const sortBy = req.query.sortBy || "created_at_desc";
 
         let orderClause = "ORDER BY f.created_at DESC";
@@ -199,27 +361,47 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
         if (sortBy === "responses_asc") orderClause = "ORDER BY response_count ASC";
 
         let query = `
-            SELECT f.form_id, f.title, f.starred, f.is_closed, f.internal_note, f.published, 
-                   COUNT(fr.response_id) AS response_count 
-            FROM forms f
-            LEFT JOIN form_responses fr ON f.form_id = fr.form_id
+            SELECT 
+                f.id AS form_id,
+                f.user_id,
+                f.title,
+                f.internal_note,
+                f.starred,
+                f.is_closed,
+                f.published,
+                f.background_color,
+                f.questions_background_color,
+                f.primary_color,
+                f.questions_color,
+                f.answers_color,
+                f.font,
+                f.created_at
+            FROM dforms f
             WHERE f.user_id = ?
         `;
         const params = [userId];
 
-        // ✅ If formId is provided, filter by it
         if (formId) {
-            query += ` AND f.form_id = ?`;
-            params.push(formId.replace("form-", ""));
+            query += ` AND f.id = ?`;
+            params.push(formId);
         }
 
-        query += `
-            GROUP BY f.form_id, f.title
-            ${formId ? "" : orderClause}  -- Don’t order if you're fetching a specific form
-        `;
+        if (!formId) {
+            query += ` ${orderClause}`;
+        }
 
         const forms = await queryPromise(db, query, params);
-        res.json(formId ? forms[0] : forms);  // ✅ Return single form object if filtering by formId
+
+        // Always send valid JSON
+        if (formId) {
+            if (forms.length === 0) {
+                return res.status(404).json({ error: "Form not found" });
+            }
+            return res.json(forms[0]);
+        } else {
+            return res.json(forms); // Even if empty, it's still valid JSON
+        }
+
     } catch (error) {
         console.error("Error fetching forms:", error);
         res.status(500).json({ error: "Internal server error" });
@@ -231,124 +413,72 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
     const { formId } = req.params;
     const userId = req.user_id;
 
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
-
-    // Check if formId starts with "template-", otherwise assume it's a regular form
-    const isTemplate = formId.startsWith("template-");
-    const cleanId = isTemplate ? formId.replace("template-", "") : formId.replace("form-", "");
-
-    // Use the correct table names
-    const formTable = isTemplate ? "form_templates" : "forms";
-    const fieldsTable = isTemplate ? "template_fields" : "form_fields";
-    const optionsTable = isTemplate ? "template_field_options" : "form_field_options";
-    const gridTable = isTemplate ? "template_field_grid_options" : "form_field_grid_options";
-    const userCondition = isTemplate ? "" : "AND user_id = ?"; // Only check user_id for user-created forms
+    if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
 
     try {
-        // Fetch form/template details
+        // 1. Fetch form
         const formQuery = `
-            SELECT title, title_font_size, title_x, title_y, title_width, title_height, 
-                   form_background_color, form_color, title_color, title_background,
-                   submit_button_x, submit_button_y, submit_button_width, 
-                   submit_button_height, submit_button_color, submit_button_background
-            FROM ${formTable} 
-            WHERE ${isTemplate ? "template_id" : "form_id"} = ? ${userCondition}`;
+            SELECT id, user_id, title, internal_note, starred, is_closed, published,
+                   background_color, questions_background_color, primary_color,
+                   questions_color, answers_color, font, created_at
+            FROM dforms
+            WHERE id = ? AND user_id = ?
+        `;
+        const [form] = await queryPromise(db, formQuery, [formId, userId]);
 
-        const queryParams = isTemplate ? [cleanId] : [cleanId, userId];
-        const formResult = await queryPromise(db, formQuery, queryParams);
-
-        if (formResult.length === 0) {
-            return res.status(404).json({ error: "Form or template not found or unauthorized" });
+        if (!form) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
         }
 
-        // Fetch form/template fields
+        // 2. Fetch fields
         const fieldsQuery = `
-            SELECT ${isTemplate ? "template_field_id AS field_id" : "field_id"},  
-            field_type, label, x, y, width, height, bgColor, labelColor, fontSize, 
-            min_value, max_value 
-            FROM ${fieldsTable} 
-            WHERE ${isTemplate ? "template_id" : "form_id"} = ?`;
-        const fieldsResult = await queryPromise(db, fieldsQuery, [cleanId]);
+            SELECT *
+            FROM dform_fields
+            WHERE form_id = ?
+            ORDER BY sort_order ASC
+        `;
+        const fields = await queryPromise(db, fieldsQuery, [formId]);
 
-        // Fetch options for Dropdown and Multiple Choice fields
-        const optionsQuery = `
-        SELECT ${isTemplate ? "template_field_id AS field_id" : "field_id"}, option_text 
-        FROM ${optionsTable} 
-        WHERE ${isTemplate ? "template_field_id" : "field_id"} IN (
-            SELECT ${isTemplate ? "template_field_id" : "field_id"} 
-            FROM ${fieldsTable} 
-            WHERE ${isTemplate ? "template_id" : "form_id"} = ?
-        ) `;
-        const optionsResult = await queryPromise(db, optionsQuery, [cleanId]);
+        // 3. Enrich each field with options and matrix data
+        const enrichedFields = await Promise.all(
+            fields.map(async (field) => {
+                const fieldId = field.id;
 
-        // Fetch grid options for Matrix/Grid fields
-        const gridQuery = `
-         SELECT ${isTemplate ? "template_field_id AS field_id" : "field_id"}, row_label, column_label
-         FROM ${gridTable}
-         WHERE ${isTemplate ? "template_field_id" : "field_id"} IN (
-             SELECT ${isTemplate ? "template_field_id" : "field_id"}  
-             FROM ${fieldsTable} 
-             WHERE ${isTemplate ? "template_id" : "form_id"} = ?
-         )`;
-        const gridResult = await queryPromise(db, gridQuery, [cleanId]);
+                // Fetch field options
+                const optionsQuery = `
+                    SELECT id, option_text, options_style, sort_order, image_path
+                    FROM dfield_options
+                    WHERE field_id = ?
+                    ORDER BY sort_order ASC
+                `;
+                const options = await queryPromise(db, optionsQuery, [fieldId]);
 
-        // Group options by field_id
-        const optionsMap = optionsResult.reduce((acc, row) => {
-            if (!acc[row.field_id]) acc[row.field_id] = [];
-            acc[row.field_id].push(row.option_text);
-            return acc;
-        }, {});
+                // Fetch matrix rows/columns
+                const matrixQuery = `
+                    SELECT row_label, column_label
+                    FROM dfield_matrix
+                    WHERE field_id = ?
+                `;
+                const matrix = await queryPromise(db, matrixQuery, [fieldId]);
 
-        // Group grid options by field_id
-        const gridMap = gridResult.reduce((acc, row) => {
-            if (!acc[row.field_id]) acc[row.field_id] = [];
-            acc[row.field_id].push({ row_label: row.row_label, column_label: row.column_label });
-            return acc;
-        }, {});
+                return {
+                    ...field,
+                    options: options || [],
+                    matrix: matrix || []
+                };
+            })
+        );
 
-        // Format fields and attach options
-        const formattedFields = fieldsResult.map(field => ({
-            id: field.field_id,
-            field_type: field.field_type,
-            label: field.label,
-            x: field.x,
-            y: field.y,
-            width: field.width,
-            height: field.height,
-            bgColor: field.bgColor,
-            labelColor: field.labelColor,
-            fontSize: field.fontSize,
-            min_value: field.min_value,
-            max_value: field.max_value,
-            options: (field.field_type === "Dropdown" || field.field_type === "Multiple Choice")
-                ? optionsMap[field.field_id] || []
-                : undefined,
-            grid_options: field.field_type === "Multiple Choice Grid" ? gridMap[field.field_id] || [] : undefined
-        }));
-
+        // 4. Return response
         res.json({
-            formId,
-            title: formResult[0].title,
-            title_font_size: formResult[0].title_font_size,
-            title_x: formResult[0].title_x,
-            title_y: formResult[0].title_y,
-            title_width: formResult[0].title_width,
-            title_height: formResult[0].title_height,
-            form_background_color: formResult[0].form_background_color || "lightgray",
-            form_color: formResult[0].form_color || "#ffffff",
-            title_color: formResult[0].title_color || "#000000",
-            title_background: formResult[0].title_background || "#ffffff",
-            submit_button_x: formResult[0].submit_button_x ?? 50,
-            submit_button_y: formResult[0].submit_button_y ?? 400,
-            submit_button_width: formResult[0].submit_button_width ?? 150,
-            submit_button_height: formResult[0].submit_button_height ?? 50,
-            submit_button_color: formResult[0].submit_button_color || "#ffffff",
-            submit_button_background: formResult[0].submit_button_background || "#007bff",
-            fields: formattedFields
+            ...form,
+            fields: enrichedFields
         });
 
     } catch (error) {
-        console.error("❌ Error fetching form/template:", error);
+        console.error("❌ Error fetching form:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 });
@@ -626,7 +756,7 @@ router.post("/save-note/:formId", verifyJWT, async (req, res) => {
     try {
         const result = await queryPromise(
             db,
-            "UPDATE forms SET internal_note = ? WHERE form_id = ? AND user_id = ?",
+            "UPDATE dforms SET internal_note = ? WHERE id = ? AND user_id = ?",
             [note, formId, userId]
         );
 
@@ -637,7 +767,7 @@ router.post("/save-note/:formId", verifyJWT, async (req, res) => {
         // Return the updated form (optional)
         const [updatedForm] = await queryPromise(
             db,
-            "SELECT * FROM forms WHERE form_id = ?",
+            "SELECT * FROM dforms WHERE id = ?",
             [formId]
         );
 
@@ -661,7 +791,7 @@ router.post("/close-form/:formId", verifyJWT, async (req, res) => {
     try {
         const result = await queryPromise(
             db,
-            "UPDATE forms SET is_closed = ? WHERE form_id = ? AND user_id = ?",
+            "UPDATE dforms SET is_closed = ? WHERE id = ? AND user_id = ?",
             [is_closed, formId, userId]
         );
 
@@ -692,7 +822,7 @@ router.post("/toggle-star/:formId", verifyJWT, async (req, res) => {
     try {
         const result = await queryPromise(
             db,
-            "UPDATE forms SET starred = ? WHERE form_id = ? AND user_id = ?",
+            "UPDATE dforms SET starred = ? WHERE id = ? AND user_id = ?",
             [starred, formId, userId]
         );
 

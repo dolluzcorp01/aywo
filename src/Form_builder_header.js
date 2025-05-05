@@ -3,6 +3,7 @@ import { apiFetch } from "./utils/api";
 import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { Modal } from 'bootstrap';
 import "./Form_builder_header.css";
 
 const Navbar = styled.nav`
@@ -38,6 +39,8 @@ const Form_builder_header = () => {
     const location = useLocation();
     const isEditableForm = /^\/form-builder\/form-\d+$/.test(location.pathname); // Checks if URL matches /form-builder/form-{number}
 
+    const [formTitle, setFormTitle] = useState("");
+    const [renameFormId, setRenameFormId] = useState(null); // NEW
 
     useEffect(() => {
         populateProfileDetails();
@@ -78,6 +81,7 @@ const Form_builder_header = () => {
 
     useEffect(() => {
         let isMounted = true;
+
         if (formId) {
             apiFetch(`/api/form_builder/get-forms?formId=${formId}`, {
                 method: "GET",
@@ -85,24 +89,38 @@ const Form_builder_header = () => {
             })
                 .then((response) => {
                     if (!response.ok) {
-                        return response.json().then(err => { throw new Error(err.message || "Failed to fetch form"); });
+                        debugger
+                        return response.text().then((text) => {
+                            let errorData;
+                            try {
+                                errorData = JSON.parse(text);
+                            } catch {
+                                throw new Error("Invalid error response");
+                            }
+                        });
                     }
-                    return response.json();
+
+                    // Handle empty response
+                    return response.text().then((text) => {
+                        if (!text) {
+                            throw new Error("Empty response from server");
+                        }
+                        return JSON.parse(text);
+                    });
                 })
                 .then((data) => {
                     if (isMounted) {
-                        setForm(data); // single form
+                        setForm(data);
                     }
                 })
                 .catch((error) => {
-                    Swal.fire("Error", error, "error");
-                })
-                .finally(() => {
-                    if (isMounted);
+                    Swal.fire("Error", error.message || "Something went wrong", "error");
                 });
-        }
 
-        return () => { isMounted = false; };
+            return () => {
+                isMounted = false;
+            };
+        }
     }, [formId]);
 
     const handleStarredForm = async (formId, starred) => {
@@ -171,6 +189,60 @@ const Form_builder_header = () => {
         }
     };
 
+    const handleRenameSubmit = (formId) => {
+        if (!formTitle.trim()) {
+            Swal.fire("Error", "Form title cannot be empty.", "error");
+            return;
+        }
+
+        Swal.fire({
+            title: "Confirm Rename",
+            text: "Do you want to rename this form?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Yes, Rename",
+            cancelButtonText: "Cancel",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                apiFetch(`/api/form_builder/rename-form/${formId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title: formTitle }),
+                    credentials: "include",
+                })
+                    .then((res) => {
+                        if (!res.ok) {
+                            return res.json().then(err => { throw new Error(err.error || "Failed to rename form"); });
+                        }
+                        return res.json();
+                    })
+                    .then(() => {
+                        // ✅ Update UI immediately
+                        setForm(prev => ({ ...prev, title: formTitle }));
+
+                        // ✅ Close modal
+                        const modal = document.getElementById('exampleModalCenter');
+                        if (modal) {
+                            modal.classList.remove("show");
+                            modal.style.display = "none";
+                        }
+                        document.body.classList.remove("modal-open");
+                        document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+
+                        Swal.fire("Renamed!", "Your form has been renamed.", "success");
+                    })
+                    .catch((error) => {
+                        console.error("Error renaming form:", error);
+                        if (error.message.includes("already exists")) {
+                            Swal.fire("Duplicate Title", "A form with this title already exists. Please choose a different name.", "warning");
+                        } else {
+                            Swal.fire("Error", error.message, "error");
+                        }
+                    });
+            }
+        });
+    };
+
     return (
         <Navbar className="form_builder_header">
             <div className="form_builder_header-left">
@@ -180,7 +252,18 @@ const Form_builder_header = () => {
 
                 {form && (
                     <div className="form_builder_header-form-title-row">
-                        <p className="form_builder_header-form-title-text">{form.title}</p>
+                        <p
+                            className="form_builder_header-form-title-text"
+                            data-bs-toggle="modal"
+                            data-bs-target="#exampleModalCenter"
+                            onClick={() => {
+                                setFormTitle(form.title);
+                                setRenameFormId(form.form_id);
+                            }}
+                        >
+                            {form.title}
+                        </p>
+
                         {form.starred ? (
                             <i
                                 className="fa-solid fa-star form-star-icon"
@@ -264,6 +347,38 @@ const Form_builder_header = () => {
                     )}
                 </div>
             </div>
+
+            {form && (
+                <div className="modal fade" id="exampleModalCenter" tabIndex="-1" role="dialog" aria-hidden="true" >
+                    <div className="modal-dialog modal-dialog-centered" role="document">
+                        <div className="modal-content custom-modal p-0">
+                            <div className="modal-header border-0 pb-0">
+                                <h5 className="modal-title">Name your form</h5>
+                                <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div className="modal-body pt-2">
+                                <input
+                                    type="text"
+                                    id="formNameInput"
+                                    className="form-control custom-input"
+                                    value={formTitle}
+                                    onChange={(e) => setFormTitle(e.target.value)}
+                                />
+                            </div>
+                            <div className="modal-footer border-0 pt-0 justify-content-end">
+                                <button
+                                    type="button"
+                                    id="continueButton"
+                                    className="btn btn-primary custom-continue-btn"
+                                    onClick={() => handleRenameSubmit(renameFormId)}
+                                >
+                                    Continue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </Navbar>
     );

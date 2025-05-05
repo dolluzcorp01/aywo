@@ -74,6 +74,8 @@ const FormBuilder = () => {
     const [activeColorPicker, setActiveColorPicker] = useState(null);
     const pickerRef = useRef(null);
 
+    const [formTitle, setFormTitle] = useState("");
+
     const [fields, setFields] = useState([]);
     const [fieldTypeMenu, setFieldTypeMenu] = useState(null); // stores id of field and position
     const [hovered, setHovered] = useState(null);
@@ -86,16 +88,15 @@ const FormBuilder = () => {
     const [formBgColor, setFormBgColor] = useState("lightgray");
     const [formColor, setformColor] = useState("white");
     const [formPrimaryColor, setformPrimaryColor] = useState("#3B82F6");
-    const [isFocused, setIsFocused] = useState("rgba(75, 85, 99, 0.2)");
     const [formQuestionColor, setformQuestionColor] = useState("black");
     const [formAnswersColor, setformAnswersColor] = useState("black");
-
     const [selectedFont, setSelectedFont] = useState("");
+
     const [search, setSearch] = useState("");
     const [tempFont, setTempFont] = useState(selectedFont);
 
     const [searchTerm, setSearchTerm] = useState("");
-    const [lastPosition, setLastPosition] = useState({ x: 50, y: 80 });
+
     const location = useLocation();
 
     const [submitBtnY, setSubmitBtnY] = useState(500);
@@ -114,6 +115,108 @@ const FormBuilder = () => {
     const [hoveredOption, setHoveredOption] = useState(null);
 
     const [isMobile, setIsMobile] = useState(false);
+
+    const [showModal, setShowModal] = useState(false);
+
+    useEffect(() => {
+        const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
+        const formId = match ? match[1] : null;
+
+        if (formId) {
+            const fetchForm = async () => {
+                try {
+                    const response = await fetch(`/api/form_builder/get-specific-form/${formId}`, {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            navigate("/form-builder");
+                        } else {
+                            Swal.fire("Error", "Something went wrong", "error");
+                        }
+                        return;
+                    }
+
+                    const data = await response.json();
+                    console.log("Form data:", data);
+
+                    setFormTitle(typeof data.title === "string" ? data.title : "testform");
+
+                    if (Array.isArray(data.fields)) {
+                        const processedFields = data.fields.map(field => {
+                            if (field.type === "Multiple Choice") {
+                                const hasBubbleStyle = field.options?.some(opt => opt.options_style === "bubble");
+                                return {
+                                    ...field,
+                                    bubble: hasBubbleStyle,
+                                    selectedOption: null
+                                };
+                            }
+                            return field;
+                        });
+
+                        setFields(processedFields);
+                    } else {
+                        console.warn("⚠️ Unexpected fields data:", data.fields);
+                        setFields([]);
+                        Swal.fire("Warning", "Form data loaded but fields are invalid or missing.", "warning");
+                    }
+
+                } catch (error) {
+                    console.error("❌ Error fetching form:", error);
+                    Swal.fire("Error", "Server error occurred while fetching the form.", "error");
+                }
+            };
+
+            fetchForm();
+        } else {
+            setShowModal(true);
+        }
+    }, [location.pathname]);
+
+    const handleContinue = async () => {
+        if (!formTitle.trim()) {
+            Swal.fire("Validation", "Form name cannot be empty.", "warning");
+            return;
+        }
+
+        try {
+            const response = await fetch("/api/form_builder/create", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ title: formTitle }),
+                credentials: "include",
+            });
+
+            const result = await response.json();
+
+            if (response.status === 401) {
+                Swal.fire("Unauthorized", "User not logged in or missing user ID.", "error");
+                return;
+            }
+
+            if (response.status === 409) {
+                Swal.fire("Duplicate", "A form with this name already exists. Please choose a different name.", "error");
+                return;
+            }
+
+            if (response.ok && result.form_id) {
+                Swal.fire("Success", "Form created successfully!", "success");
+                navigate(`/form-builder/form-${result.form_id}`);
+            } else {
+                Swal.fire("Error", result.message || "Form creation failed", "error");
+            }
+        } catch (error) {
+            console.error("❌ Form creation failed:", error);
+            Swal.fire("Error", "Server error occurred.", "error");
+        }
+    };
 
     useEffect(() => {
         const handleResize = () => {
@@ -218,16 +321,6 @@ const FormBuilder = () => {
         setFieldTypeMenu(null); // close menu
     };
 
-    const handleChange = (id, newValue) => {
-        const updatedFields = fields.map(f => {
-            if (f.id === id) {
-                return { ...f, value: newValue };
-            }
-            return f;
-        });
-        setFields(updatedFields);
-    };
-
     const duplicateField = (id) => {
         setFields(prevFields => {
             const index = prevFields.findIndex(field => field.id === id);
@@ -319,7 +412,10 @@ const FormBuilder = () => {
             case "Multiple Select":
             case "Checkbox":
             case "Checkboxes":
-                newField.options = ["Option 1", "Option 2"];
+                newField.options = [
+                    { option_text: "Option 1" },
+                    { option_text: "Option 2" }
+                ];
                 break;
             case "Opinion Scale":
                 newField.min = 1;
@@ -373,6 +469,164 @@ const FormBuilder = () => {
         // ✅ Make the new field selected and show the customize section
         setSelectedFieldId(newField.id);
         setCustomizeVisible(true);
+    };
+
+
+    const FieldButton = ({ type, section }) => {
+        const getColor = () => {
+            if (section === "Frequently used") return "#28a745";
+            if (section === "Display text") return "#6c757d";
+            if (section === "Choices") return "#F59E0B";
+            if (section === "Time") return "#A855F7";
+            if (section === "Rating & Ranking") return "rgb(239, 68, 68)";
+            if (section === "Text") return "#28a745";
+            if (section === "Contact Info") return "rgb(20, 184, 166)";
+            if (section === "Navigation & Layout") return "#e83e8c";
+            if (section === "Media") return "#3498db";
+            return "#F59E0B";
+        };
+
+        const baseColor = getColor();
+
+        const backgroundColor = `${baseColor}20`;
+        const borderColor = baseColor;
+
+        const icon = fieldIcons[type] || <FaCheck />;
+        const modifiedIcon = React.cloneElement(icon, { color: baseColor, size: 12 }); // 👈 Smaller icon
+
+        return (
+            <button
+                className="field-btn"
+                onClick={() => addField(type)}
+                style={{
+                    backgroundColor: "#fff",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "10px",
+                    padding: "12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    width: "80px",
+                    height: "80px",
+                    boxSizing: "border-box"
+                }}
+            >
+                <div
+                    className="field-icon"
+                    style={{
+                        backgroundColor,
+                        border: `1.5px solid ${borderColor}`,
+                        borderRadius: "3px",
+                        padding: "5px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginTop: "5px"
+                    }}
+                >
+                    {modifiedIcon}
+                </div>
+                <div className="field-label" style={{ color: "#1f2937", fontWeight: 500, fontSize: "0.65rem" }}>{type}</div>
+            </button>
+        );
+    };
+
+    // Function to reorder items
+    const reorder = (list, startIndex, endIndex) => {
+        const result = Array.from(list);
+        const [removed] = result.splice(startIndex, 1);
+        result.splice(endIndex, 0, removed);
+        return result;
+    };
+
+    const onDragEnd = (result) => {
+        if (!result.destination) return;
+        const newFields = reorder(fields, result.source.index, result.destination.index);
+        setFields(newFields);
+    };
+
+    const reorderOptions = (fieldId, sourceIndex, destinationIndex) => {
+        const updatedFields = fields.map(field => {
+            if (field.id === fieldId) {
+                const options = Array.from(field.options);
+                const [removed] = options.splice(sourceIndex, 1);
+                options.splice(destinationIndex, 0, removed);
+                return { ...field, options };
+            }
+            return field;
+        });
+
+        setFields(updatedFields);
+    };
+
+    const colorOptions = [
+        { label: "Background", key: "background" },
+        { label: "Questions background", key: "questionsBackground" },
+        { label: "Primary", key: "primary", info: "Border color for inputs, default color for buttons and other primary elements." },
+        { label: "Questions", key: "questions" },
+        { label: "Answers", key: "answers" }
+    ];
+
+    const [colors, setColors] = useState({
+        background: "#ffffff",
+        questionsBackground: "#f1f1f1",
+        primary: "#007bff",
+        questions: "#333333",
+        answers: "#000000",
+    });
+
+    const inputfieldBgColor = useMemo(() => getTextColor(formColor), [formColor]);
+
+    function getTextColor(bgColor, overlayOpacity = 0.09) {
+        if (!bgColor) return "#000000";
+        if (bgColor.toLowerCase() === "white") bgColor = "#ffffff";
+        if (bgColor.toLowerCase() === "#fff") bgColor = "#ffffff";
+
+        // Convert hex to RGB
+        const color = bgColor.startsWith("#") ? bgColor.slice(1) : bgColor;
+        const r = parseInt(color.substring(0, 2), 16);
+        const g = parseInt(color.substring(2, 4), 16);
+        const b = parseInt(color.substring(4, 6), 16);
+
+        // White color for blending
+        const whiteR = 255;
+        const whiteG = 255;
+        const whiteB = 255;
+
+        // Blend formula: result = (1 - alpha) * base + alpha * white
+        const mixedR = Math.round((1 - overlayOpacity) * r + overlayOpacity * whiteR);
+        const mixedG = Math.round((1 - overlayOpacity) * g + overlayOpacity * whiteG);
+        const mixedB = Math.round((1 - overlayOpacity) * b + overlayOpacity * whiteB);
+
+        // Convert back to hex
+        const toHex = (val) => val.toString(16).padStart(2, '0');
+        return `#${toHex(mixedR)}${toHex(mixedG)}${toHex(mixedB)}`;
+    }
+
+    const handleColorChange = (key, value) => {
+        setColors((prevColors) => ({
+            ...prevColors,
+            [key]: value,
+        }));
+
+        // Apply to specific UI sections
+        if (key === "background") {
+            setFormBgColor(value);
+        }
+        if (key === "questionsBackground") {
+            setformColor(value);
+        }
+        if (key === "primary") {
+            setformPrimaryColor(value);
+        }
+        if (key === "questions") {
+            setformQuestionColor(value);
+        }
+        if (key === "answers") {
+            setformAnswersColor(value);
+        }
     };
 
     useEffect(() => {
@@ -584,6 +838,16 @@ const FormBuilder = () => {
                             type="checkbox"
                             className="form-check-input"
                             id={`checkbox-${field.id}`}
+                            name={`checkbox-${field.id}`}
+                            checked={field.defaultValue === "true"}
+                            onChange={(e) => {
+                                const updatedFields = fields.map(f =>
+                                    f.id === field.id
+                                        ? { ...f, defaultValue: e.target.checked.toString() }
+                                        : f
+                                );
+                                setFields(updatedFields);
+                            }}
                             style={{ accentColor: formPrimaryColor }}
                         />
                     </div>
@@ -601,7 +865,11 @@ const FormBuilder = () => {
                     </div>
                 ));
             case "Dropdown":
-                const optionsList = field.options.map(opt => ({ value: opt, label: opt }));
+                const optionsList = field.options.map(opt => ({
+                    value: opt.option_text,
+                    label: opt.option_text
+                }));
+
                 return (
                     <div onFocus={() => setFocusedFieldId(field.id)} onBlur={() => setFocusedFieldId(null)}>
                         <Select
@@ -619,7 +887,7 @@ const FormBuilder = () => {
                             }}
                             value={
                                 field.value
-                                    ? { value: field.value, label: field.value }
+                                    ? optionsList.find(opt => opt.value === field.value)
                                     : null
                             }
                             styles={{
@@ -768,10 +1036,12 @@ const FormBuilder = () => {
 
                                     <input
                                         type="text"
-                                        value={opt}
+                                        value={typeof opt === "object" ? opt.option_text : opt}
                                         onChange={(e) => {
                                             const newOptions = [...field.options];
-                                            newOptions[idx] = e.target.value;
+                                            newOptions[idx] = typeof opt === "object"
+                                                ? { ...opt, option_text: e.target.value }
+                                                : e.target.value;
 
                                             const updatedFields = fields.map(f =>
                                                 f.id === field.id ? { ...f, options: newOptions } : f
@@ -837,10 +1107,12 @@ const FormBuilder = () => {
                                     />
                                     <input
                                         type="text"
-                                        value={opt}
+                                        value={typeof opt === "object" ? opt.option_text : opt}
                                         onChange={(e) => {
                                             const newOptions = [...field.options];
-                                            newOptions[idx] = e.target.value;
+                                            newOptions[idx] = typeof opt === "object"
+                                                ? { ...opt, option_text: e.target.value }
+                                                : e.target.value;
 
                                             const updatedFields = fields.map(f =>
                                                 f.id === field.id ? { ...f, options: newOptions } : f
@@ -901,25 +1173,6 @@ const FormBuilder = () => {
                             Add option
                         </button>
                     </>
-                );
-            case "Checkbox":
-                return (
-                    <div className="form-check">
-                        <input
-                            type="checkbox"
-                            className="form-check-input"
-                            id={`checkbox-${field.id}`}
-                            checked={field.defaultValue === "true"}
-                            onChange={(e) => {
-                                const updatedFields = fields.map(f =>
-                                    f.id === field.id
-                                        ? { ...f, defaultValue: e.target.checked.toString() }
-                                        : f
-                                );
-                                setFields(updatedFields);
-                            }}
-                        />
-                    </div>
                 );
             case "Choice Matrix":
                 return (
@@ -1759,160 +2012,129 @@ const FormBuilder = () => {
         }
     };
 
-    const FieldButton = ({ type, section }) => {
-        const getColor = () => {
-            if (section === "Frequently used") return "#28a745";
-            if (section === "Display text") return "#6c757d";
-            if (section === "Choices") return "#F59E0B";
-            if (section === "Time") return "#A855F7";
-            if (section === "Rating & Ranking") return "rgb(239, 68, 68)";
-            if (section === "Text") return "#28a745";
-            if (section === "Contact Info") return "rgb(20, 184, 166)";
-            if (section === "Navigation & Layout") return "#e83e8c";
-            if (section === "Media") return "#3498db";
-            return "#F59E0B";
-        };
-
-        const baseColor = getColor();
-
-        const backgroundColor = `${baseColor}20`;
-        const borderColor = baseColor;
-
-        const icon = fieldIcons[type] || <FaCheck />;
-        const modifiedIcon = React.cloneElement(icon, { color: baseColor, size: 12 }); // 👈 Smaller icon
-
-        return (
-            <button
-                className="field-btn"
-                onClick={() => addField(type)}
-                style={{
-                    backgroundColor: "#fff",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "10px",
-                    padding: "12px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "8px",
-                    width: "80px",
-                    height: "80px",
-                    boxSizing: "border-box"
-                }}
-            >
-                <div
-                    className="field-icon"
-                    style={{
-                        backgroundColor,
-                        border: `1.5px solid ${borderColor}`,
-                        borderRadius: "3px",
-                        padding: "5px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginTop: "5px"
-                    }}
-                >
-                    {modifiedIcon}
-                </div>
-                <div className="field-label" style={{ color: "#1f2937", fontWeight: 500, fontSize: "0.65rem" }}>{type}</div>
-            </button>
-        );
-    };
-
-    // Function to reorder items
-    const reorder = (list, startIndex, endIndex) => {
-        const result = Array.from(list);
-        const [removed] = result.splice(startIndex, 1);
-        result.splice(endIndex, 0, removed);
-        return result;
-    };
-
-    const onDragEnd = (result) => {
-        if (!result.destination) return;
-        const newFields = reorder(fields, result.source.index, result.destination.index);
-        setFields(newFields);
-    };
-
-    const reorderOptions = (fieldId, sourceIndex, destinationIndex) => {
-        const updatedFields = fields.map(field => {
-            if (field.id === fieldId) {
-                const options = Array.from(field.options);
-                const [removed] = options.splice(sourceIndex, 1);
-                options.splice(destinationIndex, 0, removed);
-                return { ...field, options };
+    const saveOrUpdateForm = async (isNew = false) => {
+        try {
+            if (fields.length === 0) {
+                Swal.fire("Validation Error", "At least one field is required in the form.", "warning");
+                return;
             }
-            return field;
-        });
 
-        setFields(updatedFields);
-    };
+            // Picture field validation
+            for (const field of fields) {
+                if (field.type === "Picture") {
+                    const hasMissingImage = field.options.some(opt => !opt.image);
+                    if (hasMissingImage) {
+                        Swal.fire("Validation Error", "One or more Picture options are missing images.", "warning");
+                        return;
+                    }
+                }
+            }
 
-    const colorOptions = [
-        { label: "Background", key: "background" },
-        { label: "Questions background", key: "questionsBackground" },
-        { label: "Primary", key: "primary", info: "Border color for inputs, default color for buttons and other primary elements." },
-        { label: "Questions", key: "questions" },
-        { label: "Answers", key: "answers" }
-    ];
+            // Add this before building FormData
+            for (const field of fields) {
+                if (["Dropdown", "Multiple Choice", "Multiple Select", "Checkboxes", "Picture"].includes(field.type)) {
+                    if (Array.isArray(field.options)) {
+                        const hasEmptyOptionText = field.options.some(opt => !opt.option_text?.trim());
+                        if (hasEmptyOptionText) {
+                            Swal.fire("Validation Error", `One or more options in "${field.label}" are empty.`, "warning");
+                            return;
+                        }
+                    }
+                }
+            }
 
-    const [colors, setColors] = useState({
-        background: "#ffffff",
-        questionsBackground: "#f1f1f1",
-        primary: "#007bff",
-        questions: "#333333",
-        answers: "#000000",
-    });
+            const formIdMatch = location.pathname.match(/\/form-builder\/form-(\d+)/);
+            const formId = formIdMatch ? parseInt(formIdMatch[1], 10) : null;
 
-    const inputfieldBgColor = useMemo(() => getTextColor(formColor), [formColor]);
+            // Build FormData
+            const formData = new FormData();
 
-    function getTextColor(bgColor, overlayOpacity = 0.09) {
-        if (!bgColor) return "#000000";
-        if (bgColor.toLowerCase() === "white") bgColor = "#ffffff";
-        if (bgColor.toLowerCase() === "#fff") bgColor = "#ffffff";
+            if (formId) {
+                formData.append("form_id", formId);
+            }
 
-        // Convert hex to RGB
-        const color = bgColor.startsWith("#") ? bgColor.slice(1) : bgColor;
-        const r = parseInt(color.substring(0, 2), 16);
-        const g = parseInt(color.substring(2, 4), 16);
-        const b = parseInt(color.substring(4, 6), 16);
+            formData.append("background_color", formBgColor);
+            formData.append("questions_background_color", formColor);
+            formData.append("primary_color", formPrimaryColor);
+            formData.append("questions_color", formQuestionColor);
+            formData.append("answers_color", formAnswersColor);
+            formData.append("font", selectedFont);
 
-        // White color for blending
-        const whiteR = 255;
-        const whiteG = 255;
-        const whiteB = 255;
+            formData.append("title", formTitle || "Untitled Form");
 
-        // Blend formula: result = (1 - alpha) * base + alpha * white
-        const mixedR = Math.round((1 - overlayOpacity) * r + overlayOpacity * whiteR);
-        const mixedG = Math.round((1 - overlayOpacity) * g + overlayOpacity * whiteG);
-        const mixedB = Math.round((1 - overlayOpacity) * b + overlayOpacity * whiteB);
+            // Attach image files to FormData
+            fields.forEach((field, fieldIndex) => {
+                if (field.type === "Picture" && Array.isArray(field.options)) {
+                    field.options.forEach((opt, optIndex) => {
+                        if (opt.image instanceof File) {
+                            const uniqueKey = `field_file_${fieldIndex}_${optIndex}`;
+                            formData.append(uniqueKey, opt.image);
+                            // Store key so backend can relate image path
+                            opt.imagePath = uniqueKey;
+                        }
+                    });
+                }
+            });
 
-        // Convert back to hex
-        const toHex = (val) => val.toString(16).padStart(2, '0');
-        return `#${toHex(mixedR)}${toHex(mixedG)}${toHex(mixedB)}`;
-    }
+            const clonedFields = JSON.parse(JSON.stringify(fields));
+            clonedFields.forEach(field => {
+                // Remove options if field type should not have them
+                if (!["Dropdown", "Multiple Choice", "Multiple Select", "Checkbox", "Checkboxes", "Choice Matrix", "Picture"].includes(field.type)) {
+                    delete field.options;
+                }
 
-    const handleColorChange = (key, value) => {
-        setColors((prevColors) => ({
-            ...prevColors,
-            [key]: value,
-        }));
+                // Handle style
+                if (field.type === "Multiple Choice") {
+                    field.style = field.bubble ? "bubble" : "standard";
+                    delete field.bubble;
+                } else {
+                    delete field.bubble;
+                }
 
-        // Apply to specific UI sections
-        if (key === "background") {
-            setFormBgColor(value);
-        }
-        if (key === "questionsBackground") {
-            setformColor(value);
-        }
-        if (key === "primary") {
-            setformPrimaryColor(value);
-        }
-        if (key === "questions") {
-            setformQuestionColor(value);
-        }
-        if (key === "answers") {
-            setformAnswersColor(value);
+                if (Array.isArray(field.options)) {
+                    field.options = field.options.map((opt, index) => {
+                        debugger
+                        if (typeof opt === "string") {
+                            return {
+                                option_text: opt,
+                                options_style: field.style || "",
+                                sortOrder: index
+                            };
+                        } else if (typeof opt === "object") {
+                            return {
+                                option_text: opt.option_text || opt.label || "",
+                                options_style: opt.options_style || field.style || "",
+                                sortOrder: opt.sortOrder || index,
+                                imagePath: opt.imagePath,
+                                image: opt.image
+                            };
+                        }
+                        return {};
+                    });
+                }
+            });
+            console.log("Cloned Fields:", clonedFields);
+
+            formData.set("fields", JSON.stringify(clonedFields));
+
+            const response = await fetch("/api/form_builder/save-form", {
+                method: "POST",
+                body: formData,
+                credentials: "include",
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                Swal.fire("Success", "Form saved successfully!", "success");
+            } else {
+                Swal.fire("Error", data.message || "Something went wrong while saving the form.", "error");
+            }
+
+        } catch (error) {
+            console.error("Error saving/updating form:", error);
+            const errorMessage = error.response?.data?.error || "An error occurred";
+            Swal.fire("Error", errorMessage, "error");
         }
     };
 
@@ -1937,6 +2159,11 @@ const FormBuilder = () => {
                             </div>
 
                             <div className="field-group-scrollable mt-2">
+                                <div className="field-group mt-1">
+                                    <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)}>
+                                        Save Form
+                                    </button>
+                                </div>
                                 <div className="field-group mt-1">
                                     <h4>Frequently used</h4>
                                     <div className="field-grid">
@@ -2640,7 +2867,7 @@ const FormBuilder = () => {
                                     </>
                                 )}
 
-                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "Document Type"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "Document Type"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Placeholder</label>
                                         <input
@@ -2657,7 +2884,7 @@ const FormBuilder = () => {
                                     </>
                                 )}
 
-                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "Document Type"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "Document Type"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Default value <span title="Initial value" style={{ cursor: "help" }}>🛈</span></label>
                                         <input
@@ -2778,13 +3005,15 @@ const FormBuilder = () => {
                                                                     >
                                                                         <input
                                                                             type="text"
-                                                                            value={opt}
+                                                                            value={typeof opt === "object" ? opt.option_text : opt}
                                                                             className="form-control"
                                                                             onChange={(e) => {
                                                                                 const updatedFields = fields.map(field => {
                                                                                     if (field.id === selectedFieldId) {
                                                                                         const newOptions = [...field.options];
-                                                                                        newOptions[index] = e.target.value;
+                                                                                        newOptions[index] = {
+                                                                                            option_text: e.target.value
+                                                                                        };
                                                                                         return { ...field, options: newOptions };
                                                                                     }
                                                                                     return field;
@@ -2799,14 +3028,14 @@ const FormBuilder = () => {
                                                                         <span
                                                                             style={{ color: "red", cursor: "pointer" }}
                                                                             onClick={() => {
-                                                                                const updatedFields = fields.map(field => {
-                                                                                    if (field.id === selectedFieldId) {
-                                                                                        const newOptions = [...field.options];
-                                                                                        newOptions.splice(index, 1); // remove the option
-                                                                                        return { ...field, options: newOptions };
-                                                                                    }
-                                                                                    return field;
-                                                                                });
+                                                                                const updatedFields = fields.map(f =>
+                                                                                    f.id === selectedFieldId
+                                                                                        ? {
+                                                                                            ...f,
+                                                                                            options: f.options.filter((_, i) => i !== index)
+                                                                                        }
+                                                                                        : f
+                                                                                );
                                                                                 setFields(updatedFields);
                                                                             }}
                                                                         >
@@ -2826,7 +3055,15 @@ const FormBuilder = () => {
                                             className="btn btn-sm btn-outline-primary"
                                             onClick={() => {
                                                 const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId ? { ...f, options: [...f.options, `Option ${f.options.length + 1}`] } : f
+                                                    f.id === selectedFieldId
+                                                        ? {
+                                                            ...f,
+                                                            options: [
+                                                                ...f.options,
+                                                                { option_text: `Option ${f.options.length + 1}` }
+                                                            ]
+                                                        }
+                                                        : f
                                                 );
                                                 setFields(updatedFields);
                                             }}
@@ -3189,9 +3426,9 @@ const FormBuilder = () => {
                                                         fontSize: "18px"
                                                     }}
                                                     onClick={(e) => {
-                                                        e.stopPropagation(); 
-                                                        setSelectedFont(""); 
-                                                        setTempFont(""); 
+                                                        e.stopPropagation();
+                                                        setSelectedFont("");
+                                                        setTempFont("");
                                                     }}
                                                 ></i>
                                             )}
@@ -3210,6 +3447,37 @@ const FormBuilder = () => {
                             >
                                 Done
                             </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                className={`modal fade ${showModal ? "show d-block" : ""}`}
+                id="exampleModalCenter"
+                tabIndex="-1"
+                role="dialog"
+                aria-labelledby="exampleModalCenterTitle"
+                aria-hidden={!showModal}
+                style={{ backgroundColor: showModal ? "rgba(0,0,0,0.5)" : "transparent" }}
+            >
+                <div className="modal-dialog modal-dialog-centered" role="document">
+                    <div className="modal-content custom-modal p-0">
+                        <div className="modal-header border-0 pb-0">
+                            <h5 className="modal-title">Name your form</h5>
+                            <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div className="modal-body pt-2">
+                            <input
+                                type="text"
+                                id="formNameInput"
+                                className="form-control custom-input"
+                                value={formTitle}
+                                onChange={(e) => setFormTitle(e.target.value)}
+                            />
+                        </div>
+                        <div className="modal-footer border-0 pt-0 justify-content-end">
+                            <button type="button" id="continueButton" className="btn btn-primary custom-continue-btn" onClick={handleContinue}>Continue</button>
                         </div>
                     </div>
                 </div>
