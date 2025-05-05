@@ -148,15 +148,20 @@ const FormBuilder = () => {
 
                     if (Array.isArray(data.fields)) {
                         const processedFields = data.fields.map(field => {
+                            const normalizedRequired = field.required === "Yes" || field.required === true;
                             if (field.type === "Multiple Choice") {
                                 const hasBubbleStyle = field.options?.some(opt => opt.options_style === "bubble");
                                 return {
                                     ...field,
+                                    required: normalizedRequired,
                                     bubble: hasBubbleStyle,
                                     selectedOption: null
                                 };
                             }
-                            return field;
+                            return {
+                                ...field,
+                                required: normalizedRequired
+                            };
                         });
 
                         setFields(processedFields);
@@ -637,7 +642,7 @@ const FormBuilder = () => {
         const commonProps = {
             className: "form-control",
             placeholder: field.placeholder || "",
-            defaultValue: field.defaultValue || "",
+            default_value: field.default_value || "",
             style: {
                 width: field.halfWidth ? "50%" : "100%",
                 color: formAnswersColor,
@@ -828,7 +833,7 @@ const FormBuilder = () => {
                                 setFields(updatedFields);
                             }
                         }}
-                        value={field.value || field.defaultValue || ""}  // Use defaultValue if value is not set
+                        value={field.value || field.default_value || ""}  // Use default_value  if value is not set
                     />
                 );
             case "Checkbox":
@@ -839,11 +844,11 @@ const FormBuilder = () => {
                             className="form-check-input"
                             id={`checkbox-${field.id}`}
                             name={`checkbox-${field.id}`}
-                            checked={field.defaultValue === "true"}
+                            checked={field.default_value === "true"}
                             onChange={(e) => {
                                 const updatedFields = fields.map(f =>
                                     f.id === field.id
-                                        ? { ...f, defaultValue: e.target.checked.toString() }
+                                        ? { ...f, default_value: e.target.checked.toString() }
                                         : f
                                 );
                                 setFields(updatedFields);
@@ -976,17 +981,17 @@ const FormBuilder = () => {
                             type="checkbox"
                             id={`switch-${field.id}`}
                             name={`switch-${field.id}`}
-                            checked={field.defaultValue === "true"}
+                            checked={field.default_value === "true"}
                             onChange={(e) => {
                                 const updatedFields = fields.map(f =>
                                     f.id === field.id
-                                        ? { ...f, defaultValue: e.target.checked.toString() }
+                                        ? { ...f, default_value: e.target.checked.toString() }
                                         : f
                                 );
                                 setFields(updatedFields);
                             }}
                             style={{
-                                backgroundColor: field.defaultValue === "true" ? formPrimaryColor : "",
+                                backgroundColor: field.default_value === "true" ? formPrimaryColor : "",
                                 borderColor: formPrimaryColor,
                                 boxShadow: "none",
                             }}
@@ -1297,10 +1302,10 @@ const FormBuilder = () => {
                     <input
                         type="date"
                         {...commonProps}
-                        value={field.defaultValue || ""}
+                        value={field.default_value || ""}
                         onChange={(e) => {
                             const updatedFields = fields.map(f =>
-                                f.id === field.id ? { ...f, defaultValue: e.target.value } : f
+                                f.id === field.id ? { ...f, default_value: e.target.value } : f
                             );
                             setFields(updatedFields);
                         }}
@@ -1311,10 +1316,10 @@ const FormBuilder = () => {
                     <input
                         type="time"
                         {...commonProps}
-                        value={field.defaultValue || ""}
+                        value={field.default_value || ""}
                         onChange={(e) => {
                             const updatedFields = fields.map(f =>
-                                f.id === field.id ? { ...f, defaultValue: e.target.value } : f
+                                f.id === field.id ? { ...f, default_value: e.target.value } : f
                             );
                             setFields(updatedFields);
                         }}
@@ -1325,10 +1330,10 @@ const FormBuilder = () => {
                     <input
                         type="datetime-local"
                         {...commonProps}
-                        value={field.defaultValue || ""}
+                        value={field.default_value || ""}
                         onChange={(e) => {
                             const updatedFields = fields.map(f =>
-                                f.id === field.id ? { ...f, defaultValue: e.target.value } : f
+                                f.id === field.id ? { ...f, default_value: e.target.value } : f
                             );
                             setFields(updatedFields);
                         }}
@@ -2890,10 +2895,10 @@ const FormBuilder = () => {
                                         <input
                                             type="text"
                                             className="form-control"
-                                            value={fields.find(f => f.id === selectedFieldId)?.defaultValue || ""}
+                                            value={fields.find(f => f.id === selectedFieldId)?.default_value || ""}
                                             onChange={(e) => {
                                                 const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId ? { ...f, defaultValue: e.target.value } : f
+                                                    f.id === selectedFieldId ? { ...f, default_value: e.target.value } : f
                                                 );
                                                 setFields(updatedFields);
                                             }}
@@ -2916,13 +2921,13 @@ const FormBuilder = () => {
                                         </label>
 
                                         <span
-                                            className={`custom-toggle ${fields.find(f => f.id === selectedFieldId)?.defaultValue === "true" ? 'active' : ''}`}
+                                            className={`custom-toggle ${fields.find(f => f.id === selectedFieldId)?.default_value === "true" ? 'active' : ''}`}
                                             onClick={() => {
                                                 const updatedFields = fields.map(f =>
                                                     f.id === selectedFieldId
                                                         ? {
                                                             ...f,
-                                                            defaultValue: f.defaultValue === "true" ? "false" : "true"
+                                                            default_value: f.default_value === "true" ? "false" : "true"
                                                         }
                                                         : f
                                                 );
@@ -3134,10 +3139,10 @@ const FormBuilder = () => {
                                                     fields.find(f => f.id === selectedFieldId)?.type === "Time Picker" ? "time" : "datetime-local"
                                             }
                                             className="form-control"
-                                            value={fields.find(f => f.id === selectedFieldId)?.defaultValue || ""}
+                                            value={fields.find(f => f.id === selectedFieldId)?.default_value || ""}
                                             onChange={(e) => {
                                                 const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId ? { ...f, defaultValue: e.target.value } : f
+                                                    f.id === selectedFieldId ? { ...f, default_value: e.target.value } : f
                                                 );
                                                 setFields(updatedFields);
                                             }}
@@ -3229,12 +3234,12 @@ const FormBuilder = () => {
                                             className="form-control"
                                             inputMode="numeric"
                                             pattern="[0-9]*"
-                                            value={fields.find(f => f.id === selectedFieldId)?.defaultValue || ""}
+                                            value={fields.find(f => f.id === selectedFieldId)?.default_value || ""}
                                             onChange={(e) => {
                                                 const value = e.target.value;
                                                 if (/^\d*$/.test(value)) { // Only digits
                                                     const updatedFields = fields.map(f =>
-                                                        f.id === selectedFieldId ? { ...f, defaultValue: value } : f
+                                                        f.id === selectedFieldId ? { ...f, default_value: value } : f
                                                     );
                                                     setFields(updatedFields);
                                                 }

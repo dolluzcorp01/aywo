@@ -223,7 +223,7 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
                         field.label || "",
                         field.placeholder || "",
                         field.caption || "",
-                        typeof field.defaultValue === "object" ? JSON.stringify(field.defaultValue) : field.defaultValue || "",
+                        typeof field.default_value === "object" ? JSON.stringify(field.default_value) : field.default_value || "",
                         field.fontSize || 14,
                         field.required ? "Yes" : "No",
                         field.sortOrder || 0,
@@ -285,12 +285,12 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
             }
 
             // Insert default values
-            if (field.defaultValue) {
+            if (field.default_value) {
                 await connection.query(`
                     INSERT INTO dfield_default_values (
                         form_id, field_id, field_value, submitted_at
                     ) VALUES (?, ?, ?, NOW())
-                `, [formId, fieldId, typeof field.defaultValue === 'object' ? JSON.stringify(field.defaultValue) : field.defaultValue]);
+                `, [formId, fieldId, typeof field.default_value === 'object' ? JSON.stringify(field.default_value) : field.default_value]);
             }
         }
 
