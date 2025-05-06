@@ -214,9 +214,9 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
             const fieldResult = await new Promise((resolve, reject) => {
                 connection.query(
                     `INSERT INTO dform_fields (
-                        form_id, type, label, placeholder, caption, default_value, font_size, required, sort_order,
+                        form_id, type, label, placeholder, caption, default_value, description, alert_type, font_size, required, sort_order,
                         min_value, max_value
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         formId,
                         field.type,
@@ -224,11 +224,13 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
                         field.placeholder || "",
                         field.caption || "",
                         typeof field.default_value === "object" ? JSON.stringify(field.default_value) : field.default_value || "",
+                        field.description || "",
+                        field.alert_type || "info",
                         field.fontSize || 14,
                         field.required ? "Yes" : "No",
                         field.sortOrder || 0,
-                        field.minValue || null,
-                        field.maxValue || null
+                        field.min_value || null,
+                        field.max_value || null
                     ],
                     (err, result) => {
                         if (err) return reject(err);
@@ -243,10 +245,10 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
             if (field.options && Array.isArray(field.options)) {
                 for (const opt of field.options) {
                     let savedFilePath = null;
-                    if (opt.imagePath && uploadedFilesMap[opt.imagePath]) {
-                        savedFilePath = uploadedFilesMap[opt.imagePath];
-                    } else if (opt.imagePath && typeof opt.imagePath === "string" && opt.imagePath.startsWith("field_file_uploads/")) {
-                        savedFilePath = opt.imagePath;
+                    if (opt.image_path && uploadedFilesMap[opt.image_path]) {
+                        savedFilePath = uploadedFilesMap[opt.image_path];
+                    } else if (opt.image_path && typeof opt.image_path === "string" && opt.image_path.startsWith("field_file_uploads/")) {
+                        savedFilePath = opt.image_path;
                     }
 
                     await connection.query(`

@@ -397,7 +397,7 @@ const FormBuilder = () => {
         setTimeout(updateFormHeight, 0);
     }, [fields, submitBtnY, submitBtnHeight]);
 
-    // Add new field 
+    // Add new field
     const addField = (type) => {
         const newField = {
             id: Date.now(),
@@ -423,12 +423,12 @@ const FormBuilder = () => {
                 ];
                 break;
             case "Opinion Scale":
-                newField.min = 1;
-                newField.max = 10; // ✅ set only 10 values for Opinion Scale
+                newField.min_value = 1;
+                newField.max_value = 100;
                 break;
             case "Slider":
-                newField.min = 1;
-                newField.max = 100;
+                newField.min_value = 0;
+                newField.max_value = 100;
                 break;
             case "Choice Matrix":
                 newField.rows = ["Row 1", "Row 2"];
@@ -439,8 +439,12 @@ const FormBuilder = () => {
                 };
                 break;
             case "Ranking":
+                newField.options = [
+                    { option_text: "Option 1" },
+                    { option_text: "Option 2" }
+                ];
             case "Star Rating":
-                newField.max = 5;
+                newField.max_value = 5;
                 newField.value = 0;
                 break;
             case "Date Range":
@@ -457,8 +461,8 @@ const FormBuilder = () => {
                 break;
             case "Picture":
                 newField.options = [
-                    { id: Date.now(), label: "Option 1", image: null },
-                    { id: Date.now() + 1, label: "Option 2", image: null }
+                    { id: Date.now(), option_text: "Option 1", image: null },
+                    { id: Date.now() + 1, option_text: "Option 2", image: null }
                 ];
                 break;
             case "Divider":
@@ -475,7 +479,6 @@ const FormBuilder = () => {
         setSelectedFieldId(newField.id);
         setCustomizeVisible(true);
     };
-
 
     const FieldButton = ({ type, section }) => {
         const getColor = () => {
@@ -722,7 +725,7 @@ const FormBuilder = () => {
                     />
                 );
             case "Banner":
-                const alertType = field.alertType || "info"; // Default to 'info'
+                const alert_type = field.alert_type || "info"; // Default to 'info'
 
                 const alertStyles = {
                     warning: {
@@ -755,7 +758,7 @@ const FormBuilder = () => {
                     }
                 };
 
-                const style = alertStyles[alertType.toLowerCase()] || alertStyles.info;
+                const style = alertStyles[alert_type.toLowerCase()] || alertStyles.info;
 
                 return (
                     <div
@@ -866,7 +869,7 @@ const FormBuilder = () => {
                             id={`checkbox-${field.id}-${idx}`}
                             style={{ accentColor: formPrimaryColor }}
                         />
-                        <label className="form-check-label" style={{ color: formAnswersColor, fontFamily: selectedFont }} htmlFor={`checkbox-${field.id}-${idx}`}>{opt}</label>
+                        <label className="form-check-label" style={{ color: formAnswersColor, fontFamily: selectedFont }} htmlFor={`checkbox-${field.id}-${idx}`}>{opt.option_text}</label>
                     </div>
                 ));
             case "Dropdown":
@@ -932,10 +935,31 @@ const FormBuilder = () => {
                 return (
                     <Select
                         isMulti
-                        options={field.options.map(opt => ({ value: opt, label: opt }))}
+                        options={field.options.map(opt => ({
+                            value: opt.option_text,
+                            label: opt.option_text
+                        }))}
                         className="basic-multi-select"
                         classNamePrefix="select"
                         placeholder={field.placeholder || "Select an option..."}
+                        onChange={(selectedOptions) => {
+                            const values = selectedOptions.map(opt => opt.value);
+                            const updatedFields = fields.map(f => {
+                                if (f.id === field.id) {
+                                    return { ...f, value: values };
+                                }
+                                return f;
+                            });
+                            setFields(updatedFields);
+                        }}
+                        value={
+                            field.value
+                                ? field.value.map(val => ({
+                                    value: val,
+                                    label: val
+                                }))
+                                : []
+                        }
                         styles={{
                             multiValue: (base) => ({
                                 ...base,
@@ -1410,10 +1434,10 @@ const FormBuilder = () => {
                                                         <input
                                                             type="text"
                                                             {...commonProps}
-                                                            value={opt}
+                                                            value={opt.option_text}
                                                             onChange={(e) => {
                                                                 const updatedOptions = [...field.options];
-                                                                updatedOptions[idx] = e.target.value;
+                                                                updatedOptions[idx] = { option_text: e.target.value };
 
                                                                 const updatedFields = fields.map(f =>
                                                                     f.id === field.id ? { ...f, options: updatedOptions } : f
@@ -1471,10 +1495,7 @@ const FormBuilder = () => {
                                                 f.id === field.id
                                                     ? {
                                                         ...f,
-                                                        options: [
-                                                            ...f.options,
-                                                            `Option ${f.options.length + 1}`,
-                                                        ]
+                                                        options: [...f.options, { option_text: `Option ${f.options.length + 1}` }]
                                                     }
                                                     : f
                                             );
@@ -1507,7 +1528,7 @@ const FormBuilder = () => {
                             }}
                             onMouseLeave={() => setHovered(null)}
                         >
-                            {[...Array(field.max || 5)].map((_, i) => (
+                            {[...Array(field.max_value || 5)].map((_, i) => (
                                 <span
                                     key={i}
                                     style={{
@@ -1541,8 +1562,8 @@ const FormBuilder = () => {
                     </div>
                 );
             case "Slider":
-                const currentValue = field.value ?? field.min;
-                const percentage = ((currentValue - field.min) / (field.max - field.min)) * 100;
+                const currentValue = field.value ?? field.min_value;
+                const percentage = ((currentValue - field.min_value) / (field.max_value - field.min_value)) * 100;
 
                 const sliderStyle = {
                     background: `linear-gradient(to right, ${formPrimaryColor} 0%, ${formPrimaryColor} ${percentage}%, #e5e7eb ${percentage}%, #e5e7eb 100%)`
@@ -1558,12 +1579,12 @@ const FormBuilder = () => {
                             marginBottom: "4px"
                         }}>
                             <span></span>
-                            <span style={{ color: "#6b7280" }}>{currentValue} / {field.max}</span>
+                            <span style={{ color: "#6b7280" }}>{currentValue} / {field.max_value}</span>
                         </div>
                         <input
                             type="range"
-                            min={field.min}
-                            max={field.max}
+                            min={field.min_value}
+                            max={field.max_value}
                             value={currentValue}
                             className="custom-slider"
                             style={{
@@ -1586,11 +1607,11 @@ const FormBuilder = () => {
                             display: "grid",
                             gridTemplateColumns: "repeat(auto-fill, minmax(40px, 1fr))",
                             gap: "8px",
-                            maxWidth: "640px", // 15 * 40px + gaps
+                            maxWidth: "640px",
                         }}
                     >
-                        {[...Array((field?.max ?? 10) - (field?.min ?? 1) + 1)].map((_, i) => {
-                            const val = field.min + i;
+                        {[...Array((field?.max_value ?? 10) - (field?.min_value ?? 1) + 1)].map((_, i) => {
+                            const val = (field?.min_value ?? 1) + i;
                             return (
                                 <label key={val} style={{ textAlign: "center" }}>
                                     <input
@@ -1603,9 +1624,7 @@ const FormBuilder = () => {
                                             );
                                             setFields(updatedFields);
                                         }}
-                                        style={{
-                                            accentColor: formPrimaryColor,
-                                        }}
+                                        style={{ accentColor: formPrimaryColor }}
                                     />
                                     <div>{val}</div>
                                 </label>
@@ -1790,7 +1809,7 @@ const FormBuilder = () => {
                                             width: "100%",
                                             height: "100px",
                                             backgroundColor: opt.image ? "transparent" : pictureBgColors[idx % pictureBgColors.length],
-                                            backgroundImage: opt.image ? `url(${opt.image})` : undefined,
+                                            backgroundImage: opt.image_path ? `url(${opt.image_path})` : undefined,
                                             backgroundSize: "cover",
                                             backgroundPosition: "center",
                                             borderRadius: "4px",
@@ -1833,7 +1852,7 @@ const FormBuilder = () => {
                                                 backgroundColor: field.selectedOption === idx ? formPrimaryColor : "transparent",
                                             }}
                                         />
-                                        <span style={{ marginLeft: "6px" }}>{opt.label}</span>
+                                        <span style={{ marginLeft: "6px" }}>{opt.option_text}</span>
                                     </div>
                                 </div>
                             ))}
@@ -1845,7 +1864,7 @@ const FormBuilder = () => {
                                     f.id === field.id
                                         ? {
                                             ...f,
-                                            options: [...f.options, { id: Date.now(), label: `Option ${f.options.length + 1}`, image: null }]
+                                            options: [...f.options, { id: Date.now(), option_text: `Option ${f.options.length + 1}`, image: null }]
                                         }
                                         : f
                                 );
@@ -2027,7 +2046,7 @@ const FormBuilder = () => {
             // Picture field validation
             for (const field of fields) {
                 if (field.type === "Picture") {
-                    const hasMissingImage = field.options.some(opt => !opt.image);
+                    const hasMissingImage = field.options.some(opt => !opt.image_path);
                     if (hasMissingImage) {
                         Swal.fire("Validation Error", "One or more Picture options are missing images.", "warning");
                         return;
@@ -2075,7 +2094,7 @@ const FormBuilder = () => {
                             const uniqueKey = `field_file_${fieldIndex}_${optIndex}`;
                             formData.append(uniqueKey, opt.image);
                             // Store key so backend can relate image path
-                            opt.imagePath = uniqueKey;
+                            opt.image_path = uniqueKey;
                         }
                     });
                 }
@@ -2083,8 +2102,22 @@ const FormBuilder = () => {
 
             const clonedFields = JSON.parse(JSON.stringify(fields));
             clonedFields.forEach(field => {
+
+                // Handle Star Rating, Slider, etc. numeric controls
+                if (typeof field.max_value === "number") {
+                    field.max_value = field.max_value;
+                }
+                if (typeof field.min_value === "number") {
+                    field.min_value = field.min_value;
+                }
+
+                if (field.type === "Banner") {
+                    field.description = field.description || "";
+                    field.alert_type = field.alert_type || "info";
+                }
+
                 // Remove options if field type should not have them
-                if (!["Dropdown", "Multiple Choice", "Multiple Select", "Checkbox", "Checkboxes", "Choice Matrix", "Picture"].includes(field.type)) {
+                if (!["Dropdown", "Multiple Choice", "Multiple Select", "Checkbox", "Checkboxes", "Choice Matrix", "Picture", "Ranking"].includes(field.type)) {
                     delete field.options;
                 }
 
@@ -2098,7 +2131,6 @@ const FormBuilder = () => {
 
                 if (Array.isArray(field.options)) {
                     field.options = field.options.map((opt, index) => {
-                        debugger
                         if (typeof opt === "string") {
                             return {
                                 option_text: opt,
@@ -2110,13 +2142,13 @@ const FormBuilder = () => {
                                 option_text: opt.option_text || opt.label || "",
                                 options_style: opt.options_style || field.style || "",
                                 sortOrder: opt.sortOrder || index,
-                                imagePath: opt.imagePath,
-                                image: opt.image
+                                image_path: opt.image_path
                             };
                         }
                         return {};
                     });
                 }
+
             });
             console.log("Cloned Fields:", clonedFields);
 
@@ -2788,12 +2820,12 @@ const FormBuilder = () => {
                                         style={{ marginBottom: "20px" }}
                                         type="text"
                                         className="form-control"
-                                        value={fields.find(f => f.id === editImageOption.fieldId).options[editImageOption.index].label}
+                                        value={fields.find(f => f.id === editImageOption.fieldId).options[editImageOption.index].option_text}
                                         onChange={(e) => {
                                             const updatedFields = fields.map(f => {
                                                 if (f.id !== editImageOption.fieldId) return f;
                                                 const updatedOptions = [...f.options];
-                                                updatedOptions[editImageOption.index].label = e.target.value;
+                                                updatedOptions[editImageOption.index].option_text = e.target.value;
                                                 return { ...f, options: updatedOptions };
                                             });
                                             setFields(updatedFields);
@@ -2812,7 +2844,7 @@ const FormBuilder = () => {
                                                 const updatedFields = fields.map(f => {
                                                     if (f.id !== editImageOption.fieldId) return f;
                                                     const updatedOptions = [...f.options];
-                                                    updatedOptions[editImageOption.index].image = reader.result;
+                                                    updatedOptions[editImageOption.index].image_path = reader.result;
                                                     return { ...f, options: updatedOptions };
                                                 });
                                                 setFields(updatedFields);
@@ -2964,10 +2996,10 @@ const FormBuilder = () => {
                                         <label>Alert type</label>
                                         <select
                                             className="form-control"
-                                            value={fields.find(f => f.id === selectedFieldId)?.alertType || "info"}
+                                            value={fields.find(f => f.id === selectedFieldId)?.alert_type || "info"}
                                             onChange={(e) => {
                                                 const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId ? { ...f, alertType: e.target.value } : f
+                                                    f.id === selectedFieldId ? { ...f, alert_type: e.target.value } : f
                                                 );
                                                 setFields(updatedFields);
                                             }}
@@ -3161,11 +3193,11 @@ const FormBuilder = () => {
                                             min="1"
                                             max="50"
                                             className="form-control"
-                                            value={fields.find(f => f.id === selectedFieldId)?.max || 5}
+                                            value={fields.find(f => f.id === selectedFieldId)?.max_value || 5}
                                             onChange={(e) => {
                                                 const value = Math.min(50, parseInt(e.target.value, 10));
                                                 const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId ? { ...f, max: value } : f
+                                                    f.id === selectedFieldId ? { ...f, max_value: value } : f
                                                 );
                                                 setFields(updatedFields);
                                             }}
@@ -3184,13 +3216,13 @@ const FormBuilder = () => {
                                             min="10"
                                             max="100"
                                             className="form-control"
-                                            value={fields.find(f => f.id === selectedFieldId)?.max || 100}
+                                            value={fields.find(f => f.id === selectedFieldId)?.max_value || 100}
                                             onChange={(e) => {
                                                 let value = parseInt(e.target.value, 10);
                                                 value = Math.max(10, Math.min(100, value)); // clamp to 10–100
 
                                                 const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId ? { ...f, max: value } : f
+                                                    f.id === selectedFieldId ? { ...f, max_value: value } : f
                                                 );
                                                 setFields(updatedFields);
                                             }}
@@ -3202,21 +3234,50 @@ const FormBuilder = () => {
                                     <>
                                         <div style={{ marginBottom: "10px" }}>
                                             <label>
+                                                Min Opinion
+                                                <span title="Minimum scale value (Min 1)" style={{ cursor: "help" }}> 🛈</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max={(fields.find(f => f.id === selectedFieldId)?.max_value || 10) - 1}
+                                                className="form-control"
+                                                value={fields.find(f => f.id === selectedFieldId)?.min_value ?? 1}
+                                                onChange={(e) => {
+                                                    const rawValue = e.target.value;
+                                                    const parsed = parseInt(rawValue, 10);
+                                                    if (!isNaN(parsed)) {
+                                                        const value = Math.max(1, parsed);
+                                                        const updatedFields = fields.map(f =>
+                                                            f.id === selectedFieldId ? { ...f, min_value: value } : f
+                                                        );
+                                                        setFields(updatedFields);
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div style={{ marginBottom: "10px" }}>
+                                            <label>
                                                 Max Opinion
                                                 <span title="Maximum scale value (Max 100)" style={{ cursor: "help" }}> 🛈</span>
                                             </label>
                                             <input
                                                 type="number"
-                                                min={fields.find(f => f.id === selectedFieldId)?.min + 1 || 2}
+                                                min={(fields.find(f => f.id === selectedFieldId)?.min_value || 1) + 1}
                                                 max="100"
                                                 className="form-control"
-                                                value={fields.find(f => f.id === selectedFieldId)?.max || 10}
+                                                value={fields.find(f => f.id === selectedFieldId)?.max_value ?? 10}
                                                 onChange={(e) => {
-                                                    const value = Math.min(100, parseInt(e.target.value, 10));
-                                                    const updatedFields = fields.map(f =>
-                                                        f.id === selectedFieldId ? { ...f, max: value } : f
-                                                    );
-                                                    setFields(updatedFields);
+                                                    const rawValue = e.target.value;
+                                                    const parsed = parseInt(rawValue, 10);
+                                                    if (!isNaN(parsed)) {
+                                                        const value = Math.min(100, parsed);
+                                                        const updatedFields = fields.map(f =>
+                                                            f.id === selectedFieldId ? { ...f, max_value: value } : f
+                                                        );
+                                                        setFields(updatedFields);
+                                                    }
                                                 }}
                                             />
                                         </div>
