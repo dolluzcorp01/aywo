@@ -149,6 +149,23 @@ const FormBuilder = () => {
                     if (Array.isArray(data.fields)) {
                         const processedFields = data.fields.map(field => {
                             const normalizedRequired = field.required === "Yes" || field.required === true;
+                            if (field.type === "Choice Matrix") {
+                                const rows = field.matrix
+                                    .filter(m => m.row_label !== null)
+                                    .map(m => m.row_label);
+                                const columns = field.matrix
+                                    .filter(m => m.column_label !== null)
+                                    .map(m => m.column_label);
+
+                                return {
+                                    ...field,
+                                    required: normalizedRequired,
+                                    rows: rows,
+                                    columns: columns,
+                                    selectedMatrix: []  // or load from backend if stored
+                                };
+                            }
+                            
                             if (field.type === "Multiple Choice") {
                                 const hasBubbleStyle = field.options?.some(opt => opt.options_style === "bubble");
                                 return {
@@ -461,8 +478,8 @@ const FormBuilder = () => {
                 break;
             case "Picture":
                 newField.options = [
-                    { id: Date.now(), option_text: "Option 1", image: null },
-                    { id: Date.now() + 1, option_text: "Option 2", image: null }
+                    { id: Date.now(), option_text: "Option 1", image_path: null },
+                    { id: Date.now() + 1, option_text: "Option 2", image_path: null }
                 ];
                 break;
             case "Divider":
@@ -1210,8 +1227,8 @@ const FormBuilder = () => {
                             <thead>
                                 <tr>
                                     <th></th>
-                                    {field.columns.map((col, colIdx) => (
-                                        <th key={colIdx}>
+                                    {(field.columns || []).map((col, colIdx) => (
+                                        <th key={colIdx} className="hover-cell">
                                             <input
                                                 type="text"
                                                 className="form-control text-center"
@@ -1227,17 +1244,36 @@ const FormBuilder = () => {
                                                     });
                                                     setFields(updatedFields);
                                                 }}
-                                                style={{ fontFamily: selectedFont }}
                                                 placeholder={`Col ${colIdx + 1}`}
+                                                style={{ fontFamily: selectedFont }}
                                             />
+                                            <i
+                                                className="fas fa-xmark choice-martix-delete-icon"
+                                                onClick={() => {
+                                                    const updatedFields = fields.map(f => {
+                                                        if (f.id === field.id) {
+                                                            const newCols = [...f.columns];
+                                                            newCols.splice(colIdx, 1);
+
+                                                            const newMatrix = (f.selectedMatrix || []).map(sel =>
+                                                                sel === colIdx ? null : sel > colIdx ? sel - 1 : sel
+                                                            );
+
+                                                            return { ...f, columns: newCols, selectedMatrix: newMatrix };
+                                                        }
+                                                        return f;
+                                                    });
+                                                    setFields(updatedFields);
+                                                }}
+                                            ></i>
                                         </th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
-                                {field.rows.map((row, rowIdx) => (
+                                {(field.rows || []).map((row, rowIdx) => (
                                     <tr key={rowIdx}>
-                                        <td>
+                                        <td className="hover-cell">
                                             <input
                                                 type="text"
                                                 className="form-control"
@@ -1253,9 +1289,26 @@ const FormBuilder = () => {
                                                     });
                                                     setFields(updatedFields);
                                                 }}
-                                                style={{ fontFamily: selectedFont }}
                                                 placeholder={`Row ${rowIdx + 1}`}
+                                                style={{ fontFamily: selectedFont }}
                                             />
+                                            <i
+                                                className="fas fa-xmark choice-martix-delete-icon"
+                                                onClick={() => {
+                                                    const updatedFields = fields.map(f => {
+                                                        if (f.id === field.id) {
+                                                            const newRows = [...f.rows];
+                                                            newRows.splice(rowIdx, 1);
+
+                                                            const newMatrix = (f.selectedMatrix || []).filter((_, i) => i !== rowIdx);
+
+                                                            return { ...f, rows: newRows, selectedMatrix: newMatrix };
+                                                        }
+                                                        return f;
+                                                    });
+                                                    setFields(updatedFields);
+                                                }}
+                                            ></i>
                                         </td>
                                         {field.columns.map((col, colIdx) => (
                                             <td key={colIdx}>
@@ -1808,7 +1861,7 @@ const FormBuilder = () => {
                                         style={{
                                             width: "100%",
                                             height: "100px",
-                                            backgroundColor: opt.image ? "transparent" : pictureBgColors[idx % pictureBgColors.length],
+                                            backgroundColor: opt.image_path ? "transparent" : pictureBgColors[idx % pictureBgColors.length],
                                             backgroundImage: opt.image_path ? `url(${opt.image_path})` : undefined,
                                             backgroundSize: "cover",
                                             backgroundPosition: "center",
@@ -1864,7 +1917,7 @@ const FormBuilder = () => {
                                     f.id === field.id
                                         ? {
                                             ...f,
-                                            options: [...f.options, { id: Date.now(), option_text: `Option ${f.options.length + 1}`, image: null }]
+                                            options: [...f.options, { id: Date.now(), option_text: `Option ${f.options.length + 1}`, image_path: null }]
                                         }
                                         : f
                                 );
@@ -2090,10 +2143,10 @@ const FormBuilder = () => {
             fields.forEach((field, fieldIndex) => {
                 if (field.type === "Picture" && Array.isArray(field.options)) {
                     field.options.forEach((opt, optIndex) => {
-                        if (opt.image instanceof File) {
+                        debugger
+                        if (opt.image_path instanceof File) {
                             const uniqueKey = `field_file_${fieldIndex}_${optIndex}`;
-                            formData.append(uniqueKey, opt.image);
-                            // Store key so backend can relate image path
+                            formData.append(uniqueKey, opt.image_path);
                             opt.image_path = uniqueKey;
                         }
                     });
@@ -2116,8 +2169,19 @@ const FormBuilder = () => {
                     field.alert_type = field.alert_type || "info";
                 }
 
+                if (field.type === "Choice Matrix") {
+                    // Wrap rows and columns inside a matrix object
+                    field.matrix = {
+                        rows: field.rows || [],
+                        columns: field.columns || []
+                    };
+                    // You can also clean up `rows` and `columns` if not needed elsewhere
+                    delete field.rows;
+                    delete field.columns;
+                }
+
                 // Remove options if field type should not have them
-                if (!["Dropdown", "Multiple Choice", "Multiple Select", "Checkbox", "Checkboxes", "Choice Matrix", "Picture", "Ranking"].includes(field.type)) {
+                if (!["Dropdown", "Multiple Choice", "Multiple Select", "Checkbox", "Checkboxes", "Picture", "Ranking"].includes(field.type)) {
                     delete field.options;
                 }
 
@@ -2150,8 +2214,8 @@ const FormBuilder = () => {
                 }
 
             });
-            console.log("Cloned Fields:", clonedFields);
 
+            console.log("Cloned Fields:", clonedFields);
             formData.set("fields", JSON.stringify(clonedFields));
 
             const response = await fetch("/api/form_builder/save-form", {
