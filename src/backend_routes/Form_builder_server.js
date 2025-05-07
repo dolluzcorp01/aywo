@@ -232,10 +232,8 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
             if (field.options && Array.isArray(field.options)) {
                 for (const opt of field.options) {
                     let savedFilePath = null;
-                    if (opt.image_path && uploadedFilesMap[opt.image_path]) {
-                        savedFilePath = uploadedFilesMap[opt.image_path];
-                    } else if (opt.image_path && typeof opt.image_path === "string" && opt.image_path.startsWith("field_file_uploads/")) {
-                        savedFilePath = opt.image_path;
+                    if (opt.image_path) {
+                        savedFilePath = uploadedFilesMap[opt.image_path] || opt.image_path;
                     }
 
                     await connection.query(`

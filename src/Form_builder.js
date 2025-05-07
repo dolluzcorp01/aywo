@@ -123,82 +123,82 @@ const FormBuilder = () => {
         const formId = match ? match[1] : null;
 
         if (formId) {
-            const fetchForm = async () => {
-                try {
-                    const response = await fetch(`/api/form_builder/get-specific-form/${formId}`, {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json"
-                        }
-                    });
-
-                    if (!response.ok) {
-                        if (response.status === 404) {
-                            navigate("/form-builder");
-                        } else {
-                            Swal.fire("Error", "Something went wrong", "error");
-                        }
-                        return;
-                    }
-
-                    const data = await response.json();
-                    console.log("Form data:", data);
-
-                    setFormTitle(typeof data.title === "string" ? data.title : "testform");
-
-                    if (Array.isArray(data.fields)) {
-                        const processedFields = data.fields.map(field => {
-                            const normalizedRequired = field.required === "Yes" || field.required === true;
-                            if (field.type === "Choice Matrix") {
-                                const rows = field.matrix
-                                    .filter(m => m.row_label !== null)
-                                    .map(m => m.row_label);
-                                const columns = field.matrix
-                                    .filter(m => m.column_label !== null)
-                                    .map(m => m.column_label);
-
-                                return {
-                                    ...field,
-                                    required: normalizedRequired,
-                                    rows: rows,
-                                    columns: columns,
-                                    selectedMatrix: []  // or load from backend if stored
-                                };
-                            }
-
-                            if (field.type === "Multiple Choice") {
-                                const hasBubbleStyle = field.options?.some(opt => opt.options_style === "bubble");
-                                return {
-                                    ...field,
-                                    required: normalizedRequired,
-                                    bubble: hasBubbleStyle,
-                                    selectedOption: null
-                                };
-                            }
-                            return {
-                                ...field,
-                                required: normalizedRequired
-                            };
-                        });
-
-                        setFields(processedFields);
-                    } else {
-                        console.warn("⚠️ Unexpected fields data:", data.fields);
-                        setFields([]);
-                        Swal.fire("Warning", "Form data loaded but fields are invalid or missing.", "warning");
-                    }
-
-                } catch (error) {
-                    console.error("❌ Error fetching form:", error);
-                    Swal.fire("Error", "Server error occurred while fetching the form.", "error");
-                }
-            };
-
-            fetchForm();
+            fetchForm(formId);
         } else {
             setShowModal(true);
         }
     }, [location.pathname]);
+
+    const fetchForm = async (formId) => {
+        try {
+            const response = await fetch(`/api/form_builder/get-specific-form/${formId}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    navigate("/form-builder");
+                } else {
+                    Swal.fire("Error", "Something went wrong", "error");
+                }
+                return;
+            }
+
+            const data = await response.json();
+            console.log("Form data:", data);
+
+            setFormTitle(typeof data.title === "string" ? data.title : "testform");
+
+            if (Array.isArray(data.fields)) {
+                const processedFields = data.fields.map(field => {
+                    const normalizedRequired = field.required === "Yes" || field.required === true;
+                    if (field.type === "Choice Matrix") {
+                        const rows = field.matrix
+                            .filter(m => m.row_label !== null)
+                            .map(m => m.row_label);
+                        const columns = field.matrix
+                            .filter(m => m.column_label !== null)
+                            .map(m => m.column_label);
+
+                        return {
+                            ...field,
+                            required: normalizedRequired,
+                            rows: rows,
+                            columns: columns,
+                            selectedMatrix: []  // or load from backend if stored
+                        };
+                    }
+
+                    if (field.type === "Multiple Choice") {
+                        const hasBubbleStyle = field.options?.some(opt => opt.options_style === "bubble");
+                        return {
+                            ...field,
+                            required: normalizedRequired,
+                            bubble: hasBubbleStyle,
+                            selectedOption: null
+                        };
+                    }
+                    return {
+                        ...field,
+                        required: normalizedRequired
+                    };
+                });
+
+                setFields(processedFields);
+            } else {
+                console.warn("⚠️ Unexpected fields data:", data.fields);
+                setFields([]);
+                Swal.fire("Warning", "Form data loaded but fields are invalid or missing.", "warning");
+            }
+
+        } catch (error) {
+            console.error("❌ Error fetching form:", error);
+            Swal.fire("Error", "Server error occurred while fetching the form.", "error");
+        }
+    };
 
     const handleContinue = async () => {
         if (!formTitle.trim()) {
@@ -2248,6 +2248,7 @@ const FormBuilder = () => {
 
             if (data.success) {
                 Swal.fire("Success", "Form saved successfully!", "success");
+                fetchForm(formId);
             } else {
                 Swal.fire("Error", data.message || "Something went wrong while saving the form.", "error");
             }
