@@ -44,6 +44,10 @@ app.use('/api/published_form', publishedFormRoutes);  // Route for Published For
 app.use('/api/responses', responsesRoutes);
 app.use('/uploads', express.static('uploads')); // Serve uploaded files
 
+const path = require('path');
+app.use('/field_file_uploads', express.static(path.join(__dirname, 'field_file_uploads')));
+
+
 console.log('✅ Routes have been set up');
 
 // ✅ Start the server

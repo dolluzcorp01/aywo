@@ -135,38 +135,6 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
         let formId = existingFormId;
 
         if (formId) {
-            // 🗑 Delete existing form's related files from disk
-            const [fileRows] = await new Promise((resolve, reject) => {
-                connection.query("SELECT file_path FROM dfield_file_uploads WHERE form_id = ?", [formId], (err, results) => {
-                    if (err) return reject(err);
-                    resolve([results]);
-                });
-            });
-
-            for (const row of fileRows) {
-                const fullPath = path.join(__dirname, "..", row.file_path);
-                if (fs.existsSync(fullPath)) {
-                    fs.unlinkSync(fullPath);
-                }
-            }
-
-            // 🗑 Delete related DB entries
-            const deleteQueries = [
-                "DELETE FROM dfield_file_uploads WHERE form_id = ?",
-                "DELETE dfm FROM dfield_matrix dfm JOIN dform_fields dff ON dfm.field_id = dff.id WHERE dff.form_id = ?",
-                "DELETE dfo FROM dfield_options dfo JOIN dform_fields dff ON dfo.field_id = dff.id WHERE dff.form_id = ?",
-                "DELETE FROM dfield_default_values WHERE form_id = ?",
-                "DELETE FROM dform_fields WHERE form_id = ?"
-            ];
-            for (const query of deleteQueries) {
-                await new Promise((resolve, reject) => {
-                    connection.query(query, [formId], (err) => {
-                        if (err) return reject(err);
-                        resolve();
-                    });
-                });
-            }
-
             // 📝 Update form styling and title
             await new Promise((resolve, reject) => {
                 connection.query(
@@ -209,14 +177,32 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
             formId = formResult.insertId;
         }
 
+        let fieldVersion = 1;
+
+        if (existingFormId) {
+            const versionResult = await new Promise((resolve, reject) => {
+                connection.query(
+                    `SELECT MAX(fields_version) AS maxVersion FROM dform_fields WHERE form_id = ?`,
+                    [formId],
+                    (err, results) => {
+                        if (err) return reject(err);
+                        resolve(results);
+                    }
+                );
+            });
+
+            const maxVersion = versionResult[0]?.maxVersion || 0;
+            fieldVersion = maxVersion + 1;
+        }
+
         // Insert fields (same as before)
         for (const field of parsedFields) {
             const fieldResult = await new Promise((resolve, reject) => {
                 connection.query(
                     `INSERT INTO dform_fields (
                         form_id, type, label, placeholder, caption, default_value, description, alert_type, font_size, required, sort_order,
-                        min_value, max_value
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        min_value, max_value, fields_version
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         formId,
                         field.type,
@@ -230,7 +216,8 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
                         field.required ? "Yes" : "No",
                         field.sortOrder || 0,
                         field.min_value || null,
-                        field.max_value || null
+                        field.max_value || null,
+                        fieldVersion
                     ],
                     (err, result) => {
                         if (err) return reject(err);
@@ -257,7 +244,7 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
                         ) VALUES (?, ?, ?, ?, ?)
                     `, [fieldId, opt.option_text || '', opt.options_style || '', opt.sortOrder || 0, savedFilePath]);
 
-                    if (field.type === "Picture" && savedFilePath) {
+                    if (field.type !== "Picture" && savedFilePath) {
                         await connection.query(`
                             INSERT INTO dfield_file_uploads (
                                 field_id, form_id, file_type, file_path, uploaded_at
@@ -436,12 +423,11 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
 
         // 2. Fetch fields
         const fieldsQuery = `
-            SELECT *
-            FROM dform_fields
-            WHERE form_id = ?
+            SELECT * FROM dform_fields 
+            WHERE form_id = ? AND fields_version = ( SELECT MAX(fields_version) FROM dform_fields WHERE form_id = ?)
             ORDER BY sort_order ASC
         `;
-        const fields = await queryPromise(db, fieldsQuery, [formId]);
+        const fields = await queryPromise(db, fieldsQuery, [formId, formId]);
 
         // 3. Enrich each field with options and matrix data
         const enrichedFields = await Promise.all(

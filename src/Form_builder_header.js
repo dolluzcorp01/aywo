@@ -89,7 +89,6 @@ const Form_builder_header = () => {
             })
                 .then((response) => {
                     if (!response.ok) {
-                        debugger
                         return response.text().then((text) => {
                             let errorData;
                             try {

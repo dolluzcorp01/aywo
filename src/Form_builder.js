@@ -1,6 +1,6 @@
 import { Rnd } from "react-rnd";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { apiFetch } from "./utils/api";
+import { apiFetch, API_BASE } from "./utils/api";
 import Swal from "sweetalert2";
 import { useNotification } from "./NotificationContext";
 import {
@@ -165,7 +165,7 @@ const FormBuilder = () => {
                                     selectedMatrix: []  // or load from backend if stored
                                 };
                             }
-                            
+
                             if (field.type === "Multiple Choice") {
                                 const hasBubbleStyle = field.options?.some(opt => opt.options_style === "bubble");
                                 return {
@@ -1862,7 +1862,11 @@ const FormBuilder = () => {
                                             width: "100%",
                                             height: "100px",
                                             backgroundColor: opt.image_path ? "transparent" : pictureBgColors[idx % pictureBgColors.length],
-                                            backgroundImage: opt.image_path ? `url(${opt.image_path})` : undefined,
+                                            backgroundImage: opt.image_path
+                                                ? opt.image_path.startsWith("data:")
+                                                    ? `url(${opt.image_path})` // It's a base64 image from modal
+                                                    : `url(${API_BASE}/${opt.image_path.replace(/\\/g, "/")})` // It's a saved image from DB
+                                                : undefined,
                                             backgroundSize: "cover",
                                             backgroundPosition: "center",
                                             borderRadius: "4px",
@@ -2089,6 +2093,17 @@ const FormBuilder = () => {
         }
     };
 
+    function base64ToBlob(base64Data) {
+        const parts = base64Data.split(",");
+        const mime = parts[0].match(/:(.*?);/)[1];
+        const binary = atob(parts[1]);
+        const array = [];
+        for (let i = 0; i < binary.length; i++) {
+            array.push(binary.charCodeAt(i));
+        }
+        return new Blob([new Uint8Array(array)], { type: mime });
+    }
+
     const saveOrUpdateForm = async (isNew = false) => {
         try {
             if (fields.length === 0) {
@@ -2143,10 +2158,15 @@ const FormBuilder = () => {
             fields.forEach((field, fieldIndex) => {
                 if (field.type === "Picture" && Array.isArray(field.options)) {
                     field.options.forEach((opt, optIndex) => {
-                        debugger
+                        const uniqueKey = `field_file_${fieldIndex}_${optIndex}`;
+
                         if (opt.image_path instanceof File) {
-                            const uniqueKey = `field_file_${fieldIndex}_${optIndex}`;
                             formData.append(uniqueKey, opt.image_path);
+                            opt.image_path = uniqueKey;
+                        } else if (typeof opt.image_path === "string" && opt.image_path.startsWith("data:image")) {
+                            const blob = base64ToBlob(opt.image_path);
+                            const file = new File([blob], `image_${Date.now()}.jpg`, { type: blob.type });
+                            formData.append(uniqueKey, file);
                             opt.image_path = uniqueKey;
                         }
                     });
