@@ -1964,23 +1964,28 @@ const FormBuilder = () => {
                     </div>
                 );
             case "Image":
+                const imageUrl =
+                    field.file instanceof File
+                        ? URL.createObjectURL(field.file)
+                        : field.uploads?.[0]?.file_path
+                            ? `/${field.uploads[0].file_path.replace(/\\/g, "/")}`
+                            : null;
+
+                const alignment = field.alignment || field.uploads?.[0]?.file_field_Alignment || "center";
+                const previewSize = field.previewSize || field.uploads?.[0]?.file_field_size || 300;
+
                 return (
-                    <div
-                        className="media-preview-wrapper"
-                        style={{
-                            textAlign: field.alignment || "center" // default to center
-                        }}
-                    >
-                        {field.file ? (
+                    <div className="media-preview-wrapper" style={{ textAlign: alignment }}>
+                        {imageUrl ? (
                             <img
-                                src={URL.createObjectURL(field.file)}
+                                src={imageUrl}
                                 alt="Uploaded"
                                 style={{
-                                    width: `${field.previewSize}px`,
-                                    maxHeight: `${field.previewSize}px`,
+                                    width: `${previewSize}px`,
+                                    maxHeight: `${previewSize}px`,
                                     objectFit: "contain",
                                     borderRadius: "8px",
-                                    boxShadow: "none",
+                                    boxShadow: "none"
                                 }}
                             />
                         ) : (
@@ -1996,11 +2001,7 @@ const FormBuilder = () => {
                                 if (file) {
                                     const updatedFields = fields.map(f =>
                                         f.id === field.id
-                                            ? {
-                                                ...f,
-                                                file,
-                                                previewSize: f.previewSize || 300
-                                            }
+                                            ? { ...f, file, previewSize: previewSize }
                                             : f
                                     );
                                     setFields(updatedFields);
@@ -2011,25 +2012,33 @@ const FormBuilder = () => {
                     </div>
                 );
             case "Video":
+                const videoUrl =
+                    field.file instanceof File
+                        ? URL.createObjectURL(field.file)
+                        : field.uploads?.[0]?.file_path
+                            ? `/${field.uploads[0].file_path.replace(/\\/g, "/")}`
+                            : null;
+
+                const videoAlignment = field.alignment || field.uploads?.[0]?.file_field_Alignment || "center";
+                const videoPreviewSize = field.previewSize || field.uploads?.[0]?.file_field_size || 300;
+
                 return (
-                    <div
-                        className="media-preview-wrapper"
-                        style={{ textAlign: field.alignment || "center" }}
-                    >
-                        {field.file ? (
+                    <div className="media-preview-wrapper" style={{ textAlign: videoAlignment }}>
+                        {videoUrl ? (
                             <video
                                 controls
+                                src={videoUrl}
                                 style={{
-                                    width: `${field.previewSize}px`,
-                                    maxHeight: `${field.previewSize * 0.6}px`,
+                                    width: `${videoPreviewSize}px`,
+                                    maxHeight: `${videoPreviewSize * 0.6}px`,
                                     borderRadius: "8px",
                                     objectFit: "contain"
                                 }}
-                                src={URL.createObjectURL(field.file)}
                             />
                         ) : (
                             <div className="media-upload-placeholder">No video uploaded</div>
                         )}
+
                         <input
                             type="file"
                             accept="video/*"
@@ -2039,7 +2048,7 @@ const FormBuilder = () => {
                                 if (file) {
                                     const updatedFields = fields.map(f =>
                                         f.id === field.id
-                                            ? { ...f, file, previewSize: f.previewSize || 300 }
+                                            ? { ...f, file, previewSize: videoPreviewSize }
                                             : f
                                     );
                                     setFields(updatedFields);
@@ -2050,17 +2059,24 @@ const FormBuilder = () => {
                     </div>
                 );
             case "PDF":
+                const pdfUrl =
+                    field.file instanceof File
+                        ? URL.createObjectURL(field.file)
+                        : field.uploads?.[0]?.file_path
+                            ? `${process.env.REACT_APP_API_BASE_URL || "http://localhost:5000"}/${field.uploads[0].file_path.replace(/\\/g, "/")}`
+                            : null;
+
+                const pdfAlignment = field.alignment || field.uploads?.[0]?.file_field_Alignment || "center";
+                const pdfPreviewSize = field.previewSize || field.uploads?.[0]?.file_field_size || 300;
+
                 return (
-                    <div
-                        className="media-preview-wrapper"
-                        style={{ textAlign: field.alignment || "center" }}
-                    >
-                        {field.file ? (
+                    <div className="media-preview-wrapper" style={{ textAlign: pdfAlignment }}>
+                        {pdfUrl ? (
                             <embed
-                                src={URL.createObjectURL(field.file)}
+                                src={pdfUrl}
                                 type="application/pdf"
-                                width={`${field.previewSize}px`}
-                                height={`${field.previewSize * 1.2}px`}
+                                width={`${pdfPreviewSize}px`}
+                                height={`${pdfPreviewSize * 1.2}px`}
                                 style={{
                                     border: "1px solid #ccc",
                                     borderRadius: "8px"
@@ -2069,6 +2085,7 @@ const FormBuilder = () => {
                         ) : (
                             <div className="media-upload-placeholder">No PDF uploaded</div>
                         )}
+
                         <input
                             type="file"
                             accept="application/pdf"
@@ -2078,7 +2095,7 @@ const FormBuilder = () => {
                                 if (file) {
                                     const updatedFields = fields.map(f =>
                                         f.id === field.id
-                                            ? { ...f, file, previewSize: f.previewSize || 300 }
+                                            ? { ...f, file, previewSize: pdfPreviewSize }
                                             : f
                                     );
                                     setFields(updatedFields);
@@ -2156,6 +2173,14 @@ const FormBuilder = () => {
 
             // Attach image files to FormData
             fields.forEach((field, fieldIndex) => {
+                if (["Image", "Video", "PDF"].includes(field.type)) {
+                    if (field.file instanceof File) {
+                        const key = `field_file_${fieldIndex}`;
+                        formData.append(key, field.file);
+                        field.file = key;
+                    }
+                }
+
                 if (field.type === "Picture" && Array.isArray(field.options)) {
                     field.options.forEach((opt, optIndex) => {
                         const uniqueKey = `field_file_${fieldIndex}_${optIndex}`;
@@ -2211,6 +2236,16 @@ const FormBuilder = () => {
                     delete field.bubble;
                 } else {
                     delete field.bubble;
+                }
+
+                if (["Image", "Video", "PDF"].includes(field.type)) {
+                    // Set alignment and previewSize from uploads[0] if not already present
+                    if (!field.alignment && field.uploads?.[0]?.file_field_Alignment) {
+                        field.alignment = field.uploads[0].file_field_Alignment;
+                    }
+                    if (!field.previewSize && field.uploads?.[0]?.file_field_size) {
+                        field.previewSize = field.uploads[0].file_field_size;
+                    }
                 }
 
                 if (Array.isArray(field.options)) {
@@ -3416,70 +3451,77 @@ const FormBuilder = () => {
                                     </>
                                 )}
 
-                                {["Image", "Vedio", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                                    <>
-                                        <label>Max Height</label>
-                                        {/* Max Height UI can go here if you plan to add one */}
+                                {["Image", "Vedio", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
+                                    const field = fields.find(f => f.id === selectedFieldId);
 
-                                        {/* Image Resize Slider */}
-                                        <div className="mt-2">
-                                            <label>Size: {fields.find(f => f.id === selectedFieldId)?.previewSize}px</label>
-                                            <input
-                                                type="range"
-                                                min="100"
-                                                max="600"
-                                                step="10"
-                                                value={fields.find(f => f.id === selectedFieldId)?.previewSize || 300}
-                                                onChange={(e) => {
-                                                    const updatedFields = fields.map(f =>
-                                                        f.id === selectedFieldId
-                                                            ? { ...f, previewSize: parseInt(e.target.value) }
-                                                            : f
-                                                    );
-                                                    setFields(updatedFields);
-                                                }}
-                                                className="form-range"
-                                            />
-                                        </div>
+                                    // Fallback to uploaded values if field values are undefined
+                                    const alignment = field?.alignment || field?.uploads?.[0]?.file_field_Alignment || "center";
+                                    const previewSize = field?.previewSize || field?.uploads?.[0]?.file_field_size || 300;
 
-                                        {/* Alignment Controls */}
-                                        <div className="mt-3">
-                                            <label>Alignment</label>
-                                            <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
-                                                {["left", "center", "right"].map((align) => {
-                                                    const icons = {
-                                                        left: "⬅️",
-                                                        center: "↔️",
-                                                        right: "➡️"
-                                                    };
-                                                    return (
-                                                        <button
-                                                            key={align}
-                                                            onClick={() => {
-                                                                const updatedFields = fields.map(f =>
-                                                                    f.id === selectedFieldId ? { ...f, alignment: align } : f
-                                                                );
-                                                                setFields(updatedFields);
-                                                            }}
-                                                            style={{
-                                                                padding: "6px 10px",
-                                                                fontSize: "1.2rem",
-                                                                border: fields.find(f => f.id === selectedFieldId)?.alignment === align
-                                                                    ? "2px solid #007bff"
-                                                                    : "1px solid lightgray",
-                                                                borderRadius: "5px",
-                                                                background: "white",
-                                                                cursor: "pointer"
-                                                            }}
-                                                        >
-                                                            {icons[align]}
-                                                        </button>
-                                                    );
-                                                })}
+                                    return (
+                                        <>
+                                            <label>Max Height</label>
+
+                                            {/* Image Resize Slider */}
+                                            <div className="mt-2">
+                                                <label>Size: {previewSize}px</label>
+                                                <input
+                                                    type="range"
+                                                    min="100"
+                                                    max="600"
+                                                    step="10"
+                                                    value={previewSize}
+                                                    onChange={(e) => {
+                                                        const updatedFields = fields.map(f =>
+                                                            f.id === selectedFieldId
+                                                                ? { ...f, previewSize: parseInt(e.target.value) }
+                                                                : f
+                                                        );
+                                                        setFields(updatedFields);
+                                                    }}
+                                                    className="form-range"
+                                                />
                                             </div>
-                                        </div>
-                                    </>
-                                )}
+
+                                            {/* Alignment Controls */}
+                                            <div className="mt-3">
+                                                <label>Alignment</label>
+                                                <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+                                                    {["left", "center", "right"].map((align) => {
+                                                        const icons = {
+                                                            left: "⬅️",
+                                                            center: "↔️",
+                                                            right: "➡️"
+                                                        };
+                                                        return (
+                                                            <button
+                                                                key={align}
+                                                                onClick={() => {
+                                                                    const updatedFields = fields.map(f =>
+                                                                        f.id === selectedFieldId ? { ...f, alignment: align } : f
+                                                                    );
+                                                                    setFields(updatedFields);
+                                                                }}
+                                                                style={{
+                                                                    padding: "6px 10px",
+                                                                    fontSize: "1.2rem",
+                                                                    border: alignment === align
+                                                                        ? "2px solid #007bff"
+                                                                        : "1px solid lightgray",
+                                                                    borderRadius: "5px",
+                                                                    background: "white",
+                                                                    cursor: "pointer"
+                                                                }}
+                                                            >
+                                                                {icons[align]}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
 
                                 {!["Heading", "Banner", "Divider", "Image", "Video", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>

@@ -228,6 +228,44 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
 
             const fieldId = fieldResult.insertId;
 
+            // ✅ Insert into dfield_file_uploads 
+            if (["Image", "Video", "PDF"].includes(field.type)) {
+
+                if (field.file instanceof File) {
+                    const key = `field_file_${fieldIndex}`;
+                    formData.append(key, field.file);
+                    field.file = key;
+                } else if (field.uploads?.length > 0) {
+                    const upload = field.uploads[0];
+
+                    // Retain existing upload metadata for old fields
+                    field.file_path = upload.file_path;
+                    field.file_type = upload.file_type;
+                    field.previewSize = upload.file_field_size;
+                    field.alignment = upload.file_field_Alignment;
+                }
+
+                const fileKey = field.file; // This would be like field_file_0_0
+                const uploadedFilename = uploadedFilesMap[fileKey] || field.file_path;
+                
+                if (uploadedFilename) {
+                    const alignment = field.alignment || "center";
+                    const previewSize = field.previewSize || 300;
+
+                    await connection.query(`
+                        INSERT INTO dfield_file_uploads (field_id, form_id, file_type, file_path, file_field_size, file_field_Alignment)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    `, [
+                        fieldId,
+                        formId,
+                        field.type,
+                        uploadedFilename,
+                        previewSize,
+                        alignment
+                    ]);
+                }
+            }
+
             // Insert options
             if (field.options && Array.isArray(field.options)) {
                 for (const opt of field.options) {
@@ -241,14 +279,6 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
                             field_id, option_text, options_style, sort_order, image_path
                         ) VALUES (?, ?, ?, ?, ?)
                     `, [fieldId, opt.option_text || '', opt.options_style || '', opt.sortOrder || 0, savedFilePath]);
-
-                    if (field.type !== "Picture" && savedFilePath) {
-                        await connection.query(`
-                            INSERT INTO dfield_file_uploads (
-                                field_id, form_id, file_type, file_path, uploaded_at
-                            ) VALUES (?, ?, 'image', ?, NOW())
-                        `, [fieldId, formId, savedFilePath]);
-                    }
                 }
             }
 
@@ -449,10 +479,19 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
                 `;
                 const matrix = await queryPromise(db, matrixQuery, [fieldId]);
 
+                // ✅ Fetch uploaded files
+                const uploadsQuery = `
+            SELECT id, file_type, file_path, file_field_size, file_field_Alignment, uploaded_at
+            FROM dfield_file_uploads
+            WHERE field_id = ? AND form_id = ?
+        `;
+                const uploads = await queryPromise(db, uploadsQuery, [fieldId, formId]);
+
                 return {
                     ...field,
                     options: options || [],
-                    matrix: matrix || []
+                    matrix: matrix || [],
+                    uploads: uploads || []
                 };
             })
         );
