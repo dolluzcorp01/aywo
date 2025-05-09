@@ -1968,7 +1968,7 @@ const FormBuilder = () => {
                     field.file instanceof File
                         ? URL.createObjectURL(field.file)
                         : field.uploads?.[0]?.file_path
-                            ? `/${field.uploads[0].file_path.replace(/\\/g, "/")}`
+                            ? `${process.env.REACT_APP_API_BASE_URL || "http://localhost:5000"}/${field.uploads[0].file_path.replace(/\\/g, "/")}`
                             : null;
 
                 const alignment = field.alignment || field.uploads?.[0]?.file_field_Alignment || "center";
@@ -2016,7 +2016,7 @@ const FormBuilder = () => {
                     field.file instanceof File
                         ? URL.createObjectURL(field.file)
                         : field.uploads?.[0]?.file_path
-                            ? `/${field.uploads[0].file_path.replace(/\\/g, "/")}`
+                            ? `${process.env.REACT_APP_API_BASE_URL || "http://localhost:5000"}/${field.uploads[0].file_path.replace(/\\/g, "/")}`
                             : null;
 
                 const videoAlignment = field.alignment || field.uploads?.[0]?.file_field_Alignment || "center";
