@@ -45,13 +45,7 @@ app.use('/api/responses', responsesRoutes);
 app.use('/uploads', express.static('uploads')); // Serve uploaded files
 
 const path = require('path');
-const isProduction = process.env.NODE_ENV === 'production';
-
-const uploadsPath = isProduction
-    ? '/var/www/app.dforms.in/field_file_uploads'
-    : path.join(__dirname, 'field_file_uploads');
-
-app.use('/field_file_uploads', express.static(uploadsPath));
+app.use('/field_file_uploads', express.static(path.join(__dirname, 'field_file_uploads')));
 
 console.log('✅ Routes have been set up');
 
