@@ -84,7 +84,10 @@ const fieldFileStorage = multer.diskStorage({
     }
 });
 
-const fieldFileUpload = multer({ storage: fieldFileStorage });
+const fieldFileUpload = multer({
+    storage: fieldFileStorage,
+    limits: { fileSize: 50 * 1024 * 1024 }
+});
 
 // ✅ Save or update a form
 router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => {
@@ -229,7 +232,7 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
             const fieldId = fieldResult.insertId;
 
             // ✅ Insert into dfield_file_uploads 
-            if (["Image", "Video", "PDF"].includes(field.type)) {
+            if (["Image", "PDF"].includes(field.type)) {
 
                 if (field.file instanceof File) {
                     const key = `field_file_${fieldIndex}`;
@@ -247,7 +250,7 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
 
                 const fileKey = field.file; // This would be like field_file_0_0
                 const uploadedFilename = uploadedFilesMap[fileKey] || field.file_path;
-                
+
                 if (uploadedFilename) {
                     const alignment = field.alignment || "center";
                     const previewSize = field.previewSize || 300;
@@ -264,6 +267,24 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
                         alignment
                     ]);
                 }
+            }
+
+            // ✅ Insert into dfield_file_uploads 
+            if (["Video"].includes(field.type)) {
+                const previewSize = field.previewSize || 300;
+
+                await connection.query(`
+                        INSERT INTO dfield_file_uploads (field_id, form_id, file_type, file_path, youtube_url, file_field_size, file_field_Alignment)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    `, [
+                    fieldId,
+                    formId,
+                    field.type,
+                    '',
+                    field.youtubeUrl,
+                    previewSize,
+                    ''
+                ]);
             }
 
             // Insert options
@@ -481,7 +502,7 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
 
                 // ✅ Fetch uploaded files
                 const uploadsQuery = `
-            SELECT id, file_type, file_path, file_field_size, file_field_Alignment, uploaded_at
+            SELECT id, file_type, file_path, youtube_url, file_field_size, file_field_Alignment, uploaded_at
             FROM dfield_file_uploads
             WHERE field_id = ? AND form_id = ?
         `;

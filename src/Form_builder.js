@@ -181,6 +181,17 @@ const FormBuilder = () => {
                             selectedOption: null
                         };
                     }
+
+                    if (field.type === "Video") {
+                        const upload = field.uploads?.[0] || {};
+                        return {
+                            ...field,
+                            required: normalizedRequired,
+                            youtubeUrl: upload.youtube_url || "",
+                            previewSize: upload.file_field_size || 300
+                        };
+                    }
+
                     return {
                         ...field,
                         required: normalizedRequired
@@ -230,6 +241,7 @@ const FormBuilder = () => {
 
             if (response.ok && result.form_id) {
                 Swal.fire("Success", "Form created successfully!", "success");
+                setShowModal(false);
                 navigate(`/form-builder/form-${result.form_id}`);
             } else {
                 Swal.fire("Error", result.message || "Form creation failed", "error");
@@ -1998,57 +2010,19 @@ const FormBuilder = () => {
                             {...commonProps}
                             onChange={(e) => {
                                 const file = e.target.files[0];
+                                if (file && file.size > 1 * 1024 * 1024) {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'File Too Large',
+                                        text: 'Please select a file smaller than 1MB.',
+                                    });
+                                    return;
+                                }
+
                                 if (file) {
                                     const updatedFields = fields.map(f =>
                                         f.id === field.id
                                             ? { ...f, file, previewSize: previewSize }
-                                            : f
-                                    );
-                                    setFields(updatedFields);
-                                }
-                            }}
-                            className="form-control mt-2"
-                        />
-                    </div>
-                );
-            case "Video":
-                const videoUrl =
-                    field.file instanceof File
-                        ? URL.createObjectURL(field.file)
-                        : field.uploads?.[0]?.file_path
-                            ? `${API_BASE}/${field.uploads[0].file_path.replace(/\\/g, "/")}`
-                            : null;
-
-                const videoAlignment = field.alignment || field.uploads?.[0]?.file_field_Alignment || "center";
-                const videoPreviewSize = field.previewSize || field.uploads?.[0]?.file_field_size || 300;
-
-                return (
-                    <div className="media-preview-wrapper" style={{ textAlign: videoAlignment }}>
-                        {videoUrl ? (
-                            <video
-                                controls
-                                src={videoUrl}
-                                style={{
-                                    width: `${videoPreviewSize}px`,
-                                    maxHeight: `${videoPreviewSize * 0.6}px`,
-                                    borderRadius: "8px",
-                                    objectFit: "contain"
-                                }}
-                            />
-                        ) : (
-                            <div className="media-upload-placeholder">No video uploaded</div>
-                        )}
-
-                        <input
-                            type="file"
-                            accept="video/*"
-                            {...commonProps}
-                            onChange={(e) => {
-                                const file = e.target.files[0];
-                                if (file) {
-                                    const updatedFields = fields.map(f =>
-                                        f.id === field.id
-                                            ? { ...f, file, previewSize: videoPreviewSize }
                                             : f
                                     );
                                     setFields(updatedFields);
@@ -2092,6 +2066,15 @@ const FormBuilder = () => {
                             {...commonProps}
                             onChange={(e) => {
                                 const file = e.target.files[0];
+                                if (file && file.size > 1 * 1024 * 1024) {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'File Too Large',
+                                        text: 'Please select a file smaller than 1MB.',
+                                    });
+                                    return;
+                                }
+
                                 if (file) {
                                     const updatedFields = fields.map(f =>
                                         f.id === field.id
@@ -2105,9 +2088,35 @@ const FormBuilder = () => {
                         />
                     </div>
                 );
+            case "Video":
+                const videoUrl = field.youtubeUrl || "";
+                const videoPreviewSize = field.previewSize || 250;
+
+                return (
+                    <div className="media-preview-wrapper">
+                        {videoUrl ? (
+                            <iframe
+                                width={`${videoPreviewSize}`}
+                                height={`${videoPreviewSize * 0.6}`}
+                                src={`https://www.youtube.com/embed/${getYouTubeVideoId(videoUrl)}`}
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                style={{ borderRadius: "8px" }}
+                            />
+                        ) : (
+                            <div className="media-upload-placeholder">No YouTube URL Provided</div>
+                        )}
+                    </div>
+                );
             default:
                 return <input type="text" {...commonProps} />;
         }
+    };
+
+    const getYouTubeVideoId = (url) => {
+        const match = url.match(/(?:https?:\/\/)?(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w\-]{11})/);
+        return match ? match[1] : "";
     };
 
     function base64ToBlob(base64Data) {
@@ -2958,6 +2967,16 @@ const FormBuilder = () => {
                                         className="form-control mt-2"
                                         onChange={(e) => {
                                             const file = e.target.files[0];
+                                            if (file && file.size > 1 * 1024 * 1024) {
+                                                setEditImageOption(null);
+                                                Swal.fire({
+                                                    icon: 'error',
+                                                    title: 'File Too Large',
+                                                    text: 'Please select a file smaller than 1MB.',
+                                                });
+                                                return;
+                                            }
+
                                             if (!file) return;
                                             const reader = new FileReader();
                                             reader.onload = () => {
@@ -3451,7 +3470,7 @@ const FormBuilder = () => {
                                     </>
                                 )}
 
-                                {["Image", "Vedio", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
+                                {["Image", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
                                     const field = fields.find(f => f.id === selectedFieldId);
 
                                     // Fallback to uploaded values if field values are undefined
@@ -3518,6 +3537,51 @@ const FormBuilder = () => {
                                                         );
                                                     })}
                                                 </div>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
+
+                                {["Video"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
+                                    const field = fields.find(f => f.id === selectedFieldId);
+                                    const previewSize = field?.previewSize || 300;
+                                    const youtubeUrl = field?.youtubeUrl || "";
+
+                                    return (
+                                        <>
+                                            <label className="form-label">YouTube Video URL</label>
+                                            <input
+                                                type="text"
+                                                placeholder="https://www.youtube.com/..."
+                                                value={youtubeUrl}
+                                                onChange={(e) => {
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId ? { ...f, youtubeUrl: e.target.value } : f
+                                                    );
+                                                    setFields(updatedFields);
+                                                }}
+                                                className="form-control mb-3"
+                                            />
+
+                                            <label className="form-label">Max Height</label>
+                                            <div className="mt-2">
+                                                <label>Size: {previewSize}px</label>
+                                                <input
+                                                    type="range"
+                                                    min="100"
+                                                    max="600"
+                                                    step="10"
+                                                    value={previewSize}
+                                                    onChange={(e) => {
+                                                        const updatedFields = fields.map(f =>
+                                                            f.id === selectedFieldId
+                                                                ? { ...f, previewSize: parseInt(e.target.value) }
+                                                                : f
+                                                        );
+                                                        setFields(updatedFields);
+                                                    }}
+                                                    className="form-range"
+                                                />
                                             </div>
                                         </>
                                     );
