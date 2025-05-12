@@ -655,3 +655,27 @@
 .btn-close:hover {
     color: #111827;
 }
+
+.btn-close:hover {
+    color: #111827;
+}
+
+.addpagebtn {
+    color: gray;
+    background-color: white;
+    border: 1px solid gray;
+}
+
+.addpagebtn:hover {
+    color: #007bff;
+    background-color: white;
+    border: 1px solid #007bff;
+}
+
+.pages-nav .active-page {
+    color: black;
+}
+
+.pages-nav i {
+    font-size: 14px;
+}

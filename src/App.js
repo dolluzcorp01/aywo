@@ -34,7 +34,7 @@ function App() {
         }
       />
       <Route
-        path="/form-builder/:formId"
+        path="/form-builder/:formId/:pageId"
         element={
           <FormBuilderLayout>
             <FormBuilder />

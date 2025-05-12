@@ -42,7 +42,6 @@ router.post("/create", verifyJWT, async (req, res) => {
     const { title } = req.body;
     const userId = req.user_id;
 
-    // Validate required fields
     if (!userId) {
         return res.status(401).json({ message: "User ID is missing. Unauthorized access." });
     }
@@ -57,22 +56,75 @@ router.post("/create", verifyJWT, async (req, res) => {
             return res.status(409).json({ message: "Form title already exists" });
         }
 
-        const query = `
+        // Insert into dforms
+        const formQuery = `
             INSERT INTO dforms (
-                user_id, title, internal_note, starred, is_closed,
+                user_id, form_title, internal_note, starred, is_closed,
                 published, background_color, questions_background_color,
                 primary_color, questions_color, answers_color, font, created_at
             ) VALUES (?, ?, '', 0, 0, 0, '#ffffff', '#f1f1f1', '#007bff', '#333333', '#000000', '', NOW())
         `;
+        const formResult = await queryPromise(db, formQuery, [userId, title]);
+        const formId = formResult.insertId;
 
-        const result = await queryPromise(db, query, [userId, title]);
-        res.status(200).json({ form_id: result.insertId });
+        // Insert first page
+        const pageQuery = `
+            INSERT INTO dform_pages (form_id, page_title, sort_order, page_number)
+            VALUES (?, 'page', 1, 1)
+        `;
+        const pageResult = await queryPromise(db, pageQuery, [formId]);
+
+        res.status(200).json({
+            form_id: formId,
+            page_id: '1',
+            message: "Form and first page created successfully"
+        });
 
     } catch (error) {
         console.error("❌ Insert error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
+
+router.post("/createnewpage", verifyJWT, async (req, res) => {
+    const { form_id, title } = req.body;
+    const userId = req.user_id;
+
+    if (!userId) {
+        return res.status(401).json({ message: "User ID is missing. Unauthorized access." });
+    }
+
+    if (!form_id || !title || title.trim() === "") {
+        return res.status(400).json({ message: "Form ID and page title are required" });
+    }
+
+    try {
+        // Get max sort_order and max page_number
+        const [[{ max_order }], [{ max_page_number }]] = await Promise.all([
+            queryPromise(db, `SELECT MAX(sort_order) AS max_order FROM dform_pages WHERE form_id = ?`, [form_id]),
+            queryPromise(db, `SELECT MAX(page_number) AS max_page_number FROM dform_pages WHERE form_id = ?`, [form_id])
+        ]);
+
+        const nextSortOrder = (max_order || 0) + 1;
+        const nextPageNumber = (max_page_number || 0) + 1;
+
+        const pageQuery = `
+            INSERT INTO dform_pages (form_id, page_title, sort_order, page_number)
+            VALUES (?, ?, ?, ?)
+        `;
+        const pageResult = await queryPromise(db, pageQuery, [form_id, title, nextSortOrder, nextPageNumber]);
+
+        res.status(200).json({
+            page_id: nextPageNumber,
+            form_id,
+            message: "Page created successfully"
+        });
+    } catch (error) {
+        console.error("❌ Page creation error:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
 
 // Multer storage for field file uploads
 const fieldFileStorage = multer.diskStorage({
@@ -203,11 +255,12 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
             const fieldResult = await new Promise((resolve, reject) => {
                 connection.query(
                     `INSERT INTO dform_fields (
-                        form_id, type, label, placeholder, caption, default_value, description, alert_type, font_size, required, sort_order,
+                        form_id, page_id, type, label, placeholder, caption, default_value, description, alert_type, font_size, required, sort_order,
                         min_value, max_value, fields_version
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         formId,
+                        field.page_id,
                         field.type,
                         field.label || "",
                         field.placeholder || "",
@@ -413,10 +466,17 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
                 f.questions_color,
                 f.answers_color,
                 f.font,
-                f.created_at
+                f.created_at,
+                p.page_id
             FROM dforms f
+            LEFT JOIN (
+                SELECT form_id, MIN(page_number) AS page_id
+                FROM dform_pages
+                GROUP BY form_id
+            ) p ON f.id = p.form_id
             WHERE f.user_id = ?
         `;
+
         const params = [userId];
 
         if (formId) {
@@ -446,9 +506,32 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
     }
 });
 
-// ✅ Fetch a specific form or template by ID
-router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
+// ✅ Fetch all page names
+router.get("/get-form-pages/:formId", verifyJWT, async (req, res) => {
     const { formId } = req.params;
+    const userId = req.user_id;
+
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    try {
+        const pagesQuery = `
+            SELECT id, form_id, page_number, page_title, sort_order 
+            FROM dform_pages 
+            WHERE form_id = ? 
+            ORDER BY sort_order ASC
+        `;
+        const pages = await queryPromise(db, pagesQuery, [formId]);
+
+        res.json({ pages });
+    } catch (error) {
+        console.error("❌ Error fetching form pages:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// ✅ Fetch a specific form or template by ID
+router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res) => {
+    const { formId, pageId } = req.params;
     const userId = req.user_id;
 
     if (!userId) {
@@ -470,15 +553,29 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
             return res.status(404).json({ error: "Form not found or unauthorized" });
         }
 
-        // 2. Fetch fields
+        // 2. Fetch the page
+        const pageQuery = `
+            SELECT id, form_id, page_number, page_title, sort_order, created_at
+            FROM dform_pages
+            WHERE page_number = ? AND form_id = ?
+        `;
+        const [page] = await queryPromise(db, pageQuery, [pageId, formId]);
+
+        if (!page) {
+            return res.status(404).json({ error: "Page not found for this form" });
+        }
+
+        // 3. Fetch fields belonging to this form and page
         const fieldsQuery = `
             SELECT * FROM dform_fields 
-            WHERE form_id = ? AND fields_version = ( SELECT MAX(fields_version) FROM dform_fields WHERE form_id = ?)
+            WHERE form_id = ? AND page_id = ? AND fields_version = (
+                SELECT MAX(fields_version) FROM dform_fields WHERE form_id = ? AND page_id = ?
+            )
             ORDER BY sort_order ASC
         `;
-        const fields = await queryPromise(db, fieldsQuery, [formId, formId]);
+        const fields = await queryPromise(db, fieldsQuery, [formId, pageId, formId, pageId]);
 
-        // 3. Enrich each field with options and matrix data
+        // 4. Enrich each field with options and matrix data
         const enrichedFields = await Promise.all(
             fields.map(async (field) => {
                 const fieldId = field.id;
@@ -517,7 +614,7 @@ router.get("/get-specific-form/:formId", verifyJWT, async (req, res) => {
             })
         );
 
-        // 4. Return response
+        // 5. Return response
         res.json({
             ...form,
             fields: enrichedFields

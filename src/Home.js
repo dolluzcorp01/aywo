@@ -202,12 +202,12 @@ function Home() {
     setRecentlyViewed(storedRecentlyViewed);
   }, []);
 
-  const handleFormClick = (form_id, title, response_count, published, internal_note, is_closed, starred) => {
+  const handleFormClick = (form_id, page_id, title, response_count, published, internal_note, is_closed, starred) => {
     // Navigate to form builder
-    navigate(`/form-builder/form-${form_id}`);
+    navigate(`/form-builder/form-${form_id}/page-${page_id}`);
 
     // Update recently viewed forms
-    const updatedRecentlyViewed = [{ form_id, title, response_count, published, internal_note, is_closed, starred }, ...recentlyViewed.filter(f => f.form_id !== form_id)].slice(0, 3);
+    const updatedRecentlyViewed = [{ form_id, page_id, title, response_count, published, internal_note, is_closed, starred }, ...recentlyViewed.filter(f => f.form_id !== form_id)].slice(0, 3);
     setRecentlyViewed(updatedRecentlyViewed);
     localStorage.setItem("recentlyViewedForms", JSON.stringify(updatedRecentlyViewed));
   };
@@ -640,7 +640,7 @@ function Home() {
               {recentlyViewed.map((form) => (
                 <div className="recently-viewed-card"
                   key={form.form_id}
-                  onClick={() => handleFormClick(form.form_id, form.title, form.response_count, form.published, form.internal_note, form.is_closed)}
+                  onClick={() => handleFormClick(form.form_id, form.page_id, form.title, form.response_count, form.published, form.internal_note, form.is_closed)}
                   onMouseEnter={() => setHoveredFormId(form.form_id)}
                   onMouseLeave={() => setHoveredFormId(null)}
                   title={form.is_closed ? "This form is closed" : ""}
@@ -870,7 +870,7 @@ function Home() {
 
                   <div
                     className="form-card-content"
-                    onClick={() => handleFormClick(form.form_id, form.title, form.response_count, form.published, form.internal_note, form.is_closed, form.starred)}
+                    onClick={() => handleFormClick(form.form_id, form.page_id, form.title, form.response_count, form.published, form.internal_note, form.is_closed, form.starred)}
                   >
 
                     <div className="form-title-row">
@@ -1144,7 +1144,7 @@ function Home() {
 
                 <div
                   className="form-card-content"
-                  onClick={() => handleFormClick(form.form_id, form.title, form.response_count, form.published, form.internal_note, form.is_closed, form.starred)}
+                  onClick={() => handleFormClick(form.form_id, form.page_id, form.title, form.response_count, form.published, form.internal_note, form.is_closed, form.starred)}
                 >
 
                   <div className="form-title-row">

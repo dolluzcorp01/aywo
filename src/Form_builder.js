@@ -9,7 +9,8 @@ import {
     FaToggleOn, FaTh, FaCheck, FaImage, FaBoxes, FaGripHorizontal, FaSearch,
     FaGripVertical, FaCog, FaClone, FaExchangeAlt, FaHeading, FaChevronUp, FaChevronDown,
     FaClock, FaRegClock, FaCalendarCheck, FaSortNumericDown, FaStar, FaSlidersH, FaSmile,
-    FaEquals, FaBars, FaMapMarkerAlt, FaVideo, FaFilePdf, FaMinus, FaTimes
+    FaEquals, FaBars, FaMapMarkerAlt, FaVideo, FaFilePdf, FaMinus, FaTimes,
+    FaTemperatureLow
 } from "react-icons/fa";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { ChromePicker } from 'react-color';
@@ -67,6 +68,9 @@ const fontsList = [
 ];
 
 const FormBuilder = () => {
+    const [formPages, setFormPages] = useState([]);
+    const [newPageTitle, setNewPageTitle] = useState("");
+
     const [showDesignSidebar, setShowDesignSidebar] = useState(false);
     const [showFieldSidebar, setShowFieldSidebar] = useState(true);
     const [activeTab, setActiveTab] = useState("current");
@@ -117,21 +121,29 @@ const FormBuilder = () => {
     const [isMobile, setIsMobile] = useState(false);
 
     const [showModal, setShowModal] = useState(false);
+    const [showNewPageModal, setShowNewPageModal] = useState(false);
 
     useEffect(() => {
-        const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
+        const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\d+)/);
         const formId = match ? match[1] : null;
+        const pageId = match ? match[2] : null;
 
-        if (formId) {
-            fetchForm(formId);
+        if (formId && pageId) {
+            fetchForm(formId, pageId);
         } else {
             setShowModal(true);
         }
     }, [location.pathname]);
 
-    const fetchForm = async (formId) => {
+    useEffect(() => {
+        const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
+        const formId = match ? match[1] : null;
+        if (formId) fetchFormPages(formId);
+    }, [location]);
+
+    const fetchForm = async (formId, pageId) => {
         try {
-            const response = await fetch(`/api/form_builder/get-specific-form/${formId}`, {
+            const response = await fetch(`/api/form_builder/get-specific-form/${formId}/page/${pageId}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json"
@@ -211,6 +223,28 @@ const FormBuilder = () => {
         }
     };
 
+    const fetchFormPages = async (formId) => {
+        try {
+            const res = await fetch(`/api/form_builder/get-form-pages/${formId}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include"
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setFormPages(data.pages || []);
+            } else {
+                Swal.fire("Error", data.error || "Unable to fetch pages", "error");
+            }
+        } catch (error) {
+            console.error("❌ Error loading pages:", error);
+        }
+    };
+
     const handleContinue = async () => {
         if (!formTitle.trim()) {
             Swal.fire("Validation", "Form name cannot be empty.", "warning");
@@ -242,12 +276,58 @@ const FormBuilder = () => {
             if (response.ok && result.form_id) {
                 Swal.fire("Success", "Form created successfully!", "success");
                 setShowModal(false);
-                navigate(`/form-builder/form-${result.form_id}`);
+                navigate(`/form-builder/form-${result.form_id}/page-${result.page_id}`);
             } else {
                 Swal.fire("Error", result.message || "Form creation failed", "error");
             }
         } catch (error) {
             console.error("❌ Form creation failed:", error);
+            Swal.fire("Error", "Server error occurred.", "error");
+        }
+    };
+
+    const handleNewPageContinue = async () => {
+        const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\d+)/);
+        const formId = match ? match[1] : null;
+
+        const pageTitle = newPageTitle.trim();
+
+        if (!formId) {
+            Swal.fire("Error", "Form ID not found in URL.", "error");
+            return;
+        }
+
+        if (!pageTitle) {
+            Swal.fire("Validation", "Page title cannot be empty.", "warning");
+            return;
+        }
+
+        try {
+            const response = await fetch("/api/form_builder/createnewpage", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ form_id: formId, title: pageTitle }),
+                credentials: "include",
+            });
+
+            const result = await response.json();
+
+            if (response.status === 401) {
+                Swal.fire("Unauthorized", "User not logged in or missing user ID.", "error");
+                return;
+            }
+
+            if (response.ok && result.page_id) {
+                Swal.fire("Success", "New page created successfully!", "success");
+                setShowNewPageModal(false);
+                navigate(`/form-builder/form-${formId}/page-${result.page_id}`);
+            } else {
+                Swal.fire("Error", result.message || "Page creation failed", "error");
+            }
+        } catch (error) {
+            console.error("❌ Page creation failed:", error);
             Swal.fire("Error", "Server error occurred.", "error");
         }
     };
@@ -2161,14 +2241,18 @@ const FormBuilder = () => {
                 }
             }
 
-            const formIdMatch = location.pathname.match(/\/form-builder\/form-(\d+)/);
-            const formId = formIdMatch ? parseInt(formIdMatch[1], 10) : null;
+            const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\d+)/);
+            const formId = match ? match[1] : null;
+            const pageId = match ? match[2] : null;
 
             // Build FormData
             const formData = new FormData();
 
             if (formId) {
                 formData.append("form_id", formId);
+            }
+            if (pageId) {
+                formData.append("page_id", pageId);
             }
 
             formData.append("background_color", formBgColor);
@@ -2209,6 +2293,9 @@ const FormBuilder = () => {
 
             const clonedFields = JSON.parse(JSON.stringify(fields));
             clonedFields.forEach(field => {
+                if (!field.page_id) {
+                    field.page_id = pageId || "default_page_id";
+                }
 
                 // Handle Star Rating, Slider, etc. numeric controls
                 if (typeof field.max_value === "number") {
@@ -2292,7 +2379,7 @@ const FormBuilder = () => {
 
             if (data.success) {
                 Swal.fire("Success", "Form saved successfully!", "success");
-                fetchForm(formId);
+                fetchForm(formId, pageId);
             } else {
                 Swal.fire("Error", data.message || "Something went wrong while saving the form.", "error");
             }
@@ -2877,6 +2964,7 @@ const FormBuilder = () => {
                             </div>
 
                         </div>
+
                         {fieldTypeMenu && (
                             <div
                                 className="field-type-menu"
@@ -2999,6 +3087,42 @@ const FormBuilder = () => {
                                 </div>
                             </div>
                         )}
+
+                        <div className="form-container-bottom d-flex align-items-center gap-3" style={{ marginBottom: "-30px", marginTop: "10px" }}>
+                            <button className="btn btn-primary addpagebtn"
+                                onClick={() => {
+                                    {
+                                        const nextPageNumber = formPages.length + 1;
+                                        setNewPageTitle(`page ` + nextPageNumber);
+                                        setShowNewPageModal(true)
+                                    }
+                                }}
+                            >+ Add page</button>
+
+                            <div className="d-flex align-items-center gap-3 pages-nav">
+                                {formPages.map((page, index) => {
+                                    const isActive = location.pathname.includes(`/page-${page.page_number}`);
+                                    return (
+                                        <div
+                                            key={page.page_number}
+                                            className={`d-flex align-items-center gap-1 ${isActive ? "active-page" : "text-muted"}`}
+                                            style={{ cursor: "pointer" }}
+                                            onClick={() => navigate(`/form-builder/form-${formPages[0].form_id}/page-${page.page_number}`)}
+                                        >
+                                            <i className={`fas ${isActive ? "fa-file-alt" : "fa-ellipsis-vertical"}`}></i>
+                                            <span>{page.page_title || `Page ${index + 1}`}</span>
+                                        </div>
+                                    );
+                                })}
+                                {/* Static ending */}
+                                <div className="d-flex align-items-center gap-1 text-muted">
+                                    <i className="fas fa-check-circle"></i>
+                                    <span>Ending</span>
+                                </div>
+                            </div>
+
+                        </div>
+
                     </div>
 
                     {customizeVisible && selectedFieldId && (
@@ -3722,7 +3846,7 @@ const FormBuilder = () => {
                     <div className="modal-content custom-modal p-0">
                         <div className="modal-header border-0 pb-0">
                             <h5 className="modal-title">Name your form</h5>
-                            <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
+                            <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} onClick={() => { setShowModal(false) }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
                         </div>
                         <div className="modal-body pt-2">
                             <input
@@ -3735,6 +3859,37 @@ const FormBuilder = () => {
                         </div>
                         <div className="modal-footer border-0 pt-0 justify-content-end">
                             <button type="button" id="continueButton" className="btn btn-primary custom-continue-btn" onClick={handleContinue}>Continue</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                className={`modal fade ${showNewPageModal ? "show d-block" : ""}`}
+                id="exampleModalCenter"
+                tabIndex="-1"
+                role="dialog"
+                aria-labelledby="exampleModalCenterTitle"
+                aria-hidden={!showNewPageModal}
+                style={{ backgroundColor: showNewPageModal ? "rgba(0,0,0,0.5)" : "transparent" }}
+            >
+                <div className="modal-dialog modal-dialog-centered" role="document">
+                    <div className="modal-content custom-modal p-0">
+                        <div className="modal-header border-0 pb-0">
+                            <h5 className="modal-title">Name your form page</h5>
+                            <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} onClick={() => { setShowNewPageModal(false) }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div className="modal-body pt-2">
+                            <input
+                                type="text"
+                                id="formNewPageInput"
+                                className="form-control custom-input"
+                                value={newPageTitle}
+                                onChange={(e) => setNewPageTitle(e.target.value)}
+                            />
+                        </div>
+                        <div className="modal-footer border-0 pt-0 justify-content-end">
+                            <button type="button" id="continueButton" className="btn btn-primary custom-continue-btn" onClick={handleNewPageContinue}>Continue</button>
                         </div>
                     </div>
                 </div>
