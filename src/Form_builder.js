@@ -2237,6 +2237,39 @@ const FormBuilder = () => {
                         )}
                     </div>
                 );
+            case 'ThankYou':
+                return (
+                    <div className="thank-you-container" style={{
+                        backgroundColor: "#fff",
+                        borderRadius: "12px",
+                        padding: "2rem",
+                        margin: "2rem auto",
+                        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+                        width: "fit-content",
+                        textAlign: "center",
+                        fontFamily: selectedFont
+                    }}>
+                        <div style={{
+                            fontSize: "2rem",
+                            color: "rgb(59, 130, 246)",
+                            marginBottom: "1rem"
+                        }}>✔️</div>
+                        <h2 style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>Thank you</h2>
+                        <p style={{ color: "#888", fontSize: "0.9rem", marginBottom: "1rem" }}>
+                            Made with <span style={{ color: "#b16cea" }}>Fillout</span>, the easy way to make stunning forms
+                        </p>
+                        <button style={{
+                            background: "#f1f5f9",
+                            borderRadius: "999px",
+                            padding: "0.5rem 1rem",
+                            border: "1px solid #ccc",
+                            cursor: "pointer"
+                        }}>
+                            Make your own <strong>Fillout</strong>
+                        </button>
+                    </div>
+                );
+
             default:
                 return <input type="text" {...commonProps} />;
         }
@@ -2890,7 +2923,6 @@ const FormBuilder = () => {
 
                     <div className="form-container">
                         <div className="form-body" style={{ backgroundColor: formBgColor }}>
-
                             {/* Theme Button */}
                             <button
                                 className="theme-button"
@@ -2904,7 +2936,7 @@ const FormBuilder = () => {
 
                             <div className="form-content" style={{ backgroundColor: formColor }} onClick={() => setShowCustomize(true)}>
                                 <DragDropContext onDragEnd={onDragEnd}>
-                                    <Droppable droppableId="fields">
+                                    <Droppable droppableId="fields" direction="vertical">
                                         {(provided) => (
                                             <div ref={provided.innerRef} {...provided.droppableProps}>
                                                 {fields.map((field, index) => (
@@ -2914,7 +2946,11 @@ const FormBuilder = () => {
                                                                 className="form-field-wrapper"
                                                                 ref={provided.innerRef}
                                                                 {...provided.draggableProps}
-                                                                style={{ backgroundColor: formColor }}
+                                                                {...provided.dragHandleProps}
+                                                                style={{
+                                                                    ...provided.draggableProps.style,
+                                                                    backgroundColor: formColor
+                                                                }}
                                                                 onClick={() => handleFieldClick(field.id)}
                                                             >
                                                                 <div className="drag-handle" {...provided.dragHandleProps}>
