@@ -124,18 +124,24 @@ const FormBuilder = () => {
     const [showNewPageModal, setShowNewPageModal] = useState(false);
 
     useEffect(() => {
-        const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\d+)/);
+        const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
         const formId = match ? match[1] : null;
-        const pageId = match ? match[2] : null;
+        const pageParam = match ? match[2] : null;
 
-        if (formId && pageId) {
-            fetchForm(formId, pageId);
+        if (formId && pageParam) {
+            // Check if it's the ending page
+            if (pageParam === "end") {
+                fetchForm(formId, "end");
+            } else {
+                fetchForm(formId, pageParam);
+            }
         } else {
             setShowModal(true);
         }
     }, [location.pathname]);
 
     useEffect(() => {
+
         const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
         const formId = match ? match[1] : null;
         if (formId) fetchFormPages(formId);
@@ -242,6 +248,48 @@ const FormBuilder = () => {
             }
         } catch (error) {
             console.error("❌ Error loading pages:", error);
+        }
+    };
+
+    const handleEndingPage = async () => {
+        try {
+            const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
+            const formId = match ? match[1] : null;
+
+            navigate(`/form-builder/form-${formId}/page-end`);
+        } catch (error) {
+            console.error("❌ Error loading pages:", error);
+        }
+    };
+
+    const handleDragEnd = async (result) => {
+        if (!result.destination) return;
+
+        const reorderedPages = Array.from(formPages);
+        const [movedPage] = reorderedPages.splice(result.source.index, 1);
+        reorderedPages.splice(result.destination.index, 0, movedPage);
+
+        // Update local state
+        setFormPages(reorderedPages);
+
+        // Send new order to backend
+        try {
+            debugger
+            const updatedOrder = reorderedPages.map((page, index) => ({
+                id: page.id,
+                sort_order: index + 1
+            }));
+
+            console.log(updatedOrder);
+
+            await fetch('/api/form_builder/update-page-order', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ pages: updatedOrder })
+            });
+        } catch (error) {
+            console.error("❌ Error updating page order:", error);
         }
     };
 
@@ -2241,7 +2289,7 @@ const FormBuilder = () => {
                 }
             }
 
-            const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\d+)/);
+            const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
             const formId = match ? match[1] : null;
             const pageId = match ? match[2] : null;
 
@@ -2294,7 +2342,7 @@ const FormBuilder = () => {
             const clonedFields = JSON.parse(JSON.stringify(fields));
             clonedFields.forEach(field => {
                 if (!field.page_id) {
-                    field.page_id = pageId || "default_page_id";
+                    field.page_id = pageId || "1";
                 }
 
                 // Handle Star Rating, Slider, etc. numeric controls
@@ -3099,27 +3147,49 @@ const FormBuilder = () => {
                                 }}
                             >+ Add page</button>
 
-                            <div className="d-flex align-items-center gap-3 pages-nav">
-                                {formPages.map((page, index) => {
-                                    const isActive = location.pathname.includes(`/page-${page.page_number}`);
-                                    return (
+                            <DragDropContext onDragEnd={handleDragEnd}>
+                                <Droppable droppableId="pages" direction="horizontal">
+                                    {(provided) => (
                                         <div
-                                            key={page.page_number}
-                                            className={`d-flex align-items-center gap-1 ${isActive ? "active-page" : "text-muted"}`}
-                                            style={{ cursor: "pointer" }}
-                                            onClick={() => navigate(`/form-builder/form-${formPages[0].form_id}/page-${page.page_number}`)}
+                                            className="d-flex align-items-center gap-3 pages-nav"
+                                            {...provided.droppableProps}
+                                            ref={provided.innerRef}
                                         >
-                                            <i className={`fas ${isActive ? "fa-file-alt" : "fa-ellipsis-vertical"}`}></i>
-                                            <span>{page.page_title || `Page ${index + 1}`}</span>
+                                            {formPages.map((page, index) => {
+                                                const isActive = location.pathname.includes(`/page-${page.page_number}`);
+                                                return (
+                                                    <Draggable key={page.id} draggableId={page.id.toString()} index={index}>
+                                                        {(provided, snapshot) => (
+                                                            <div
+                                                                ref={provided.innerRef}
+                                                                {...provided.draggableProps}
+                                                                {...provided.dragHandleProps}
+                                                                className={`no-select d-flex align-items-center gap-1 ${isActive ? "active-page" : "text-muted"}`}
+                                                                style={{
+                                                                    cursor: snapshot.isDragging ? 'grabbing' : 'pointer',
+                                                                    ...provided.draggableProps.style
+                                                                }}
+                                                                onClick={(e) => {
+                                                                    if (e.defaultPrevented) return;
+                                                                    navigate(`/form-builder/form-${formPages[0].form_id}/page-${page.page_number}`);
+                                                                }}
+                                                            >
+                                                                <i className={`fas ${isActive ? "fa-file-alt" : "fa-ellipsis-vertical"}`}></i>
+                                                                <span>{page.page_title || `Page ${index + 1}`}</span>
+                                                            </div>
+                                                        )}
+                                                    </Draggable>
+                                                );
+                                            })}
+                                            {provided.placeholder}
+                                            <div className="d-flex align-items-center gap-1 text-muted" onClick={() => { handleEndingPage() }}>
+                                                <i className="fas fa-check-circle"></i>
+                                                <span>Ending</span>
+                                            </div>
                                         </div>
-                                    );
-                                })}
-                                {/* Static ending */}
-                                <div className="d-flex align-items-center gap-1 text-muted">
-                                    <i className="fas fa-check-circle"></i>
-                                    <span>Ending</span>
-                                </div>
-                            </div>
+                                    )}
+                                </Droppable>
+                            </DragDropContext>
 
                         </div>
 

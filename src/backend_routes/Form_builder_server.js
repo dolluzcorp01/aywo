@@ -529,6 +529,63 @@ router.get("/get-form-pages/:formId", verifyJWT, async (req, res) => {
     }
 });
 
+// POST /api/form_builder/update-page-order
+router.post("/update-page-order", verifyJWT, async (req, res) => {
+    const { pages } = req.body;
+    const userId = req.user_id;
+
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    let connection;
+    try {
+        // Fix: getConnection using callback pattern wrapped in a Promise
+        connection = await new Promise((resolve, reject) => {
+            db.getConnection((err, conn) => {
+                if (err) return reject(err);
+                resolve(conn);
+            });
+        });
+
+        await new Promise((resolve, reject) => {
+            connection.beginTransaction(err => {
+                if (err) return reject(err);
+                resolve();
+            });
+        });
+
+        for (const page of pages) {
+            await new Promise((resolve, reject) => {
+                connection.query(
+                    "UPDATE dform_pages SET sort_order = ? WHERE id = ?",
+                    [page.sort_order, page.id],
+                    (err) => {
+                        if (err) return reject(err);
+                        resolve();
+                    }
+                );
+            });
+        }
+
+        await new Promise((resolve, reject) => {
+            connection.commit(err => {
+                if (err) return reject(err);
+                resolve();
+            });
+        });
+
+        res.json({ success: true });
+
+    } catch (err) {
+        if (connection) {
+            await new Promise(resolve => connection.rollback(resolve));
+        }
+        console.error("❌ Error updating sort order:", err);
+        res.status(500).json({ error: "Failed to update page order" });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
 // ✅ Fetch a specific form or template by ID
 router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res) => {
     const { formId, pageId } = req.params;
@@ -561,7 +618,7 @@ router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res
         `;
         const [page] = await queryPromise(db, pageQuery, [pageId, formId]);
 
-        if (!page) {
+        if (!page && pageId !== "end") {
             return res.status(404).json({ error: "Page not found for this form" });
         }
 
