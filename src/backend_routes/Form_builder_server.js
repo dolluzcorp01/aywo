@@ -62,7 +62,7 @@ router.post("/create", verifyJWT, async (req, res) => {
                 user_id, title, internal_note, starred, is_closed,
                 published, background_color, questions_background_color,
                 primary_color, questions_color, answers_color, font, created_at
-            ) VALUES (?, ?, '', 0, 0, 0, '#ffffff', '#f1f1f1', '#007bff', '#333333', '#000000', '', NOW())
+            ) VALUES (?, ?, '', 0, 0, 0, '#f8f9fa', '#fff', '#3b82f6', '#333333', '#rgb(55, 65, 81)', '', NOW())
         `;
         const formResult = await queryPromise(db, formQuery, [userId, title]);
         const formId = formResult.insertId;

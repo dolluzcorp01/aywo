@@ -93,7 +93,7 @@ const FormBuilder = () => {
     const [formColor, setformColor] = useState("white");
     const [formPrimaryColor, setformPrimaryColor] = useState("#3B82F6");
     const [formQuestionColor, setformQuestionColor] = useState("black");
-    const [formAnswersColor, setformAnswersColor] = useState("black");
+    const [formAnswersColor, setformAnswersColor] = useState("rgb(55, 65, 81)");
     const [selectedFont, setSelectedFont] = useState("");
 
     const [search, setSearch] = useState("");
@@ -170,14 +170,14 @@ const FormBuilder = () => {
             setformColor(data.questions_background_color || "#fff");
             setformPrimaryColor(data.primary_color || "#3b82f6");
             setformQuestionColor(data.questions_color || "black");
-            setformAnswersColor(data.answers_color || "black");
+            setformAnswersColor(data.answers_color || "rgb(55, 65, 81)");
 
             setColors({
                 background: data.background_color || "#f8f9fa",
                 questionsBackground: data.questions_background_color || "#fff",
                 primary: data.primary_color || "#3b82f6",
-                questions: data.questions_color || "black",
-                answers: data.answers_color || "black",
+                questions: data.questions_color || "#333333",
+                answers: data.answers_color || "#000000",
             });
 
             console.log("Form data:", data);
@@ -766,11 +766,11 @@ const FormBuilder = () => {
     ];
 
     const [colors, setColors] = useState({
-        background: "#ffffff",
-        questionsBackground: "#f1f1f1",
-        primary: "#007bff",
+        background: "#F8F9FA",
+        questionsBackground: "#FFFFFF",
+        primary: "#3B82F6",
         questions: "#333333",
-        answers: "#000000",
+        answers: "rgb(55, 65, 81)",
     });
 
     const inputfieldBgColor = useMemo(() => getTextColor(formColor), [formColor]);
