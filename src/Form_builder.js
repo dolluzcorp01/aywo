@@ -166,6 +166,20 @@ const FormBuilder = () => {
             }
 
             const data = await response.json();
+            setFormBgColor(data.background_color || "#f8f9fa");
+            setformColor(data.questions_background_color || "#fff");
+            setformPrimaryColor(data.primary_color || "#3b82f6");
+            setformQuestionColor(data.questions_color || "black");
+            setformAnswersColor(data.answers_color || "black");
+
+            setColors({
+                background: data.background_color || "#f8f9fa",
+                questionsBackground: data.questions_background_color || "#fff",
+                primary: data.primary_color || "#3b82f6",
+                questions: data.questions_color || "black",
+                answers: data.answers_color || "black",
+            });
+
             console.log("Form data:", data);
 
             setFormTitle(typeof data.title === "string" ? data.title : "testform");
@@ -173,6 +187,17 @@ const FormBuilder = () => {
             if (Array.isArray(data.fields)) {
                 const processedFields = data.fields.map(field => {
                     const normalizedRequired = field.required === "Yes" || field.required === true;
+                    if (field.type === "ThankYou") {
+                        const thankyouData = field.thankyouData?.[0] || {};
+                        return {
+                            ...field,
+                            required: normalizedRequired,
+                            thankyou_heading: thankyouData.thankyou_heading || "Thank you",
+                            thankyou_subtext: thankyouData.thankyou_subtext || "Made with dForms, the easy way to make stunning forms",
+                            hideIcon: thankyouData.show_tick_icon === 0 // if 0, hide icon
+                        };
+                    }
+
                     if (field.type === "Choice Matrix") {
                         const rows = field.matrix
                             .filter(m => m.row_label !== null)
@@ -626,6 +651,12 @@ const FormBuilder = () => {
             case "Image":
             case "Video":
             case "PDF":
+            case "ThankYou":
+                newField.thankyou_heading = "Thank you";
+                newField.thankyou_subtext = "Made with dForms, the easy way to make stunning forms";
+                newField.show_tick_icon = true;
+                newField.page_id = "end";
+                break;
             default:
                 break;
         }
@@ -838,6 +869,7 @@ const FormBuilder = () => {
                             background: "transparent",
                             width: "100%",
                             margin: "8px 0",
+                            color: formAnswersColor,
                             fontFamily: selectedFont
                         }}
                     />
@@ -2239,37 +2271,113 @@ const FormBuilder = () => {
                 );
             case 'ThankYou':
                 return (
-                    <div className="thank-you-container" style={{
-                        backgroundColor: "#fff",
-                        borderRadius: "12px",
-                        padding: "2rem",
-                        margin: "2rem auto",
-                        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-                        width: "fit-content",
-                        textAlign: "center",
-                        fontFamily: selectedFont
-                    }}>
-                        <div style={{
-                            fontSize: "2rem",
-                            color: "rgb(59, 130, 246)",
-                            marginBottom: "1rem"
-                        }}>✔️</div>
-                        <h2 style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>Thank you</h2>
-                        <p style={{ color: "#888", fontSize: "0.9rem", marginBottom: "1rem" }}>
-                            Made with <span style={{ color: "#b16cea" }}>Fillout</span>, the easy way to make stunning forms
-                        </p>
-                        <button style={{
-                            background: "#f1f5f9",
-                            borderRadius: "999px",
-                            padding: "0.5rem 1rem",
-                            border: "1px solid #ccc",
-                            cursor: "pointer"
-                        }}>
-                            Make your own <strong>Fillout</strong>
+                    <div
+                        className="thank-you-container"
+                        style={{
+                            padding: "2rem",
+                            margin: "2rem auto",
+                            textAlign: "center",
+                            fontFamily: selectedFont,
+                            color: formAnswersColor,
+                            borderRadius: "10px"
+                        }}
+                    >
+                        {!field.hideIcon && (
+                            <div style={{
+                                fontSize: "1.5rem",
+                                width: "50px",
+                                height: "50px",
+                                borderRadius: "50%",
+                                backgroundColor: "rgba(147, 197, 253, 0.3)",
+                                color: formPrimaryColor,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                margin: "0 auto 1rem auto"
+                            }}>
+                                <i className="fa-solid fa-check"></i>
+                            </div>
+                        )}
+
+                        <input
+                            type="text"
+                            className="form-control mb-2"
+                            placeholder="Thank You"
+                            value={field.thankyou_heading}
+                            onChange={(e) => {
+                                const updatedFields = fields.map(f =>
+                                    f.id === field.id ? { ...f, thankyou_heading: e.target.value } : f
+                                );
+                                setFields(updatedFields);
+                            }}
+                            onFocus={() => {
+                                setFocusedFieldId(field.id);
+                                setFocusedSubField("thankyou_heading");
+                            }}
+                            onBlur={() => setFocusedSubField(null)}
+                            style={{
+                                textAlign: "center",
+                                fontWeight: "bold",
+                                fontSize: "1.5rem",
+                                color: formAnswersColor,
+                                border: "none",
+                                background: "transparent",
+                                outline: "none"
+                            }}
+                        />
+
+                        <textarea
+                            className="form-control"
+                            placeholder="Made with dForms, the easy way to make stunning forms"
+                            value={field.thankyou_subtext || "Made with dForms, the easy way to make stunning forms"}
+                            onChange={(e) => {
+                                const updatedFields = fields.map(f =>
+                                    f.id === field.id ? { ...f, thankyou_subtext: e.target.value } : f
+                                );
+                                setFields(updatedFields);
+                            }}
+                            onFocus={() => {
+                                setFocusedFieldId(field.id);
+                                setFocusedSubField("thankyou_subtext");
+                            }}
+                            onBlur={() => setFocusedSubField(null)}
+                            style={{
+                                textAlign: "center",
+                                fontSize: "0.9rem",
+                                marginBottom: "1rem",
+                                color: "rgb(155, 160, 168)",
+                                border: "none",
+                                background: "transparent",
+                                resize: "none",
+                                outline: "none",
+                            }}
+                        />
+
+                        <button
+                            style={{
+                                background: inputfieldBgColor,
+                                color: formAnswersColor,
+                                padding: "0.5rem 1rem",
+                                border: "1px solid #e0e0e0",
+                                cursor: "pointer",
+                                fontFamily: selectedFont,
+                                boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)",
+                                transition: "all 0.3s ease",
+                                paddingTop: "5px"
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.boxShadow = "0 6px 14px rgba(0, 0, 0, 0.1)";
+                                e.currentTarget.style.border = `1px solid ${formPrimaryColor}`;
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.05)";
+                                e.currentTarget.style.border = "1px solid #e0e0e0";
+                            }}
+                        >
+                            Make your own <span style={{ fontWeight: "900", fontSize: "1.3rem" }}>dForms</span>
                         </button>
                     </div>
                 );
-
             default:
                 return <input type="text" {...commonProps} />;
         }
@@ -2376,6 +2484,10 @@ const FormBuilder = () => {
             clonedFields.forEach(field => {
                 if (!field.page_id) {
                     field.page_id = pageId || "1";
+                }
+
+                if (field.type === "ThankYou") {
+                    field.show_tick_icon = !field.hideIcon; // Convert to match DB
                 }
 
                 // Handle Star Rating, Slider, etc. numeric controls
@@ -2492,97 +2604,133 @@ const FormBuilder = () => {
                                 />
                             </div>
 
-                            <div className="field-group-scrollable mt-2">
-                                <div className="field-group mt-1">
-                                    <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)}>
-                                        Save Form
-                                    </button>
-                                </div>
-                                <div className="field-group mt-1">
-                                    <h4>Frequently used</h4>
-                                    <div className="field-grid">
-                                        {["Short Answer", "Multiple Choice", "Email"]
-                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                            .map(type => <FieldButton key={type} type={type} section="Frequently used" />)}
+                            {window.location.pathname.endsWith('/page-end') ? (
+                                <div className="field-group-scrollable mt-2">
+                                    <div className="field-group mt-1">
+                                        <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)}>
+                                            Save Form
+                                        </button>
+                                    </div>
+                                    <div className="field-group mt-1">
+                                        <h4>Display text</h4>
+                                        <div className="field-grid">
+                                            {["Heading", "Paragraph", "Banner"]
+                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                .map(type => <FieldButton key={type} type={type} section="Frequently used" />)}
+                                        </div>
+                                    </div>
+
+                                    <div className="field-group mt-1">
+                                        <h4>Navigation & Layout</h4>
+                                        <div className="field-grid">
+                                            {["Divider", "ThankYou"]
+                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                .map(type => <FieldButton key={type} type={type} section="Navigation & Layout" />)}
+                                        </div>
+                                    </div>
+
+                                    <div className="field-group mt-1">
+                                        <h4>Media</h4>
+                                        <div className="field-grid">
+                                            {["Image", "Video", "PDF"]
+                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                .map(type => <FieldButton key={type} type={type} section="Media" />)}
+                                        </div>
                                     </div>
                                 </div>
-
-                                <div className="field-group mt-1">
-                                    <h4>Display text</h4>
-                                    <div className="field-grid">
-                                        {["Heading", "Paragraph", "Banner"]
-                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                            .map(type => <FieldButton key={type} type={type} section="Display text" />)}
+                            ) : (
+                                <div className="field-group-scrollable mt-2">
+                                    <div className="field-group mt-1">
+                                        <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)}>
+                                            Save Form
+                                        </button>
                                     </div>
-                                </div>
-
-                                <div className="field-group mt-1">
-                                    <h4>Choices</h4>
-                                    <div className="field-grid">
-                                        {[
-                                            "Dropdown", "Picture", "Multiple Select", "Switch", "Multiple Choice", "Checkbox",
-                                            "Checkboxes", "Choice Matrix"
-                                        ]
-                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                            .map(type => <FieldButton key={type} type={type} section="Choices" />)}
+                                    <div className="field-group mt-1">
+                                        <h4>Frequently used</h4>
+                                        <div className="field-grid">
+                                            {["Short Answer", "Multiple Choice", "Email"]
+                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                .map(type => <FieldButton key={type} type={type} section="Frequently used" />)}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="field-group mt-1">
-                                    <h4>Time</h4>
-                                    <div className="field-grid">
-                                        {["Date Picker", "Date Time Picker", "Time Picker", "Date Range"]
-                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                            .map(type => <FieldButton key={type} type={type} section="Time" />)}
+                                    <div className="field-group mt-1">
+                                        <h4>Display text</h4>
+                                        <div className="field-grid">
+                                            {["Heading", "Paragraph", "Banner"]
+                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                .map(type => <FieldButton key={type} type={type} section="Display text" />)}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="field-group mt-1">
-                                    <h4>Rating & Ranking</h4>
-                                    <div className="field-grid">
-                                        {["Ranking", "Star Rating", "Slider", "Opinion Scale"]
-                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                            .map(type => <FieldButton key={type} type={type} section="Rating & Ranking" />)}
+                                    <div className="field-group mt-1">
+                                        <h4>Choices</h4>
+                                        <div className="field-grid">
+                                            {[
+                                                "Dropdown", "Picture", "Multiple Select", "Switch", "Multiple Choice", "Checkbox",
+                                                "Checkboxes", "Choice Matrix"
+                                            ]
+                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                .map(type => <FieldButton key={type} type={type} section="Choices" />)}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="field-group mt-1">
-                                    <h4>Text</h4>
-                                    <div className="field-grid">
-                                        {["Short Answer", "Long Answer"]
-                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                            .map(type => <FieldButton key={type} type={type} section="Text" />)}
+                                    <div className="field-group mt-1">
+                                        <h4>Time</h4>
+                                        <div className="field-grid">
+                                            {["Date Picker", "Date Time Picker", "Time Picker", "Date Range"]
+                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                .map(type => <FieldButton key={type} type={type} section="Time" />)}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="field-group mt-1">
-                                    <h4>Contact Info</h4>
-                                    <div className="field-grid">
-                                        {["Email", "Number", "Address", "Document Type"]
-                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                            .map(type => <FieldButton key={type} type={type} section="Contact Info" />)}
+                                    <div className="field-group mt-1">
+                                        <h4>Rating & Ranking</h4>
+                                        <div className="field-grid">
+                                            {["Ranking", "Star Rating", "Slider", "Opinion Scale"]
+                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                .map(type => <FieldButton key={type} type={type} section="Rating & Ranking" />)}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="field-group mt-1">
-                                    <h4>Navigation & Layout</h4>
-                                    <div className="field-grid">
-                                        {["Divider"]
-                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                            .map(type => <FieldButton key={type} type={type} section="Navigation & Layout" />)}
+                                    <div className="field-group mt-1">
+                                        <h4>Text</h4>
+                                        <div className="field-grid">
+                                            {["Short Answer", "Long Answer"]
+                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                .map(type => <FieldButton key={type} type={type} section="Text" />)}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="field-group mt-1">
-                                    <h4>Media</h4>
-                                    <div className="field-grid">
-                                        {["Image", "Video", "PDF"]
-                                            .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                            .map(type => <FieldButton key={type} type={type} section="Media" />)}
+                                    <div className="field-group mt-1">
+                                        <h4>Contact Info</h4>
+                                        <div className="field-grid">
+                                            {["Email", "Number", "Address", "Document Type"]
+                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                .map(type => <FieldButton key={type} type={type} section="Contact Info" />)}
+                                        </div>
                                     </div>
-                                </div>
 
-                            </div>
+                                    <div className="field-group mt-1">
+                                        <h4>Navigation & Layout</h4>
+                                        <div className="field-grid">
+                                            {["Divider"]
+                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                .map(type => <FieldButton key={type} type={type} section="Navigation & Layout" />)}
+                                        </div>
+                                    </div>
+
+                                    <div className="field-group mt-1">
+                                        <h4>Media</h4>
+                                        <div className="field-grid">
+                                            {["Image", "Video", "PDF"]
+                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                .map(type => <FieldButton key={type} type={type} section="Media" />)}
+                                        </div>
+                                    </div>
+
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -2958,7 +3106,7 @@ const FormBuilder = () => {
                                                                 </div>
 
                                                                 <div className="form-field-content">
-                                                                    {!["Heading", "Banner", "Divider", "Image", "Video", "PDF"].includes(field.type) ? (
+                                                                    {!["Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou"].includes(field.type) ? (
                                                                         <>
                                                                             <input
                                                                                 type="text"
@@ -3246,7 +3394,7 @@ const FormBuilder = () => {
 
                             <div>
 
-                                {!["Divider", "Image", "Video", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Divider", "Image", "Video", "PDF", "ThankYou"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Label</label>
                                         <div style={{ color: "#aaa", fontSize: ".875rem", marginBottom: "10px" }}>
@@ -3256,7 +3404,7 @@ const FormBuilder = () => {
                                 )}
 
                                 {/* Show only Specific Fields */}
-                                {!["Divider", "Image", "Video", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Divider", "Image", "Video", "PDF", "ThankYou"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Caption</label>
                                         <input
@@ -3273,7 +3421,7 @@ const FormBuilder = () => {
                                     </>
                                 )}
 
-                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "Document Type"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "Document Type", "ThankYou"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Placeholder</label>
                                         <input
@@ -3290,7 +3438,7 @@ const FormBuilder = () => {
                                     </>
                                 )}
 
-                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "Document Type"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "Document Type", "ThankYou"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Default value <span title="Initial value" style={{ cursor: "help" }}>🛈</span></label>
                                         <input
@@ -3817,7 +3965,7 @@ const FormBuilder = () => {
                                     );
                                 })()}
 
-                                {!["Heading", "Banner", "Divider", "Image", "Video", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
                                             {/* Required Row */}
@@ -3835,6 +3983,25 @@ const FormBuilder = () => {
                                             </div>
                                         </div>
                                     </>
+                                )}
+
+                                {["ThankYou"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <label className="form-check-label">Hide icon</label>
+                                            <span
+                                                className={`custom-toggle ${fields.find(f => f.id === selectedFieldId)?.hideIcon ? 'active' : ''}`}
+                                                onClick={() => {
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId
+                                                            ? { ...f, hideIcon: !f.hideIcon }
+                                                            : f
+                                                    );
+                                                    setFields(updatedFields);
+                                                }}
+                                            ></span>
+                                        </div>
+                                    </div>
                                 )}
 
                             </div>

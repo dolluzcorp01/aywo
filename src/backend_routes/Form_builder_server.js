@@ -59,7 +59,7 @@ router.post("/create", verifyJWT, async (req, res) => {
         // Insert into dforms
         const formQuery = `
             INSERT INTO dforms (
-                user_id, form_title, internal_note, starred, is_closed,
+                user_id, title, internal_note, starred, is_closed,
                 published, background_color, questions_background_color,
                 primary_color, questions_color, answers_color, font, created_at
             ) VALUES (?, ?, '', 0, 0, 0, '#ffffff', '#f1f1f1', '#007bff', '#333333', '#000000', '', NOW())
@@ -74,10 +74,29 @@ router.post("/create", verifyJWT, async (req, res) => {
         `;
         const pageResult = await queryPromise(db, pageQuery, [formId]);
 
+        // Insert "Thank You" field into dform_fields
+        const thankYouFieldQuery = `
+            INSERT INTO dform_fields (
+                form_id, page_id, type, label, placeholder, caption, default_value,
+                description, alert_type, font_size, required, sort_order,
+                min_value, max_value, fields_version, created_at
+            ) VALUES (?, ?, 'ThankYou', 'ThankYou', '', '', '', '', 'info', 16, 'No', 0, NULL, NULL, 1, NOW())
+        `;
+        const thankYouFieldResult = await queryPromise(db, thankYouFieldQuery, [formId, 'end']);
+        const fieldId = thankYouFieldResult.insertId;
+
+        // Insert into dform_thankyou
+        const thankYouQuery = `
+            INSERT INTO dform_thankyou (form_id, field_id)
+            VALUES (?, ?)
+        `;
+        await queryPromise(db, thankYouQuery, [formId, fieldId]);
+
         res.status(200).json({
             form_id: formId,
             page_id: '1',
-            message: "Form and first page created successfully"
+            thank_you_field_id: fieldId,
+            message: "Form, page, and thank you components created successfully"
         });
 
     } catch (error) {
@@ -383,6 +402,21 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
                     ) VALUES (?, ?, ?, NOW())
                 `, [formId, fieldId, typeof field.default_value === 'object' ? JSON.stringify(field.default_value) : field.default_value]);
             }
+
+            if (field.type === "ThankYou") {
+                await connection.query(`
+                INSERT INTO dform_thankyou (
+                    form_id, field_id, show_tick_icon, thankyou_heading, thankyou_subtext, created_at
+                ) VALUES (?, ?, ?, ?, ?, NOW())
+            `, [
+                    formId,
+                    fieldId,
+                    field.show_tick_icon === true,
+                    field.thankyou_heading || 'Thank you',
+                    field.thankyou_subtext || 'Made with dForms, the easy way to make stunning forms'
+                ]);
+            }
+
         }
 
         await connection.commit();
@@ -656,17 +690,27 @@ router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res
 
                 // ✅ Fetch uploaded files
                 const uploadsQuery = `
-            SELECT id, file_type, file_path, youtube_url, file_field_size, file_field_Alignment, uploaded_at
-            FROM dfield_file_uploads
-            WHERE field_id = ? AND form_id = ?
-        `;
+                    SELECT id, file_type, file_path, youtube_url, file_field_size, file_field_Alignment, uploaded_at
+                    FROM dfield_file_uploads
+                    WHERE field_id = ? AND form_id = ?
+                `;
                 const uploads = await queryPromise(db, uploadsQuery, [fieldId, formId]);
+
+                // Fetch thank you data
+                const thankyouQuery = `
+                    SELECT show_tick_icon, thankyou_heading, thankyou_subtext
+                    FROM dform_thankyou
+                    WHERE form_id = ? AND field_id = ?
+                    LIMIT 1
+                `;
+                const thankyouData = await queryPromise(db, thankyouQuery, [formId, fieldId]);
 
                 return {
                     ...field,
                     options: options || [],
                     matrix: matrix || [],
-                    uploads: uploads || []
+                    uploads: uploads || [],
+                    thankyouData
                 };
             })
         );
