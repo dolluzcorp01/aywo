@@ -1150,6 +1150,17 @@ const FormBuilder = () => {
                                 : []
                         }
                         styles={{
+                            control: (base, state) => ({
+                                ...base,
+                                border: `1px solid ${focusedFieldId === field.id ? formPrimaryColor : "rgba(75, 85, 99, 0.2)"}`,
+                                boxShadow: "none",
+                                backgroundColor: inputfieldBgColor,
+                                color: formAnswersColor,
+                                "&:hover": {
+                                    border: `1px solid ${formPrimaryColor}`
+                                },
+                                fontFamily: selectedFont
+                            }),
                             multiValue: (base) => ({
                                 ...base,
                                 backgroundColor: formPrimaryColor,
@@ -1171,12 +1182,9 @@ const FormBuilder = () => {
                             }),
                             option: (base, { isSelected, isFocused }) => ({
                                 ...base,
-                                color: formAnswersColor,
-                                backgroundColor: isSelected
-                                    ? formPrimaryColor
-                                    : isFocused
-                                        ? "#f0f0f0"
-                                        : "#fff",
+                                backgroundColor: isFocused || isSelected ? formPrimaryColor : "white",
+                                color: isFocused || isSelected ? "white" : "black",
+                                cursor: "pointer",
                                 fontFamily: selectedFont
                             }),
                             placeholder: (base) => ({
@@ -1394,13 +1402,27 @@ const FormBuilder = () => {
                 );
             case "Choice Matrix":
                 return (
-                    <div className="Matrix-grid-wrapper">
-                        <table className="table Matrix-table text-center">
-                            <thead>
+                    <div className="Matrix-grid-wrapper"
+                        style={{
+                            color: formAnswersColor,
+                            backgroundColor: inputfieldBgColor,
+                            fontFamily: selectedFont,
+                        }}>
+                        <table className="table Matrix-table text-center"
+                            style={{
+                                color: formAnswersColor,
+                                backgroundColor: inputfieldBgColor,
+                                fontFamily: selectedFont,
+                            }}
+                        >
+                            <thead
+                                style={{
+                                    backgroundColor: inputfieldBgColor, // ensure thead matches table
+                                }}>
                                 <tr>
-                                    <th></th>
+                                    <th style={{ backgroundColor: inputfieldBgColor }}></th>
                                     {(field.columns || []).map((col, colIdx) => (
-                                        <th key={colIdx} className="hover-cell">
+                                        <th key={colIdx} className="hover-cell" style={{ backgroundColor: inputfieldBgColor }}>
                                             <input
                                                 type="text"
                                                 className="form-control text-center"
@@ -1445,7 +1467,7 @@ const FormBuilder = () => {
                             <tbody>
                                 {(field.rows || []).map((row, rowIdx) => (
                                     <tr key={rowIdx}>
-                                        <td className="hover-cell">
+                                        <td className="hover-cell" style={{ backgroundColor: inputfieldBgColor }}>
                                             <input
                                                 type="text"
                                                 className="form-control"
@@ -1483,7 +1505,7 @@ const FormBuilder = () => {
                                             ></i>
                                         </td>
                                         {field.columns.map((col, colIdx) => (
-                                            <td key={colIdx}>
+                                            <td key={colIdx} style={{ backgroundColor: inputfieldBgColor }}>
                                                 <input
                                                     type="radio"
                                                     name={`Matrix_${field.id}_row_${rowIdx}`}
@@ -2081,7 +2103,7 @@ const FormBuilder = () => {
                                                 backgroundColor: field.selectedOption === idx ? formPrimaryColor : "transparent",
                                             }}
                                         />
-                                        <span style={{ marginLeft: "6px" }}>{opt.option_text}</span>
+                                        <span style={{ marginLeft: "6px", color: formAnswersColor }}>{opt.option_text}</span>
                                     </div>
                                 </div>
                             ))}
