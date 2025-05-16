@@ -903,7 +903,7 @@ router.put("/publish-form/:formId", verifyJWT, async (req, res) => {
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
     try {
-        const updateQuery = "UPDATE forms SET published = ? WHERE form_id = ? AND user_id = ?";
+        const updateQuery = "UPDATE dforms SET published = ? WHERE id = ? AND user_id = ?";
         await queryPromise(db, updateQuery, [published, formId, userId]);
 
         res.json({ message: published ? "Form published successfully!" : "Form unpublished.", formId });

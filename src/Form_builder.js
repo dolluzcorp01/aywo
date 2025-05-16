@@ -122,6 +122,7 @@ const FormBuilder = () => {
 
     const [showModal, setShowModal] = useState(false);
     const [showNewPageModal, setShowNewPageModal] = useState(false);
+    const [activeBtnColorPicker, setActiveBtnColorPicker] = useState(null);
 
     useEffect(() => {
         const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
@@ -297,22 +298,39 @@ const FormBuilder = () => {
         // Update local state
         setFormPages(reorderedPages);
 
-        // Send new order to backend
+        // Prepare updated sort order
+        const updatedOrder = reorderedPages.map((page, index) => ({
+            id: page.id,
+            sort_order: index + 1
+        }));
+
         try {
-            debugger
-            const updatedOrder = reorderedPages.map((page, index) => ({
-                id: page.id,
-                sort_order: index + 1
-            }));
+            // await fetch('/api/form_builder/update-page-order', {
+            //     method: "POST",
+            //     headers: { "Content-Type": "application/json" },
+            //     credentials: "include",
+            //     body: JSON.stringify({ pages: updatedOrder })
+            // });
 
-            console.log(updatedOrder);
+            // ✅ Correct last page ID
+            const lastPageId = reorderedPages[reorderedPages.length - 1]?.page_number?.toString();
 
-            await fetch('/api/form_builder/update-page-order', {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ pages: updatedOrder })
+            // ✅ Update Submit/Next buttons
+            const newFields = fields.map(field => {
+                if (field.type === "Submit" || field.type === "Next") {
+                    const isLastPage = field.page_id?.toString() === lastPageId;
+                    return {
+                        ...field,
+                        type: isLastPage ? "Submit" : "Next",
+                        field_type: isLastPage ? "Submit" : "Next",
+                        label: isLastPage ? "Submit" : "Next"
+                    };
+                }
+                return field;
             });
+
+            setFields(newFields);
+
         } catch (error) {
             console.error("❌ Error updating page order:", error);
         }
@@ -469,6 +487,9 @@ const FormBuilder = () => {
             if (pickerRef.current && !pickerRef.current.contains(event.target)) {
                 setActiveColorPicker(null);
             }
+            if (pickerRef.current && !pickerRef.current.contains(event.target)) {
+                setActiveBtnColorPicker(null);
+            }
             setFieldTypeMenu(null);
         };
 
@@ -526,7 +547,15 @@ const FormBuilder = () => {
     };
 
     const deleteField = (id) => {
-        setFields(prevFields => prevFields.filter(field => field.id !== id));
+        const updatedFields = fields.filter(field => field.id !== id);
+
+        const hasRealFields = updatedFields.some(field => field.type !== "Submit" && field.type !== "Next");
+
+        const cleanedFields = hasRealFields
+            ? updatedFields
+            : updatedFields.filter(field => field.type !== "Submit" && field.type !== "Next");
+
+        setFields(cleanedFields);
     };
 
     useEffect(() => {
@@ -625,6 +654,7 @@ const FormBuilder = () => {
                     { option_text: "Option 1" },
                     { option_text: "Option 2" }
                 ];
+                break;
             case "Star Rating":
                 newField.max_value = 5;
                 newField.value = 0;
@@ -661,9 +691,35 @@ const FormBuilder = () => {
                 break;
         }
 
-        setFields([...fields, newField]);
+        let updatedFields = [...fields];
+        updatedFields = updatedFields.filter(f => f.type !== "Submit" && f.type !== "Next");
+        updatedFields.push(newField);
 
-        // ✅ Make the new field selected and show the customize section
+        // ✅ Get current page number from URL
+        const pathname = location.pathname;
+        const match = pathname.match(/page-(\d+)/);
+        const pageNumFromUrl = match ? parseInt(match[1], 10) : null;
+
+        const currentPage = formPages.find(p => p.page_number === pageNumFromUrl);
+        if (!currentPage) return;
+
+        const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
+        const currentIndex = sortedPages.findIndex(p => p.id === currentPage.id);
+        const isLastPage = currentIndex === sortedPages.length - 1;
+
+        updatedFields.push({
+            id: Date.now() + 1,
+            type: isLastPage ? "Submit" : "Next",
+            field_type: isLastPage ? "Submit" : "Next",
+            label: isLastPage ? "Submit" : "Next",
+            page_id: currentPage.page_number.toString(),
+            bgColor: "#FFFFFF",
+            labelColor: "#000000",
+            fontSize: 16,
+            customized: {}
+        });
+
+        setFields(updatedFields); // ✅ Use the cleaned and correct updated list
         setSelectedFieldId(newField.id);
         setCustomizeVisible(true);
     };
@@ -2400,6 +2456,69 @@ const FormBuilder = () => {
                         </button>
                     </div>
                 );
+            case "Submit":
+                const submitAlignment = field.alignment || "left";
+                let submitAlignmentStyle = {};
+                if (submitAlignment === "center") {
+                    submitAlignmentStyle = { margin: "0 auto", display: "block" };
+                } else if (submitAlignment === "right") {
+                    submitAlignmentStyle = { marginLeft: "auto", display: "block" };
+                } else {
+                    submitAlignmentStyle = { display: "inline-block" };
+                }
+
+                return (
+                    <button
+                        type="submit"
+                        className="btn"
+                        style={{
+                            padding: "6px 12px",
+                            fontSize: "1.2rem",
+                            fontFamily: selectedFont,
+                            backgroundColor: field.bgColor || "#007bff",
+                            color: field.labelColor || "#ffffff",
+                            border: focusedFieldId === field.id ? "2px solid #007bff" : "1px solid lightgray",
+                            borderRadius: "5px",
+                            ...submitAlignmentStyle
+                        }}
+                        onFocus={() => setFocusedFieldId(field.id)}
+                        onBlur={() => setFocusedFieldId(null)}
+                    >
+                        {field.label || "Submit"}
+                    </button>
+                );
+            case "Next":
+                const nextAlignment = field.alignment || "left";
+                let nextAlignmentStyle = {};
+                if (nextAlignment === "center") {
+                    nextAlignmentStyle = { margin: "0 auto", display: "block" };
+                } else if (nextAlignment === "right") {
+                    nextAlignmentStyle = { marginLeft: "auto", display: "block" };
+                } else {
+                    nextAlignmentStyle = { display: "inline-block" };
+                }
+
+                return (
+                    <button
+                        type="button"
+                        className="btn"
+                        style={{
+                            padding: "6px 12px",
+                            fontSize: "1.2rem",
+                            fontFamily: selectedFont,
+                            backgroundColor: field.bgColor || "#6c757d",
+                            color: field.labelColor || "#ffffff",
+                            border: focusedFieldId === field.id ? "2px solid #6c757d" : "1px solid lightgray",
+                            borderRadius: "5px",
+                            ...nextAlignmentStyle
+                        }}
+                        onFocus={() => setFocusedFieldId(field.id)}
+                        onBlur={() => setFocusedFieldId(null)}
+                    >
+                        {field.label}
+                        <i className="fa-solid fa-arrow-right ms-2"></i>
+                    </button>
+                );
             default:
                 return <input type="text" {...commonProps} />;
         }
@@ -2584,20 +2703,20 @@ const FormBuilder = () => {
             console.log("Cloned Fields:", clonedFields);
             formData.set("fields", JSON.stringify(clonedFields));
 
-            const response = await fetch("/api/form_builder/save-form", {
-                method: "POST",
-                body: formData,
-                credentials: "include",
-            });
+            // const response = await fetch("/api/form_builder/save-form", {
+            //     method: "POST",
+            //     body: formData,
+            //     credentials: "include",
+            // });
 
-            const data = await response.json();
+            // const data = await response.json();
 
-            if (data.success) {
-                Swal.fire("Success", "Form saved successfully!", "success");
-                fetchForm(formId, pageId);
-            } else {
-                Swal.fire("Error", data.message || "Something went wrong while saving the form.", "error");
-            }
+            // if (data.success) {
+            //     Swal.fire("Success", "Form saved successfully!", "success");
+            //     fetchForm(formId, pageId);
+            // } else {
+            //     Swal.fire("Error", data.message || "Something went wrong while saving the form.", "error");
+            // }
 
         } catch (error) {
             console.error("Error saving/updating form:", error);
@@ -3128,7 +3247,7 @@ const FormBuilder = () => {
                                                                 </div>
 
                                                                 <div className="form-field-content">
-                                                                    {!["Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou"].includes(field.type) ? (
+                                                                    {!["Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) ? (
                                                                         <>
                                                                             <input
                                                                                 type="text"
@@ -3416,7 +3535,7 @@ const FormBuilder = () => {
 
                             <div>
 
-                                {!["Divider", "Image", "Video", "PDF", "ThankYou"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Divider", "Image", "Video", "PDF", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Label</label>
                                         <div style={{ color: "#aaa", fontSize: ".875rem", marginBottom: "10px" }}>
@@ -3426,7 +3545,7 @@ const FormBuilder = () => {
                                 )}
 
                                 {/* Show only Specific Fields */}
-                                {!["Divider", "Image", "Video", "PDF", "ThankYou"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Divider", "Image", "Video", "PDF", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Caption</label>
                                         <input
@@ -3443,7 +3562,7 @@ const FormBuilder = () => {
                                     </>
                                 )}
 
-                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "Document Type", "ThankYou"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Placeholder</label>
                                         <input
@@ -3460,7 +3579,7 @@ const FormBuilder = () => {
                                     </>
                                 )}
 
-                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "Document Type", "ThankYou"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Default value <span title="Initial value" style={{ cursor: "help" }}>🛈</span></label>
                                         <input
@@ -3987,7 +4106,7 @@ const FormBuilder = () => {
                                     );
                                 })()}
 
-                                {!["Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
                                             {/* Required Row */}
@@ -4025,6 +4144,173 @@ const FormBuilder = () => {
                                         </div>
                                     </div>
                                 )}
+
+                                {["Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
+                                    const field = fields.find(f => f.id === selectedFieldId);
+                                    const alignment = field?.alignment || "left";
+
+                                    return (
+                                        <>
+                                            <label>Button Text</label>
+                                            <input
+                                                className="form-control mb-3"
+                                                type="text"
+                                                value={field.label}
+                                                onChange={(e) => {
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId ? { ...f, label: e.target.value } : f
+                                                    );
+                                                    setFields(updatedFields);
+                                                }}
+                                            />
+
+                                            {/* Alignment Buttons */}
+                                            <div className="mt-3">
+                                                <label>Alignment</label>
+                                                <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+                                                    {["left", "center", "right"].map((align) => {
+                                                        const icons = {
+                                                            left: "⬅️",
+                                                            center: "↔️",
+                                                            right: "➡️"
+                                                        };
+                                                        return (
+                                                            <button
+                                                                key={align}
+                                                                onClick={() => {
+                                                                    const updatedFields = fields.map(f =>
+                                                                        f.id === selectedFieldId ? { ...f, alignment: align } : f
+                                                                    );
+                                                                    setFields(updatedFields);
+                                                                }}
+                                                                style={{
+                                                                    padding: "6px 10px",
+                                                                    fontSize: "1.2rem",
+                                                                    border: alignment === align
+                                                                        ? "2px solid #007bff"
+                                                                        : "1px solid lightgray",
+                                                                    borderRadius: "5px",
+                                                                    background: "white",
+                                                                    cursor: "pointer"
+                                                                }}
+                                                            >
+                                                                {icons[align]}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+
+                                            {/* Background Color */}
+                                            <div className="d-flex align-items-center justify-content-between mb-3" style={{ position: "relative" }}>
+                                                <label className="me-2" style={{ width: '150px' }}>Background Color</label>
+                                                <div
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setActiveBtnColorPicker("bgColor");
+                                                    }}
+                                                    style={{
+                                                        width: "30px",
+                                                        height: "25px",
+                                                        backgroundColor: field.bgColor || "#6c757d",
+                                                        border: "1px solid #ccc",
+                                                        borderRadius: "4px",
+                                                        cursor: "pointer"
+                                                    }}
+                                                ></div>
+
+                                                {activeBtnColorPicker === "bgColor" && (
+                                                    <div
+                                                        ref={pickerRef}
+                                                        style={{
+                                                            position: "absolute",
+                                                            top: "35px",
+                                                            right: "35px", // show ChromePicker on left side of the box
+                                                            zIndex: 9999,
+                                                        }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <ChromePicker
+                                                            color={field.bgColor || "#6c757d"}
+                                                            onChangeComplete={(color) => {
+                                                                const updatedFields = fields.map(f =>
+                                                                    f.id === selectedFieldId ? { ...f, bgColor: color.hex } : f
+                                                                );
+                                                                setFields(updatedFields);
+                                                            }}
+                                                            disableAlpha
+                                                        />
+                                                        <div
+                                                            onClick={() => setActiveBtnColorPicker(null)}
+                                                            style={{
+                                                                marginTop: "5px",
+                                                                fontSize: "12px",
+                                                                color: "#374151",
+                                                                cursor: "pointer"
+                                                            }}
+                                                        >
+                                                            Close
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Label Color */}
+                                            <div className="d-flex align-items-center justify-content-between mb-3" style={{ position: "relative" }}>
+                                                <label className="me-2" style={{ width: '150px' }}>Label Color</label>
+                                                <div
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setActiveBtnColorPicker("labelColor");
+                                                    }}
+                                                    style={{
+                                                        width: "30px",
+                                                        height: "25px",
+                                                        backgroundColor: field.labelColor || "#ffffff",
+                                                        border: "1px solid #ccc",
+                                                        borderRadius: "4px",
+                                                        cursor: "pointer"
+                                                    }}
+                                                ></div>
+
+                                                {activeBtnColorPicker === "labelColor" && (
+                                                    <div
+                                                        ref={pickerRef}
+                                                        style={{
+                                                            position: "absolute",
+                                                            top: "35px",
+                                                            right: "35px", // show ChromePicker on left side of the box
+                                                            zIndex: 9999,
+                                                        }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <ChromePicker
+                                                            color={field.labelColor || "#ffffff"}
+                                                            onChangeComplete={(color) => {
+                                                                const updatedFields = fields.map(f =>
+                                                                    f.id === selectedFieldId ? { ...f, labelColor: color.hex } : f
+                                                                );
+                                                                setFields(updatedFields);
+                                                            }}
+                                                            disableAlpha
+                                                        />
+                                                        <div
+                                                            onClick={() => setActiveBtnColorPicker(null)}
+                                                            style={{
+                                                                marginTop: "5px",
+                                                                fontSize: "12px",
+                                                                color: "#374151",
+                                                                cursor: "pointer"
+                                                            }}
+                                                        >
+                                                            Close
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </>
+                                    );
+                                })()}
 
                             </div>
                         </div>

@@ -37,7 +37,6 @@ const Form_builder_header = () => {
     const dropdownRef = useRef(null);
 
     const location = useLocation();
-    const isEditableForm = /^\/form-builder\/form-\d+$/.test(location.pathname); // Checks if URL matches /form-builder/form-{number}
 
     const [formTitle, setFormTitle] = useState("");
     const [renameFormId, setRenameFormId] = useState(null); // NEW
@@ -163,7 +162,7 @@ const Form_builder_header = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ published: true }),
-                credentials: 'same-origin'  // Ensures credentials are sent
+                credentials: "include"
             });
 
             if (!response.ok) {
@@ -173,7 +172,11 @@ const Form_builder_header = () => {
             const publicUrl = `${window.location.origin}/forms/${cleanFormId}`;
 
             // Copy link to clipboard
-            await navigator.clipboard.writeText(publicUrl);
+            if (document.hasFocus()) {
+                await navigator.clipboard.writeText(publicUrl);
+            } else {
+                console.warn("Clipboard copy skipped because the document is not focused.");
+            }
 
             // Show success alert
             Swal.fire({
@@ -329,13 +332,9 @@ const Form_builder_header = () => {
                                 <i className="fa-regular fa-clock"></i>
                             </button>
                             <button className="form_builder_header-preview-btn">Preview</button>
-                            {isEditableForm && (
-                                <>
-                                    <button className="form_builder_header-publish-btn" onClick={() => publishForm()}>
-                                        Publish <i className="fa-solid fa-bolt"></i>
-                                    </button>
-                                </>
-                            )}
+                            <button className="form_builder_header-publish-btn" onClick={() => publishForm()}>
+                                Publish <i className="fa-solid fa-bolt"></i>
+                            </button>
                         </>
                     )}
 

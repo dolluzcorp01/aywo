@@ -57,6 +57,7 @@ const PublishedForm = () => {
                 if (!response.ok) throw new Error("Failed to fetch form");
 
                 const data = await response.json();
+                console.log(data);
 
                 setForm(data.form);
                 setFields(data.fields);

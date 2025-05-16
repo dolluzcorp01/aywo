@@ -102,36 +102,58 @@ router.get("/get-published-form/:formId", async (req, res) => {
     const { formId } = req.params;
 
     try {
-        // ✅ Fetch form details
-        const formQuery = "SELECT * FROM forms WHERE form_id = ? AND published = TRUE";
+        // ✅ 1. Fetch main form
+        const formQuery = "SELECT * FROM dforms WHERE id = ? AND published = 1";
         const formResult = await queryPromise(db, formQuery, [formId]);
 
         if (formResult.length === 0) {
             return res.status(404).json({ error: "Form not found or not published" });
         }
 
-        // ✅ Fetch all fields for the form
-        const fieldsQuery = "SELECT * FROM form_fields WHERE form_id = ?";
+        // ✅ 2. Fetch pages of the form
+        const pagesQuery = "SELECT * FROM dform_pages WHERE form_id = ? ORDER BY sort_order ASC";
+        const pagesResult = await queryPromise(db, pagesQuery, [formId]);
+
+        // ✅ 3. Fetch all fields for the form
+        const fieldsQuery = "SELECT * FROM dform_fields WHERE form_id = ?";
         const fieldsResult = await queryPromise(db, fieldsQuery, [formId]);
 
-        // ✅ Fetch options for fields
-        const fieldIds = fieldsResult.map(field => field.field_id);
-        let optionsResult = [];
+        const fieldIds = fieldsResult.map(f => f.id);
 
+        // ✅ 4. Fetch field options
+        let optionsResult = [];
         if (fieldIds.length > 0) {
-            const optionsQuery = `SELECT * FROM form_field_options WHERE field_id IN (${fieldIds.join(",")})`;
+            const optionsQuery = `SELECT * FROM dfield_options WHERE field_id IN (${fieldIds.join(",")})`;
             optionsResult = await queryPromise(db, optionsQuery);
         }
 
-        // ✅ Structure the fields with their respective options
-        const fieldsWithOptions = fieldsResult.map(field => ({
+        // ✅ 5. Fetch matrix values
+        const matrixQuery = `SELECT * FROM dfield_matrix WHERE field_id IN (${fieldIds.join(",")})`;
+        const matrixResult = await queryPromise(db, matrixQuery);
+
+        // ✅ 6. Fetch default values
+        const defaultValuesQuery = `SELECT * FROM dfield_default_values WHERE form_id = ?`;
+        const defaultValuesResult = await queryPromise(db, defaultValuesQuery, [formId]);
+
+        // ✅ 7. Fetch uploaded files
+        const uploadsQuery = `SELECT * FROM dfield_file_uploads WHERE form_id = ?`;
+        const uploadsResult = await queryPromise(db, uploadsQuery, [formId]);
+
+        // ✅ 8. Structure fields with related data
+        const fieldsWithDetails = fieldsResult.map(field => ({
             ...field,
-            options: optionsResult
-                .filter(option => option.field_id === field.field_id)
-                .map(option => option.option_text) // Extract only option text
+            options: optionsResult.filter(opt => opt.field_id === field.id),
+            matrix: matrixResult.filter(m => m.field_id === field.id),
+            default_value: defaultValuesResult.find(def => def.field_id === field.id)?.field_value || null,
+            uploads: uploadsResult.filter(u => u.field_id === field.id)
         }));
 
-        res.json({ form: formResult[0], fields: fieldsWithOptions });
+        res.json({
+            form: formResult[0],
+            pages: pagesResult,
+            fields: fieldsWithDetails
+        });
+
     } catch (error) {
         console.error("❌ Error fetching published form:", error);
         res.status(500).json({ error: "Internal server error" });
