@@ -329,38 +329,27 @@ const FormBuilder = () => {
             });
 
             const data = await res.json();
-            console.log(data);
             const { submitbtnField, nextbtnfield } = data;
 
             const newFields = fields.map(field => {
                 if (field.type === "Submit" || field.type === "Next") {
-                    // Convert to Submit if it's on the last page
                     if (submitbtnField && field.id === submitbtnField.id) {
-                        return {
-                            ...field,
-                            type: "Submit",
-                            field_type: "Submit",
-                            label: submitbtnField.label || "Submit"
-                        };
-                    }
-
-                    // Convert to Next if it's the first page
-                    if (nextbtnfield && field.id === nextbtnfield.id) {
                         return {
                             ...field,
                             type: "Next",
                             field_type: "Next",
-                            label: nextbtnfield.label || "Next"
+                            label: submitbtnField.label || "Next"
                         };
                     }
 
-                    // Default fallback for all other buttons
-                    return {
-                        ...field,
-                        type: "Next",
-                        field_type: "Next",
-                        label: "Next"
-                    };
+                    if (nextbtnfield && field.id === nextbtnfield.id) {
+                        return {
+                            ...field,
+                            type: "Submit",
+                            field_type: "Submit",
+                            label: nextbtnfield.label || "Submit"
+                        };
+                    }
                 }
                 return field;
             }).filter(Boolean);
