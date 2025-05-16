@@ -275,8 +275,8 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
                 connection.query(
                     `INSERT INTO dform_fields (
                         form_id, page_id, type, label, placeholder, caption, default_value, description, alert_type, font_size, required, sort_order,
-                        min_value, max_value, fields_version
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        min_value, max_value, btnalignment, btnbgColor, btnlabelColor, fields_version
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         formId,
                         field.page_id,
@@ -292,6 +292,9 @@ router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => 
                         field.sortOrder || 0,
                         field.min_value || null,
                         field.max_value || null,
+                        field.btnalignment || "",
+                        field.btnbgColor || "",
+                        field.btnlabelColor || "",
                         fieldVersion
                     ],
                     (err, result) => {
@@ -615,6 +618,146 @@ router.post("/update-page-order", verifyJWT, async (req, res) => {
         }
         console.error("❌ Error updating sort order:", err);
         res.status(500).json({ error: "Failed to update page order" });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+router.post("/check-pages-btnfields", verifyJWT, async (req, res) => {
+    const { pageIds, firstPageId, lastPageId, formId } = req.body;
+    if (!Array.isArray(pageIds)) return res.status(400).json({ error: "Invalid page IDs" });
+
+    let connection;
+    try {
+        connection = await new Promise((resolve, reject) => {
+            db.getConnection((err, conn) => (err ? reject(err) : resolve(conn)));
+        });
+
+        const placeholders = pageIds.map(() => '?').join(',');
+
+        // 1. Get page mappings including page_number and sort_order
+        const pageMappings = await new Promise((resolve, reject) => {
+            connection.query(
+                `SELECT id, page_number, sort_order FROM form_builder.dform_pages WHERE id IN (${placeholders})`,
+                pageIds,
+                (err, results) => (err ? reject(err) : resolve(results))
+            );
+        });
+
+        const idToPageNumber = {};
+        const pageSortOrderMap = {};
+        pageMappings.forEach(row => {
+            idToPageNumber[row.id] = row.page_number;
+            pageSortOrderMap[row.page_number] = row.sort_order;
+        });
+
+        // 2. Get latest fields_version per page_number
+        const pageNumbers = pageIds.map(id => idToPageNumber[id]).filter(Boolean);
+        const versionPlaceholders = pageNumbers.map(() => '?').join(',');
+
+        const versionResults = await new Promise((resolve, reject) => {
+            connection.query(
+                `SELECT page_id, MAX(fields_version) as latest_version
+                 FROM dform_fields
+                 WHERE form_id = ? AND page_id IN (${versionPlaceholders})
+                 GROUP BY page_id`,
+                [formId, ...pageNumbers],
+                (err, results) => (err ? reject(err) : resolve(results))
+            );
+        });
+
+        const pageIdToVersion = {};
+        versionResults.forEach(row => {
+            pageIdToVersion[row.page_id] = row.latest_version;
+        });
+
+        // 3. Determine page_number and version for lastPageId
+        const lastPageNumber = idToPageNumber[lastPageId];
+        const lastPageVersion = pageIdToVersion[lastPageNumber] || 1;
+
+        // 4. Get Submit button field from lastPage
+        const [submitRow] = await new Promise((resolve, reject) => {
+            connection.query(
+                `SELECT id, page_id, label FROM dform_fields
+         WHERE form_id = ? AND type = 'Submit' AND fields_version = ?
+         LIMIT 1`,
+                [formId, lastPageVersion],
+                (err, results) => (err ? reject(err) : resolve(results))
+            );
+        });
+
+        const submitbtnField = submitRow;
+
+        if (submitbtnField) {
+            const submitPageId = parseInt(submitbtnField.page_id);
+            const submitPageOrder = pageSortOrderMap[submitPageId];
+            const sortedOrders = Object.values(pageSortOrderMap).sort((a, b) => a - b);
+            const maxOrder = sortedOrders[sortedOrders.length - 1];
+
+            if (submitPageOrder !== maxOrder) {
+                //❗Submit button is not on the last page, so update to Next button
+                await new Promise((resolve, reject) => {
+                    connection.query(
+                        `UPDATE dform_fields SET type = 'Next', label = 'Next' WHERE id = ?`,
+                        [submitbtnField.id],
+                        (err) => (err ? reject(err) : resolve())
+                    );
+                });
+                console.log("🔄 Converted Submit button to Next button because it's not on the last page.");
+            } else {
+                console.log("✅ Submit button is on the last page, no changes needed.");
+            }
+        }
+
+        // 5. Get Next button
+        // 5. Convert the Next button on the last page to Submit (if present)
+
+        // Find page_id with max sort_order
+        let maxSortOrder = -Infinity;
+        let lastSortedPageId = null;
+        for (const [pageId, sortOrder] of Object.entries(pageSortOrderMap)) {
+            if (sortOrder > maxSortOrder) {
+                maxSortOrder = sortOrder;
+                lastSortedPageId = parseInt(pageId);
+            }
+        }
+
+        const lastSortedPageVersion = pageIdToVersion[lastSortedPageId] || 1;
+
+        // Now find Next button in that last page and update it to Submit
+        const [lastPageNextRow] = await new Promise((resolve, reject) => {
+            connection.query(
+                `SELECT id, page_id, label FROM dform_fields
+         WHERE form_id = ? AND page_id = ? AND type = 'Next' AND fields_version = ?
+         LIMIT 1`,
+                [formId, lastSortedPageId, lastSortedPageVersion],
+                (err, results) => (err ? reject(err) : resolve(results))
+            );
+        });
+
+        const finalNextBtn = lastPageNextRow;
+
+        if (finalNextBtn) {
+            await new Promise((resolve, reject) => {
+                connection.query(
+                    `UPDATE dform_fields SET type = 'Submit', label = 'Submit' WHERE id = ?`,
+                    [finalNextBtn.id],
+                    (err) => (err ? reject(err) : resolve())
+                );
+            });
+            console.log("🔄 Converted Next button to Submit button on the last sorted page.");
+        } else {
+            console.log("ℹ️ No Next button found on the last sorted page.");
+        }
+
+        res.json({
+            submitbtnField,
+            nextbtnfield
+        });
+
+    } catch (err) {
+        console.error("❌ Error checking fields:", err);
+        res.status(500).json({ error: "Failed to check fields" });
     } finally {
         if (connection) connection.release();
     }

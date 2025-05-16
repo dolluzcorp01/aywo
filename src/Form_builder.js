@@ -142,7 +142,6 @@ const FormBuilder = () => {
     }, [location.pathname]);
 
     useEffect(() => {
-
         const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
         const formId = match ? match[1] : null;
         if (formId) fetchFormPages(formId);
@@ -295,39 +294,75 @@ const FormBuilder = () => {
         const [movedPage] = reorderedPages.splice(result.source.index, 1);
         reorderedPages.splice(result.destination.index, 0, movedPage);
 
-        // Update local state
         setFormPages(reorderedPages);
 
-        // Prepare updated sort order
         const updatedOrder = reorderedPages.map((page, index) => ({
             id: page.id,
             sort_order: index + 1
         }));
 
+        const firstPageId = formPages[0]?.id;
+        const lastPageId = formPages[formPages.length - 1]?.id;
+
+        const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
+        const formId = match ? match[1] : null;
+
         try {
-            // await fetch('/api/form_builder/update-page-order', {
-            //     method: "POST",
-            //     headers: { "Content-Type": "application/json" },
-            //     credentials: "include",
-            //     body: JSON.stringify({ pages: updatedOrder })
-            // });
+            await fetch('/api/form_builder/update-page-order', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ pages: updatedOrder })
+            });
 
-            // ✅ Correct last page ID
-            const lastPageId = reorderedPages[reorderedPages.length - 1]?.page_number?.toString();
+            // ✅ Call backend to get which pages have fields
+            const res = await fetch("/api/form_builder/check-pages-btnfields", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    pageIds: reorderedPages.map(p => p.id),
+                    firstPageId,
+                    lastPageId,
+                    formId
+                })
+            });
 
-            // ✅ Update Submit/Next buttons
+            const data = await res.json();
+            const { submitbtnField, nextbtnfield } = data;
+
             const newFields = fields.map(field => {
                 if (field.type === "Submit" || field.type === "Next") {
-                    const isLastPage = field.page_id?.toString() === lastPageId;
+                    // Convert to Submit if it's on the last page
+                    if (submitbtnField && field.id === submitbtnField.id) {
+                        return {
+                            ...field,
+                            type: "Submit",
+                            field_type: "Submit",
+                            label: submitbtnField.label || "Submit"
+                        };
+                    }
+
+                    // Convert to Next if it's the first page
+                    if (nextbtnfield && field.id === nextbtnfield.id) {
+                        return {
+                            ...field,
+                            type: "Next",
+                            field_type: "Next",
+                            label: nextbtnfield.label || "Next"
+                        };
+                    }
+
+                    // Default fallback for all other buttons
                     return {
                         ...field,
-                        type: isLastPage ? "Submit" : "Next",
-                        field_type: isLastPage ? "Submit" : "Next",
-                        label: isLastPage ? "Submit" : "Next"
+                        type: "Next",
+                        field_type: "Next",
+                        label: "Next"
                     };
                 }
                 return field;
-            });
+            }).filter(Boolean);
 
             setFields(newFields);
 
@@ -713,8 +748,9 @@ const FormBuilder = () => {
             field_type: isLastPage ? "Submit" : "Next",
             label: isLastPage ? "Submit" : "Next",
             page_id: currentPage.page_number.toString(),
-            bgColor: "#FFFFFF",
-            labelColor: "#000000",
+            btnalignment: "left",
+            btnbgColor: formPrimaryColor,
+            btnlabelColor: "#FFFFFF",
             fontSize: 16,
             customized: {}
         });
@@ -2457,7 +2493,7 @@ const FormBuilder = () => {
                     </div>
                 );
             case "Submit":
-                const submitAlignment = field.alignment || "left";
+                const submitAlignment = field.btnalignment || "left";
                 let submitAlignmentStyle = {};
                 if (submitAlignment === "center") {
                     submitAlignmentStyle = { margin: "0 auto", display: "block" };
@@ -2475,8 +2511,8 @@ const FormBuilder = () => {
                             padding: "6px 12px",
                             fontSize: "1.2rem",
                             fontFamily: selectedFont,
-                            backgroundColor: field.bgColor || "#007bff",
-                            color: field.labelColor || "#ffffff",
+                            backgroundColor: field.btnbgColor || formPrimaryColor,
+                            color: field.btnlabelColor || "#ffffff",
                             border: focusedFieldId === field.id ? "2px solid #007bff" : "1px solid lightgray",
                             borderRadius: "5px",
                             ...submitAlignmentStyle
@@ -2488,7 +2524,7 @@ const FormBuilder = () => {
                     </button>
                 );
             case "Next":
-                const nextAlignment = field.alignment || "left";
+                const nextAlignment = field.btnalignment || "left";
                 let nextAlignmentStyle = {};
                 if (nextAlignment === "center") {
                     nextAlignmentStyle = { margin: "0 auto", display: "block" };
@@ -2506,8 +2542,8 @@ const FormBuilder = () => {
                             padding: "6px 12px",
                             fontSize: "1.2rem",
                             fontFamily: selectedFont,
-                            backgroundColor: field.bgColor || "#6c757d",
-                            color: field.labelColor || "#ffffff",
+                            backgroundColor: field.btnbgColor || formPrimaryColor,
+                            color: field.btnlabelColor || "#ffffff",
                             border: focusedFieldId === field.id ? "2px solid #6c757d" : "1px solid lightgray",
                             borderRadius: "5px",
                             ...nextAlignmentStyle
@@ -2703,20 +2739,20 @@ const FormBuilder = () => {
             console.log("Cloned Fields:", clonedFields);
             formData.set("fields", JSON.stringify(clonedFields));
 
-            // const response = await fetch("/api/form_builder/save-form", {
-            //     method: "POST",
-            //     body: formData,
-            //     credentials: "include",
-            // });
+            const response = await fetch("/api/form_builder/save-form", {
+                method: "POST",
+                body: formData,
+                credentials: "include",
+            });
 
-            // const data = await response.json();
+            const data = await response.json();
 
-            // if (data.success) {
-            //     Swal.fire("Success", "Form saved successfully!", "success");
-            //     fetchForm(formId, pageId);
-            // } else {
-            //     Swal.fire("Error", data.message || "Something went wrong while saving the form.", "error");
-            // }
+            if (data.success) {
+                Swal.fire("Success", "Form saved successfully!", "success");
+                fetchForm(formId, pageId);
+            } else {
+                Swal.fire("Error", data.message || "Something went wrong while saving the form.", "error");
+            }
 
         } catch (error) {
             console.error("Error saving/updating form:", error);
@@ -4147,7 +4183,7 @@ const FormBuilder = () => {
 
                                 {["Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
                                     const field = fields.find(f => f.id === selectedFieldId);
-                                    const alignment = field?.alignment || "left";
+                                    const btnalignment = field?.btnalignment || "left";
 
                                     return (
                                         <>
@@ -4179,14 +4215,14 @@ const FormBuilder = () => {
                                                                 key={align}
                                                                 onClick={() => {
                                                                     const updatedFields = fields.map(f =>
-                                                                        f.id === selectedFieldId ? { ...f, alignment: align } : f
+                                                                        f.id === selectedFieldId ? { ...f, btnalignment: align } : f
                                                                     );
                                                                     setFields(updatedFields);
                                                                 }}
                                                                 style={{
                                                                     padding: "6px 10px",
                                                                     fontSize: "1.2rem",
-                                                                    border: alignment === align
+                                                                    border: btnalignment === align
                                                                         ? "2px solid #007bff"
                                                                         : "1px solid lightgray",
                                                                     borderRadius: "5px",
@@ -4207,19 +4243,19 @@ const FormBuilder = () => {
                                                 <div
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        setActiveBtnColorPicker("bgColor");
+                                                        setActiveBtnColorPicker("btnbgColor");
                                                     }}
                                                     style={{
                                                         width: "30px",
                                                         height: "25px",
-                                                        backgroundColor: field.bgColor || "#6c757d",
+                                                        backgroundColor: field.btnbgColor || "#6c757d",
                                                         border: "1px solid #ccc",
                                                         borderRadius: "4px",
                                                         cursor: "pointer"
                                                     }}
                                                 ></div>
 
-                                                {activeBtnColorPicker === "bgColor" && (
+                                                {activeBtnColorPicker === "btnbgColor" && (
                                                     <div
                                                         ref={pickerRef}
                                                         style={{
@@ -4231,10 +4267,10 @@ const FormBuilder = () => {
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
                                                         <ChromePicker
-                                                            color={field.bgColor || "#6c757d"}
+                                                            color={field.btnbgColor || "#6c757d"}
                                                             onChangeComplete={(color) => {
                                                                 const updatedFields = fields.map(f =>
-                                                                    f.id === selectedFieldId ? { ...f, bgColor: color.hex } : f
+                                                                    f.id === selectedFieldId ? { ...f, btnbgColor: color.hex } : f
                                                                 );
                                                                 setFields(updatedFields);
                                                             }}
@@ -4261,19 +4297,19 @@ const FormBuilder = () => {
                                                 <div
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        setActiveBtnColorPicker("labelColor");
+                                                        setActiveBtnColorPicker("btnlabelColor");
                                                     }}
                                                     style={{
                                                         width: "30px",
                                                         height: "25px",
-                                                        backgroundColor: field.labelColor || "#ffffff",
+                                                        backgroundColor: field.btnlabelColor || "#ffffff",
                                                         border: "1px solid #ccc",
                                                         borderRadius: "4px",
                                                         cursor: "pointer"
                                                     }}
                                                 ></div>
 
-                                                {activeBtnColorPicker === "labelColor" && (
+                                                {activeBtnColorPicker === "btnlabelColor" && (
                                                     <div
                                                         ref={pickerRef}
                                                         style={{
@@ -4285,10 +4321,10 @@ const FormBuilder = () => {
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
                                                         <ChromePicker
-                                                            color={field.labelColor || "#ffffff"}
+                                                            color={field.btnlabelColor || "#ffffff"}
                                                             onChangeComplete={(color) => {
                                                                 const updatedFields = fields.map(f =>
-                                                                    f.id === selectedFieldId ? { ...f, labelColor: color.hex } : f
+                                                                    f.id === selectedFieldId ? { ...f, btnlabelColor: color.hex } : f
                                                                 );
                                                                 setFields(updatedFields);
                                                             }}
