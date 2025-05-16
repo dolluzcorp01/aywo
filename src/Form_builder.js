@@ -329,6 +329,7 @@ const FormBuilder = () => {
             });
 
             const data = await res.json();
+            console.log(data);
             const { submitbtnField, nextbtnfield } = data;
 
             const newFields = fields.map(field => {

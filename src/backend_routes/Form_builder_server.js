@@ -750,9 +750,32 @@ router.post("/check-pages-btnfields", verifyJWT, async (req, res) => {
             console.log("ℹ️ No Next button found on the last sorted page.");
         }
 
+        let updatedSubmitField = null;
+        let updatedNextField = null;
+
+        if (submitbtnField) {
+            [updatedSubmitField] = await new Promise((resolve, reject) => {
+                connection.query(
+                    `SELECT id, page_id, type, label FROM dform_fields WHERE id = ?`,
+                    [submitbtnField.id],
+                    (err, results) => (err ? reject(err) : resolve(results))
+                );
+            });
+        }
+
+        if (finalNextBtn) {
+            [updatedNextField] = await new Promise((resolve, reject) => {
+                connection.query(
+                    `SELECT id, page_id, type, label FROM dform_fields WHERE id = ?`,
+                    [finalNextBtn.id],
+                    (err, results) => (err ? reject(err) : resolve(results))
+                );
+            });
+        }
+
         res.json({
-            submitbtnField,
-            nextbtnfield
+            submitbtnField: updatedSubmitField,
+            nextbtnfield: updatedNextField
         });
 
     } catch (err) {
