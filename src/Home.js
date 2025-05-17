@@ -1456,7 +1456,7 @@ function Home() {
                     <div
                       key={form.form_id}
                       className="form-item"
-                      onClick={() => navigate(`/form-builder/${form.form_id}`)}
+                      onClick={() => navigate(`/form-builder/form-${form.form_id}/page-${form.page_id}`)}
                     >
                       <i className="fa-solid fa-file-alt search-modal-form-icon"></i>
                       <span className="form-name">{form.title}</span>
