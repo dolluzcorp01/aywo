@@ -301,7 +301,6 @@ const FormBuilder = () => {
             sort_order: index + 1
         }));
 
-        const firstPageId = formPages[0]?.id;
         const lastPageId = formPages[formPages.length - 1]?.id;
 
         const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
@@ -322,7 +321,6 @@ const FormBuilder = () => {
                 credentials: "include",
                 body: JSON.stringify({
                     pageIds: reorderedPages.map(p => p.id),
-                    firstPageId,
                     lastPageId,
                     formId
                 })
@@ -436,9 +434,33 @@ const FormBuilder = () => {
             }
 
             if (response.ok && result.page_id) {
+                const lastPageId = formPages[formPages.length - 1]?.id;
+
+                const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
+                const formId = match ? match[1] : null;
+
+                // ✅ Add result.page_id to reorderedPages if not already included
+                const reorderedPages = [...formPages];
+                const isAlreadyIncluded = reorderedPages.some(p => p.id === result.page_id);
+
+                if (!isAlreadyIncluded) {
+                    reorderedPages.push({ id: result.page_id });  // Add minimal object; update if needed
+                }
+
+                const res = await fetch("/api/form_builder/check-pages-btnfields", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        pageIds: reorderedPages.map(p => p.id),
+                        lastPageId,
+                        formId
+                    })
+                });
+
                 Swal.fire("Success", "New page created successfully!", "success");
                 setShowNewPageModal(false);
-                navigate(`/form-builder/form-${formId}/page-${result.page_id}`);
+                navigate(`/form-builder/form-${formId}/page-${result.page_number}`);
             } else {
                 Swal.fire("Error", result.message || "Page creation failed", "error");
             }

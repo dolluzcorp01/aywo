@@ -134,7 +134,8 @@ router.post("/createnewpage", verifyJWT, async (req, res) => {
         const pageResult = await queryPromise(db, pageQuery, [form_id, title, nextSortOrder, nextPageNumber]);
 
         res.status(200).json({
-            page_id: nextPageNumber,
+            page_id: pageResult.insertId,
+            page_number: nextPageNumber,
             form_id,
             message: "Page created successfully"
         });
@@ -624,7 +625,7 @@ router.post("/update-page-order", verifyJWT, async (req, res) => {
 });
 
 router.post("/check-pages-btnfields", verifyJWT, async (req, res) => {
-    const { pageIds, firstPageId, lastPageId, formId } = req.body;
+    const { pageIds, lastPageId, formId } = req.body;
     if (!Array.isArray(pageIds)) return res.status(400).json({ error: "Invalid page IDs" });
 
     let connection;
