@@ -492,6 +492,7 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
         let query = `
             SELECT 
                 f.id AS form_id,
+                first_page.page_number AS page_id,
                 f.user_id,
                 f.title,
                 f.internal_note,
@@ -504,15 +505,20 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
                 f.questions_color,
                 f.answers_color,
                 f.font,
-                f.created_at,
-                p.page_id
+                f.created_at
             FROM dforms f
             LEFT JOIN (
-                SELECT form_id, MIN(page_number) AS page_id
-                FROM dform_pages
-                GROUP BY form_id
-            ) p ON f.id = p.form_id
-            WHERE f.user_id = ?
+                SELECT page_number, form_id
+                FROM (
+                    SELECT 
+                        page_number,
+                        form_id,
+                        ROW_NUMBER() OVER (PARTITION BY form_id ORDER BY sort_order ASC) AS rn
+                    FROM dform_pages
+                ) ranked_pages
+                WHERE rn = 1
+            ) AS first_page ON f.id = first_page.form_id
+            WHERE f.user_id = ? 
         `;
 
         const params = [userId];

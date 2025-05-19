@@ -156,6 +156,36 @@ const Form_builder_header = () => {
 
         try {
             const cleanFormId = formId.replace("form-", "");
+
+            // ✅ Fetch form pages directly
+            const res = await fetch(`/api/form_builder/get-form-pages/${cleanFormId}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include"
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "Failed to fetch pages");
+            }
+
+            const pages = data.pages || [];
+
+            if (pages.length === 0) {
+                Swal.fire("Error", "No pages found for this form.", "error");
+                return;
+            }
+
+            // ✅ Sort pages by sort_order to get the first page number
+            const firstPage = pages.reduce((min, page) =>
+                page.sort_order < min.sort_order ? page : min, pages[0]
+            );
+            const firstPageNumber = firstPage?.page_number || 1;
+
+            // ✅ Send publish request
             const response = await apiFetch(`/api/form_builder/publish-form/${cleanFormId}`, {
                 method: 'PUT',
                 headers: {
@@ -169,16 +199,17 @@ const Form_builder_header = () => {
                 throw new Error('Failed to publish form');
             }
 
-            const publicUrl = `${window.location.origin}/forms/${cleanFormId}`;
+            // ✅ Construct public URL
+            const publicUrl = `${window.location.origin}/forms/form-${cleanFormId}/page-${firstPageNumber}`;
 
-            // Copy link to clipboard
+            // ✅ Copy link to clipboard
             if (document.hasFocus()) {
                 await navigator.clipboard.writeText(publicUrl);
             } else {
                 console.warn("Clipboard copy skipped because the document is not focused.");
             }
 
-            // Show success alert
+            // ✅ Success message
             Swal.fire({
                 title: "Success!",
                 html: `Form published successfully! <br> The link has been copied to clipboard: <br> <b>${publicUrl}</b>`,

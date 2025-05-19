@@ -265,7 +265,7 @@ const FormBuilder = () => {
             });
 
             const data = await res.json();
-
+            console.log("ordering", data);
             if (res.ok) {
                 setFormPages(data.pages || []);
             } else {

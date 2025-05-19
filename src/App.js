@@ -43,7 +43,7 @@ function App() {
       />
 
       {/* Published form (no layout) */}
-      <Route path="/forms/:formId" element={<PublishedForm />} />
+      <Route path="/forms/:formId/:pageId" element={<PublishedForm />} />
 
       {/* Responses page uses default layout */}
       <Route

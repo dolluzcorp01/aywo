@@ -98,59 +98,59 @@ router.post("/submit-form", upload.single("document"), async (req, res) => {
     }
 });
 
-router.get("/get-published-form/:formId", async (req, res) => {
-    const { formId } = req.params;
+router.get("/get-published-form/:formId/:pageId", async (req, res) => {
+    const { formId, pageId } = req.params;
 
     try {
-        // ✅ 1. Fetch main form
+        // ✅ 1. Fetch the form if published
         const formQuery = "SELECT * FROM dforms WHERE id = ? AND published = 1";
-        const formResult = await queryPromise(db, formQuery, [formId]);
+        const [form] = await queryPromise(db, formQuery, [formId]);
 
-        if (formResult.length === 0) {
+        if (!form) {
             return res.status(404).json({ error: "Form not found or not published" });
         }
 
-        // ✅ 2. Fetch pages of the form
-        const pagesQuery = "SELECT * FROM dform_pages WHERE form_id = ? ORDER BY sort_order ASC";
-        const pagesResult = await queryPromise(db, pagesQuery, [formId]);
+        // ✅ 2. Fetch page data
+        const pageQuery = "SELECT * FROM dform_pages WHERE form_id = ? AND page_number = ?";
+        const [page] = await queryPromise(db, pageQuery, [formId, pageId]);
 
-        // ✅ 3. Fetch all fields for the form
-        const fieldsQuery = "SELECT * FROM dform_fields WHERE form_id = ?";
-        const fieldsResult = await queryPromise(db, fieldsQuery, [formId]);
-
-        const fieldIds = fieldsResult.map(f => f.id);
-
-        // ✅ 4. Fetch field options
-        let optionsResult = [];
-        if (fieldIds.length > 0) {
-            const optionsQuery = `SELECT * FROM dfield_options WHERE field_id IN (${fieldIds.join(",")})`;
-            optionsResult = await queryPromise(db, optionsQuery);
+        if (!page) {
+            return res.status(404).json({ error: "Page not found" });
         }
 
-        // ✅ 5. Fetch matrix values
-        const matrixQuery = `SELECT * FROM dfield_matrix WHERE field_id IN (${fieldIds.join(",")})`;
-        const matrixResult = await queryPromise(db, matrixQuery);
+        // ✅ 3. Fetch latest-version fields for this page
+        const fieldsQuery = `
+            SELECT * FROM dform_fields f
+            WHERE f.form_id = ? AND f.page_id = ?
+            AND f.fields_version = (
+                SELECT MAX(f2.fields_version)
+                FROM dform_fields f2
+                WHERE f2.form_id = f.form_id AND f2.page_id = f.page_id AND f2.label = f.label
+            )
+        `;
+        const fields = await queryPromise(db, fieldsQuery, [formId, pageId]);
 
-        // ✅ 6. Fetch default values
-        const defaultValuesQuery = `SELECT * FROM dfield_default_values WHERE form_id = ?`;
-        const defaultValuesResult = await queryPromise(db, defaultValuesQuery, [formId]);
+        const fieldIds = fields.map(f => f.id);
+        let options = [], matrix = [], defaults = [], uploads = [];
 
-        // ✅ 7. Fetch uploaded files
-        const uploadsQuery = `SELECT * FROM dfield_file_uploads WHERE form_id = ?`;
-        const uploadsResult = await queryPromise(db, uploadsQuery, [formId]);
+        if (fieldIds.length > 0) {
+            options = await queryPromise(db, `SELECT * FROM dfield_options WHERE field_id IN (${fieldIds.join(",")})`);
+            matrix = await queryPromise(db, `SELECT * FROM dfield_matrix WHERE field_id IN (${fieldIds.join(",")})`);
+            defaults = await queryPromise(db, `SELECT * FROM dfield_default_values WHERE form_id = ?`, [formId]);
+            uploads = await queryPromise(db, `SELECT * FROM dfield_file_uploads WHERE form_id = ?`, [formId]);
+        }
 
-        // ✅ 8. Structure fields with related data
-        const fieldsWithDetails = fieldsResult.map(field => ({
+        const fieldsWithDetails = fields.map(field => ({
             ...field,
-            options: optionsResult.filter(opt => opt.field_id === field.id),
-            matrix: matrixResult.filter(m => m.field_id === field.id),
-            default_value: defaultValuesResult.find(def => def.field_id === field.id)?.field_value || null,
-            uploads: uploadsResult.filter(u => u.field_id === field.id)
+            options: options.filter(opt => opt.field_id === field.id),
+            matrix: matrix.filter(m => m.field_id === field.id),
+            default_value: defaults.find(def => def.field_id === field.id)?.field_value || null,
+            uploads: uploads.filter(u => u.field_id === field.id)
         }));
 
         res.json({
-            form: formResult[0],
-            pages: pagesResult,
+            form,
+            page,
             fields: fieldsWithDetails
         });
 
