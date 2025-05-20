@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { apiFetch, API_BASE } from "./utils/api";
 import Swal from "sweetalert2";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
@@ -10,9 +10,11 @@ import {
 
 const PublishedForm = () => {
     const [form, setForm] = useState(null);
+    const [formPages, setFormPages] = useState([]);
     const [fields, setFields] = useState([]);
     const [responses, setResponses] = useState({});
     const location = useLocation();
+    const navigate = useNavigate();
 
     const [focusedFieldId, setFocusedFieldId] = useState(null);
     const [focusedOptionId, setFocusedOptionId] = useState(null);
@@ -83,7 +85,7 @@ const PublishedForm = () => {
                 if (!response.ok) throw new Error("Failed to fetch form");
 
                 const data = await response.json();
-
+                console.log(data);
                 setFormBgColor(data.form.background_color || "#f8f9fa");
                 setformColor(data.form.questions_background_color || "#fff");
                 setformPrimaryColor(data.form.primary_color || "#3b82f6");
@@ -99,14 +101,57 @@ const PublishedForm = () => {
                 });
 
                 setForm(data.form);
-                setFields(data.fields);
+                const processedFields = data.fields.map((field) => {
+                    if (field.type === "Choice Matrix" && Array.isArray(field.matrix)) {
+                        const rows = field.matrix
+                            .filter(m => m.row_label !== null)
+                            .map(m => m.row_label);
+                        const columns = field.matrix
+                            .filter(m => m.column_label !== null)
+                            .map(m => m.column_label);
+
+                        return {
+                            ...field,
+                            rows,
+                            columns,
+                            selectedMatrix: [] // you can later load actual values if stored
+                        };
+                    }
+                    return field;
+                });
+
+                setFields(processedFields);
+
             } catch (error) {
                 Swal.fire("Error", "Form not found or unpublished.", "error");
             }
         };
 
+        const fetchFormPages = async () => {
+            try {
+                const res = await fetch(`/api/form_builder/get-form-pages/${formId}`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    credentials: "include"
+                });
+
+                const data = await res.json();
+                console.log("ordering", data);
+                if (res.ok) {
+                    setFormPages(data.pages || []);
+                } else {
+                    Swal.fire("Error", data.error || "Unable to fetch pages", "error");
+                }
+            } catch (error) {
+                console.error("❌ Error loading pages:", error);
+            }
+        };
+
         if (formId && pageId) {
             fetchPublishedForm();
+            fetchFormPages();
         }
     }, [formId, pageId]);
 
@@ -188,7 +233,7 @@ const PublishedForm = () => {
         const commonProps = {
             className: "form-control",
             placeholder: field.placeholder || "",
-            default_value: field.default_value || "",
+            value: field.default_value || "",
             style: {
                 width: field.halfWidth ? "50%" : "100%",
                 color: formAnswersColor,
@@ -734,25 +779,6 @@ const PublishedForm = () => {
                                 </div>
                             )
                         ))}
-                        <button
-                            onClick={() => {
-                                const updatedFields = fields.map(f =>
-                                    f.id === field.id
-                                        ? { ...f, options: [...f.options, `Option ${f.options.length + 1}`] }
-                                        : f
-                                );
-                                setFields(updatedFields);
-                            }}
-                            style={{
-                                marginTop: "10px",
-                                color: "#2563eb",
-                                textDecoration: "underline",
-                                background: "none",
-                                border: "none"
-                            }}
-                        >
-                            Add option
-                        </button>
                     </>
                 );
             case "Choice Matrix":
@@ -891,36 +917,6 @@ const PublishedForm = () => {
                                 ))}
                             </tbody>
                         </table>
-
-                        {/* Add Row / Add Column Buttons */}
-                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                            <button
-                                className="btn btn-sm btn-link"
-                                onClick={() => {
-                                    const updatedFields = fields.map(f =>
-                                        f.id === field.id
-                                            ? { ...f, rows: [...f.rows, `Row ${f.rows.length + 1}`] }
-                                            : f
-                                    );
-                                    setFields(updatedFields);
-                                }}
-                            >
-                                Add row
-                            </button>
-                            <button
-                                className="btn btn-sm btn-link"
-                                onClick={() => {
-                                    const updatedFields = fields.map(f =>
-                                        f.id === field.id
-                                            ? { ...f, columns: [...f.columns, `Col ${f.columns.length + 1}`] }
-                                            : f
-                                    );
-                                    setFields(updatedFields);
-                                }}
-                            >
-                                Add column
-                            </button>
-                        </div>
                     </div>
                 );
             case "Date Picker":
@@ -1069,50 +1065,12 @@ const PublishedForm = () => {
                                                             <i className="fas fa-grip-vertical"></i>
                                                         </span>
 
-                                                        {/* Delete option */}
-                                                        <span
-                                                            style={{ color: "red", cursor: "pointer" }}
-                                                            onClick={() => {
-                                                                const updatedOptions = [...field.options];
-                                                                updatedOptions.splice(idx, 1);
-                                                                const updatedFields = fields.map(f =>
-                                                                    f.id === field.id ? { ...f, options: updatedOptions } : f
-                                                                );
-                                                                setFields(updatedFields);
-                                                            }}
-                                                        >
-                                                            <i className="fas fa-trash-alt"></i>
-                                                        </span>
                                                     </li>
                                                 )}
                                             </Draggable>
                                         ))}
                                         {provided.placeholder}
                                     </ol>
-
-                                    {/* Add Option Button */}
-                                    <button
-                                        onClick={() => {
-                                            const updatedFields = fields.map(f =>
-                                                f.id === field.id
-                                                    ? {
-                                                        ...f,
-                                                        options: [...f.options, { option_text: `Option ${f.options.length + 1}` }]
-                                                    }
-                                                    : f
-                                            );
-                                            setFields(updatedFields);
-                                        }}
-                                        style={{
-                                            marginTop: "10px",
-                                            color: "#2563eb",
-                                            textDecoration: "underline",
-                                            background: "none",
-                                            border: "none",
-                                        }}
-                                    >
-                                        Add option
-                                    </button>
                                 </div>
                             )}
                         </Droppable>
@@ -1164,8 +1122,11 @@ const PublishedForm = () => {
                     </div>
                 );
             case "Slider":
-                const currentValue = field.value ?? field.min_value;
-                const percentage = ((currentValue - field.min_value) / (field.max_value - field.min_value)) * 100;
+                const min = field.min_value ?? 0;  // Default to 0
+                const max = field.max_value ?? 100; // Default to 100
+                const currentValue = field.value ?? min;
+
+                const percentage = ((currentValue - min) / (max - min)) * 100;
 
                 const sliderStyle = {
                     background: `linear-gradient(to right, ${formPrimaryColor} 0%, ${formPrimaryColor} ${percentage}%, #e5e7eb ${percentage}%, #e5e7eb 100%)`
@@ -1373,39 +1334,6 @@ const PublishedForm = () => {
                                     onMouseEnter={() => setHoveredOption(idx)}
                                     onMouseLeave={() => setHoveredOption(null)}
                                 >
-                                    {/* Close Icon */}
-                                    <button
-                                        onClick={() => {
-                                            const updatedFields = fields.map(f =>
-                                                f.id === field.id
-                                                    ? {
-                                                        ...f,
-                                                        options: f.options.filter((_, i) => i !== idx)
-                                                    }
-                                                    : f
-                                            );
-                                            setFields(updatedFields);
-                                        }}
-                                        style={{
-                                            position: "absolute",
-                                            top: "-10px",
-                                            right: "-10px",
-                                            background: "rgb(107 114 128)",
-                                            color: "white",
-                                            border: "none",
-                                            borderRadius: "50%",
-                                            width: "24px",
-                                            height: "24px",
-                                            display: hoveredOption === idx ? "flex" : "none",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            cursor: "pointer",
-                                            zIndex: 10
-                                        }}
-                                    >
-                                        <FaTimes size={14} />
-                                    </button>
-
                                     <div
                                         style={{
                                             width: "100%",
@@ -1424,19 +1352,6 @@ const PublishedForm = () => {
                                             justifyContent: "center"
                                         }}
                                     >
-                                        <button
-                                            onClick={() => setEditImageOption({ fieldId: field.id, index: idx })}
-                                            style={{
-                                                background: "rgba(0,0,0,0.5)",
-                                                color: "white",
-                                                border: "none",
-                                                padding: "6px 12px",
-                                                borderRadius: "4px",
-                                                cursor: "pointer"
-                                            }}
-                                        >
-                                            ✎ Edit
-                                        </button>
                                     </div>
                                     <div style={{ textAlign: "center", marginTop: "8px" }}>
                                         <input
@@ -1463,29 +1378,6 @@ const PublishedForm = () => {
                                 </div>
                             ))}
                         </div>
-
-                        <button
-                            onClick={() => {
-                                const updatedFields = fields.map(f =>
-                                    f.id === field.id
-                                        ? {
-                                            ...f,
-                                            options: [...f.options, { id: Date.now(), option_text: `Option ${f.options.length + 1}`, image_path: null }]
-                                        }
-                                        : f
-                                );
-                                setFields(updatedFields);
-                            }}
-                            style={{
-                                marginTop: "10px",
-                                color: "#2563eb",
-                                textDecoration: "underline",
-                                background: "none",
-                                border: "none"
-                            }}
-                        >
-                            Add option
-                        </button>
                     </div>
                 );
             case "Divider":
@@ -1540,33 +1432,6 @@ const PublishedForm = () => {
                         ) : (
                             <div className="media-upload-placeholder">No image uploaded</div>
                         )}
-
-                        <input
-                            type="file"
-                            accept="image/*"
-                            {...commonProps}
-                            onChange={(e) => {
-                                const file = e.target.files[0];
-                                if (file && file.size > 1 * 1024 * 1024) {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'File Too Large',
-                                        text: 'Please select a file smaller than 1MB.',
-                                    });
-                                    return;
-                                }
-
-                                if (file) {
-                                    const updatedFields = fields.map(f =>
-                                        f.id === field.id
-                                            ? { ...f, file, previewSize: previewSize }
-                                            : f
-                                    );
-                                    setFields(updatedFields);
-                                }
-                            }}
-                            className="form-control mt-2"
-                        />
                     </div>
                 );
             case "PDF":
@@ -1596,38 +1461,11 @@ const PublishedForm = () => {
                         ) : (
                             <div className="media-upload-placeholder">No PDF uploaded</div>
                         )}
-
-                        <input
-                            type="file"
-                            accept="application/pdf"
-                            {...commonProps}
-                            onChange={(e) => {
-                                const file = e.target.files[0];
-                                if (file && file.size > 1 * 1024 * 1024) {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'File Too Large',
-                                        text: 'Please select a file smaller than 1MB.',
-                                    });
-                                    return;
-                                }
-
-                                if (file) {
-                                    const updatedFields = fields.map(f =>
-                                        f.id === field.id
-                                            ? { ...f, file, previewSize: pdfPreviewSize }
-                                            : f
-                                    );
-                                    setFields(updatedFields);
-                                }
-                            }}
-                            className="form-control mt-2"
-                        />
                     </div>
                 );
             case "Video":
-                const videoUrl = field.youtubeUrl || "";
-                const videoPreviewSize = field.previewSize || 250;
+                const videoUrl = field.uploads?.[0]?.youtube_url || "";
+                const videoPreviewSize = field.uploads?.[0]?.file_field_size || 250;
 
                 return (
                     <div className="media-preview-wrapper">
@@ -1800,6 +1638,7 @@ const PublishedForm = () => {
                 return (
                     <button
                         type="button"
+                        onClick={handleNextPage}
                         className="btn"
                         style={{
                             padding: "6px 12px",
@@ -1820,6 +1659,34 @@ const PublishedForm = () => {
                 );
             default:
                 return <input type="text" {...commonProps} />;
+        }
+    };
+
+    const handleNextPage = () => {
+        const currentPageId = parseInt(pageId);
+        const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
+
+        const currentIndex = sortedPages.findIndex(p => p.page_number === currentPageId);
+
+        if (currentIndex !== -1 && currentIndex < sortedPages.length - 1) {
+            const nextPage = sortedPages[currentIndex + 1];
+            navigate(`/forms/form-${formId}/page-${nextPage.page_number}`);
+        } else {
+            console.log("This is the last page or page not found");
+        }
+    };
+
+    const handleBackPage = () => {
+        const currentPageId = parseInt(pageId);
+        const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
+
+        const currentIndex = sortedPages.findIndex(p => p.page_number === currentPageId);
+
+        if (currentIndex > 0) {
+            const previousPage = sortedPages[currentIndex - 1];
+            navigate(`/forms/form-${formId}/page-${previousPage.page_number}`);
+        } else {
+            console.log("This is the first page");
         }
     };
 
@@ -1883,6 +1750,28 @@ const PublishedForm = () => {
 
     return (
         <div className="Published-form-container">
+            {(() => {
+                const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
+                const isFirstPage = sortedPages.findIndex(p => p.page_number === parseInt(pageId)) === 0;
+
+                return !isFirstPage && (
+                    <div
+                        onClick={handleBackPage}
+                        style={{
+                            position: "absolute",
+                            top: "10px",
+                            left: "30px",
+                            cursor: "pointer",
+                            fontSize: "1.5rem",
+                            color: formQuestionColor,
+                            zIndex: 10
+                        }}
+                    >
+                        <i className="fa-solid fa-arrow-left"></i>
+                    </div>
+                );
+            })()}
+
             <div
                 className="Published-form-body"
                 style={{ backgroundColor: form.background_color }}
@@ -1915,7 +1804,7 @@ const PublishedForm = () => {
                                         }}
                                     >
                                         {field.label}
-                                        {field.required === "Yes" && <span style={{ color: "red" }}>*</span>}
+                                        {field.required === "Yes" && <span style={{ color: "red", marginLeft: "30px" }}>*</span>}
                                     </label>
                                     {field.caption && (
                                         <small

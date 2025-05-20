@@ -686,3 +686,8 @@
     -moz-user-select: none;
     -ms-user-select: none;
 }
+
+/* Your CSS file or a <style> block */
+input::placeholder {
+    color: #888 !important;
+}

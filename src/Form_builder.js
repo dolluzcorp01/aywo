@@ -682,7 +682,7 @@ const FormBuilder = () => {
                 break;
             case "Opinion Scale":
                 newField.min_value = 1;
-                newField.max_value = 100;
+                newField.max_value = 10;
                 break;
             case "Slider":
                 newField.min_value = 0;
@@ -732,7 +732,6 @@ const FormBuilder = () => {
                 newField.thankyou_heading = "Thank you";
                 newField.thankyou_subtext = "Made with dForms, the easy way to make stunning forms";
                 newField.show_tick_icon = true;
-                newField.page_id = "end";
                 break;
             default:
                 break;
@@ -744,9 +743,18 @@ const FormBuilder = () => {
 
         // ✅ Get current page number from URL
         const pathname = location.pathname;
-        const match = pathname.match(/page-(\d+)/);
-        const pageNumFromUrl = match ? parseInt(match[1], 10) : null;
+        const match = pathname.match(/page-(\w+)/);
+        const pageIdentifier = match ? match[1] : null;
 
+        // ✅ If pageIdentifier is 'end', then skip Submit/Next
+        if (pageIdentifier === "end") {
+            setFields(updatedFields);
+            setSelectedFieldId(newField.id);
+            setCustomizeVisible(true);
+            return;
+        }
+
+        const pageNumFromUrl = parseInt(pageIdentifier, 10);
         const currentPage = formPages.find(p => p.page_number === pageNumFromUrl);
         if (!currentPage) return;
 
@@ -937,7 +945,7 @@ const FormBuilder = () => {
         const commonProps = {
             className: "form-control",
             placeholder: field.placeholder || "",
-            default_value: field.default_value || "",
+            value: field.default_value || "",
             style: {
                 width: field.halfWidth ? "50%" : "100%",
                 color: formAnswersColor,
@@ -1913,8 +1921,11 @@ const FormBuilder = () => {
                     </div>
                 );
             case "Slider":
-                const currentValue = field.value ?? field.min_value;
-                const percentage = ((currentValue - field.min_value) / (field.max_value - field.min_value)) * 100;
+                const min = field.min_value ?? 0;  // Default to 0
+                const max = field.max_value ?? 100; // Default to 100
+                const currentValue = field.value ?? min;
+
+                const percentage = ((currentValue - min) / (max - min)) * 100;
 
                 const sliderStyle = {
                     background: `linear-gradient(to right, ${formPrimaryColor} 0%, ${formPrimaryColor} ${percentage}%, #e5e7eb ${percentage}%, #e5e7eb 100%)`
@@ -3629,7 +3640,7 @@ const FormBuilder = () => {
 
                                 {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
-                                        <label>Default value <span title="Initial value" style={{ cursor: "help" }}>🛈</span></label>
+                                        <label>Default value<span title="Initial value" style={{ cursor: "help" }}>🛈</span></label>
                                         <input
                                             type="text"
                                             className="form-control"

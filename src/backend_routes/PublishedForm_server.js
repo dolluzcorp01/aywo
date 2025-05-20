@@ -125,7 +125,7 @@ router.get("/get-published-form/:formId/:pageId", async (req, res) => {
             AND f.fields_version = (
                 SELECT MAX(f2.fields_version)
                 FROM dform_fields f2
-                WHERE f2.form_id = f.form_id AND f2.page_id = f.page_id AND f2.label = f.label
+                WHERE f2.form_id = f.form_id AND f2.page_id = f.page_id 
             )
         `;
         const fields = await queryPromise(db, fieldsQuery, [formId, pageId]);
