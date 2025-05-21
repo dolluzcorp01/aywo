@@ -7,6 +7,7 @@ import Select from 'react-select';
 import {
     FaStar, FaTimes
 } from "react-icons/fa";
+import "./PublishedForm.css";
 
 const PublishedForm = () => {
     const [form, setForm] = useState(null);
@@ -30,46 +31,6 @@ const PublishedForm = () => {
     const [hovered, setHovered] = useState(null);
     const [hoveredOption, setHoveredOption] = useState(null);
     const pictureBgColors = ["#ffb3ba", "#bae1ff", "#baffc9", "#ffffba", "#e3baff", "#ffdfba"];
-    const [editImageOption, setEditImageOption] = useState(null);
-
-
-    useEffect(() => {
-        const style = document.createElement("style");
-        style.innerHTML = `
-            .Published-form-container {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                height: calc(100vh - 80px);
-                overflow: hidden;
-                position: relative;
-                background-color: white;
-            }
-    
-            .Published-form-body {
-                display: flex;
-                justify-content: center;
-                overflow-y: auto;
-                padding: 50px 20px;
-                height: 100%;
-            }
-    
-            .Published-form-content {
-                display: flex;
-                flex-direction: column;
-                position: relative;
-                border-radius: 15px;
-                overflow: visible;
-                max-width: 700px;
-                width: 100%;
-            }
-        `;
-        document.head.appendChild(style);
-
-        return () => {
-            document.head.removeChild(style); // Cleanup when component unmounts
-        };
-    }, []);
 
     const match = location.pathname.match(/\/forms\/form-(\d+)\/page-(\w+)/);
     const formId = match ? match[1] : null;
@@ -154,31 +115,6 @@ const PublishedForm = () => {
             fetchFormPages();
         }
     }, [formId, pageId]);
-
-    useEffect(() => {
-        const updateFormHeight = () => {
-            const formContainer = document.querySelector('.Published-form-content');
-            if (!formContainer) return;
-
-            let maxBottom = 0;
-            fields.forEach(field => {
-                const bottom = field.y + field.height;
-                if (bottom > maxBottom) maxBottom = bottom;
-            });
-
-            // ✅ Use form values instead of undefined vars
-            const submitBottom = form?.submit_button_y + form?.submit_button_height;
-            const contentHeight = Math.max(maxBottom, submitBottom) + 100;
-
-            const currentHeight = parseInt(formContainer.style.height || "0");
-            if (currentHeight !== contentHeight) {
-                formContainer.style.height = `${contentHeight}px`;
-            }
-        };
-
-        // Run after DOM updates
-        setTimeout(updateFormHeight, 0);
-    }, [fields, form]);
 
     const [colors, setColors] = useState({
         background: "#F8F9FA",

@@ -1,0 +1,27 @@
+.Published-form-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background-color: white;
+}
+
+.Published-form-body {
+    display: flex;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 50px 20px;
+    flex: 1 1 auto;
+}
+
+.Published-form-content {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border-radius: 15px;
+    overflow: visible;
+    max-width: 750px;
+    width: 100%;
+    padding: 20px;
+    flex-grow: 1;
+}

@@ -629,32 +629,6 @@ const FormBuilder = () => {
         fetchProfile();
     }, [navigate]);
 
-    useEffect(() => {
-        const updateFormHeight = () => {
-            const formContainer = document.querySelector('.form-content');
-            if (!formContainer) return;
-
-            // Get max bottom edge of all fields
-            let maxBottom = 0;
-            fields.forEach(field => {
-                const bottom = field.y + field.height;
-                if (bottom > maxBottom) maxBottom = bottom;
-            });
-
-            const submitBottom = submitBtnY + submitBtnHeight;
-            const contentHeight = Math.max(maxBottom, submitBottom) + 100;
-
-            // Only set if changed to prevent re-render flicker
-            const currentHeight = parseInt(formContainer.style.height || "0");
-            if (currentHeight !== contentHeight) {
-                formContainer.style.height = `${contentHeight}px`;
-            }
-        };
-
-        // Run after DOM updates
-        setTimeout(updateFormHeight, 0);
-    }, [fields, submitBtnY, submitBtnHeight]);
-
     // Add new field
     const addField = (type) => {
         const newField = {
@@ -3580,7 +3554,7 @@ const FormBuilder = () => {
                     </div>
 
                     {customizeVisible && selectedFieldId && (
-                        <div className="customize-section" style={{ color: 'gray' }}>
+                        <div className="customize-section" style={{ color: 'gray', zIndex: "0" }}>
                             <div className="customize-header" style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginBottom: '20px' }}>
                                 <i
                                     className="fa-solid fa-xmark"
