@@ -103,9 +103,6 @@ const FormBuilder = () => {
 
     const location = useLocation();
 
-    const [submitBtnY, setSubmitBtnY] = useState(500);
-    const [submitBtnHeight, setSubmitBtnHeight] = useState(50);
-
     const [showCustomize, setShowCustomize] = useState(true);
 
     const [profile, setProfile] = useState(null);
@@ -123,6 +120,27 @@ const FormBuilder = () => {
     const [showModal, setShowModal] = useState(false);
     const [showNewPageModal, setShowNewPageModal] = useState(false);
     const [activeBtnColorPicker, setActiveBtnColorPicker] = useState(null);
+    const [formbgImage, setFormbgImage] = useState(null);
+
+    const handleBackgroundImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 1 * 1024 * 1024) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'File Too Large',
+                    text: 'Please select a file smaller than 1MB.',
+                });
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormbgImage(reader.result); // base64 string
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     useEffect(() => {
         const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
@@ -166,6 +184,12 @@ const FormBuilder = () => {
             }
 
             const data = await response.json();
+
+            // Set background image if available
+            if (data.background_image) {
+                setFormbgImage(`${API_BASE}/${data.background_image.replace(/\\/g, "/")}`);
+            }
+
             setFormBgColor(data.background_color || "#f8f9fa");
             setformColor(data.questions_background_color || "#fff");
             setformPrimaryColor(data.primary_color || "#3b82f6");
@@ -179,8 +203,6 @@ const FormBuilder = () => {
                 questions: data.questions_color || "#333333",
                 answers: data.answers_color || "#000000",
             });
-
-            console.log("Form data:", data);
 
             setFormTitle(typeof data.title === "string" ? data.title : "testform");
 
@@ -265,7 +287,6 @@ const FormBuilder = () => {
             });
 
             const data = await res.json();
-            console.log("ordering", data);
             if (res.ok) {
                 setFormPages(data.pages || []);
             } else {
@@ -2618,6 +2639,15 @@ const FormBuilder = () => {
                 formData.append("page_id", pageId);
             }
 
+            if (formbgImage?.startsWith("data:image")) {
+                const blob = base64ToBlob(formbgImage);
+                const file = new File([blob], `background_${Date.now()}.jpg`, { type: blob.type });
+                formData.append("backgroundImage", file);
+            } else if (typeof formbgImage === "string" && formbgImage.includes("/form_bg_img_uploads/")) {
+                // Send the image path for already uploaded image
+                formData.append("backgroundImagePath", formbgImage);
+            }
+
             formData.append("background_color", formBgColor);
             formData.append("questions_background_color", formColor);
             formData.append("primary_color", formPrimaryColor);
@@ -2733,8 +2763,12 @@ const FormBuilder = () => {
 
             });
 
-            console.log("Cloned Fields:", clonedFields);
             formData.set("fields", JSON.stringify(clonedFields));
+
+            console.log("📦 FormData content:");
+            for (let pair of formData.entries()) {
+                console.log(`${pair[0]}:`, pair[1]);
+            }
 
             const response = await fetch("/api/form_builder/save-form", {
                 method: "POST",
@@ -2977,7 +3011,7 @@ const FormBuilder = () => {
                             </div>
 
                             {/* Content based on tab */}
-                            <div style={{ padding: "14px" }}>
+                            <div style={{ height: "100%", maxHeight: "calc(100vh - 100px)", overflowY: "auto", padding: "14px" }}>
                                 {activeTab === "current" ? (
                                     <>
                                         {colorOptions.map(({ label, key, info }) => (
@@ -3068,9 +3102,73 @@ const FormBuilder = () => {
                                             />
                                         </div>
 
+                                        <div style={{ marginBottom: "10px" }}>
+                                            <div style={{ marginBottom: "20px" }}>Background Image</div>
+                                            <input
+                                                type="file"
+                                                id="bgImageInput"
+                                                accept="image/*"
+                                                style={{ display: "none" }}
+                                                onChange={handleBackgroundImageUpload}
+                                            />
+
+                                            <button
+                                                style={{
+                                                    backgroundColor: "rgb(30, 41, 59)",
+                                                    color: "white",
+                                                    border: "none",
+                                                    padding: "8px 16px",
+                                                    borderRadius: "5px",
+                                                    cursor: "pointer"
+                                                }}
+                                                onClick={() => document.getElementById("bgImageInput").click()}
+                                            >
+                                                Add Image
+                                            </button>
+
+                                            {formbgImage && (
+                                                <div style={{ position: "relative", display: "inline-block", marginTop: "10px" }}>
+                                                    {/* Close Icon */}
+                                                    <i
+                                                        className="fa-solid fa-xmark"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setFormbgImage(null)
+                                                        }}
+                                                        style={{
+                                                            position: "absolute",
+                                                            top: "-8px",
+                                                            right: "-8px",
+                                                            backgroundColor: "#e5e7eb",
+                                                            color: "#374151",
+                                                            borderRadius: "50%",
+                                                            padding: "6px",
+                                                            cursor: "pointer",
+                                                            fontSize: "12px",
+                                                            boxShadow: "0 0 4px rgba(0,0,0,0.1)",
+                                                            zIndex: 1
+                                                        }}
+                                                    ></i>
+
+                                                    {/* Image */}
+                                                    <img
+                                                        src={formbgImage}
+                                                        alt="Background Preview"
+                                                        style={{
+                                                            maxWidth: "100%",
+                                                            maxHeight: "150px",
+                                                            border: "1px solid #ccc",
+                                                            borderRadius: "5px"
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+
+                                        </div>
+
                                     </>
                                 ) : (
-                                    <div className="themediv" style={{ padding: "10px", height: "calc(100vh - 200px)", overflowY: "auto", }}>
+                                    <div className="themediv" style={{ padding: "10px" }}>
                                         {/* Themes list */}
                                         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                                             {/* Light Theme */}
@@ -3244,7 +3342,12 @@ const FormBuilder = () => {
                     )}
 
                     <div className="form-container">
-                        <div className="form-body" style={{ backgroundColor: formBgColor }}>
+                        <div className={`form-body ${formbgImage ? "with-bg-image" : ""}`}
+                            style={{
+                                backgroundColor: formBgColor,
+                                backgroundImage: formbgImage ? `url(${formbgImage})` : "none"
+                            }}
+                        >
                             {/* Theme Button */}
                             <button
                                 className="theme-button"

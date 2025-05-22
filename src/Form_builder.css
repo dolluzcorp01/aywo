@@ -694,3 +694,17 @@
 input::placeholder {
     color: #888 !important;
 }
+
+/* In your CSS file */
+.with-bg-image {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    padding: 20px 0;
+}

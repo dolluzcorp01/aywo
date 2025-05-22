@@ -1,27 +1,37 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
 .Published-form-container {
-    flex: 1;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     position: relative;
-    background-color: white;
 }
 
 .Published-form-body {
+    flex: 1;
+    overflow-y: auto;
     display: flex;
     justify-content: center;
-    overflow-y: auto;
-    padding: 50px 20px;
-    flex: 1 1 auto;
+    align-items: flex-start;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    padding: 20px 0;
 }
 
 .Published-form-content {
     display: flex;
     flex-direction: column;
-    position: relative;
-    border-radius: 15px;
-    overflow: visible;
     max-width: 750px;
     width: 100%;
     padding: 20px;
-    flex-grow: 1;
+    border-radius: 15px;
+    background-color: white;
 }

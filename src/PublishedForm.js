@@ -31,6 +31,7 @@ const PublishedForm = () => {
     const [hovered, setHovered] = useState(null);
     const [hoveredOption, setHoveredOption] = useState(null);
     const pictureBgColors = ["#ffb3ba", "#bae1ff", "#baffc9", "#ffffba", "#e3baff", "#ffdfba"];
+    const [formbgImage, setFormbgImage] = useState(null);
 
     const match = location.pathname.match(/\/forms\/form-(\d+)\/page-(\w+)/);
     const formId = match ? match[1] : null;
@@ -46,7 +47,9 @@ const PublishedForm = () => {
                 if (!response.ok) throw new Error("Failed to fetch form");
 
                 const data = await response.json();
-                console.log(data);
+                if (data.form.background_image) {
+                    setFormbgImage(`${API_BASE}/${data.form.background_image.replace(/\\/g, "/")}`);
+                }
                 setFormBgColor(data.form.background_color || "#f8f9fa");
                 setformColor(data.form.questions_background_color || "#fff");
                 setformPrimaryColor(data.form.primary_color || "#3b82f6");
@@ -99,7 +102,6 @@ const PublishedForm = () => {
                 });
 
                 const data = await res.json();
-                console.log("ordering", data);
                 if (res.ok) {
                     setFormPages(data.pages || []);
                 } else {
@@ -1709,8 +1711,11 @@ const PublishedForm = () => {
             })()}
 
             <div
-                className="Published-form-body"
-                style={{ backgroundColor: form.background_color }}
+                className={`Published-form-body ${formbgImage ? "with-bg-image" : ""}`}
+                style={{
+                    backgroundColor: formBgColor,
+                    backgroundImage: formbgImage ? `url(${formbgImage})` : "none"
+                }}
             >
                 <div
                     className="Published-form-content"
