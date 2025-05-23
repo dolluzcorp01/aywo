@@ -9,8 +9,7 @@ import {
     FaToggleOn, FaTh, FaCheck, FaImage, FaBoxes, FaGripHorizontal, FaSearch,
     FaGripVertical, FaCog, FaClone, FaExchangeAlt, FaHeading, FaChevronUp, FaChevronDown,
     FaClock, FaRegClock, FaCalendarCheck, FaSortNumericDown, FaStar, FaSlidersH, FaSmile,
-    FaEquals, FaBars, FaMapMarkerAlt, FaVideo, FaFilePdf, FaMinus, FaTimes,
-    FaTemperatureLow
+    FaEquals, FaBars, FaMapMarkerAlt, FaVideo, FaFilePdf, FaMinus, FaTimes, FaYoutube
 } from "react-icons/fa";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { ChromePicker } from 'react-color';
@@ -58,6 +57,7 @@ const fieldIcons = {
     "Image": <FaImage />,
     "Video": <FaVideo />,
     "PDF": <FaFilePdf />,
+    "YouTubeVideo": <FaYoutube style={{ color: "#FF0000" }} />,
 
     "Divider": <FaMinus />
 };
@@ -247,7 +247,7 @@ const FormBuilder = () => {
                         };
                     }
 
-                    if (field.type === "Video") {
+                    if (field.type === "YouTubeVideo") {
                         const upload = field.uploads?.[0] || {};
                         return {
                             ...field,
@@ -2381,16 +2381,75 @@ const FormBuilder = () => {
                     </div>
                 );
             case "Video":
-                const videoUrl = field.youtubeUrl || "";
-                const videoPreviewSize = field.previewSize || 250;
+                const videoUrl =
+                    field.file instanceof File
+                        ? URL.createObjectURL(field.file)
+                        : field.uploads?.[0]?.file_path
+                            ? `${API_BASE}/${field.uploads[0].file_path.replace(/\\/g, "/")}`
+                            : null;
+
+                const videoAlignment = field.alignment || field.uploads?.[0]?.file_field_Alignment || "center";
+                const videoPreviewSize = field.previewSize || field.uploads?.[0]?.file_field_size || 300;
+
+                return (
+                    <div className="media-preview-wrapper" style={{ textAlign: videoAlignment }}>
+                        {videoUrl ? (
+                            <video
+                                controls
+                                width={`${videoPreviewSize}px`}
+                                style={{
+                                    maxHeight: `${videoPreviewSize * 1.2}px`,
+                                    borderRadius: "8px",
+                                    boxShadow: "none",
+                                    border: "1px solid #ccc"
+                                }}
+                            >
+                                <source src={videoUrl} type="video/mp4" />
+                                Your browser does not support the video tag.
+                            </video>
+                        ) : (
+                            <div className="media-upload-placeholder">No video uploaded</div>
+                        )}
+
+                        <input
+                            type="file"
+                            accept="video/*"
+                            {...commonProps}
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file && file.size > 10 * 1024 * 1024) {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'File Too Large',
+                                        text: 'Please select a file smaller than 10MB.',
+                                    });
+                                    return;
+                                }
+
+                                if (file) {
+                                    const updatedFields = fields.map(f =>
+                                        f.id === field.id
+                                            ? { ...f, file, previewSize: videoPreviewSize }
+                                            : f
+                                    );
+                                    setFields(updatedFields);
+                                }
+                            }}
+                            className="form-control mt-2"
+                        />
+                    </div>
+                );
+            case "YouTubeVideo":
+                const youTubevideoUrl = field.youtubeUrl || "";
+                const youTubevideoPreviewSize = field.previewSize || 250;
 
                 return (
                     <div className="media-preview-wrapper">
-                        {videoUrl ? (
+                        {youTubevideoUrl ? (
                             <iframe
-                                width={`${videoPreviewSize}`}
-                                height={`${videoPreviewSize * 0.6}`}
-                                src={`https://www.youtube.com/embed/${getYouTubeVideoId(videoUrl)}`}
+                                width={`${youTubevideoPreviewSize}`}
+                                height={`${youTubevideoPreviewSize * 0.6}`}
+                                src={`https://www.youtube.com/embed/${getYouTubeVideoId(youTubevideoUrl)}`}
                                 frameBorder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen
@@ -2765,10 +2824,7 @@ const FormBuilder = () => {
 
             formData.set("fields", JSON.stringify(clonedFields));
 
-            console.log("📦 FormData content:");
-            for (let pair of formData.entries()) {
-                console.log(`${pair[0]}:`, pair[1]);
-            }
+            console.log("📦 FormData content:", clonedFields);
 
             const response = await fetch("/api/form_builder/save-form", {
                 method: "POST",
@@ -2840,7 +2896,7 @@ const FormBuilder = () => {
                                     <div className="field-group mt-1">
                                         <h4>Media</h4>
                                         <div className="field-grid">
-                                            {["Image", "Video", "PDF"]
+                                            {["Image", "Video", "PDF", "YouTubeVideo"]
                                                 .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
                                                 .map(type => <FieldButton key={type} type={type} section="Media" />)}
                                         </div>
@@ -2931,7 +2987,7 @@ const FormBuilder = () => {
                                     <div className="field-group mt-1">
                                         <h4>Media</h4>
                                         <div className="field-grid">
-                                            {["Image", "Video", "PDF"]
+                                            {["Image", "Video", "PDF", "YouTubeVideo"]
                                                 .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
                                                 .map(type => <FieldButton key={type} type={type} section="Media" />)}
                                         </div>
@@ -3383,7 +3439,7 @@ const FormBuilder = () => {
                                                                 </div>
 
                                                                 <div className="form-field-content">
-                                                                    {!["Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) ? (
+                                                                    {!["Heading", "Banner", "Divider", "Image", "Video", "YouTubeVideo", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) ? (
                                                                         <>
                                                                             <input
                                                                                 type="text"
@@ -3671,7 +3727,7 @@ const FormBuilder = () => {
 
                             <div>
 
-                                {!["Divider", "Image", "Video", "PDF", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Divider", "Image", "Video", "PDF", "YouTubeVideo", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Label</label>
                                         <div style={{ color: "#aaa", fontSize: ".875rem", marginBottom: "10px" }}>
@@ -3681,7 +3737,7 @@ const FormBuilder = () => {
                                 )}
 
                                 {/* Show only Specific Fields */}
-                                {!["Divider", "Image", "Video", "PDF", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Divider", "Image", "Video", "PDF", "YouTubeVideo", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Caption</label>
                                         <input
@@ -3698,7 +3754,7 @@ const FormBuilder = () => {
                                     </>
                                 )}
 
-                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Placeholder</label>
                                         <input
@@ -3715,7 +3771,7 @@ const FormBuilder = () => {
                                     </>
                                 )}
 
-                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Default value<span title="Initial value" style={{ cursor: "help" }}>🛈</span></label>
                                         <input
@@ -4125,7 +4181,7 @@ const FormBuilder = () => {
                                     </>
                                 )}
 
-                                {["Image", "PDF"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
+                                {["Image", "PDF", "Video"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
                                     const field = fields.find(f => f.id === selectedFieldId);
 
                                     // Fallback to uploaded values if field values are undefined
@@ -4197,7 +4253,7 @@ const FormBuilder = () => {
                                     );
                                 })()}
 
-                                {["Video"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
+                                {["YouTubeVideo"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
                                     const field = fields.find(f => f.id === selectedFieldId);
                                     const previewSize = field?.previewSize || 300;
                                     const youtubeUrl = field?.youtubeUrl || "";
@@ -4242,7 +4298,7 @@ const FormBuilder = () => {
                                     );
                                 })()}
 
-                                {!["Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Heading", "Banner", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
                                             {/* Required Row */}

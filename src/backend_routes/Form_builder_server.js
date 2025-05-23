@@ -238,7 +238,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
                     [
                         title, background_color, questions_background_color,
                         primary_color, questions_color, answers_color, font,
-                        backgroundImagePath || null, 
+                        backgroundImagePath || null,
                         formId, userId
                     ],
                     (err) => {
@@ -325,7 +325,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
             const fieldId = fieldResult.insertId;
 
             // ✅ Insert into dfield_file_uploads 
-            if (["Image", "PDF"].includes(field.type)) {
+            if (["Image", "PDF", "Video"].includes(field.type)) {
 
                 if (field.file instanceof File) {
                     const key = `field_file_${fieldIndex}`;
@@ -363,7 +363,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
             }
 
             // ✅ Insert into dfield_file_uploads 
-            if (["Video"].includes(field.type)) {
+            if (["YouTubeVideo"].includes(field.type)) {
                 const previewSize = field.previewSize || 300;
 
                 await connection.query(`
