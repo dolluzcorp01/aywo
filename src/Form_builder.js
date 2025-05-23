@@ -2636,9 +2636,10 @@ const FormBuilder = () => {
                 return <input type="text" {...commonProps} />;
         }
     };
-
+    
     const getYouTubeVideoId = (url) => {
-        const match = url.match(/(?:https?:\/\/)?(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w\-]{11})/);
+        const regex = /(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|watch(?:_popup)?)(?:\?v=|\/)|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+        const match = url.match(regex);
         return match ? match[1] : "";
     };
 
