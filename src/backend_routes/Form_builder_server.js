@@ -182,10 +182,12 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
     let parsedFields;
     try {
         parsedFields = JSON.parse(fields);
+        console.log("Parsed Fields:", parsedFields);
     } catch (err) {
-        return res.status(400).json({ error: "Invalid fields format" });
+        console.error("❌ Failed to parse fields:", fields);
+        return res.status(400).json({ error: "Invalid fields JSON" });
     }
-
+    
     if (!Array.isArray(parsedFields) || parsedFields.length === 0) {
         return res.status(400).json({ error: "At least one field is required." });
     }
