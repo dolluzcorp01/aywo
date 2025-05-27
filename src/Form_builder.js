@@ -2636,7 +2636,7 @@ const FormBuilder = () => {
                 return <input type="text" {...commonProps} />;
         }
     };
-    
+
     const getYouTubeVideoId = (url) => {
         const regex = /(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|watch(?:_popup)?)(?:\?v=|\/)|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
         const match = url.match(regex);
@@ -2724,6 +2724,8 @@ const FormBuilder = () => {
                         const key = `field_file_${fieldIndex}`;
                         formData.append(key, field.file);
                         field.file = key;
+                    } else {
+                        console.warn("⚠️ Missing or invalid file for", field);
                     }
                 }
 

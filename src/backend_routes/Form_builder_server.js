@@ -146,25 +146,22 @@ router.post("/createnewpage", verifyJWT, async (req, res) => {
 });
 
 // Multer storage for field file uploads
-const saveFormUpload = multer({
-    storage: multer.diskStorage({
-        destination: (req, file, cb) => {
-            5
-            if (file.fieldname === "backgroundImage") {
-                cb(null, "form_bg_img_uploads/");
-            } else {
-                cb(null, "field_file_uploads/");
-            }
-        },
-        filename: (req, file, cb) => {
-            cb(null, Date.now() + "-" + file.originalname);
-        }
-    }),
+const fieldFileStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "field_file_uploads/");
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + "-" + file.originalname);
+    }
+});
+
+const fieldFileUpload = multer({
+    storage: fieldFileStorage,
     limits: { fileSize: 50 * 1024 * 1024 }
 });
 
 // ✅ Save or update a form
-router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
+router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => {
     const userId = req.user_id;
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
@@ -191,26 +188,12 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
         return res.status(400).json({ error: "At least one field is required." });
     }
 
-    const uploadedFilesMap = {};
     let backgroundImagePath = null;
 
+    const uploadedFilesMap = {};
     if (req.files && Array.isArray(req.files)) {
         for (const file of req.files) {
-            if (file.fieldname === "backgroundImage") {
-                backgroundImagePath = file.path;
-            } else {
-                uploadedFilesMap[file.fieldname] = file.path;
-            }
-        }
-    }
-
-    if (!backgroundImagePath && req.body.backgroundImagePath) {
-        const fullPath = req.body.backgroundImagePath;
-        const index = fullPath.indexOf('form_bg_img_uploads');
-        if (index !== -1) {
-            backgroundImagePath = fullPath.substring(index); // Extract only the relative path
-        } else {
-            backgroundImagePath = fullPath; // fallback, store as-is if pattern not found
+            uploadedFilesMap[file.fieldname] = file.path;
         }
     }
 
