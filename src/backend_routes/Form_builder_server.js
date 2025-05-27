@@ -146,24 +146,22 @@ router.post("/createnewpage", verifyJWT, async (req, res) => {
 });
 
 // Multer storage for field file uploads
-const saveFormUpload = multer({
-    storage: multer.diskStorage({
-        destination: (req, file, cb) => {
-            if (file.fieldname === "backgroundImage") {
-                cb(null, "form_bg_img_uploads/");
-            } else {
-                cb(null, "field_file_uploads/");
-            }
-        },
-        filename: (req, file, cb) => {
-            cb(null, Date.now() + "-" + file.originalname);
-        }
-    }),
+const fieldFileStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "field_file_uploads/");
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + "-" + file.originalname);
+    }
+});
+
+const fieldFileUpload = multer({
+    storage: fieldFileStorage,
     limits: { fileSize: 50 * 1024 * 1024 }
-}).any();
+});
 
 // ✅ Save or update a form
-router.post("/save-form", verifyJWT, saveFormUpload, async (req, res) => {
+router.post("/save-form", verifyJWT, fieldFileUpload.any(), async (req, res) => {
     const userId = req.user_id;
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
