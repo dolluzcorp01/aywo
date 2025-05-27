@@ -160,10 +160,10 @@ const saveFormUpload = multer({
         }
     }),
     limits: { fileSize: 50 * 1024 * 1024 }
-});
+}).any();
 
 // ✅ Save or update a form
-router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
+router.post("/save-form", verifyJWT, saveFormUpload, async (req, res) => {
     const userId = req.user_id;
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
