@@ -2701,8 +2701,10 @@ const FormBuilder = () => {
 
             if (formbgImage?.startsWith("data:image")) {
                 const blob = base64ToBlob(formbgImage);
-                const file = new File([blob], `background_${Date.now()}.jpg`, { type: blob.type });
-                formData.append("backgroundImage", file);
+                if (typeof File !== "undefined") {
+                    const file = new File([blob], `background_${Date.now()}.jpg`, { type: blob.type });
+                    formData.append("backgroundImage", file);
+                }
             } else if (typeof formbgImage === "string" && formbgImage.includes("/form_bg_img_uploads/")) {
                 // Send the image path for already uploaded image
                 formData.append("backgroundImagePath", formbgImage);
