@@ -2653,7 +2653,7 @@ const FormBuilder = () => {
         }
         return new Blob([new Uint8Array(array)], { type: mime });
     }
-
+    
     const saveOrUpdateForm = async (isNew = false) => {
         try {
             if (fields.length === 0) {
@@ -2699,15 +2699,6 @@ const FormBuilder = () => {
                 formData.append("page_id", pageId);
             }
 
-            if (formbgImage?.startsWith("data:image")) {
-                const blob = base64ToBlob(formbgImage);
-                const file = new File([blob], `background_${Date.now()}.jpg`, { type: blob.type });
-                formData.append("backgroundImage", file);
-            } else if (typeof formbgImage === "string" && formbgImage.includes("/form_bg_img_uploads/")) {
-                // Send the image path for already uploaded image
-                formData.append("backgroundImagePath", formbgImage);
-            }
-
             formData.append("background_color", formBgColor);
             formData.append("questions_background_color", formColor);
             formData.append("primary_color", formPrimaryColor);
@@ -2724,8 +2715,6 @@ const FormBuilder = () => {
                         const key = `field_file_${fieldIndex}`;
                         formData.append(key, field.file);
                         field.file = key;
-                    } else {
-                        console.warn("⚠️ Missing or invalid file for", field);
                     }
                 }
 
@@ -2825,9 +2814,8 @@ const FormBuilder = () => {
 
             });
 
+            console.log("Cloned Fields:", clonedFields);
             formData.set("fields", JSON.stringify(clonedFields));
-
-            console.log("📦 FormData content:", clonedFields);
 
             const response = await fetch("/api/form_builder/save-form", {
                 method: "POST",
