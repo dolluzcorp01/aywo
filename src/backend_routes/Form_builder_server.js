@@ -187,7 +187,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
         console.error("❌ Failed to parse fields:", fields);
         return res.status(400).json({ error: "Invalid fields JSON" });
     }
-    
+
     if (!Array.isArray(parsedFields) || parsedFields.length === 0) {
         return res.status(400).json({ error: "At least one field is required." });
     }
@@ -329,21 +329,18 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
             // ✅ Insert into dfield_file_uploads 
             if (["Image", "PDF", "Video"].includes(field.type)) {
 
-                if (field.file instanceof File) {
-                    const key = `field_file_${fieldIndex}`;
-                    formData.append(key, field.file);
-                    field.file = key;
+                if (field.file && typeof field.file === 'object' && field.file.name) {
+                    // Skip appending here (this is server-side)
+                    // Do nothing on server, file already uploaded via multer
                 } else if (field.uploads?.length > 0) {
                     const upload = field.uploads[0];
-
-                    // Retain existing upload metadata for old fields
                     field.file_path = upload.file_path;
                     field.file_type = upload.file_type;
                     field.previewSize = upload.file_field_size;
                     field.alignment = upload.file_field_Alignment;
                 }
 
-                const fileKey = field.file; // This would be like field_file_0_0
+                const fileKey = field.file; // should be 'field_file_0_0' or similar
                 const uploadedFilename = uploadedFilesMap[fileKey] || field.file_path;
 
                 if (uploadedFilename) {
@@ -351,9 +348,9 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
                     const previewSize = field.previewSize || 300;
 
                     await connection.query(`
-                        INSERT INTO dfield_file_uploads (field_id, form_id, file_type, file_path, file_field_size, file_field_Alignment)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    `, [
+                    INSERT INTO dfield_file_uploads (field_id, form_id, file_type, file_path, file_field_size, file_field_Alignment)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                `, [
                         fieldId,
                         formId,
                         field.type,
