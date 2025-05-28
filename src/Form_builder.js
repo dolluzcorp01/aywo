@@ -2417,11 +2417,11 @@ const FormBuilder = () => {
                             {...commonProps}
                             onChange={(e) => {
                                 const file = e.target.files[0];
-                                if (file && file.size > 10 * 1024 * 1024) {
+                                if (file && file.size > 5 * 1024 * 1024) {
                                     Swal.fire({
                                         icon: 'error',
                                         title: 'File Too Large',
-                                        text: 'Please select a file smaller than 10MB.',
+                                        text: 'Please select a file smaller than 5MB.',
                                     });
                                     return;
                                 }
