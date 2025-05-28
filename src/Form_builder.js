@@ -2837,14 +2837,22 @@ const FormBuilder = () => {
                 credentials: "include",
             });
 
-            const data = await response.json();
+            const text = await response.text();
 
-            if (data.success) {
-                Swal.fire("Success", "Form saved successfully!", "success");
-                fetchForm(formId, pageId);
-            } else {
-                Swal.fire("Error", data.message || "Something went wrong while saving the form.", "error");
+            try {
+                const data = JSON.parse(text);
+                if (data.success) {
+                    Swal.fire("Success", "Form saved successfully!", "success");
+                    fetchForm(formId, pageId);
+                } else {
+                    Swal.fire("Error", data.message || "Something went wrong while saving the form.", "error");
+                }
+            } catch (e) {
+                console.error("❌ Error saving/updating form:", e);
+                console.error("💡 Raw server response:", text);
+                Swal.fire("Server Error", "Something went wrong while saving the form.", "error");
             }
+
 
         } catch (error) {
             console.error("Error saving/updating form:", error);
