@@ -2395,6 +2395,7 @@ const FormBuilder = () => {
                     <div className="media-preview-wrapper" style={{ textAlign: videoAlignment }}>
                         {videoUrl ? (
                             <video
+                                key={videoUrl}
                                 controls
                                 width={`${videoPreviewSize}px`}
                                 style={{
