@@ -47,6 +47,7 @@ const PublishedForm = () => {
                 if (!response.ok) throw new Error("Failed to fetch form");
 
                 const data = await response.json();
+                console.log("📄 Form data:", data);
                 if (data.form.background_image) {
                     setFormbgImage(`${API_BASE}/${data.form.background_image.replace(/\\/g, "/")}`);
                 }
@@ -55,6 +56,8 @@ const PublishedForm = () => {
                 setformPrimaryColor(data.form.primary_color || "#3b82f6");
                 setformQuestionColor(data.form.questions_color || "black");
                 setformAnswersColor(data.form.answers_color || "rgb(55, 65, 81)");
+
+                document.documentElement.style.setProperty('--form-primary-color', data.form.primary_color);
 
                 setColors({
                     background: data.form.background_color || "#f8f9fa",
@@ -81,6 +84,15 @@ const PublishedForm = () => {
                             selectedMatrix: [] // you can later load actual values if stored
                         };
                     }
+
+                    if (field.type === "YouTubeVideo" && Array.isArray(field.uploads) && field.uploads.length > 0) {
+                        return {
+                            ...field,
+                            previewSize: field.uploads[0].file_field_size || "",
+                            youtubeUrl: field.uploads[0].youtube_url || "",
+                        };
+                    }
+
                     return field;
                 });
 
@@ -98,7 +110,6 @@ const PublishedForm = () => {
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    credentials: "include"
                 });
 
                 const data = await res.json();
@@ -179,9 +190,16 @@ const PublishedForm = () => {
                 boxShadow: "none",
                 border: `1px solid ${focusedFieldId === field.id ? formPrimaryColor : "rgba(75, 85, 99, 0.2)"}`,
                 fontFamily: selectedFont,
+                fontSize: field.font_size || "16px",
             },
             onFocus: () => setFocusedFieldId(field.id),
             onBlur: () => setFocusedFieldId(null),
+            onChange: (e) => {
+                const updatedFields = fields.map(f =>
+                    f.id === field.id ? { ...f, default_value: e.target.value } : f
+                );
+                setFields(updatedFields);
+            }
         };
 
         switch (field.type) {
@@ -194,6 +212,7 @@ const PublishedForm = () => {
                     <input
                         type="text"
                         value={field.label}
+                        readOnly
                         onChange={(e) => {
                             const updatedFields = fields.map(f =>
                                 f.id === field.id ? { ...f, label: e.target.value } : f
@@ -201,9 +220,10 @@ const PublishedForm = () => {
                             setFields(updatedFields);
                         }}
                         style={{
-                            fontSize: field.fontSize || "24px",
+                            fontSize: field.font_size || "24px",
                             fontWeight: "bold",
                             border: "none",
+                            outline: "none",
                             background: "transparent",
                             width: "100%",
                             margin: "8px 0",
@@ -306,6 +326,7 @@ const PublishedForm = () => {
                             <input
                                 type="text"
                                 value={field.label || "Banner title"}
+                                readOnly
                                 onChange={(e) => {
                                     const updatedFields = fields.map(f =>
                                         f.id === field.id ? { ...f, label: e.target.value } : f
@@ -316,6 +337,7 @@ const PublishedForm = () => {
                                     fontWeight: "bold",
                                     color: style.textColor,
                                     border: "none",
+                                    outline: "none",
                                     background: "transparent",
                                     width: "100%",
                                     fontSize: "18px",
@@ -325,6 +347,7 @@ const PublishedForm = () => {
                             />
                             <textarea
                                 value={field.description || "Some description"}
+                                readOnly
                                 onChange={(e) => {
                                     const updatedFields = fields.map(f =>
                                         f.id === field.id ? { ...f, description: e.target.value } : f
@@ -340,6 +363,7 @@ const PublishedForm = () => {
                                     fontSize: "1rem",
                                     padding: "8px",
                                     border: "1px solid #ccc",
+                                    outline: "none",
                                     borderRadius: "6px",
                                     fontFamily: selectedFont
                                 }}
@@ -758,27 +782,8 @@ const PublishedForm = () => {
                                                     setFields(updatedFields);
                                                 }}
                                                 placeholder={`Col ${colIdx + 1}`}
-                                                style={{ fontFamily: selectedFont }}
+                                                style={{ fontFamily: selectedFont, border: "none", outline: "none" }}
                                             />
-                                            <i
-                                                className="fas fa-xmark choice-martix-delete-icon"
-                                                onClick={() => {
-                                                    const updatedFields = fields.map(f => {
-                                                        if (f.id === field.id) {
-                                                            const newCols = [...f.columns];
-                                                            newCols.splice(colIdx, 1);
-
-                                                            const newMatrix = (f.selectedMatrix || []).map(sel =>
-                                                                sel === colIdx ? null : sel > colIdx ? sel - 1 : sel
-                                                            );
-
-                                                            return { ...f, columns: newCols, selectedMatrix: newMatrix };
-                                                        }
-                                                        return f;
-                                                    });
-                                                    setFields(updatedFields);
-                                                }}
-                                            ></i>
                                         </th>
                                     ))}
                                 </tr>
@@ -803,7 +808,7 @@ const PublishedForm = () => {
                                                     setFields(updatedFields);
                                                 }}
                                                 placeholder={`Row ${rowIdx + 1}`}
-                                                style={{ fontFamily: selectedFont }}
+                                                style={{ fontFamily: selectedFont, border: "none", outline: "none" }}
                                             />
                                             <i
                                                 className="fas fa-xmark choice-martix-delete-icon"
@@ -1402,16 +1407,49 @@ const PublishedForm = () => {
                     </div>
                 );
             case "Video":
-                const videoUrl = field.uploads?.[0]?.youtube_url || "";
-                const videoPreviewSize = field.uploads?.[0]?.file_field_size || 250;
+                const videoUrl =
+                    field.file instanceof File
+                        ? URL.createObjectURL(field.file)
+                        : field.uploads?.[0]?.file_path
+                            ? `${API_BASE}/${field.uploads[0].file_path.replace(/\\/g, "/")}`
+                            : null;
+
+                const videoAlignment = field.alignment || field.uploads?.[0]?.file_field_Alignment || "center";
+                const videoPreviewSize = field.previewSize || field.uploads?.[0]?.file_field_size || 300;
+
+                return (
+                    <div className="media-preview-wrapper" style={{ textAlign: videoAlignment }}>
+                        {videoUrl ? (
+                            <video
+                                key={videoUrl}
+                                controls
+                                width={`${videoPreviewSize}px`}
+                                style={{
+                                    maxHeight: `${videoPreviewSize * 1.2}px`,
+                                    borderRadius: "8px",
+                                    boxShadow: "none",
+                                    border: "1px solid #ccc"
+                                }}
+                            >
+                                <source src={videoUrl} type="video/mp4" />
+                                Your browser does not support the video tag.
+                            </video>
+                        ) : (
+                            <div className="media-upload-placeholder">No video uploaded</div>
+                        )}
+                    </div>
+                );
+            case "YouTubeVideo":
+                const youTubevideoUrl = field.youtubeUrl || "";
+                const youTubevideoPreviewSize = field.previewSize || 250;
 
                 return (
                     <div className="media-preview-wrapper">
-                        {videoUrl ? (
+                        {youTubevideoUrl ? (
                             <iframe
-                                width={`${videoPreviewSize}`}
-                                height={`${videoPreviewSize * 0.6}`}
-                                src={`https://www.youtube.com/embed/${getYouTubeVideoId(videoUrl)}`}
+                                width={`${youTubevideoPreviewSize}`}
+                                height={`${youTubevideoPreviewSize * 0.6}`}
+                                src={`https://www.youtube.com/embed/${getYouTubeVideoId(youTubevideoUrl)}`}
                                 frameBorder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen

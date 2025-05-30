@@ -185,6 +185,8 @@ const FormBuilder = () => {
 
             const data = await response.json();
 
+            console.log("📦 FormData content:", data);
+
             // Set background image if available
             if (data.background_image) {
                 setFormbgImage(`${API_BASE}/${data.background_image.replace(/\\/g, "/")}`);
@@ -948,9 +950,16 @@ const FormBuilder = () => {
                 boxShadow: "none",
                 border: `1px solid ${focusedFieldId === field.id ? formPrimaryColor : "rgba(75, 85, 99, 0.2)"}`,
                 fontFamily: selectedFont,
+                fontSize: field.font_size || "16px",
             },
             onFocus: () => setFocusedFieldId(field.id),
             onBlur: () => setFocusedFieldId(null),
+            onChange: (e) => {
+                const updatedFields = fields.map(f =>
+                    f.id === field.id ? { ...f, default_value: e.target.value } : f
+                );
+                setFields(updatedFields);
+            }
         };
 
         switch (field.type) {
@@ -958,29 +967,8 @@ const FormBuilder = () => {
                 return <input type="text" {...commonProps} />;
             case "Short Answer":
                 return <input type="text" {...commonProps} />;
-            case "Heading":
-                return (
-                    <input
-                        type="text"
-                        value={field.label}
-                        onChange={(e) => {
-                            const updatedFields = fields.map(f =>
-                                f.id === field.id ? { ...f, label: e.target.value } : f
-                            );
-                            setFields(updatedFields);
-                        }}
-                        style={{
-                            fontSize: field.fontSize || "24px",
-                            fontWeight: "bold",
-                            border: "none",
-                            background: "transparent",
-                            width: "100%",
-                            margin: "8px 0",
-                            color: formAnswersColor,
-                            fontFamily: selectedFont
-                        }}
-                    />
-                );
+            case "Long Answer":
+                return <textarea {...commonProps}></textarea>;
             case "Email":
                 return (
                     <div style={{ position: "relative", width: field.halfWidth ? "50%" : "100%" }}>
@@ -1017,6 +1005,29 @@ const FormBuilder = () => {
                             fontSize: "1rem",
                             padding: "8px",
                             borderRadius: "6px"
+                        }}
+                    />
+                );
+            case "Heading":
+                return (
+                    <input
+                        type="text"
+                        value={field.label}
+                        onChange={(e) => {
+                            const updatedFields = fields.map(f =>
+                                f.id === field.id ? { ...f, label: e.target.value } : f
+                            );
+                            setFields(updatedFields);
+                        }}
+                        style={{
+                            fontSize: field.font_size || "24px",
+                            fontWeight: "bold",
+                            border: "none",
+                            background: "transparent",
+                            width: "100%",
+                            margin: "8px 0",
+                            color: formAnswersColor,
+                            fontFamily: selectedFont
                         }}
                     />
                 );
@@ -1724,8 +1735,6 @@ const FormBuilder = () => {
                         <input type="date"  {...commonProps} className="form-control" placeholder="To" />
                     </div>
                 );
-            case "Long Answer":
-                return <textarea {...commonProps}></textarea>;
             case "Document Type":
                 return (
                     <input
@@ -2830,7 +2839,7 @@ const FormBuilder = () => {
 
             formData.set("fields", JSON.stringify(clonedFields));
 
-            console.log("📦 FormData content:", clonedFields);
+            console.log("📦 Save content:", clonedFields);
 
             const response = await fetch("/api/form_builder/save-form", {
                 method: "POST",
@@ -3751,7 +3760,7 @@ const FormBuilder = () => {
                                 )}
 
                                 {/* Show only Specific Fields */}
-                                {!["Divider", "Image", "Video", "PDF", "YouTubeVideo", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Heading", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Caption</label>
                                         <input

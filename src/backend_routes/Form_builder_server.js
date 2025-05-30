@@ -307,7 +307,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
                         typeof field.default_value === "object" ? JSON.stringify(field.default_value) : field.default_value || "",
                         field.description || "",
                         field.alert_type || "info",
-                        field.fontSize || 14,
+                        parseInt(field.fontSize) || 14,
                         field.required ? "Yes" : "No",
                         field.sortOrder || 0,
                         field.min_value || null,
@@ -567,11 +567,8 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
 });
 
 // ✅ Fetch all page names
-router.get("/get-form-pages/:formId", verifyJWT, async (req, res) => {
+router.get("/get-form-pages/:formId", async (req, res) => {
     const { formId } = req.params;
-    const userId = req.user_id;
-
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
     try {
         const pagesQuery = `
