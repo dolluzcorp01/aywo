@@ -3852,10 +3852,10 @@ const FormBuilder = () => {
                                             min={12}
                                             max={48}
                                             className="form-control"
-                                            value={parseInt(fields.find(f => f.id === selectedFieldId)?.fontSize || "24")}
+                                            value={parseInt(fields.find(f => f.id === selectedFieldId)?.font_size || "24")}
                                             onChange={(e) => {
                                                 const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId ? { ...f, fontSize: `${e.target.value}px` } : f
+                                                    f.id === selectedFieldId ? { ...f, font_size: `${e.target.value}px` } : f
                                                 );
                                                 setFields(updatedFields);
                                             }}

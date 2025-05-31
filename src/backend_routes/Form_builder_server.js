@@ -307,7 +307,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
                         typeof field.default_value === "object" ? JSON.stringify(field.default_value) : field.default_value || "",
                         field.description || "",
                         field.alert_type || "info",
-                        parseInt(field.fontSize) || 14,
+                        parseInt(field.font_size) || 14,
                         field.required ? "Yes" : "No",
                         field.sortOrder || 0,
                         field.min_value || null,
