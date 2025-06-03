@@ -391,7 +391,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
                         INSERT INTO dfield_options (
                             field_id, option_text, options_style, sort_order, image_path
                         ) VALUES (?, ?, ?, ?, ?)
-                    `, [fieldId, opt.option_text || '', opt.options_style || '', opt.sortOrder || 0, savedFilePath]);
+                    `, [fieldId, opt.option_text || '', field.style || '', opt.sortOrder || 0, savedFilePath]);
                 }
             }
 

@@ -69,6 +69,8 @@ const PublishedForm = () => {
 
                 setForm(data.form);
                 const processedFields = data.fields.map((field) => {
+                    const normalizedRequired = field.required === "Yes" || field.required === true;
+
                     if (field.type === "Choice Matrix" && Array.isArray(field.matrix)) {
                         const rows = field.matrix
                             .filter(m => m.row_label !== null)
@@ -85,6 +87,16 @@ const PublishedForm = () => {
                         };
                     }
 
+                    if (field.type === "Multiple Choice") {
+                        const hasBubbleStyle = field.options?.some(opt => opt.options_style === "bubble");
+                        return {
+                            ...field,
+                            required: normalizedRequired,
+                            bubble: hasBubbleStyle,
+                            selectedOption: null
+                        };
+                    }
+
                     if (field.type === "YouTubeVideo" && Array.isArray(field.uploads) && field.uploads.length > 0) {
                         return {
                             ...field,
@@ -93,7 +105,10 @@ const PublishedForm = () => {
                         };
                     }
 
-                    return field;
+                    return {
+                        ...field,
+                        required: normalizedRequired
+                    };
                 });
 
                 setFields(processedFields);
@@ -199,6 +214,10 @@ const PublishedForm = () => {
                     f.id === field.id ? { ...f, default_value: e.target.value } : f
                 );
                 setFields(updatedFields);
+                setResponses((prev) => ({
+                    ...prev,
+                    [field.id]: e.target.value
+                }));
             }
         };
 
@@ -213,12 +232,6 @@ const PublishedForm = () => {
                         type="text"
                         value={field.label}
                         readOnly
-                        onChange={(e) => {
-                            const updatedFields = fields.map(f =>
-                                f.id === field.id ? { ...f, label: e.target.value } : f
-                            );
-                            setFields(updatedFields);
-                        }}
                         style={{
                             fontSize: field.font_size || "24px",
                             fontWeight: "bold",
@@ -327,12 +340,6 @@ const PublishedForm = () => {
                                 type="text"
                                 value={field.label || "Banner title"}
                                 readOnly
-                                onChange={(e) => {
-                                    const updatedFields = fields.map(f =>
-                                        f.id === field.id ? { ...f, label: e.target.value } : f
-                                    );
-                                    setFields(updatedFields);
-                                }}
                                 style={{
                                     fontWeight: "bold",
                                     color: style.textColor,
@@ -348,12 +355,6 @@ const PublishedForm = () => {
                             <textarea
                                 value={field.description || "Some description"}
                                 readOnly
-                                onChange={(e) => {
-                                    const updatedFields = fields.map(f =>
-                                        f.id === field.id ? { ...f, description: e.target.value } : f
-                                    );
-                                    setFields(updatedFields);
-                                }}
                                 rows={4}
                                 style={{
                                     color: style.textColor,
@@ -385,6 +386,10 @@ const PublishedForm = () => {
                                     f.id === field.id ? { ...f, value } : f
                                 );
                                 setFields(updatedFields);
+                                setResponses((prev) => ({
+                                    ...prev,
+                                    [field.id]: e.target.value
+                                }));
                             }
                         }}
                         value={field.value || field.default_value || ""}  // Use default_value  if value is not set
@@ -406,6 +411,10 @@ const PublishedForm = () => {
                                         : f
                                 );
                                 setFields(updatedFields);
+                                setResponses((prev) => ({
+                                    ...prev,
+                                    [field.id]: e.target.value
+                                }));
                             }}
                             style={{ accentColor: formPrimaryColor }}
                         />
@@ -418,9 +427,33 @@ const PublishedForm = () => {
                             type="checkbox"
                             className="form-check-input"
                             id={`checkbox-${field.id}-${idx}`}
+                            name={`checkbox-${field.id}`}
+                            checked={responses[field.id]?.includes(opt.option_text) || false}
+                            onChange={(e) => {
+                                const isChecked = e.target.checked;
+                                const prevSelections = responses[field.id] || [];
+
+                                let updatedSelections = [];
+                                if (isChecked) {
+                                    updatedSelections = [...prevSelections, opt.option_text];
+                                } else {
+                                    updatedSelections = prevSelections.filter(item => item !== opt.option_text);
+                                }
+
+                                setResponses(prev => ({
+                                    ...prev,
+                                    [field.id]: updatedSelections
+                                }));
+                            }}
                             style={{ accentColor: formPrimaryColor }}
                         />
-                        <label className="form-check-label" style={{ color: formAnswersColor, fontFamily: selectedFont }} htmlFor={`checkbox-${field.id}-${idx}`}>{opt.option_text}</label>
+                        <label
+                            className="form-check-label"
+                            style={{ color: formAnswersColor, fontFamily: selectedFont }}
+                            htmlFor={`checkbox-${field.id}-${idx}`}
+                        >
+                            {opt.option_text}
+                        </label>
                     </div>
                 ));
             case "Dropdown":
@@ -443,6 +476,10 @@ const PublishedForm = () => {
                                     return f;
                                 });
                                 setFields(updatedFields);
+                                setResponses(prev => ({
+                                    ...prev,
+                                    [field.id]: selectedOption ? selectedOption.value : ""
+                                }));
                             }}
                             value={
                                 field.value
@@ -502,6 +539,10 @@ const PublishedForm = () => {
                                 return f;
                             });
                             setFields(updatedFields);
+                            setResponses(prev => ({
+                                ...prev,
+                                [field.id]: values
+                            }));
                         }}
                         value={
                             field.value
@@ -572,6 +613,10 @@ const PublishedForm = () => {
                                         : f
                                 );
                                 setFields(updatedFields);
+                                setResponses((prev) => ({
+                                    ...prev,
+                                    [field.id]: e.target.value
+                                }));
                             }}
                             style={{
                                 backgroundColor: field.default_value === "true" ? formPrimaryColor : "",
@@ -613,6 +658,12 @@ const PublishedForm = () => {
                                                 f.id === field.id ? { ...f, selectedOption: idx } : f
                                             );
                                             setFields(updatedFields);
+                                            const selectedOption = field.options[idx];
+                                            const optionText = typeof selectedOption === "object" ? selectedOption.option_text : selectedOption;
+                                            setResponses(prev => ({
+                                                ...prev,
+                                                [field.id]: optionText
+                                            }));
                                         }}
                                         style={{
                                             marginRight: "8px",
@@ -685,6 +736,13 @@ const PublishedForm = () => {
                                                 f.id === field.id ? { ...f, selectedOption: idx } : f
                                             );
                                             setFields(updatedFields);
+
+                                            const selectedOption = field.options[idx];
+                                            const optionText = typeof selectedOption === "object" ? selectedOption.option_text : selectedOption;
+                                            setResponses(prev => ({
+                                                ...prev,
+                                                [field.id]: optionText
+                                            }));
                                         }}
                                         style={{
                                             marginRight: "8px",
@@ -845,6 +903,14 @@ const PublishedForm = () => {
                                                             return f;
                                                         });
                                                         setFields(updatedFields);
+                                                        const updatedResponses = {
+                                                            ...(responses || {}),
+                                                            [field.id]: {
+                                                                ...(responses[field.id] || {}),
+                                                                [row]: col // Store selected column text for that row label
+                                                            }
+                                                        };
+                                                        setResponses(updatedResponses);
                                                     }}
                                                     className="form-check-input"
                                                     style={{
@@ -873,6 +939,11 @@ const PublishedForm = () => {
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
                             );
                             setFields(updatedFields);
+
+                            setResponses(prev => ({
+                                ...prev,
+                                [field.id]: e.target.value
+                            }));
                         }}
                     />
                 );
@@ -887,6 +958,11 @@ const PublishedForm = () => {
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
                             );
                             setFields(updatedFields);
+
+                            setResponses(prev => ({
+                                ...prev,
+                                [field.id]: e.target.value
+                            }));
                         }}
                     />
                 );
@@ -901,26 +977,91 @@ const PublishedForm = () => {
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
                             );
                             setFields(updatedFields);
+
+                            setResponses(prev => ({
+                                ...prev,
+                                [field.id]: e.target.value
+                            }));
                         }}
                     />
                 );
             case "Date Range":
                 return (
                     <div className="d-flex gap-2">
-                        <input type="date"  {...commonProps} className="form-control" placeholder="From" />
-                        <input type="date"  {...commonProps} className="form-control" placeholder="To" />
+                        <input
+                            type="date"
+                            {...commonProps}
+                            className="form-control"
+                            placeholder="From"
+                            value={responses[field.id]?.from || ""}
+                            onChange={(e) => {
+                                const fromDate = e.target.value;
+                                setResponses(prev => ({
+                                    ...prev,
+                                    [field.id]: {
+                                        ...prev[field.id],
+                                        from: fromDate
+                                    }
+                                }));
+
+                                const updatedFields = fields.map(f =>
+                                    f.id === field.id
+                                        ? { ...f, default_value: JSON.stringify({ ...JSON.parse(f.default_value || "{}"), from: fromDate }) }
+                                        : f
+                                );
+                                setFields(updatedFields);
+                            }}
+                        />
+                        <input
+                            type="date"
+                            {...commonProps}
+                            className="form-control"
+                            placeholder="To"
+                            value={responses[field.id]?.to || ""}
+                            onChange={(e) => {
+                                const toDate = e.target.value;
+                                setResponses(prev => ({
+                                    ...prev,
+                                    [field.id]: {
+                                        ...prev[field.id],
+                                        to: toDate
+                                    }
+                                }));
+
+                                const updatedFields = fields.map(f =>
+                                    f.id === field.id
+                                        ? { ...f, default_value: JSON.stringify({ ...JSON.parse(f.default_value || "{}"), to: toDate }) }
+                                        : f
+                                );
+                                setFields(updatedFields);
+                            }}
+                        />
                     </div>
                 );
             case "Long Answer":
                 return <textarea {...commonProps}></textarea>;
             case "Document Type":
                 return (
-                    <input
-                        type="file"
-                        {...commonProps}
-                        accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,image/*"
-                        className="form-control-file"
-                    />
+                    <div>
+                        <input
+                            type="file"
+                            {...commonProps}
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,image/*"
+                            className="form-control"
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                    setResponses(prev => ({
+                                        ...prev,
+                                        [field.id]: file.name  // store only name
+                                    }));
+                                }
+                            }}
+                        />
+                        {responses[field.id] && (
+                            <small className="text-light mt-1">Selected: {responses[field.id]}</small>
+                        )}
+                    </div>
                 );
             case "Ranking":
                 return (
@@ -1151,6 +1292,13 @@ const PublishedForm = () => {
                                     f.id === field.id ? { ...f, address: e.target.value } : f
                                 );
                                 setFields(updatedFields);
+                                setResponses(prev => ({
+                                    ...prev,
+                                    [field.id]: {
+                                        ...prev[field.id],
+                                        address: e.target.value
+                                    }
+                                }));
                             }}
                             onFocus={() => {
                                 setFocusedFieldId(field.id);
@@ -1180,6 +1328,13 @@ const PublishedForm = () => {
                                         f.id === field.id ? { ...f, city: e.target.value } : f
                                     );
                                     setFields(updatedFields);
+                                    setResponses(prev => ({
+                                        ...prev,
+                                        [field.id]: {
+                                            ...prev[field.id],
+                                            city: e.target.value
+                                        }
+                                    }));
                                 }}
                                 onFocus={() => {
                                     setFocusedFieldId(field.id);
@@ -1207,6 +1362,13 @@ const PublishedForm = () => {
                                         f.id === field.id ? { ...f, state: e.target.value } : f
                                     );
                                     setFields(updatedFields);
+                                    setResponses(prev => ({
+                                        ...prev,
+                                        [field.id]: {
+                                            ...prev[field.id],
+                                            state: e.target.value
+                                        }
+                                    }));
                                 }}
                                 onFocus={() => {
                                     setFocusedFieldId(field.id);
@@ -1234,6 +1396,13 @@ const PublishedForm = () => {
                                         f.id === field.id ? { ...f, zip: e.target.value } : f
                                     );
                                     setFields(updatedFields);
+                                    setResponses(prev => ({
+                                        ...prev,
+                                        [field.id]: {
+                                            ...prev[field.id],
+                                            zip: e.target.value
+                                        }
+                                    }));
                                 }}
                                 onFocus={() => {
                                     setFocusedFieldId(field.id);
@@ -1584,6 +1753,7 @@ const PublishedForm = () => {
                     <button
                         type="submit"
                         className="btn"
+                        onClick={handleSubmitForm}
                         style={{
                             padding: "6px 12px",
                             fontSize: "1.2rem",
@@ -1638,18 +1808,49 @@ const PublishedForm = () => {
         }
     };
 
-    const handleNextPage = () => {
-        const currentPageId = parseInt(pageId);
-        const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
+    const handleSubmitForm = async () => {
+        const allRequiredFields = fields.filter(f => f.required === "Yes");
 
-        const currentIndex = sortedPages.findIndex(p => p.page_number === currentPageId);
-
-        if (currentIndex !== -1 && currentIndex < sortedPages.length - 1) {
-            const nextPage = sortedPages[currentIndex + 1];
-            navigate(`/forms/form-${formId}/page-${nextPage.page_number}`);
-        } else {
-            console.log("This is the last page or page not found");
+        for (const field of allRequiredFields) {
+            if (!responses[field.id]) {
+                Swal.fire("Missing Field", `Please fill out "${field.label}"`, "warning");
+                return;
+            }
         }
+
+        // Save final responses to localStorage
+        localStorage.setItem(`form_final_responses`, JSON.stringify(responses));
+
+        // --- Optionally send to server or just log to console
+        console.log("Collected Responses:", responses);
+
+        // Show in SweetAlert
+        Swal.fire({
+            title: "Form Submitted",
+            html: `<pre>${JSON.stringify(responses, null, 2)}</pre>`,
+            icon: "success"
+        });
+
+        // Clear data
+        localStorage.clear();
+        setResponses({});
+    };
+
+    const handleNextPage = () => {
+        const currentPageFields = fields.filter(f => f.page_id === pageId);
+
+        for (const field of currentPageFields) {
+            if (field.required === "Yes" && !responses[field.id]) {
+                Swal.fire("Missing Field", `Please fill out "${field.label}"`, "warning");
+                return;
+            }
+        }
+
+        // Save current page data in localStorage
+        localStorage.setItem(`form_page_${pageId}`, JSON.stringify(responses));
+
+        // Logic to go to the next page here (depends on your navigation setup)
+        // e.g., setCurrentPage(page.id + 1) or navigateToNextPage()
     };
 
     const handleBackPage = () => {
@@ -1663,62 +1864,6 @@ const PublishedForm = () => {
             navigate(`/forms/form-${formId}/page-${previousPage.page_number}`);
         } else {
             console.log("This is the first page");
-        }
-    };
-
-    const handleSubmit = async () => {
-        if (!form || fields.length === 0) {
-            Swal.fire("Error", "Form data is missing.", "error");
-            return;
-        }
-
-        if (Object.keys(responses).length < fields.length) {
-            Swal.fire("Error", "Please fill out all fields before submitting.", "warning");
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append("form_id", form.form_id);
-
-        const responsesObject = {};
-
-        Object.entries(responses).forEach(([key, value]) => {
-            if (value instanceof File) {
-                formData.append("document", value);
-                responsesObject[key] = "file_attached";
-            } else {
-                responsesObject[key] = value;
-            }
-        });
-
-        formData.append("responses", JSON.stringify(responsesObject));
-
-        try {
-            const response = await fetch("/api/published_form/submit-form", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!response.ok) {
-                throw new Error("Form submission failed");
-            }
-
-            Swal.fire("Success!", "Form submitted successfully!", "success");
-
-            // Clear input fields
-            setResponses({});
-            document.querySelectorAll("input, textarea, select").forEach((element) => {
-                if (element.type === "checkbox" || element.type === "radio") {
-                    element.checked = false;
-                } else if (element.type === "file") {
-                    element.value = "";
-                } else {
-                    element.value = "";
-                }
-            });
-        } catch (error) {
-            Swal.fire("Error", "Failed to submit form.", "error");
-            console.error("Submit Error:", error);
         }
     };
 

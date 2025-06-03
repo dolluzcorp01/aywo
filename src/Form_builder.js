@@ -2863,7 +2863,6 @@ const FormBuilder = () => {
                 Swal.fire("Server Error", "Something went wrong while saving the form.", "error");
             }
 
-
         } catch (error) {
             console.error("Error saving/updating form:", error);
             const errorMessage = error.response?.data?.error || "An error occurred";
