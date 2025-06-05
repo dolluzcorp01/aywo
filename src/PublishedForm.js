@@ -1508,6 +1508,11 @@ const PublishedForm = () => {
                                                     f.id === field.id ? { ...f, selectedOption: idx } : f
                                                 );
                                                 setFields(updatedFields);
+
+                                                setResponses(prev => ({
+                                                    ...prev,
+                                                    [field.id]: field.options[idx].option_text // or you can store just the index
+                                                }));
                                             }}
                                             style={{
                                                 marginRight: "8px",
@@ -1840,9 +1845,34 @@ const PublishedForm = () => {
     };
 
     const handleSubmitForm = async () => {
-        const allRequiredFields = fields.filter(f => f.required === "Yes");
+        const allRequiredFields = fields.filter(f => f.required);
 
         for (const field of allRequiredFields) {
+            const value = responses[field.id];
+
+            if (field.type === "Address") {
+                if (
+                    !value ||
+                    !value.address?.trim() ||
+                    !value.city?.trim() ||
+                    !value.state?.trim() ||
+                    !value.zip?.trim()
+                ) {
+                    Swal.fire("Missing Field", `Please fill out all parts of "${field.label}"`, "warning");
+                    return;
+                }
+            }
+            else if (field.type === "Choice Matrix") {
+                const expectedRows = field.rows || [];
+                const answeredRows = value ? Object.keys(value) : [];
+                const missingRow = expectedRows.find(row => !answeredRows.includes(row));
+
+                if (missingRow) {
+                    Swal.fire("Missing Field", `Please select an option for "${missingRow}" in "${field.label}"`, "warning");
+                    return;
+                }
+            }
+
             if (!responses[field.id]) {
                 Swal.fire("Missing Field", `Please fill out "${field.label}"`, "warning");
                 return;
@@ -1871,7 +1901,32 @@ const PublishedForm = () => {
         const currentPageFields = fields.filter(f => f.page_id === pageId);
 
         for (const field of currentPageFields) {
-            if (field.required === "Yes" && !responses[field.id]) {
+            const value = responses[field.id];
+
+            if (field.type === "Address") {
+                if (
+                    !value ||
+                    !value.address?.trim() ||
+                    !value.city?.trim() ||
+                    !value.state?.trim() ||
+                    !value.zip?.trim()
+                ) {
+                    Swal.fire("Missing Field", `Please fill out all parts of "${field.label}"`, "warning");
+                    return;
+                }
+            }
+            else if (field.type === "Choice Matrix") {
+                const expectedRows = field.rows || [];
+                const answeredRows = value ? Object.keys(value) : [];
+                const missingRow = expectedRows.find(row => !answeredRows.includes(row));
+
+                if (missingRow) {
+                    Swal.fire("Missing Field", `Please select an option for "${missingRow}" in "${field.label}"`, "warning");
+                    return;
+                }
+            }
+
+            if (field.required && !responses[field.id]) {
                 Swal.fire("Missing Field", `Please fill out "${field.label}"`, "warning");
                 return;
             }
@@ -1879,9 +1934,6 @@ const PublishedForm = () => {
 
         // Save current page data in localStorage
         localStorage.setItem(`form_page_${pageId}`, JSON.stringify(responses));
-
-        // Logic to go to the next page here (depends on your navigation setup)
-        // e.g., setCurrentPage(page.id + 1) or navigateToNextPage()
     };
 
     const handleBackPage = () => {
@@ -1959,7 +2011,7 @@ const PublishedForm = () => {
                                         }}
                                     >
                                         {field.label}
-                                        {field.required === "Yes" && <span style={{ color: "red", marginLeft: "30px" }}>*</span>}
+                                        {field.required && <span style={{ color: "red", marginLeft: "30px" }}>*</span>}
                                     </label>
                                     {field.caption && (
                                         <small
