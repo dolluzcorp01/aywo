@@ -1075,10 +1075,18 @@ const PublishedForm = () => {
                                 result.destination.index
                             );
 
+                            // Update fields state
                             const updatedFields = fields.map(f =>
                                 f.id === field.id ? { ...f, options: reordered } : f
                             );
                             setFields(updatedFields);
+
+                            // Update responses state
+                            const rankedValues = reordered.map(opt => opt.option_text);
+                            setResponses((prev) => ({
+                                ...prev,
+                                [field.id]: rankedValues
+                            }));
                         }}
                     >
                         <Droppable droppableId={`ranking-${field.id}`}>
@@ -1168,7 +1176,7 @@ const PublishedForm = () => {
                                 display: "flex",
                                 flexWrap: "wrap",
                                 gap: "4px",
-                                maxWidth: "400px", // 15 stars * 26px per star (adjust if needed)
+                                maxWidth: "400px",
                             }}
                             onMouseLeave={() => setHovered(null)}
                         >
@@ -1182,7 +1190,7 @@ const PublishedForm = () => {
                                                 ? i <= hovered
                                                     ? formPrimaryColor
                                                     : "#ccc"
-                                                : i < field.value
+                                                : i < (field.value || 0)
                                                     ? formPrimaryColor
                                                     : "#ccc",
                                         cursor: "pointer",
@@ -1192,10 +1200,18 @@ const PublishedForm = () => {
                                     }}
                                     onClick={() => {
                                         const newValue = field.value === i + 1 ? 0 : i + 1;
+
+                                        // update field
                                         const updatedFields = fields.map(f =>
                                             f.id === field.id ? { ...f, value: newValue } : f
                                         );
                                         setFields(updatedFields);
+
+                                        // update response
+                                        setResponses(prev => ({
+                                            ...prev,
+                                            [field.id]: newValue
+                                        }));
                                     }}
                                     onMouseEnter={() => setHovered(i)}
                                 >
@@ -1230,8 +1246,8 @@ const PublishedForm = () => {
                         </div>
                         <input
                             type="range"
-                            min={field.min_value}
-                            max={field.max_value}
+                            min={min}
+                            max={max}
                             value={currentValue}
                             className="custom-slider"
                             style={{
@@ -1239,10 +1255,19 @@ const PublishedForm = () => {
                                 '--slider-thumb-border': formPrimaryColor
                             }}
                             onChange={(e) => {
+                                const val = parseInt(e.target.value);
+
+                                // Update fields
                                 const updatedFields = fields.map(f =>
-                                    f.id === field.id ? { ...f, value: parseInt(e.target.value) } : f
+                                    f.id === field.id ? { ...f, value: val } : f
                                 );
                                 setFields(updatedFields);
+
+                                // Update responses
+                                setResponses(prev => ({
+                                    ...prev,
+                                    [field.id]: val
+                                }));
                             }}
                         />
                     </div>
@@ -1270,6 +1295,12 @@ const PublishedForm = () => {
                                                 f.id === field.id ? { ...f, value: val } : f
                                             );
                                             setFields(updatedFields);
+
+                                            // ✅ Update responses
+                                            setResponses(prev => ({
+                                                ...prev,
+                                                [field.id]: val
+                                            }));
                                         }}
                                         style={{ accentColor: formPrimaryColor }}
                                     />
