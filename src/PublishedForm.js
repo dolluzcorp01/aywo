@@ -81,6 +81,7 @@ const PublishedForm = () => {
 
                         return {
                             ...field,
+                            required: normalizedRequired,
                             rows,
                             columns,
                             selectedMatrix: [] // you can later load actual values if stored
@@ -1903,7 +1904,7 @@ const PublishedForm = () => {
         for (const field of currentPageFields) {
             const value = responses[field.id];
 
-            if (field.type === "Address") {
+            if (field.type === "Address" && field.required) {
                 if (
                     !value ||
                     !value.address?.trim() ||
@@ -1915,7 +1916,7 @@ const PublishedForm = () => {
                     return;
                 }
             }
-            else if (field.type === "Choice Matrix") {
+            else if (field.type === "Choice Matrix" && field.required) {
                 const expectedRows = field.rows || [];
                 const answeredRows = value ? Object.keys(value) : [];
                 const missingRow = expectedRows.find(row => !answeredRows.includes(row));
