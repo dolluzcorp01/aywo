@@ -215,9 +215,12 @@ const PublishedForm = () => {
                     f.id === field.id ? { ...f, default_value: e.target.value } : f
                 );
                 setFields(updatedFields);
-                setResponses((prev) => ({
+                setResponses(prev => ({
                     ...prev,
-                    [field.id]: e.target.value
+                    [field.id]: {
+                        type: field.type,
+                        value: e.target.value
+                    }
                 }));
             }
         };
@@ -387,9 +390,12 @@ const PublishedForm = () => {
                                     f.id === field.id ? { ...f, value } : f
                                 );
                                 setFields(updatedFields);
-                                setResponses((prev) => ({
+                                setResponses(prev => ({
                                     ...prev,
-                                    [field.id]: e.target.value
+                                    [field.id]: {
+                                        type: field.type,
+                                        value: e.target.value
+                                    }
                                 }));
                             }
                         }}
@@ -412,9 +418,12 @@ const PublishedForm = () => {
                                         : f
                                 );
                                 setFields(updatedFields);
-                                setResponses((prev) => ({
+                                setResponses(prev => ({
                                     ...prev,
-                                    [field.id]: e.target.value
+                                    [field.id]: {
+                                        type: field.type,
+                                        value: e.target.value
+                                    }
                                 }));
                             }}
                             style={{ accentColor: formPrimaryColor }}
@@ -429,10 +438,10 @@ const PublishedForm = () => {
                             className="form-check-input"
                             id={`checkbox-${field.id}-${idx}`}
                             name={`checkbox-${field.id}`}
-                            checked={responses[field.id]?.includes(opt.option_text) || false}
+                            checked={responses[field.id]?.value?.includes(opt.option_text) || false}
                             onChange={(e) => {
                                 const isChecked = e.target.checked;
-                                const prevSelections = responses[field.id] || [];
+                                const prevSelections = responses[field.id]?.value || [];
 
                                 let updatedSelections = [];
                                 if (isChecked) {
@@ -443,7 +452,10 @@ const PublishedForm = () => {
 
                                 setResponses(prev => ({
                                     ...prev,
-                                    [field.id]: updatedSelections
+                                    [field.id]: {
+                                        type: field.type,
+                                        value: updatedSelections
+                                    }
                                 }));
                             }}
                             style={{ accentColor: formPrimaryColor }}
@@ -479,7 +491,10 @@ const PublishedForm = () => {
                                 setFields(updatedFields);
                                 setResponses(prev => ({
                                     ...prev,
-                                    [field.id]: selectedOption ? selectedOption.value : ""
+                                    [field.id]: {
+                                        type: field.type,
+                                        value: selectedOption ? selectedOption.value : ""
+                                    }
                                 }));
                             }}
                             value={
@@ -542,7 +557,10 @@ const PublishedForm = () => {
                             setFields(updatedFields);
                             setResponses(prev => ({
                                 ...prev,
-                                [field.id]: values
+                                [field.id]: {
+                                    type: field.type,
+                                    value: values
+                                }
                             }));
                         }}
                         value={
@@ -614,9 +632,12 @@ const PublishedForm = () => {
                                         : f
                                 );
                                 setFields(updatedFields);
-                                setResponses((prev) => ({
+                                setResponses(prev => ({
                                     ...prev,
-                                    [field.id]: e.target.value
+                                    [field.id]: {
+                                        type: field.type,
+                                        value: e.target.value
+                                    }
                                 }));
                             }}
                             style={{
@@ -663,7 +684,10 @@ const PublishedForm = () => {
                                             const optionText = typeof selectedOption === "object" ? selectedOption.option_text : selectedOption;
                                             setResponses(prev => ({
                                                 ...prev,
-                                                [field.id]: optionText
+                                                [field.id]: {
+                                                    type: field.type,
+                                                    value: optionText
+                                                }
                                             }));
                                         }}
                                         style={{
@@ -742,7 +766,10 @@ const PublishedForm = () => {
                                             const optionText = typeof selectedOption === "object" ? selectedOption.option_text : selectedOption;
                                             setResponses(prev => ({
                                                 ...prev,
-                                                [field.id]: optionText
+                                                [field.id]: {
+                                                    type: field.type,
+                                                    value: optionText
+                                                }
                                             }));
                                         }}
                                         style={{
@@ -904,14 +931,16 @@ const PublishedForm = () => {
                                                             return f;
                                                         });
                                                         setFields(updatedFields);
-                                                        const updatedResponses = {
-                                                            ...(responses || {}),
+                                                        setResponses(prev => ({
+                                                            ...prev,
                                                             [field.id]: {
-                                                                ...(responses[field.id] || {}),
-                                                                [row]: col // Store selected column text for that row label
+                                                                type: field.type, // <-- saves the type ("Choice Matrix")
+                                                                value: {
+                                                                    ...(prev[field.id]?.value || {}),
+                                                                    [row]: col // store selected column value for this row
+                                                                }
                                                             }
-                                                        };
-                                                        setResponses(updatedResponses);
+                                                        }));
                                                     }}
                                                     className="form-check-input"
                                                     style={{
@@ -940,10 +969,12 @@ const PublishedForm = () => {
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
                             );
                             setFields(updatedFields);
-
                             setResponses(prev => ({
                                 ...prev,
-                                [field.id]: e.target.value
+                                [field.id]: {
+                                    type: field.type,
+                                    value: e.target.value
+                                }
                             }));
                         }}
                     />
@@ -959,10 +990,12 @@ const PublishedForm = () => {
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
                             );
                             setFields(updatedFields);
-
                             setResponses(prev => ({
                                 ...prev,
-                                [field.id]: e.target.value
+                                [field.id]: {
+                                    type: field.type,
+                                    value: e.target.value
+                                }
                             }));
                         }}
                     />
@@ -978,10 +1011,12 @@ const PublishedForm = () => {
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
                             );
                             setFields(updatedFields);
-
                             setResponses(prev => ({
                                 ...prev,
-                                [field.id]: e.target.value
+                                [field.id]: {
+                                    type: field.type,
+                                    value: e.target.value
+                                }
                             }));
                         }}
                     />
@@ -992,22 +1027,30 @@ const PublishedForm = () => {
                         <input
                             type="date"
                             {...commonProps}
-                            className="form-control"
                             placeholder="From"
-                            value={responses[field.id]?.from || ""}
+                            value={responses[field.id]?.value?.from || ""}
                             onChange={(e) => {
                                 const fromDate = e.target.value;
                                 setResponses(prev => ({
                                     ...prev,
                                     [field.id]: {
-                                        ...prev[field.id],
-                                        from: fromDate
+                                        type: "Date Range",
+                                        value: {
+                                            ...(prev[field.id]?.value || {}),
+                                            from: fromDate
+                                        }
                                     }
                                 }));
 
                                 const updatedFields = fields.map(f =>
                                     f.id === field.id
-                                        ? { ...f, default_value: JSON.stringify({ ...JSON.parse(f.default_value || "{}"), from: fromDate }) }
+                                        ? {
+                                            ...f,
+                                            default_value: JSON.stringify({
+                                                ...(JSON.parse(f.default_value || "{}")),
+                                                from: fromDate
+                                            })
+                                        }
                                         : f
                                 );
                                 setFields(updatedFields);
@@ -1016,22 +1059,30 @@ const PublishedForm = () => {
                         <input
                             type="date"
                             {...commonProps}
-                            className="form-control"
                             placeholder="To"
-                            value={responses[field.id]?.to || ""}
+                            value={responses[field.id]?.value?.to || ""}
                             onChange={(e) => {
                                 const toDate = e.target.value;
                                 setResponses(prev => ({
                                     ...prev,
                                     [field.id]: {
-                                        ...prev[field.id],
-                                        to: toDate
+                                        type: "Date Range",
+                                        value: {
+                                            ...(prev[field.id]?.value || {}),
+                                            to: toDate
+                                        }
                                     }
                                 }));
 
                                 const updatedFields = fields.map(f =>
                                     f.id === field.id
-                                        ? { ...f, default_value: JSON.stringify({ ...JSON.parse(f.default_value || "{}"), to: toDate }) }
+                                        ? {
+                                            ...f,
+                                            default_value: JSON.stringify({
+                                                ...(JSON.parse(f.default_value || "{}")),
+                                                to: toDate
+                                            })
+                                        }
                                         : f
                                 );
                                 setFields(updatedFields);
@@ -1054,13 +1105,18 @@ const PublishedForm = () => {
                                 if (file) {
                                     setResponses(prev => ({
                                         ...prev,
-                                        [field.id]: file.name  // store only name
+                                        [field.id]: {
+                                            type: field.type,
+                                            value: file.name  // If you want to store full file object: `value: file`
+                                        }
                                     }));
                                 }
                             }}
                         />
-                        {responses[field.id] && (
-                            <small className="text-light mt-1">Selected: {responses[field.id]}</small>
+                        {responses[field.id]?.value && (
+                            <small className="text-light mt-1">
+                                Selected: {responses[field.id].value}
+                            </small>
                         )}
                     </div>
                 );
@@ -1086,8 +1142,12 @@ const PublishedForm = () => {
                             const rankedValues = reordered.map(opt => opt.option_text);
                             setResponses((prev) => ({
                                 ...prev,
-                                [field.id]: rankedValues
+                                [field.id]: {
+                                    type: field.type,
+                                    value: rankedValues
+                                }
                             }));
+
                         }}
                     >
                         <Droppable droppableId={`ranking-${field.id}`}>
@@ -1207,11 +1267,12 @@ const PublishedForm = () => {
                                             f.id === field.id ? { ...f, value: newValue } : f
                                         );
                                         setFields(updatedFields);
-
-                                        // update response
                                         setResponses(prev => ({
                                             ...prev,
-                                            [field.id]: newValue
+                                            [field.id]: {
+                                                type: field.type,
+                                                value: newValue
+                                            }
                                         }));
                                     }}
                                     onMouseEnter={() => setHovered(i)}
@@ -1263,11 +1324,12 @@ const PublishedForm = () => {
                                     f.id === field.id ? { ...f, value: val } : f
                                 );
                                 setFields(updatedFields);
-
-                                // Update responses
                                 setResponses(prev => ({
                                     ...prev,
-                                    [field.id]: val
+                                    [field.id]: {
+                                        type: field.type,
+                                        value: val
+                                    }
                                 }));
                             }}
                         />
@@ -1296,11 +1358,12 @@ const PublishedForm = () => {
                                                 f.id === field.id ? { ...f, value: val } : f
                                             );
                                             setFields(updatedFields);
-
-                                            // ✅ Update responses
                                             setResponses(prev => ({
                                                 ...prev,
-                                                [field.id]: val
+                                                [field.id]: {
+                                                    type: field.type,
+                                                    value: val
+                                                }
                                             }));
                                         }}
                                         style={{ accentColor: formPrimaryColor }}
@@ -1327,8 +1390,11 @@ const PublishedForm = () => {
                                 setResponses(prev => ({
                                     ...prev,
                                     [field.id]: {
-                                        ...prev[field.id],
-                                        address: e.target.value
+                                        type: field.type,
+                                        value: {
+                                            ...((prev[field.id] && prev[field.id].value) || {}),
+                                            address: e.target.value
+                                        }
                                     }
                                 }));
                             }}
@@ -1363,8 +1429,11 @@ const PublishedForm = () => {
                                     setResponses(prev => ({
                                         ...prev,
                                         [field.id]: {
-                                            ...prev[field.id],
-                                            city: e.target.value
+                                            type: field.type,
+                                            value: {
+                                                ...((prev[field.id] && prev[field.id].value) || {}),
+                                                city: e.target.value
+                                            }
                                         }
                                     }));
                                 }}
@@ -1397,8 +1466,11 @@ const PublishedForm = () => {
                                     setResponses(prev => ({
                                         ...prev,
                                         [field.id]: {
-                                            ...prev[field.id],
-                                            state: e.target.value
+                                            type: field.type,
+                                            value: {
+                                                ...((prev[field.id] && prev[field.id].value) || {}),
+                                                state: e.target.value
+                                            }
                                         }
                                     }));
                                 }}
@@ -1431,10 +1503,14 @@ const PublishedForm = () => {
                                     setResponses(prev => ({
                                         ...prev,
                                         [field.id]: {
-                                            ...prev[field.id],
-                                            zip: e.target.value
+                                            type: field.type,
+                                            value: {
+                                                ...((prev[field.id] && prev[field.id].value) || {}),
+                                                zip: e.target.value
+                                            }
                                         }
                                     }));
+
                                 }}
                                 onFocus={() => {
                                     setFocusedFieldId(field.id);
