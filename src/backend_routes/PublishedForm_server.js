@@ -59,31 +59,44 @@ router.post("/submit-form", upload.single("document"), async (req, res) => {
 
         await connection.beginTransaction();
 
-        // ✅ Insert response into `form_responses`
-        const responseInsertQuery = "INSERT INTO form_responses (form_id) VALUES (?)";
-        const responseResult = await queryPromise(connection, responseInsertQuery, [form_id]);
+        // ✅ Insert response into `dform_responses`
+        const responseInsertQuery = "INSERT INTO dform_responses (form_id) VALUES (?)";
+        const responseResult = await queryPromise(connection, responseInsertQuery, [parseInt(form_id)]);
         const response_id = responseResult.insertId;
 
         // ✅ Insert individual field responses
         for (const [field_id, answer] of Object.entries(responses)) {
-            let finalAnswer = answer;
+            let finalAnswer = answer.value;
 
-            // ✅ Check if this is the file input field
-            if (file && answer === "file_attached") {
+            if (answer.type === "Choice Matrix" && typeof answer.value === "object" && !Array.isArray(answer.value)) {
+                finalAnswer = JSON.stringify(answer.value); // 👈 Convert object to JSON string
+            } else if (answer.type === "Address" && typeof answer.value === "object") {
+                finalAnswer = JSON.stringify(answer.value);
+            } else if (Array.isArray(answer.value)) {
+                finalAnswer = JSON.stringify(answer.value);
+            } else {
+                finalAnswer = answer.value;
+            }
+
+            if (file && answer.type === "Document Type" && answer.value === "file_attached") {
                 finalAnswer = `/uploads/${file.filename}`;
             }
 
-            // ✅ Prevent inserting empty values
             if (!finalAnswer) {
                 console.warn(`Skipping field_id ${field_id} because answer is empty.`);
                 continue;
             }
 
             const responseFieldQuery = `
-                INSERT INTO response_fields (response_id, field_id, answer) 
-                VALUES (?, ?, ?)`;
+    INSERT INTO dform_response_fields (response_id, field_id, answer) 
+    VALUES (?, ?, ?)`;
+
+            if (Array.isArray(finalAnswer)) {
+                finalAnswer = JSON.stringify(finalAnswer); // ✅ Convert array to JSON string
+            }
 
             await queryPromise(connection, responseFieldQuery, [response_id, field_id, finalAnswer]);
+
         }
 
         await connection.commit();

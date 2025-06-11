@@ -1923,6 +1923,8 @@ const PublishedForm = () => {
 
     const handleSubmitForm = async () => {
         const allRequiredFields = fields.filter(f => f.required);
+        const formData = new FormData();
+        const updatedResponses = { ...responses };
 
         for (const field of allRequiredFields) {
             const value = responses[field.id];
@@ -1930,18 +1932,17 @@ const PublishedForm = () => {
             if (field.type === "Address") {
                 if (
                     !value ||
-                    !value.address?.trim() ||
-                    !value.city?.trim() ||
-                    !value.state?.trim() ||
-                    !value.zip?.trim()
+                    !value.value?.address?.trim() ||
+                    !value.value?.city?.trim() ||
+                    !value.value?.state?.trim() ||
+                    !value.value?.zip?.trim()
                 ) {
                     Swal.fire("Missing Field", `Please fill out all parts of "${field.label}"`, "warning");
                     return;
                 }
-            }
-            else if (field.type === "Choice Matrix") {
+            } else if (field.type === "Choice Matrix") {
                 const expectedRows = field.rows || [];
-                const answeredRows = value ? Object.keys(value) : [];
+                const answeredRows = value ? Object.keys(value.value || {}) : [];
                 const missingRow = expectedRows.find(row => !answeredRows.includes(row));
 
                 if (missingRow) {
@@ -1950,28 +1951,52 @@ const PublishedForm = () => {
                 }
             }
 
-            if (!responses[field.id]) {
+            // Basic required check
+            if (!value || value.value === undefined || value.value === "") {
                 Swal.fire("Missing Field", `Please fill out "${field.label}"`, "warning");
                 return;
             }
+
+            // ⬇️ Handle file upload field
+            if (field.type === "Document Type") {
+                const file = value.value;
+                if (file instanceof File) {
+                    formData.append("document", file);
+                    updatedResponses[field.id] = {
+                        ...value,
+                        value: "file_attached"
+                    };
+                }
+            }
         }
 
-        // Save final responses to localStorage
-        localStorage.setItem(`form_final_responses`, JSON.stringify(responses));
+        formData.append("form_id", formId);
+        formData.append("responses", JSON.stringify(updatedResponses));
 
-        // --- Optionally send to server or just log to console
-        console.log("Collected Responses:", responses);
+        try {
+            const res = await fetch("/api/published_form/submit-form", {
+                method: "POST",
+                body: formData
+            });
 
-        // Show in SweetAlert
-        Swal.fire({
-            title: "Form Submitted",
-            html: `<pre>${JSON.stringify(responses, null, 2)}</pre>`,
-            icon: "success"
-        });
+            const data = await res.json();
+            if (res.ok) {
+                Swal.fire("Form Submitted", "Your form has been submitted successfully!", "success");
+                Object.keys(localStorage).forEach((key) => {
+                    if (key.startsWith("form_page_")) {
+                        localStorage.removeItem(key);
+                    }
+                });
 
-        // Clear data
-        localStorage.clear();
-        setResponses({});
+                setResponses({});
+            } else {
+                Swal.fire("Error", data.error || "Submission failed.", "error");
+            }
+        }
+        catch (error) {
+            console.error("❌ Error submitting form:", error);
+            Swal.fire("Error", "Something went wrong while submitting the form.", "error");
+        }
     };
 
     const handleNextPage = () => {
@@ -2011,6 +2036,18 @@ const PublishedForm = () => {
 
         // Save current page data in localStorage
         localStorage.setItem(`form_page_${pageId}`, JSON.stringify(responses));
+
+        const currentPageId = parseInt(pageId);
+        const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
+
+        const currentIndex = sortedPages.findIndex(p => p.page_number === currentPageId);
+
+        if (currentIndex !== -1 && currentIndex < sortedPages.length - 1) {
+            const nextPage = sortedPages[currentIndex + 1];
+            navigate(`/forms/form-${formId}/page-${nextPage.page_number}`);
+        } else {
+            console.log("This is the last page or page not found");
+        }
     };
 
     const handleBackPage = () => {
