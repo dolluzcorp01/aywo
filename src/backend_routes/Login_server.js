@@ -245,7 +245,7 @@ const generateOTP = (userInput, res) => {
   const expiryTime = new Date(Date.now() + 5 * 60000); // 5 mins from now
   const db = getDBConnection('form_builder');
 
-  const query = `INSERT INTO OTPStorage (UserInput, OTP, ExpiryTime) VALUES (?, ?, ?) 
+  const query = `INSERT INTO otpstorage (UserInput, OTP, ExpiryTime) VALUES (?, ?, ?) 
                  ON DUPLICATE KEY UPDATE OTP = ?, ExpiryTime = ?`;
 
   db.query(query, [userInput, otp, expiryTime, otp, expiryTime], async (err) => {
