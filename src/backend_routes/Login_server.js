@@ -242,7 +242,7 @@ router.post('/checkUserExists', (req, res) => {
 // 🔹 Generate OTP Function
 const generateOTP = (userInput, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiryTime = new Date(Date.now() + 5 * 60000); // 5 mins from now
+  const expiryTime = new Date(Date.now() + 5 * 60000); 
   const db = getDBConnection('form_builder');
 
   const query = `INSERT INTO otpstorage (UserInput, OTP, ExpiryTime) VALUES (?, ?, ?) 
