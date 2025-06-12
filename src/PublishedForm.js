@@ -1103,6 +1103,15 @@ const PublishedForm = () => {
                             onChange={(e) => {
                                 const file = e.target.files[0];
                                 if (file) {
+                                    if (file.size > 1 * 1024 * 1024) {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'File Too Large',
+                                            text: 'Please select a file smaller than 1MB.',
+                                        });
+                                        return;
+                                    }
+
                                     setResponses(prev => ({
                                         ...prev,
                                         [field.id]: {
