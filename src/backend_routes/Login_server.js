@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
+const nodemailer = require("nodemailer");
 const getDBConnection = require('../../config/db');
 
 const JWT_SECRET = 'Pavithran_form_builder_jwt_secret_key';
@@ -241,17 +242,55 @@ router.post('/checkUserExists', (req, res) => {
 // 🔹 Generate OTP Function
 const generateOTP = (userInput, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiryTime = new Date(Date.now() + 5 * 60000);
+  const expiryTime = new Date(Date.now() + 5 * 60000); // 5 mins from now
   const db = getDBConnection('form_builder');
+
   const query = `INSERT INTO OTPStorage (UserInput, OTP, ExpiryTime) VALUES (?, ?, ?) 
                  ON DUPLICATE KEY UPDATE OTP = ?, ExpiryTime = ?`;
 
-  db.query(query, [userInput, otp, expiryTime, otp, expiryTime], (err) => {
+  db.query(query, [userInput, otp, expiryTime, otp, expiryTime], async (err) => {
     if (err) {
       console.error('❌ Error in generateOTP:', err);
       return res.status(500).json({ message: 'Error generating OTP' });
     }
-    res.json({ message: "exists" });
+
+    // 🔹 Send OTP via Email
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: "vv.pavithran12@gmail.com",
+        pass: "aajuyoahcuszqrey", // Gmail App Password
+      },
+    });
+
+    const mailOptions = {
+      from: '"dForms Support" <vv.pavithran12@gmail.com>',
+      to: userInput,
+      subject: "dForms Password Reset - Your OTP Code",
+      html: `
+    <div style="font-family: Arial, sans-serif; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+      <h2 style="color: #4A90E2;">dForms - One Time Password (OTP)</h2>
+      <p>Hello,</p>
+      <p>We received a request to reset your password on <strong>dForms</strong>.</p>
+      <p>Please use the following OTP to verify your identity:</p>
+      <h3 style="color: #333; font-size: 24px;">${otp}</h3>
+      <p>This OTP is valid for <strong>2 minutes</strong>. Do not share this code with anyone.</p>
+      <p>If you did not request a password reset, please ignore this message.</p>
+      <br/>
+      <p style="color: #888;">— The dForms Team</p>
+    </div>
+  `
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      res.json({ message: "OTP sent successfully" });
+    } catch (error) {
+      console.error("❌ Error sending OTP email:", error);
+      res.status(500).json({ message: "Failed to send OTP email" });
+    }
   });
 };
 
