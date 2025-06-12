@@ -31,7 +31,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-router.post("/submit-form", upload.single("document"), async (req, res) => {
+router.post("/submit-form", upload.any(), async (req, res) => {
     const { form_id } = req.body;
     let responses;
 
@@ -64,6 +64,18 @@ router.post("/submit-form", upload.single("document"), async (req, res) => {
         const responseResult = await queryPromise(connection, responseInsertQuery, [parseInt(form_id)]);
         const response_id = responseResult.insertId;
 
+
+        const files = req.files || [];
+        const fieldIdToFileMap = {};
+
+        files.forEach(file => {
+            const match = file.fieldname.match(/^document_(\d+)$/); // Match document_1718
+            if (match) {
+                const fieldId = match[1];
+                fieldIdToFileMap[fieldId] = file;
+            }
+        });
+
         // ✅ Insert individual field responses
         for (const [field_id, answer] of Object.entries(responses)) {
             let finalAnswer = answer.value;
@@ -78,7 +90,8 @@ router.post("/submit-form", upload.single("document"), async (req, res) => {
                 finalAnswer = answer.value;
             }
 
-            if (file && answer.type === "Document Type" && answer.value === "file_attached") {
+            if (answer.type === "Document Type" && answer.value === "file_attached" && fieldIdToFileMap[field_id]) {
+                const file = fieldIdToFileMap[field_id];
                 finalAnswer = `/uploads/${file.filename}`;
             }
 

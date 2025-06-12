@@ -1107,15 +1107,17 @@ const PublishedForm = () => {
                                         ...prev,
                                         [field.id]: {
                                             type: field.type,
-                                            value: file.name  // If you want to store full file object: `value: file`
+                                            value: file // ✅ Store actual file object here
                                         }
                                     }));
                                 }
                             }}
                         />
                         {responses[field.id]?.value && (
-                            <small className="text-light mt-1">
-                                Selected: {responses[field.id].value}
+                            <small
+                                className={`mt-1 ${!formAnswersColor ? "text-light" : ""}`}
+                            >
+                                Selected: {responses[field.id].value.name}
                             </small>
                         )}
                     </div>
@@ -1928,7 +1930,6 @@ const PublishedForm = () => {
 
         for (const field of allRequiredFields) {
             const value = responses[field.id];
-
             if (field.type === "Address") {
                 if (
                     !value ||
@@ -1956,12 +1957,16 @@ const PublishedForm = () => {
                 Swal.fire("Missing Field", `Please fill out "${field.label}"`, "warning");
                 return;
             }
+        }
 
-            // ⬇️ Handle file upload field
+        // ✅ Loop again through all fields (not just required)
+        for (const field of fields) {
             if (field.type === "Document Type") {
-                const file = value.value;
+                const value = responses[field.id];
+                const file = value?.value;
+
                 if (file instanceof File) {
-                    formData.append("document", file);
+                    formData.append(`document_${field.id}`, file);
                     updatedResponses[field.id] = {
                         ...value,
                         value: "file_attached"
