@@ -254,7 +254,7 @@ function Login() {
       });
 
       const data = await response.json();
-      debugger
+    
       if (data.message === "OTP sent successfully") {
         showSuccessMessage("OTP has been sent successfully!");
         setShowOTPVerificationSection(true);
