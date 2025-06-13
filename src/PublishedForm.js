@@ -194,6 +194,97 @@ const PublishedForm = () => {
         return match ? match[1] : "";
     };
 
+    useEffect(() => {
+        const saved = localStorage.getItem(`form_page_${pageId}`);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            setResponses(parsed);
+
+            // Optionally update field display values from localStorage too
+            const updatedFields = fields.map(field => {
+                const response = parsed[field.id];
+                if (!response) return field;
+
+                if (field.type === "Multiple Choice") {
+                    const selectedIndex = field.options.findIndex(opt => {
+                        const text = typeof opt === "object" ? opt.option_text : opt;
+                        return text === response.value;
+                    });
+                    return { ...field, selectedOption: selectedIndex };
+                }
+
+                if (field.type === "Date Picker" || field.type === "Time Picker" || field.type === "Date Time Picker") {
+                    return { ...field, default_value: response.value };
+                }
+
+                if (field.type === "Ranking") {
+                    const savedRanking = response.value || []; // ["Option 2", "Option 1"]
+
+                    const reorderedOptions = [];
+                    const seen = new Set();
+
+                    // Step 1: Place saved ranking in order
+                    savedRanking.forEach(text => {
+                        const match = field.options.find(opt => opt.option_text === text);
+                        if (match) {
+                            reorderedOptions.push(match);
+                            seen.add(text);
+                        }
+                    });
+
+                    // Step 2: Add remaining options not in saved data (e.g., new ones)
+                    const remainingOptions = field.options.filter(opt => !seen.has(opt.option_text));
+
+                    return {
+                        ...field,
+                        options: [...reorderedOptions, ...remainingOptions]
+                    };
+                }
+
+                if (field.type === "Choice Matrix") {
+                    const matrixValue = response.value || {};
+                    const selectedMatrix = (field.rows || []).map((rowLabel, rowIdx) => {
+                        let selectedColLabel;
+
+                        // Try matching by row label
+                        if (matrixValue.hasOwnProperty(rowLabel)) {
+                            selectedColLabel = matrixValue[rowLabel];
+                        } else {
+                            // Fallback to index-based match
+                            const matrixValueKeys = Object.keys(matrixValue);
+                            if (matrixValueKeys[rowIdx]) {
+                                selectedColLabel = matrixValue[matrixValueKeys[rowIdx]];
+                            }
+                        }
+
+                        // Try exact match first
+                        let selectedIndex = (field.columns || []).findIndex(col => col === selectedColLabel);
+                        // Case-insensitive fallback
+                        if (selectedIndex === -1 && selectedColLabel) {
+                            selectedIndex = (field.columns || []).findIndex(
+                                col => col?.toLowerCase?.() === selectedColLabel?.toLowerCase?.()
+                            );
+                        }
+                        return selectedIndex >= 0 ? selectedIndex : null;
+                    });
+                    return { ...field, selectedMatrix };
+                }
+
+                if (field.type === "Checkbox") {
+                    return { ...field, default_value: response.value };
+                }
+
+                if (typeof response.value === "string" || typeof response.value === "number") {
+                    return { ...field, default_value: response.value };
+                }
+
+                return field;
+            });
+
+            setFields(updatedFields);
+        }
+    }, [pageId]);
+
     const handleFieldChange = (fieldId, fieldType, newValue) => {
         const updatedResponses = {
             ...responses,
@@ -211,7 +302,7 @@ const PublishedForm = () => {
         const commonProps = {
             className: "form-control",
             placeholder: field.placeholder || "",
-            value: field.default_value || "",
+            value: responses[field.id]?.value ?? field.default_value ?? "",
             style: {
                 width: field.halfWidth ? "50%" : "100%",
                 color: formAnswersColor,
@@ -394,13 +485,13 @@ const PublishedForm = () => {
                             const value = e.target.value;
                             if (/^\d*$/.test(value)) {
                                 const updatedFields = fields.map(f =>
-                                    f.id === field.id ? { ...f, value } : f
+                                    f.id === field.id ? { ...f, default_value: value } : f
                                 );
                                 setFields(updatedFields);
-                                handleFieldChange(field.id, field.type, e.target.value);
+                                handleFieldChange(field.id, field.type, value);
                             }
                         }}
-                        value={field.value || field.default_value || ""}  // Use default_value  if value is not set
+                        value={responses[field.id]?.value ?? ""}  // ✅ fix here
                     />
                 );
             case "Checkbox":
@@ -411,14 +502,11 @@ const PublishedForm = () => {
                             className="form-check-input"
                             id={`checkbox-${field.id}`}
                             name={`checkbox-${field.id}`}
-                            checked={field.default_value === "true"}
+                            checked={responses[field.id]?.value === "true"}
                             onChange={(e) => {
                                 const isChecked = e.target.checked.toString(); // ✅ Get "true"/"false"
-
                                 const updatedFields = fields.map(f =>
-                                    f.id === field.id
-                                        ? { ...f, default_value: isChecked }
-                                        : f
+                                    f.id === field.id ? { ...f, default_value: isChecked } : f
                                 );
                                 setFields(updatedFields);
                                 handleFieldChange(field.id, field.type, isChecked); // ✅ Pass correct value
@@ -483,25 +571,15 @@ const PublishedForm = () => {
                             placeholder={field.placeholder || "Select an option..."}
                             onChange={(selectedOption) => {
                                 const selectedValue = selectedOption ? selectedOption.value : "";
-
-                                const updatedFields = fields.map(f => {
-                                    if (f.id === field.id) {
-                                        return { ...f, value: selectedValue };
-                                    }
-                                    return f;
-                                });
-                                setFields(updatedFields);
-
-                                // 🔹 Call global field change handler for storage
                                 handleFieldChange(field.id, field.type, selectedValue);
                             }}
                             value={
-                                field.value
-                                    ? optionsList.find(opt => opt.value === field.value)
+                                responses[field.id]?.value
+                                    ? optionsList.find(opt => opt.value === responses[field.id].value)
                                     : null
                             }
                             styles={{
-                                control: (base, state) => ({
+                                control: (base) => ({
                                     ...base,
                                     border: `1px solid ${focusedFieldId === field.id ? formPrimaryColor : "rgba(75, 85, 99, 0.2)"}`,
                                     boxShadow: "none",
@@ -546,15 +624,11 @@ const PublishedForm = () => {
                         placeholder={field.placeholder || "Select an option..."}
                         onChange={(selectedOptions) => {
                             const values = selectedOptions.map(opt => opt.value);
-                            const updatedFields = fields.map(f =>
-                                f.id === field.id ? { ...f, value: values } : f
-                            );
-                            setFields(updatedFields);
                             handleFieldChange(field.id, field.type, values);
                         }}
                         value={
-                            field.value
-                                ? field.value.map(val => ({
+                            Array.isArray(responses[field.id]?.value)
+                                ? responses[field.id].value.map(val => ({
                                     value: val,
                                     label: val
                                 }))
@@ -606,6 +680,8 @@ const PublishedForm = () => {
                     />
                 );
             case "Switch":
+                const switchValue = responses[field.id]?.value === "true"; // convert string to boolean
+
                 return (
                     <div className="form-check form-switch">
                         <input
@@ -613,24 +689,13 @@ const PublishedForm = () => {
                             type="checkbox"
                             id={`switch-${field.id}`}
                             name={`switch-${field.id}`}
-                            checked={field.default_value === "true"}
+                            checked={switchValue}
                             onChange={(e) => {
-                                const isChecked = e.target.checked;
-                                const valueAsString = isChecked.toString(); // "true" or "false"
-
-                                // 🔹 Update field default_value
-                                const updatedFields = fields.map(f =>
-                                    f.id === field.id
-                                        ? { ...f, default_value: valueAsString }
-                                        : f
-                                );
-                                setFields(updatedFields);
-
-                                // 🔹 Use global change handler for saving
-                                handleFieldChange(field.id, field.type, valueAsString);
+                                const isChecked = e.target.checked.toString(); // "true" or "false"
+                                handleFieldChange(field.id, field.type, isChecked);
                             }}
                             style={{
-                                backgroundColor: field.default_value === "true" ? formPrimaryColor : "",
+                                backgroundColor: switchValue ? formPrimaryColor : "",
                                 borderColor: formPrimaryColor,
                                 boxShadow: "none",
                             }}
@@ -663,7 +728,10 @@ const PublishedForm = () => {
                                         className="form-check-input"
                                         name={`field_${field.id}`}
                                         id={`bubble-radio-${field.id}-${idx}`}
-                                        checked={field.selectedOption === idx}
+                                        checked={
+                                            responses[field.id]?.value ===
+                                            (typeof opt === "object" ? opt.option_text : opt)
+                                        }
                                         onChange={() => {
                                             const updatedFields = fields.map(f =>
                                                 f.id === field.id ? { ...f, selectedOption: idx } : f
@@ -738,7 +806,10 @@ const PublishedForm = () => {
                                         className="form-check-input"
                                         name={`field_${field.id}`}
                                         id={`standard-radio-${field.id}-${idx}`}
-                                        checked={field.selectedOption === idx}
+                                        checked={
+                                            responses[field.id]?.value ===
+                                            (typeof opt === "object" ? opt.option_text : opt)
+                                        }
                                         onChange={() => {
                                             const updatedFields = fields.map(f =>
                                                 f.id === field.id ? { ...f, selectedOption: idx } : f
@@ -935,8 +1006,19 @@ const PublishedForm = () => {
                 return (
                     <input
                         type="date"
-                        {...commonProps}
-                        value={field.default_value || ""}
+                        className="form-control"
+                        value={responses[field.id]?.value ?? field.default_value ?? ""}
+                        style={{
+                            width: field.halfWidth ? "50%" : "100%",
+                            color: formAnswersColor,
+                            backgroundColor: inputfieldBgColor,
+                            boxShadow: "none",
+                            border: `1px solid ${focusedFieldId === field.id ? formPrimaryColor : "rgba(75, 85, 99, 0.2)"}`,
+                            fontFamily: selectedFont,
+                            fontSize: field.font_size || "16px",
+                        }}
+                        onFocus={() => setFocusedFieldId(field.id)}
+                        onBlur={() => setFocusedFieldId(null)}
                         onChange={(e) => {
                             const updatedFields = fields.map(f =>
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
@@ -951,7 +1033,7 @@ const PublishedForm = () => {
                     <input
                         type="time"
                         {...commonProps}
-                        value={field.default_value || ""}
+                        value={responses[field.id]?.value ?? field.default_value ?? ""}
                         onChange={(e) => {
                             const updatedFields = fields.map(f =>
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
@@ -966,7 +1048,7 @@ const PublishedForm = () => {
                     <input
                         type="datetime-local"
                         {...commonProps}
-                        value={field.default_value || ""}
+                        value={responses[field.id]?.value ?? field.default_value ?? ""}
                         onChange={(e) => {
                             const updatedFields = fields.map(f =>
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
@@ -1090,13 +1172,11 @@ const PublishedForm = () => {
                                 result.destination.index
                             );
 
-                            // Update fields state
                             const updatedFields = fields.map(f =>
                                 f.id === field.id ? { ...f, options: reordered } : f
                             );
                             setFields(updatedFields);
 
-                            // Update responses + localStorage
                             const rankedValues = reordered.map(opt => opt.option_text);
                             handleFieldChange(field.id, field.type, rankedValues);
                         }}
@@ -1111,8 +1191,8 @@ const PublishedForm = () => {
                                     >
                                         {field.options.map((opt, idx) => (
                                             <Draggable
-                                                key={idx}
-                                                draggableId={`ranking-${field.id}-option-${idx}`}
+                                                key={`rank-${field.id}-opt-${idx}`}
+                                                draggableId={`rank-${field.id}-opt-${idx}`}
                                                 index={idx}
                                             >
                                                 {(provided) => (
@@ -1126,28 +1206,18 @@ const PublishedForm = () => {
                                                             border: "1px solid #ddd",
                                                             borderRadius: "5px",
                                                             marginBottom: "6px",
-                                                            ...provided.draggableProps.style
+                                                            ...provided.draggableProps.style,
                                                         }}
                                                     >
-                                                        {/* Ranking number */}
+                                                        {/* Rank number */}
                                                         <span style={{ width: "20px", textAlign: "center" }}>{idx + 1}</span>
 
-                                                        {/* Editable input for option text */}
+                                                        {/* Option text (read-only during fill mode) */}
                                                         <input
                                                             type="text"
                                                             {...commonProps}
                                                             value={opt.option_text}
-                                                            onChange={(e) => {
-                                                                const updatedOptions = [...field.options];
-                                                                updatedOptions[idx] = { option_text: e.target.value };
-
-                                                                const updatedFields = fields.map(f =>
-                                                                    f.id === field.id ? { ...f, options: updatedOptions } : f
-                                                                );
-                                                                setFields(updatedFields);
-                                                            }}
-                                                            onFocus={() => setFocusedOptionId(idx)}
-                                                            onBlur={() => setFocusedOptionId(null)}
+                                                            readOnly // Make editable only in edit mode
                                                             style={{
                                                                 flex: 1,
                                                                 width: field.halfWidth ? "50%" : "100%",
@@ -1156,8 +1226,9 @@ const PublishedForm = () => {
                                                                 boxShadow: "none",
                                                                 border: `1px solid ${focusedOptionId === idx
                                                                     ? formPrimaryColor
-                                                                    : "rgba(75, 85, 99, 0.2)"}`,
-                                                                fontFamily: selectedFont
+                                                                    : "rgba(75, 85, 99, 0.2)"
+                                                                    }`,
+                                                                fontFamily: selectedFont,
                                                             }}
                                                         />
 
@@ -1265,6 +1336,8 @@ const PublishedForm = () => {
                     </div>
                 );
             case "Opinion Scale":
+                const selectedValue = responses[field.id]?.value ?? field.value ?? field.default_value ?? null;
+
                 return (
                     <div
                         style={{
@@ -1281,7 +1354,7 @@ const PublishedForm = () => {
                                     <input
                                         type="radio"
                                         name={`opinion_${field.id}`}
-                                        checked={field.value === val}
+                                        checked={selectedValue === val}
                                         onChange={() => {
                                             const updatedFields = fields.map(f =>
                                                 f.id === field.id ? { ...f, value: val } : f
@@ -1371,24 +1444,34 @@ const PublishedForm = () => {
                     </div>
                 );
             case "Picture":
+                const selectedPicValue = responses[field.id]?.value ?? (
+                    typeof field.selectedOption === "number" && field.options?.[field.selectedOption]
+                        ? field.options[field.selectedOption]?.option_text
+                        : ""
+                );
+
+                const selectedPicIndex = field.options.findIndex(opt =>
+                    (typeof opt === "object" ? opt.option_text : opt) === selectedPicValue
+                );
+
                 return (
                     <div>
                         <div
                             style={{
                                 display: "grid",
                                 gridTemplateColumns: "repeat(3, 1fr)",
-                                gap: "12px"
+                                gap: "12px",
                             }}
                         >
                             {field.options.map((opt, idx) => (
                                 <div
-                                    key={opt.id}
+                                    key={opt.id || idx}
                                     style={{
                                         border: "1px solid #ddd",
                                         borderRadius: "8px",
                                         padding: "8px",
                                         position: "relative",
-                                        fontFamily: selectedFont
+                                        fontFamily: selectedFont,
                                     }}
                                     onMouseEnter={() => setHoveredOption(idx)}
                                     onMouseLeave={() => setHoveredOption(null)}
@@ -1397,44 +1480,51 @@ const PublishedForm = () => {
                                         style={{
                                             width: "100%",
                                             height: "100px",
-                                            backgroundColor: opt.image_path ? "transparent" : pictureBgColors[idx % pictureBgColors.length],
+                                            backgroundColor: opt.image_path
+                                                ? "transparent"
+                                                : pictureBgColors[idx % pictureBgColors.length],
                                             backgroundImage: opt.image_path
                                                 ? opt.image_path.startsWith("data:")
-                                                    ? `url(${opt.image_path})` // It's a base64 image from modal
-                                                    : `url(${API_BASE}/${opt.image_path.replace(/\\/g, "/")})` // It's a saved image from DB
+                                                    ? `url(${opt.image_path})`
+                                                    : `url(${API_BASE}/${opt.image_path.replace(/\\/g, "/")})`
                                                 : undefined,
                                             backgroundSize: "cover",
                                             backgroundPosition: "center",
                                             borderRadius: "4px",
                                             display: "flex",
                                             alignItems: "center",
-                                            justifyContent: "center"
+                                            justifyContent: "center",
                                         }}
-                                    >
-                                    </div>
+                                    ></div>
+
                                     <div style={{ textAlign: "center", marginTop: "8px" }}>
                                         <input
                                             type="radio"
                                             className="form-check-input"
                                             name={`pic_${field.id}`}
-                                            id={`bubble-radio-${field.id}-${idx}`}
-                                            checked={field.selectedOption === idx}
+                                            id={`pic-radio-${field.id}-${idx}`}
+                                            checked={selectedPicIndex === idx}
                                             onChange={() => {
                                                 const updatedFields = fields.map(f =>
-                                                    f.id === field.id ? { ...f, selectedOption: idx } : f
+                                                    f.id === field.id
+                                                        ? { ...f, selectedOption: idx }
+                                                        : f
                                                 );
                                                 setFields(updatedFields);
 
-                                                handleFieldChange(field.id, field.type, opt.option_text);
+                                                const optionText = typeof opt === "object" ? opt.option_text : opt;
+                                                handleFieldChange(field.id, field.type, optionText);
                                             }}
                                             style={{
                                                 marginRight: "8px",
                                                 boxShadow: "none",
-                                                borderColor: field.selectedOption === idx ? formPrimaryColor : "#ccc",
-                                                backgroundColor: field.selectedOption === idx ? formPrimaryColor : "transparent",
+                                                borderColor: selectedPicIndex === idx ? formPrimaryColor : "#ccc",
+                                                backgroundColor: selectedPicIndex === idx ? formPrimaryColor : "transparent",
                                             }}
                                         />
-                                        <span style={{ marginLeft: "6px", color: formAnswersColor }}>{opt.option_text}</span>
+                                        <span style={{ marginLeft: "6px", color: formAnswersColor }}>
+                                            {opt.option_text}
+                                        </span>
                                     </div>
                                 </div>
                             ))}
