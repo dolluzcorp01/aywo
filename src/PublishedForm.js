@@ -37,6 +37,8 @@ const PublishedForm = () => {
     const formId = match ? match[1] : null;
     const pageId = match ? match[2] : null;
 
+    const [formLoaded, setFormLoaded] = useState(false);
+
     useEffect(() => {
         const fetchPublishedForm = async () => {
             try {
@@ -84,7 +86,7 @@ const PublishedForm = () => {
                             required: normalizedRequired,
                             rows,
                             columns,
-                            selectedMatrix: [] // you can later load actual values if stored
+                            selectedMatrix: []
                         };
                     }
 
@@ -113,6 +115,7 @@ const PublishedForm = () => {
                 });
 
                 setFields(processedFields);
+                setFormLoaded(true);
 
             } catch (error) {
                 Swal.fire("Error", "Form not found or unpublished.", "error");
@@ -195,7 +198,9 @@ const PublishedForm = () => {
     };
 
     useEffect(() => {
-        const saved = localStorage.getItem(`form_page_${pageId}`);
+        if (!formLoaded) return;
+
+        const saved = localStorage.getItem(`form_${formId}_page_${pageId}`);
         if (saved) {
             const parsed = JSON.parse(saved);
             setResponses(parsed);
@@ -218,23 +223,30 @@ const PublishedForm = () => {
                 }
 
                 if (field.type === "Ranking") {
-                    const savedRanking = response.value || []; // ["Option 2", "Option 1"]
+                    const savedRanking = response.value || []; // ["Option 2", "Option 1", "Option 3"]
 
                     const reorderedOptions = [];
                     const seen = new Set();
 
                     // Step 1: Place saved ranking in order
                     savedRanking.forEach(text => {
-                        const match = field.options.find(opt => opt.option_text === text);
+                        const match = field.options.find(opt => {
+                            const label = typeof opt === "object" ? opt.option_text : opt;
+                            return label === text;
+                        });
+
                         if (match) {
                             reorderedOptions.push(match);
                             seen.add(text);
                         }
                     });
 
-                    // Step 2: Add remaining options not in saved data (e.g., new ones)
-                    const remainingOptions = field.options.filter(opt => !seen.has(opt.option_text));
-
+                    // Step 2: Add remaining options not in saved data (e.g., newly added ones)
+                    const remainingOptions = field.options.filter(opt => {
+                        const label = typeof opt === "object" ? opt.option_text : opt;
+                        return !seen.has(label);
+                    });
+                    debugger
                     return {
                         ...field,
                         options: [...reorderedOptions, ...remainingOptions]
@@ -243,30 +255,21 @@ const PublishedForm = () => {
 
                 if (field.type === "Choice Matrix") {
                     const matrixValue = response.value || {};
-                    const selectedMatrix = (field.rows || []).map((rowLabel, rowIdx) => {
-                        let selectedColLabel;
 
-                        // Try matching by row label
-                        if (matrixValue.hasOwnProperty(rowLabel)) {
-                            selectedColLabel = matrixValue[rowLabel];
-                        } else {
-                            // Fallback to index-based match
-                            const matrixValueKeys = Object.keys(matrixValue);
-                            if (matrixValueKeys[rowIdx]) {
-                                selectedColLabel = matrixValue[matrixValueKeys[rowIdx]];
-                            }
-                        }
+                    const getText = (val) => typeof val === "object" ? val.option_text : val;
 
-                        // Try exact match first
-                        let selectedIndex = (field.columns || []).findIndex(col => col === selectedColLabel);
-                        // Case-insensitive fallback
-                        if (selectedIndex === -1 && selectedColLabel) {
-                            selectedIndex = (field.columns || []).findIndex(
-                                col => col?.toLowerCase?.() === selectedColLabel?.toLowerCase?.()
-                            );
-                        }
-                        return selectedIndex >= 0 ? selectedIndex : null;
+                    const selectedMatrix = (field.rows || []).map((rowItem) => {
+                        const rowLabel = getText(rowItem).trim().toLowerCase();
+
+                        const selectedColLabel = matrixValue[rowLabel];
+                        const colIndex = (field.columns || []).findIndex(col => {
+                            const colLabel = getText(col).trim().toLowerCase();
+                            return colLabel === (selectedColLabel || "").trim().toLowerCase();
+                        });
+
+                        return colIndex >= 0 ? colIndex : null;
                     });
+
                     return { ...field, selectedMatrix };
                 }
 
@@ -283,7 +286,7 @@ const PublishedForm = () => {
 
             setFields(updatedFields);
         }
-    }, [pageId]);
+    }, [formLoaded]);
 
     const handleFieldChange = (fieldId, fieldType, newValue) => {
         const updatedResponses = {
@@ -295,7 +298,7 @@ const PublishedForm = () => {
         };
 
         setResponses(updatedResponses);
-        localStorage.setItem(`form_page_${pageId}`, JSON.stringify(updatedResponses));
+        localStorage.setItem(`form_${formId}_page_${pageId}`, JSON.stringify(updatedResponses));
     };
 
     const renderField = (field) => {
@@ -970,6 +973,11 @@ const PublishedForm = () => {
                                                     value={col}
                                                     checked={field.selectedMatrix?.[rowIdx] === colIdx}
                                                     onChange={() => {
+                                                        console.log("🔘 Radio changed:");
+                                                        console.log("Row label:", row);
+                                                        console.log("Col label:", col);
+                                                        console.log("colIdx:", colIdx);
+
                                                         const updatedFields = fields.map(f => {
                                                             if (f.id === field.id) {
                                                                 const newMatrix = [...(f.selectedMatrix || [])];
@@ -978,11 +986,15 @@ const PublishedForm = () => {
                                                             }
                                                             return f;
                                                         });
+
                                                         setFields(updatedFields);
+
                                                         const updatedMatrixValue = {
                                                             ...(responses[field.id]?.value || {}),
-                                                            [row]: col
+                                                            [row.trim().toLowerCase()]: (typeof col === "object" ? col.option_text : col).trim().toLowerCase()
                                                         };
+
+                                                        console.log("⬆️ Saving updatedMatrixValue:", updatedMatrixValue);
 
                                                         handleFieldChange(field.id, field.type, updatedMatrixValue);
                                                     }}
@@ -1191,8 +1203,8 @@ const PublishedForm = () => {
                                     >
                                         {field.options.map((opt, idx) => (
                                             <Draggable
-                                                key={`rank-${field.id}-opt-${idx}`}
-                                                draggableId={`rank-${field.id}-opt-${idx}`}
+                                                key={`rank-${field.id}-opt-${opt.id}`}
+                                                draggableId={`rank-${field.id}-opt-${opt.id}`}
                                                 index={idx}
                                             >
                                                 {(provided) => (
