@@ -235,7 +235,7 @@ const FormBuilder = () => {
                             required: normalizedRequired,
                             rows: rows,
                             columns: columns,
-                            selectedMatrix: []  // or load from backend if stored
+                            selectedMatrix: []  
                         };
                     }
 
