@@ -246,7 +246,7 @@ const PublishedForm = () => {
                         const label = typeof opt === "object" ? opt.option_text : opt;
                         return !seen.has(label);
                     });
-                    debugger
+                    
                     return {
                         ...field,
                         options: [...reorderedOptions, ...remainingOptions]

@@ -35,7 +35,6 @@ const Responses = () => {
     }, []);
 
     useEffect(() => {
-        debugger
         apiFetch(`/api/responses/get-responses/${formId}`, {
             method: "GET",
             credentials: "include",
