@@ -848,7 +848,6 @@ router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res
             WHERE form_id = ? AND page_id = ? AND fields_version = (
                 SELECT MAX(fields_version) FROM dform_fields WHERE form_id = ? AND page_id = ?
             )
-            ORDER BY sort_order ASC
         `;
         const fields = await queryPromise(db, fieldsQuery, [formId, pageId, formId, pageId]);
 
@@ -900,7 +899,7 @@ router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res
                 };
             })
         );
-        
+
         console.log("📤 Sending Form + Fields to frontend:", enrichedFields); // ✅ Backend log
 
         // 5. Return response
