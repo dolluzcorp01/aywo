@@ -315,13 +315,13 @@ const Form_builder_header = () => {
             <div className="form_builder_header-center">
                 <span
                     className={`center-nav-btn ${window.location.pathname.includes("form-builder") ? "active" : ""}`}
-                    onClick={() => navigate(`/form-builder/${formId}`)}
+                    onClick={() => navigate(`/form-builder/${formId}/page-${form.page_id}`)}
                 >
                     Edit
                 </span>
                 <span
                     className={`center-nav-btn ${window.location.pathname.includes("share") ? "active" : ""}`}
-                    onClick={() => navigate(`/share/${formId}`)}
+                    onClick={() => navigate(`/share/${formId}/page-${form.page_id}`)}
                 >
                     Share
                 </span>
