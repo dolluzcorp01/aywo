@@ -900,8 +900,6 @@ router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res
             })
         );
 
-        console.log("📤 Sending Form + Fields to frontend:", enrichedFields); // ✅ Backend log
-
         // 5. Return response
         res.json({
             ...form,

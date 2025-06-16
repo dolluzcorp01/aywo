@@ -45,7 +45,7 @@ router.post("/submit-form", upload.any(), async (req, res) => {
 
     const file = req.file;
     if (!form_id || !responses || Object.keys(responses).length === 0) {
-        return res.status(400).json({ error: "Form ID and responses are required." });
+        return res.status(400).json({ error: "Responses are required." });
     }
 
     let connection;
@@ -82,9 +82,7 @@ router.post("/submit-form", upload.any(), async (req, res) => {
 
             if (answer.type === "Choice Matrix" && typeof answer.value === "object" && !Array.isArray(answer.value)) {
                 finalAnswer = JSON.stringify(answer.value); // 👈 Convert object to JSON string
-            } else if (answer.type === "Address" && typeof answer.value === "object") {
-                finalAnswer = JSON.stringify(answer.value);
-            } else if (Array.isArray(answer.value)) {
+            } else if (typeof answer.value === "object") {
                 finalAnswer = JSON.stringify(answer.value);
             } else {
                 finalAnswer = answer.value;
@@ -140,7 +138,7 @@ router.get("/get-published-form/:formId/:pageId", async (req, res) => {
         const pageQuery = "SELECT * FROM dform_pages WHERE form_id = ? AND page_number = ?";
         const [page] = await queryPromise(db, pageQuery, [formId, pageId]);
 
-        if (!page) {
+        if (!page && pageId !== "end") {
             return res.status(404).json({ error: "Page not found" });
         }
 
@@ -164,6 +162,7 @@ router.get("/get-published-form/:formId/:pageId", async (req, res) => {
             matrix = await queryPromise(db, `SELECT * FROM dfield_matrix WHERE field_id IN (${fieldIds.join(",")})`);
             defaults = await queryPromise(db, `SELECT * FROM dfield_default_values WHERE form_id = ?`, [formId]);
             uploads = await queryPromise(db, `SELECT * FROM dfield_file_uploads WHERE form_id = ?`, [formId]);
+            thankyou = await queryPromise(db, `SELECT * FROM dform_thankyou WHERE field_id IN (${fieldIds.join(",")}) AND form_id = ? LIMIT 1`, [formId]);
         }
 
         const fieldsWithDetails = fields.map(field => ({
@@ -171,7 +170,8 @@ router.get("/get-published-form/:formId/:pageId", async (req, res) => {
             options: options.filter(opt => opt.field_id === field.id),
             matrix: matrix.filter(m => m.field_id === field.id),
             default_value: defaults.find(def => def.field_id === field.id)?.field_value || null,
-            uploads: uploads.filter(u => u.field_id === field.id)
+            uploads: uploads.filter(u => u.field_id === field.id),
+            thankyou: thankyou.find(t => t.field_id === field.id) || null
         }));
 
         res.json({

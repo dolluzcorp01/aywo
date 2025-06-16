@@ -185,8 +185,6 @@ const FormBuilder = () => {
 
             const data = await response.json();
 
-            console.log("📦 FormData content:", data);
-
             // Set background image if available
             if (data.background_image) {
                 setFormbgImage(`${API_BASE}/${data.background_image.replace(/\\/g, "/")}`);
@@ -235,7 +233,7 @@ const FormBuilder = () => {
                             required: normalizedRequired,
                             rows: rows,
                             columns: columns,
-                            selectedMatrix: []  
+                            selectedMatrix: []
                         };
                     }
 
@@ -1974,6 +1972,7 @@ const FormBuilder = () => {
                             gridTemplateColumns: "repeat(auto-fill, minmax(40px, 1fr))",
                             gap: "8px",
                             maxWidth: "640px",
+                            color: formQuestionColor
                         }}
                     >
                         {[...Array((field?.max_value ?? 10) - (field?.min_value ?? 1) + 1)].map((_, i) => {

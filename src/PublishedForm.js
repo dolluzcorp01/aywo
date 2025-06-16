@@ -246,7 +246,7 @@ const PublishedForm = () => {
                         const label = typeof opt === "object" ? opt.option_text : opt;
                         return !seen.has(label);
                     });
-                    
+
                     return {
                         ...field,
                         options: [...reorderedOptions, ...remainingOptions]
@@ -1166,7 +1166,7 @@ const PublishedForm = () => {
                         />
 
                         {responses[field.id]?.value && (
-                            <small className={`mt-1 ${!formAnswersColor ? "text-light" : ""}`}>
+                            <small className={`mt-1`} style={{ color: formQuestionColor }}>
                                 Selected: {responses[field.id].value.name}
                             </small>
                         )}
@@ -1357,6 +1357,7 @@ const PublishedForm = () => {
                             gridTemplateColumns: "repeat(auto-fill, minmax(40px, 1fr))",
                             gap: "8px",
                             maxWidth: "640px",
+                            color: formQuestionColor
                         }}
                     >
                         {[...Array((field?.max_value ?? 10) - (field?.min_value ?? 1) + 1)].map((_, i) => {
@@ -1924,12 +1925,19 @@ const PublishedForm = () => {
             if (res.ok) {
                 Swal.fire("Form Submitted", "Your form has been submitted successfully!", "success");
                 Object.keys(localStorage).forEach((key) => {
-                    if (key.startsWith("form_page_")) {
+                    if (key.startsWith("form_")) {
                         localStorage.removeItem(key);
                     }
                 });
-
                 setResponses({});
+
+                // 🔁 Redirect to end page
+                const currentPath = window.location.pathname; // e.g. /forms/form-1/page-1
+                const formMatch = currentPath.match(/\/forms\/(form-\d+)\//); // extract "form-1"
+                if (formMatch && formMatch[1]) {
+                    const formId = formMatch[1];
+                    window.location.href = `/forms/${formId}/page-end`;
+                }
             } else {
                 Swal.fire("Error", data.error || "Submission failed.", "error");
             }
