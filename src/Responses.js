@@ -70,6 +70,7 @@ const Responses = () => {
                                 if (!answer) return "-";
 
                                 if (answer.filePath) {
+                                    debugger
                                     // ✅ Make file name clickable
                                     return `<a href="/${answer.filePath.replace(/^\/?uploads\//, 'uploads/')}" target="_blank">${answer.answer}</a>`;
                                 }

@@ -1146,7 +1146,7 @@ const PublishedForm = () => {
                                         return;
                                     }
 
-                                    // Store file object in memory (state), and meta info in localStorage
+                                    // ❗ Save only to in-memory state
                                     setResponses(prev => ({
                                         ...prev,
                                         [field.id]: {
@@ -1155,18 +1155,27 @@ const PublishedForm = () => {
                                         }
                                     }));
 
-                                    // Save filename to localStorage (files cannot be saved directly)
-                                    handleFieldChange(field.id, field.type, {
+                                    // ✅ Save minimal metadata in localStorage
+                                    const localCopy = {
                                         name: file.name,
                                         type: file.type,
                                         size: file.size
-                                    });
+                                    };
+
+                                    const existing = JSON.parse(localStorage.getItem(`form_${formId}_page_${pageId}`) || '{}');
+                                    localStorage.setItem(`form_${formId}_page_${pageId}`, JSON.stringify({
+                                        ...existing,
+                                        [field.id]: {
+                                            type: field.type,
+                                            value: localCopy
+                                        }
+                                    }));
                                 }
                             }}
                         />
 
                         {responses[field.id]?.value && (
-                            <small className={`mt-1`} style={{ color: formQuestionColor }}>
+                            <small className="mt-1" style={{ color: formQuestionColor }}>
                                 Selected: {responses[field.id].value.name}
                             </small>
                         )}

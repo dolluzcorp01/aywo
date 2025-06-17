@@ -66,12 +66,14 @@ router.post("/submit-form", upload.any(), async (req, res) => {
 
 
         const files = req.files || [];
+        console.log("Uploaded files:", files); // ✅ Debug this
+
         const fieldIdToFileMap = {};
 
         files.forEach(file => {
-            const match = file.fieldname.match(/^document_(\d+)$/); // Match document_1718
+            const match = file.fieldname.match(/^document_(\d+)$/);
             if (match) {
-                const fieldId = match[1];
+                const fieldId = String(match[1]); // ensure it's string
                 fieldIdToFileMap[fieldId] = file;
             }
         });
@@ -88,7 +90,7 @@ router.post("/submit-form", upload.any(), async (req, res) => {
                 finalAnswer = answer.value;
             }
 
-            if (answer.type === "Document Type" && answer.value === "file_attached" && fieldIdToFileMap[field_id]) {
+            if (answer.type === "Document Type" && fieldIdToFileMap[field_id]) {
                 const file = fieldIdToFileMap[field_id];
                 finalAnswer = `/uploads/${file.filename}`;
             }
