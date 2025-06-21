@@ -47,7 +47,7 @@ const Responses = () => {
             })
             .then((data) => {
                 setResponses(data);
-
+                console.log("Fetched responses:", data);
                 if (data.length > 0) {
                     const uniqueFields = new Set();
                     data.forEach((response) => {
@@ -70,14 +70,37 @@ const Responses = () => {
                                 if (!answer) return "-";
 
                                 if (answer.filePath) {
-                                    debugger
-                                    // ✅ Make file name clickable
                                     return `<a href="/${answer.filePath.replace(/^\/?uploads\//, 'uploads/')}" target="_blank">${answer.answer}</a>`;
                                 }
 
-                                return answer.answer;
+                                let value = answer.answer;
+
+                                try {
+                                    const parsed = JSON.parse(value);
+
+                                    if (Array.isArray(parsed)) {
+                                        value = parsed.map(item => `<div style="white-space: nowrap;">${item}</div>`).join("");
+                                    } else if (typeof parsed === "object" && parsed !== null) {
+                                        value = Object.entries(parsed)
+                                            .map(([k, v]) => `<div style="white-space: nowrap;">${k}: ${v}</div>`)
+                                            .join("");
+                                    }
+                                } catch (e) {
+                                    value = value.replace(/,\s*/g, "<br>");
+                                }
+
+                                const isPlainDate = /^\d{4}-\d{2}-\d{2}$/.test(value);
+                                const isDateTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value);
+                                const isTimeOnly = /^\d{2}:\d{2}$/.test(value);
+
+                                if (isPlainDate || isDateTime || isTimeOnly) {
+                                    return `<div style="white-space: nowrap;">${value}</div>`;
+                                }
+
+                                return `<div style="white-space: normal;">${value}</div>`;
+
                             },
-                        })),
+                        }))
                     ];
 
                     setColumns(dynamicColumns);
@@ -167,29 +190,31 @@ const Responses = () => {
 
     return (
         <div className="responses-container">
-            <h2>Responses for Form {formId}</h2>
-            <div className="export-dropdown" ref={dropdownRef}>
-                <button className="export-btn" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                    Export <i className="fa-solid fa-caret-down" style={{ marginLeft: "2px", fontSize: "1.1rem" }}></i>
-                </button>
-                {dropdownOpen && (
-                    <div className="dropdown-menu">
-                        <button onClick={exportToExcel}>Excel</button>
-                        <button onClick={exportToPDF}>PDF</button>
-                    </div>
-                )}
-            </div>
+            <div style={{ marginTop: "20px" }}>
+                <h2>Responses for Form {formId}</h2>
+                <div className="export-dropdown" ref={dropdownRef}>
+                    <button className="export-btn" onClick={() => setDropdownOpen(!dropdownOpen)}>
+                        Export <i className="fa-solid fa-caret-down" style={{ marginLeft: "2px", fontSize: "1.1rem" }}></i>
+                    </button>
+                    {dropdownOpen && (
+                        <div className="dropdown-menu">
+                            <button onClick={exportToExcel}>Excel</button>
+                            <button onClick={exportToPDF}>PDF</button>
+                        </div>
+                    )}
+                </div>
 
-            <table ref={tableRef} className="display" style={{ width: "100%" }}>
-                <thead>
-                    <tr>
-                        {columns.map((col, index) => (
-                            <th key={index}>{col.title}</th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+                <table ref={tableRef} className="display" style={{ width: "100%" }}>
+                    <thead>
+                        <tr>
+                            {columns.map((col, index) => (
+                                <th key={index}>{col.title}</th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     );
 };
