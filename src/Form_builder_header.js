@@ -80,7 +80,6 @@ const Form_builder_header = () => {
 
     useEffect(() => {
         let isMounted = true;
-
         if (formId) {
             apiFetch(`/api/form_builder/get-forms?formId=${formId}`, {
                 method: "GET",
@@ -109,6 +108,7 @@ const Form_builder_header = () => {
                 .then((data) => {
                     if (isMounted) {
                         setForm(data);
+                        console.log("Form data to test page id:", data);
                     }
                 })
                 .catch((error) => {
@@ -313,24 +313,43 @@ const Form_builder_header = () => {
             </div>
 
             <div className="form_builder_header-center">
-                <span
-                    className={`center-nav-btn ${window.location.pathname.includes("form-builder") ? "active" : ""}`}
-                    onClick={() => navigate(`/form-builder/${formId}/page-${form.page_id}`)}
-                >
-                    Edit
-                </span>
-                <span
-                    className={`center-nav-btn ${window.location.pathname.includes("share") ? "active" : ""}`}
-                    onClick={() => navigate(`/share/${formId}/page-${form.page_id}`)}
-                >
-                    Share
-                </span>
-                <span
-                    className={`center-nav-btn ${window.location.pathname.includes("responses") ? "active" : ""}`}
-                    onClick={() => navigate(`/responses/${formId}`)}
-                >
-                    Results
-                </span>
+                {window.location.pathname.includes("preview") ? (
+                    <div className="device-toggle">
+                        <span
+                            className={`center-nav-btn ${window.location.pathname.includes("device-desktop") ? "active" : ""}`}
+                            onClick={() => navigate(`/preview/form-${formId.replace(/^form-/, '')}/page-${form.page_id}/device-desktop`)}
+                        >
+                            Desktop
+                        </span>
+                        <span
+                            className={`center-nav-btn ${window.location.pathname.includes("device-mobile") ? "active" : ""}`}
+                            onClick={() => navigate(`/preview/form-${formId.replace(/^form-/, '')}/page-${form.page_id}/device-mobile`)}
+                        >
+                            Mobile
+                        </span>
+                    </div>
+                ) : (
+                    <>
+                        <span
+                            className={`center-nav-btn ${window.location.pathname.includes("form-builder") ? "active" : ""}`}
+                            onClick={() => navigate(`/form-builder/${formId}/page-${form.page_id}`)}
+                        >
+                            Edit
+                        </span>
+                        <span
+                            className={`center-nav-btn ${window.location.pathname.includes("share") ? "active" : ""}`}
+                            onClick={() => navigate(`/share/${formId}/page-${form.page_id}`)}
+                        >
+                            Share
+                        </span>
+                        <span
+                            className={`center-nav-btn ${window.location.pathname.includes("responses") ? "active" : ""}`}
+                            onClick={() => navigate(`/responses/${formId}`)}
+                        >
+                            Results
+                        </span>
+                    </>
+                )}
             </div>
 
             <div className="form_builder_header-right">
@@ -362,11 +381,17 @@ const Form_builder_header = () => {
                             <button className="form_builder_header-clock-btn" style={{ marginLeft: "-5px" }}>
                                 <i className="fa-regular fa-clock"></i>
                             </button>
-                            <button className="form_builder_header-preview-btn">Preview</button>
+                            <button className="form_builder_header-preview-btn" onClick={() => navigate(`/preview/${formId}/page-${form.page_id}/device-desktop`)}>Preview</button>
                             <button className="form_builder_header-publish-btn" onClick={() => publishForm()}>
                                 Publish <i className="fa-solid fa-bolt"></i>
                             </button>
                         </>
+                    )}
+
+                    {window.location.pathname.includes("preview") && (
+                        <button className="form_builder_header-publish-btn" style={{ fontSize: "0.9rem", fontWeight: "500" }} onClick={() => navigate(`/form-builder/${formId}/page-${form.page_id}`)}>
+                            <i class="fa-solid fa-xmark"></i> Exit preview
+                        </button>
                     )}
 
                     {window.location.pathname.includes("responses") && (

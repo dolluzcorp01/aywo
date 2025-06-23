@@ -7,6 +7,7 @@ import FormBuilder from "./Form_builder";
 import FormBuilderLayout from "./FormBuilderLayout";
 import PublishedForm from "./PublishedForm";
 import Responses from "./Responses";
+import Preview from "./Preview";
 
 function App() {
   return (
@@ -51,6 +52,16 @@ function App() {
         element={
           <FormBuilderLayout>
             <Responses />
+          </FormBuilderLayout>
+        }
+      />
+
+      {/* ✅ Preview route */}
+      <Route
+        path="/preview/:formId/:pageId/:device"
+        element={
+          <FormBuilderLayout>
+            <Preview />
           </FormBuilderLayout>
         }
       />

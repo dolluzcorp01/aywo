@@ -5,9 +5,9 @@ import Swal from "sweetalert2";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import Select from 'react-select';
 import { FaStar } from "react-icons/fa";
-import "./PublishedForm.css";
+import "./Preview.css";
 
-const PublishedForm = () => {
+const Preview = () => {
     const [form, setForm] = useState(null);
     const [formPages, setFormPages] = useState([]);
     const [fields, setFields] = useState([]);
@@ -31,9 +31,11 @@ const PublishedForm = () => {
     const pictureBgColors = ["#ffb3ba", "#bae1ff", "#baffc9", "#ffffba", "#e3baff", "#ffdfba"];
     const [formbgImage, setFormbgImage] = useState(null);
 
-    const match = location.pathname.match(/\/forms\/form-(\d+)\/page-(\w+)/);
+    const match = location.pathname.match(/\/preview\/form-(\d+)\/page-(\d+)\/device-(\w+)/);
+
     const formId = match ? match[1] : null;
     const pageId = match ? match[2] : null;
+    const device = match ? match[3] : null;
 
     const [formLoaded, setFormLoaded] = useState(false);
 
@@ -287,16 +289,7 @@ const PublishedForm = () => {
     }, [formLoaded]);
 
     const handleFieldChange = (fieldId, fieldType, newValue) => {
-        const updatedResponses = {
-            ...responses,
-            [fieldId]: {
-                type: fieldType,
-                value: newValue
-            }
-        };
 
-        setResponses(updatedResponses);
-        localStorage.setItem(`form_${formId}_page_${pageId}`, JSON.stringify(updatedResponses));
     };
 
     const renderField = (field) => {
@@ -1868,128 +1861,10 @@ const PublishedForm = () => {
     };
 
     const handleSubmitForm = async () => {
-        const allRequiredFields = fields.filter(f => f.required);
-        const formData = new FormData();
-        const updatedResponses = { ...responses };
 
-        for (const field of allRequiredFields) {
-            const value = responses[field.id];
-            if (field.type === "Address") {
-                if (
-                    !value ||
-                    !value.value?.address?.trim() ||
-                    !value.value?.city?.trim() ||
-                    !value.value?.state?.trim() ||
-                    !value.value?.zip?.trim()
-                ) {
-                    Swal.fire("Missing Field", `Please fill out all parts of "${field.label}"`, "warning");
-                    return;
-                }
-            } else if (field.type === "Choice Matrix") {
-                const expectedRows = field.rows || [];
-                const answeredRows = value ? Object.keys(value.value || {}) : [];
-                const missingRow = expectedRows.find(row => !answeredRows.includes(row));
-
-                if (missingRow) {
-                    Swal.fire("Missing Field", `Please select an option for "${missingRow}" in "${field.label}"`, "warning");
-                    return;
-                }
-            }
-
-            // Basic required check
-            if (!value || value.value === undefined || value.value === "") {
-                Swal.fire("Missing Field", `Please fill out "${field.label}"`, "warning");
-                return;
-            }
-        }
-
-        // ✅ Loop again through all fields (not just required)
-        for (const field of fields) {
-            if (field.type === "Document Type") {
-                const value = responses[field.id];
-                const file = value?.value;
-
-                if (file instanceof File) {
-                    formData.append(`document_${field.id}`, file);
-                    updatedResponses[field.id] = {
-                        ...value,
-                        value: "file_attached"
-                    };
-                }
-            }
-        }
-
-        formData.append("form_id", formId);
-        formData.append("responses", JSON.stringify(updatedResponses));
-
-        try {
-            const res = await fetch("/api/published_form/submit-form", {
-                method: "POST",
-                body: formData
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                Swal.fire("Form Submitted", "Your form has been submitted successfully!", "success");
-                Object.keys(localStorage).forEach((key) => {
-                    if (key.startsWith("form_")) {
-                        localStorage.removeItem(key);
-                    }
-                });
-                setResponses({});
-
-                // 🔁 Redirect to end page
-                const currentPath = window.location.pathname; // e.g. /forms/form-1/page-1
-                const formMatch = currentPath.match(/\/forms\/(form-\d+)\//); // extract "form-1"
-                if (formMatch && formMatch[1]) {
-                    const formId = formMatch[1];
-                    window.location.href = `/forms/${formId}/page-end`;
-                }
-            } else {
-                Swal.fire("Error", data.error || "Submission failed.", "error");
-            }
-        }
-        catch (error) {
-            console.error("❌ Error submitting form:", error);
-            Swal.fire("Error", "Something went wrong while submitting the form.", "error");
-        }
     };
 
     const handleNextPage = () => {
-        const currentPageFields = fields.filter(f => f.page_id === pageId);
-
-        for (const field of currentPageFields) {
-            const value = responses[field.id];
-
-            if (field.type === "Address" && field.required) {
-                if (
-                    !value ||
-                    !value.address?.trim() ||
-                    !value.city?.trim() ||
-                    !value.state?.trim() ||
-                    !value.zip?.trim()
-                ) {
-                    Swal.fire("Missing Field", `Please fill out all parts of "${field.label}"`, "warning");
-                    return;
-                }
-            }
-            else if (field.type === "Choice Matrix" && field.required) {
-                const expectedRows = field.rows || [];
-                const answeredRows = value ? Object.keys(value) : [];
-                const missingRow = expectedRows.find(row => !answeredRows.includes(row));
-
-                if (missingRow) {
-                    Swal.fire("Missing Field", `Please select an option for "${missingRow}" in "${field.label}"`, "warning");
-                    return;
-                }
-            }
-
-            if (field.required && !responses[field.id]) {
-                Swal.fire("Missing Field", `Please fill out "${field.label}"`, "warning");
-                return;
-            }
-        }
-
         const currentPageId = parseInt(pageId);
         const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
 
@@ -1997,7 +1872,7 @@ const PublishedForm = () => {
 
         if (currentIndex !== -1 && currentIndex < sortedPages.length - 1) {
             const nextPage = sortedPages[currentIndex + 1];
-            navigate(`/forms/form-${formId}/page-${nextPage.page_number}`);
+            navigate(`/preview/form-${formId}/page-${nextPage.page_number}/device-${device}`);
         } else {
             console.log("This is the last page or page not found");
         }
@@ -2011,7 +1886,7 @@ const PublishedForm = () => {
 
         if (currentIndex > 0) {
             const previousPage = sortedPages[currentIndex - 1];
-            navigate(`/forms/form-${formId}/page-${previousPage.page_number}`);
+            navigate(`/preview/form-${formId}/page-${previousPage.page_number}/device-${device}`);
         } else {
             console.log("This is the first page");
         }
@@ -2020,89 +1895,101 @@ const PublishedForm = () => {
     if (!form) return <p>Loading...</p>;
 
     return (
-        <div className="Published-form-container">
-            {(() => {
-                const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
-                const isFirstPage = sortedPages.findIndex(p => p.page_number === parseInt(pageId)) === 0;
+        <div className={`Preview-form-container ${device === "mobile" ? "mobile-preview-wrapper" : ""}`}>
 
-                return !isFirstPage && (
+            {device === "mobile" ? (
+                <div className="mobile-preview-phone">
+                    {(() => {
+                        const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
+                        const isFirstPage = sortedPages.findIndex(p => p.page_number === parseInt(pageId)) === 0;
+
+                        return !isFirstPage && (
+                            <div className="preview-back-arrow" onClick={handleBackPage}>
+                                <i className="fa-solid fa-arrow-left"></i>
+                            </div>
+                        );
+                    })()}
+
                     <div
-                        onClick={handleBackPage}
-                        style={{
-                            position: "absolute",
-                            top: "10px",
-                            left: "30px",
-                            cursor: "pointer",
-                            fontSize: "1.5rem",
-                            color: formQuestionColor,
-                            zIndex: 10
-                        }}
+                        className="Preview-form-content"
+                        style={{ backgroundColor: form.questions_background_color }}
                     >
-                        <i className="fa-solid fa-arrow-left"></i>
-                    </div>
-                );
-            })()}
-
-            <div
-                className={`Published-form-body ${formbgImage ? "with-bg-image" : ""}`}
-                style={{
-                    backgroundColor: formBgColor,
-                    backgroundImage: formbgImage ? `url(${formbgImage})` : "none"
-                }}
-            >
-                <div
-                    className="Published-form-content"
-                    style={{ backgroundColor: form.questions_background_color }}
-                >
-                    {fields.map((field) => (
-                        <div
-                            key={field.id}
-                            style={{
-                                marginBottom: "1rem",
-                                padding: "0.5rem",
-                                borderRadius: "6px"
-                            }}
-                        >
-                            {/* Render label, required asterisk, and caption (only for applicable fields) */}
-                            {!["Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) && (
-                                <>
-                                    <label
-                                        style={{
-                                            fontSize: "1rem",
-                                            border: "none",
-                                            background: "transparent",
-                                            width: "fit-content",
-                                            marginBottom: "2px",
-                                            color: formQuestionColor,
-                                            fontFamily: selectedFont
-                                        }}
-                                    >
-                                        {field.label}
-                                        {field.required && <span style={{ color: "red", marginLeft: "30px" }}>*</span>}
-                                    </label>
-                                    {field.caption && (
-                                        <small
+                        {fields.map((field) => (
+                            <div
+                                key={field.id}
+                                style={{
+                                    marginBottom: "1rem",
+                                    padding: "0.5rem",
+                                    borderRadius: "6px"
+                                }}
+                            >
+                                {/* Labels */}
+                                {!["Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) && (
+                                    <>
+                                        <label
                                             style={{
+                                                fontSize: "1rem",
+                                                background: "transparent",
+                                                marginBottom: "2px",
+                                                color: formQuestionColor,
+                                                fontFamily: selectedFont
+                                            }}
+                                        >
+                                            {field.label}
+                                            {field.required && <span style={{ color: "red", marginLeft: "30px" }}>*</span>}
+                                        </label>
+                                        {field.caption && (
+                                            <small style={{
                                                 color: "gray",
                                                 display: "block",
                                                 marginBottom: "6px",
                                                 fontFamily: form.selected_font || 'inherit'
-                                            }}
-                                        >
-                                            {field.caption}
-                                        </small>
-                                    )}
-                                </>
-                            )}
-
-                            {renderField(field)}
-                        </div>
-                    ))}
+                                            }}>
+                                                {field.caption}
+                                            </small>
+                                        )}
+                                    </>
+                                )}
+                                {renderField(field)}
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            </div>
-        </div >
-    );
+            ) : (
+                // Desktop layout fallback
+                <div
+                    className={`Preview-form-body ${formbgImage ? "with-bg-image" : ""}`}
+                    style={{
+                        backgroundColor: formBgColor,
+                        backgroundImage: formbgImage ? `url(${formbgImage})` : "none"
+                    }}
+                >
 
+                    {(() => {
+                        const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
+                        const isFirstPage = sortedPages.findIndex(p => p.page_number === parseInt(pageId)) === 0;
+
+                        return !isFirstPage && (
+                            <div className="preview-back-arrow" onClick={handleBackPage}>
+                                <i className="fa-solid fa-arrow-left"></i>
+                            </div>
+                        );
+                    })()}
+
+                    <div
+                        className="Preview-form-content"
+                        style={{ backgroundColor: form.questions_background_color }}
+                    >
+                        {fields.map((field) => (
+                            <div key={field.id} style={{ marginBottom: "1rem", padding: "0.5rem", borderRadius: "6px" }}>
+                                {renderField(field)}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 };
 
-export default PublishedForm;
+export default Preview;

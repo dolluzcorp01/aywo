@@ -1,0 +1,71 @@
+/* desktopp view */
+.Preview-form-container {
+    width: 100%;
+    background: #fff;
+    overflow-y: auto;
+}
+
+.Preview-form-body {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    padding: 20px 0;
+}
+
+.Preview-form-content {
+    display: flex;
+    flex-direction: column;
+    max-width: 750px;
+    width: 100%;
+    padding: 20px;
+    border-radius: 15px;
+    background-color: white;
+}
+
+/* Mobile view */
+/* Mobile view */
+.mobile-preview-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 30px 0;
+    width: 100%;
+}
+
+/* ✅ Phone frame */
+.mobile-preview-phone {
+    width: 375px;
+    height: 667px;
+    border: 6px solid #1e1e1e;
+    border-radius: 50px;
+    background-color: white;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ✅ Scrollable content inside phone */
+.mobile-preview-phone .Preview-form-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 10px;
+    border-radius: 0;
+    width: 100%;
+}
+
+.preview-back-arrow {
+    position: relative;
+    margin: 20px 0 10px 30px;
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: var(--form-question-color, #333);
+    z-index: 10;
+}
