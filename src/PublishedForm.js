@@ -71,6 +71,14 @@ const PublishedForm = () => {
                 const processedFields = data.fields.map((field) => {
                     const normalizedRequired = field.required === "Yes" || field.required === true;
 
+                    if (field.type === "Heading") {
+                        return {
+                            ...field,
+                            required: normalizedRequired,
+                            alignment: field.heading_alignment || "center" // 👈 map DB field to frontend field.alignment
+                        };
+                    }
+
                     if (field.type === "Choice Matrix" && Array.isArray(field.matrix)) {
                         const rows = field.matrix
                             .filter(m => m.row_label !== null)
@@ -331,23 +339,34 @@ const PublishedForm = () => {
             case "Short Answer":
                 return <input type="text" {...commonProps} />;
             case "Heading":
+                const headingAlign = field.alignment || "center"; // force default to center
+
                 return (
-                    <input
-                        type="text"
-                        value={field.label}
-                        readOnly
-                        style={{
-                            fontSize: field.font_size || "24px",
-                            fontWeight: "bold",
-                            border: "none",
-                            outline: "none",
-                            background: "transparent",
-                            width: "100%",
-                            margin: "8px 0",
-                            color: formAnswersColor,
-                            fontFamily: selectedFont
-                        }}
-                    />
+                    <div style={{ textAlign: headingAlign }}>
+                        <input
+                            type="text"
+                            value={field.label}
+                            onChange={(e) => {
+                                const updatedFields = fields.map(f =>
+                                    f.id === field.id ? { ...f, label: e.target.value } : f
+                                );
+                                setFields(updatedFields);
+                            }}
+                            style={{
+                                fontSize: field.font_size || "24px",
+                                fontWeight: "bold",
+                                border: "none",
+                                background: "transparent",
+                                width: "auto",
+                                minWidth: "100px",
+                                margin: "8px 0",
+                                color: formAnswersColor,
+                                fontFamily: selectedFont,
+                                textAlign: headingAlign,
+                                display: "inline-block"
+                            }}
+                        />
+                    </div>
                 );
             case "Email":
                 return (

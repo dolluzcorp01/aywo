@@ -209,6 +209,15 @@ const FormBuilder = () => {
             if (Array.isArray(data.fields)) {
                 const processedFields = data.fields.map(field => {
                     const normalizedRequired = field.required === "Yes" || field.required === true;
+
+                    if (field.type === "Heading") {
+                        return {
+                            ...field,
+                            required: normalizedRequired,
+                            alignment: field.heading_alignment || "center" // 👈 map DB field to frontend field.alignment
+                        };
+                    }
+
                     if (field.type === "ThankYou") {
                         const thankyouData = field.thankyouData?.[0] || {};
                         return {
@@ -1007,27 +1016,34 @@ const FormBuilder = () => {
                     />
                 );
             case "Heading":
+                const headingAlign = field.alignment || "center"; // force default to center
+
                 return (
-                    <input
-                        type="text"
-                        value={field.label}
-                        onChange={(e) => {
-                            const updatedFields = fields.map(f =>
-                                f.id === field.id ? { ...f, label: e.target.value } : f
-                            );
-                            setFields(updatedFields);
-                        }}
-                        style={{
-                            fontSize: field.font_size || "24px",
-                            fontWeight: "bold",
-                            border: "none",
-                            background: "transparent",
-                            width: "100%",
-                            margin: "8px 0",
-                            color: formAnswersColor,
-                            fontFamily: selectedFont
-                        }}
-                    />
+                    <div style={{ textAlign: headingAlign }}>
+                        <input
+                            type="text"
+                            value={field.label}
+                            onChange={(e) => {
+                                const updatedFields = fields.map(f =>
+                                    f.id === field.id ? { ...f, label: e.target.value } : f
+                                );
+                                setFields(updatedFields);
+                            }}
+                            style={{
+                                fontSize: field.font_size || "24px",
+                                fontWeight: "bold",
+                                border: "none",
+                                background: "transparent",
+                                width: "auto",
+                                minWidth: "100px",
+                                margin: "8px 0",
+                                color: formAnswersColor,
+                                fontFamily: selectedFont,
+                                textAlign: headingAlign,
+                                display: "inline-block"
+                            }}
+                        />
+                    </div>
                 );
             case "Banner":
                 const alert_type = field.alert_type || "info"; // Default to 'info'
@@ -2763,6 +2779,11 @@ const FormBuilder = () => {
                     field.page_id = pageId || "1";
                 }
 
+                if (field.type === "Heading") {
+                    field.alignment = field.alignment || "center"; // default alignment
+                    field.font_size = field.font_size || 24;       // ✅ default font size
+                }
+
                 if (field.type === "ThankYou") {
                     field.show_tick_icon = !field.hideIcon; // Convert to match DB
                 }
@@ -4202,7 +4223,7 @@ const FormBuilder = () => {
                                     </>
                                 )}
 
-                                {["Image", "PDF", "Video"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
+                                {["Image", "PDF", "Video", "Heading"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
                                     const field = fields.find(f => f.id === selectedFieldId);
 
                                     // Fallback to uploaded values if field values are undefined

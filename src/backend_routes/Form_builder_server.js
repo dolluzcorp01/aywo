@@ -295,8 +295,8 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
                 connection.query(
                     `INSERT INTO dform_fields (
                         form_id, page_id, type, label, placeholder, caption, default_value, description, alert_type, font_size, required, sort_order,
-                        min_value, max_value, btnalignment, btnbgColor, btnlabelColor, fields_version
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        min_value, max_value, heading_alignment, btnalignment, btnbgColor, btnlabelColor, fields_version
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         formId,
                         field.page_id,
@@ -312,6 +312,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
                         field.sortOrder || 0,
                         field.min_value || null,
                         field.max_value || null,
+                        field.alignment || "",
                         field.btnalignment || "",
                         field.btnbgColor || "",
                         field.btnlabelColor || "",
