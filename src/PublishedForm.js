@@ -101,6 +101,7 @@ const PublishedForm = () => {
                     if (field.type === "YouTubeVideo" && Array.isArray(field.uploads) && field.uploads.length > 0) {
                         return {
                             ...field,
+                            required: normalizedRequired,
                             previewSize: field.uploads[0].file_field_size || "",
                             youtubeUrl: field.uploads[0].youtube_url || "",
                         };
