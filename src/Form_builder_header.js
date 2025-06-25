@@ -108,7 +108,6 @@ const Form_builder_header = () => {
                 .then((data) => {
                     if (isMounted) {
                         setForm(data);
-                        console.log("Form data to test page id:", data);
                     }
                 })
                 .catch((error) => {

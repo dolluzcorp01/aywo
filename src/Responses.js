@@ -7,7 +7,58 @@ import "datatables.net-dt/css/dataTables.dataTables.min.css";
 import * as XLSX from "xlsx"; // Import SheetJS for Excel export
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable"; // Import the autoTable plugin
+import {
+    FaEnvelope, FaHashtag, FaList, FaCheckSquare, FaCaretDown,
+    FaCalendarAlt, FaAlignLeft, FaFileAlt, FaToggleOn, FaImage, FaBoxes, FaGripHorizontal,
+    FaHeading, FaChevronUp, FaChevronDown, FaClock, FaRegClock, FaCalendarCheck, FaSortNumericDown, FaStar,
+    FaSlidersH, FaSmile, FaEquals, FaBars, FaMapMarkerAlt, FaVideo, FaFilePdf, FaMinus, FaYoutube
+} from "react-icons/fa";
 import "./Responses.css";
+
+const fieldIcons = {
+    "Heading": <FaHeading />,
+    "Paragraph": <FaAlignLeft />,
+    "Banner": <FaFileAlt />,
+
+    "Dropdown": <FaCaretDown />,
+    "Picture": <FaImage />,
+    "Multiple Select": (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: "#F59E0B" }}>
+            <FaChevronUp style={{ height: '0.45rem', width: '0.65rem' }} />
+            <FaChevronDown style={{ height: '0.45rem', width: '0.65rem' }} />
+        </div>
+    ),
+    "Switch": <FaToggleOn />,
+    "Multiple Choice": <FaList />,
+    "Checkboxes": <FaBoxes />,
+    "Choice Matrix": <FaGripHorizontal />,
+    "Checkbox": <FaCheckSquare />,
+
+    "Date Picker": <FaCalendarAlt />,
+    "Date Time Picker": <FaClock />,
+    "Time Picker": <FaRegClock />,
+    "Date Range": <FaCalendarCheck />,
+
+    "Ranking": <FaSortNumericDown />,
+    "Star Rating": <FaStar />,
+    "Slider": <FaSlidersH />,
+    "Opinion Scale": <FaSmile />,
+
+    "Short Answer": <FaEquals />,
+    "Long Answer": <FaBars />,
+
+    "Email": <FaEnvelope />,
+    "Number": <FaHashtag />,
+    "Address": <FaMapMarkerAlt />,
+    "Document Type": <FaFileAlt />,
+
+    "Image": <FaImage />,
+    "Video": <FaVideo />,
+    "PDF": <FaFilePdf />,
+    "YouTubeVideo": <FaYoutube style={{ color: "#FF0000" }} />,
+
+    "Divider": <FaMinus />
+};
 
 const Responses = () => {
     const { formId } = useParams();
@@ -19,20 +70,31 @@ const Responses = () => {
     const dataTableRef = useRef(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
+    const [summaryData, setSummaryData] = useState([]);
+    const [viewMode, setViewMode] = useState("results"); // 'results' | 'summary'
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setDropdownOpen(false);
-            }
-        };
+    const generateSummaryData = (responses) => {
+        const questionSummaryMap = {};
 
-        document.addEventListener("mousedown", handleClickOutside);
+        responses.forEach(response => {
+            response.answers.forEach(answer => {
+                const key = answer.label;
+                const isAnswered = answer.answer !== null && answer.answer !== "";
 
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, []);
+                if (!questionSummaryMap[key]) {
+                    questionSummaryMap[key] = { count: 0, total: 0, label: key, type: answer.type };
+                }
+
+                if (isAnswered) {
+                    questionSummaryMap[key].count += 1;
+                }
+
+                questionSummaryMap[key].total += 1;
+            });
+        });
+
+        return Object.values(questionSummaryMap);
+    };
 
     useEffect(() => {
         apiFetch(`/api/responses/get-responses/${formId}`, {
@@ -48,6 +110,9 @@ const Responses = () => {
             .then((data) => {
                 setResponses(data);
                 console.log("Fetched responses:", data);
+                const summary = generateSummaryData(data);
+                setSummaryData(summary);
+
                 if (data.length > 0) {
                     const uniqueFields = new Set();
                     data.forEach((response) => {
@@ -130,6 +195,20 @@ const Responses = () => {
         }
     }, [responses, columns]);
 
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
     // ✅ Export Data to Excel using SheetJS
     const exportToExcel = () => {
         if (responses.length === 0) {
@@ -187,34 +266,87 @@ const Responses = () => {
 
     if (loading) return <p>Loading responses...</p>;
     if (error) return <p>Error: {error}</p>;
-    if (responses.length === 0) return <p>No responses available.</p>;
 
     return (
         <div className="responses-container">
-            <div style={{ marginTop: "20px" }}>
-                <h2>Responses for Form {formId}</h2>
-                <div className="export-dropdown" ref={dropdownRef}>
-                    <button className="export-btn" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                        Export <i className="fa-solid fa-caret-down" style={{ marginLeft: "2px", fontSize: "1.1rem" }}></i>
-                    </button>
-                    {dropdownOpen && (
-                        <div className="dropdown-menu">
-                            <button onClick={exportToExcel}>Excel</button>
-                            <button onClick={exportToPDF}>PDF</button>
+            <div className="responses-header-tabs">
+                <div
+                    className={`tab ${viewMode === "results" ? "active-tab" : ""}`}
+                    onClick={() => setViewMode("results")}
+                >
+                    <i className="fa-solid fa-table-cells"></i> Results
+                </div>
+                <div
+                    className={`tab ${viewMode === "summary" ? "active-tab" : ""}`}
+                    onClick={() => setViewMode("summary")}
+                >
+                    <i className="fa-solid fa-chart-pie"></i> Summary
+                </div>
+            </div>
+
+            <div style={{ backgroundColor: viewMode === "summary" ? "rgb(249 250 251)" : "transparent" }}>
+                {responses.length > 0 && (
+                    <div className="export-dropdown" ref={dropdownRef}>
+                        <button className="export-btn" onClick={() => setDropdownOpen(!dropdownOpen)}>
+                            Export <i className="fa-solid fa-caret-down" style={{ marginLeft: "2px", fontSize: "1.1rem" }}></i>
+                        </button>
+                        {dropdownOpen && (
+                            <div className="dropdown-menu">
+                                <button onClick={exportToExcel}>Excel</button>
+                                <button onClick={exportToPDF}>PDF</button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                <div style={{ display: viewMode === "results" ? "block" : "none" }}>
+                    {responses.length === 0 ? (
+                        <p>No responses available.</p>
+                    ) : (
+                        <div className="data-table-scroll-wrapper" style={{ marginTop: "20px" }}>
+                            <table ref={tableRef} className="display">
+                                <thead>
+                                    <tr>
+                                        {columns.map((col, index) => (
+                                            <th key={index}>{col.title}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
                         </div>
                     )}
                 </div>
 
-                <table ref={tableRef} className="display" style={{ width: "100%" }}>
-                    <thead>
-                        <tr>
-                            {columns.map((col, index) => (
-                                <th key={index}>{col.title}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+                <div style={{ display: viewMode === "summary" ? "block" : "none" }}>
+                    {summaryData.length === 0 ? (
+                        <p>No responses available.</p>
+                    ) : (
+                        <div className="summary-wrapper">
+                            <div className="summary-section">
+                                {summaryData.map((item, index) => (
+                                    <div key={index} className="summary-group-card">
+                                        <div className="summary-question">
+                                            <div className="summary-icon">
+                                                {fieldIcons[item.type] || <FaAlignLeft />}
+                                            </div>
+                                            <div className="summary-question-text">
+                                                {item.label} <span className="summary-count">({index + 1})</span>
+                                            </div>
+                                            <div className="summary-answered">
+                                                {item.count} of {item.total} answered
+                                            </div>
+                                        </div>
+                                        <div className="summary-footer-text">
+                                            No responses yet
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
             </div>
         </div>
     );

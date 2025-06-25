@@ -38,7 +38,7 @@ router.get("/get-responses/:formId", async (req, res) => {
 
         const responseIds = formResponses.map(res => res.response_id);
         const responseFieldsQuery = `
-            SELECT rf.response_id, rf.field_id, ff.label, rf.answer 
+            SELECT rf.response_id, rf.field_id, ff.label, rf.answer, ff.type 
             FROM dform_response_fields rf
             JOIN dform_fields ff ON rf.field_id = ff.id
             WHERE rf.response_id IN (${responseIds.map(() => "?").join(",")})
@@ -50,13 +50,14 @@ router.get("/get-responses/:formId", async (req, res) => {
             submitted_at: response.submitted_at,
             answers: responseFields
                 .filter(({ response_id }) => response_id === response.response_id)
-                .map(({ field_id, label, answer }) => {
+                .map(({ field_id, label, answer, type }) => {
                     const isFile = answer && answer.includes("/");
                     return {
                         field_id,
                         label,
                         answer: isFile ? answer.split("/").pop() : answer,
                         filePath: isFile ? answer : null,
+                        type
                     };
                 }),
         }));
