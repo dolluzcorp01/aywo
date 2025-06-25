@@ -82,3 +82,46 @@
 .responses-container .dropdown-menu button:hover {
     background: #f1f1f1;
 }
+
+div.dt-container select.dt-input {
+    margin-right: 10px;
+}
+
+/* Align entries dropdown and search bar in same row */
+div.top-bar-wrapper {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+/* Prevent search box from jumping to right */
+.dataTables_filter {
+    float: none !important;
+    margin: 0 !important;
+}
+
+/* Prevent entries dropdown from floating left */
+.dataTables_length {
+    float: none !important;
+    margin: 0 !important;
+}
+
+/* Fix the bottom info and pagination in a row */
+div.bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    /* optional: makes it wrap on smaller screens */
+    margin-top: 10px;
+}
+
+/* Remove float from info and pagination to behave inside flex */
+.dataTables_info,
+.dataTables_paginate {
+    float: none !important;
+    margin: 0 !important;
+}

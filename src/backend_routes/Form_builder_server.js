@@ -522,7 +522,8 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
                 f.questions_color,
                 f.answers_color,
                 f.font,
-                f.created_at
+                f.created_at, 
+                COUNT(fr.response_id) AS response_count 
             FROM dforms f
             LEFT JOIN (
                 SELECT page_number, form_id
@@ -535,6 +536,7 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
                 ) ranked_pages
                 WHERE rn = 1
             ) AS first_page ON f.id = first_page.form_id
+            LEFT JOIN dform_responses fr ON f.id = fr.form_id
             WHERE f.user_id = ? 
         `;
 
@@ -545,8 +547,25 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
             params.push(formId);
         }
 
+            query += `  GROUP BY 
+                        f.id,
+                        first_page.page_number,
+                        f.user_id,
+                        f.title,
+                        f.internal_note,
+                        f.starred,
+                        f.is_closed,
+                        f.published,
+                        f.background_color,
+                        f.questions_background_color,
+                        f.primary_color,
+                        f.questions_color,
+                        f.answers_color,
+                        f.font,
+                        f.created_at `;
+
         if (!formId) {
-            query += ` ${orderClause}`;
+            query += `${orderClause}`;
         }
 
         const forms = await queryPromise(db, query, params);

@@ -125,6 +125,7 @@ const Responses = () => {
                 paging: true,
                 ordering: true,
                 info: true,
+                dom: '<"top-bar-wrapper"lf>rt<"bottom"ip><"clear">'
             });
         }
     }, [responses, columns]);
