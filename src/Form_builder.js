@@ -3638,6 +3638,14 @@ const FormBuilder = () => {
                         {editImageOption && (
                             <div className="image-option-modal-backdrop">
                                 <div className="image-option-modal-box">
+                                    {/* Close Button */}
+                                    <button
+                                        className="modal-close-btn"
+                                        onClick={() => setEditImageOption(null)}
+                                    >
+                                        <i className="fas fa-times"></i>
+                                    </button>
+
                                     <h5 style={{ fontWeight: "600", fontSize: "1.125rem", marginBottom: "20px" }}>Edit image option</h5>
                                     <span style={{ fontWeight: "500", fontSize: ".875rem" }}>Lable</span>
                                     <input

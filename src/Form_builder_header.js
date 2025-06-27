@@ -41,6 +41,9 @@ const Form_builder_header = () => {
     const [formTitle, setFormTitle] = useState("");
     const [renameFormId, setRenameFormId] = useState(null); // NEW
 
+    const [edithistory, setEdithistory] = useState(false);
+    const [versionHistory, setVersionHistory] = useState([]);
+
     useEffect(() => {
         populateProfileDetails();
 
@@ -77,6 +80,38 @@ const Form_builder_header = () => {
             console.error(error);
         }
     };
+
+    function formatDate(datetimeStr) {
+        const date = new Date(datetimeStr);
+        return date.toLocaleString('en-IN', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+        });
+    }
+
+    useEffect(() => {
+        let isMounted = true;
+
+        if (formId) {
+            apiFetch(`/api/form_builder/${formId}/version-history`, {
+                method: "GET",
+                credentials: "include",
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (isMounted) {
+                        setVersionHistory(data);
+                    }
+                })
+                .catch((error) => {
+                    Swal.fire("Error", error.message || "Something went wrong", "error");
+                });
+
+            return () => {
+                isMounted = false;
+            };
+        }
+    }, [formId]);
 
     useEffect(() => {
         let isMounted = true;
@@ -377,9 +412,14 @@ const Form_builder_header = () => {
                 <div className="action-btns">
                     {window.location.pathname.includes("form-builder") && (
                         <>
-                            <button className="form_builder_header-clock-btn" style={{ marginLeft: "-5px" }}>
+                            <button
+                                className="form_builder_header-clock-btn"
+                                style={{ marginLeft: "-5px" }}
+                                onClick={() => setEdithistory(true)}
+                            >
                                 <i className="fa-regular fa-clock"></i>
                             </button>
+
                             <button className="form_builder_header-preview-btn" onClick={() => navigate(`/preview/${formId}/page-${form.page_id}/device-desktop`)}>Preview</button>
                             <button className="form_builder_header-publish-btn" onClick={() => publishForm()}>
                                 Publish <i className="fa-solid fa-bolt"></i>
@@ -428,6 +468,30 @@ const Form_builder_header = () => {
                                     Continue
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {edithistory && (
+                <div className="edithistory-modal-backdrop">
+                    <div className="edithistory-modal-box">
+                        <button className="edithistory-close-btn" onClick={() => setEdithistory(false)}>
+                            <i className="fa-solid fa-xmark"></i>
+                        </button>
+                        <h5 className="edithistory-modal-title">Form edit history</h5>
+                        <p>Showing recent versions</p>
+
+                        <div className="version-list">
+                            {versionHistory.map((item, idx) => (
+                                <div className="version-item" key={idx}>
+                                    <div className="version-user-icon">P</div>
+                                    <div className="version-details">
+                                        <span className="user-name">Pavithran VV</span>
+                                        <span className="version-time">{formatDate(item.created_at)}</span>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>

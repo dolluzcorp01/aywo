@@ -547,7 +547,7 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
             params.push(formId);
         }
 
-            query += `  GROUP BY 
+        query += `  GROUP BY 
                         f.id,
                         first_page.page_number,
                         f.user_id,
@@ -1283,6 +1283,31 @@ router.post("/toggle-star/:formId", verifyJWT, async (req, res) => {
     } catch (error) {
         console.error("Error toggling star:", error);
         res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// GET /api/form/:formId/version-history
+router.get('/:formId/version-history', async (req, res) => {
+    let { formId } = req.params;
+
+    // ✅ Strip "form-" prefix if present
+    if (formId.startsWith("form-")) {
+        formId = formId.replace("form-", "");
+    }
+
+    try {
+        const query = `
+            SELECT fields_version, MIN(created_at) as created_at
+            FROM dform_fields
+            WHERE form_id = ?
+            GROUP BY fields_version
+            ORDER BY fields_version DESC
+        `;
+        const rows = await queryPromise(db, query, [formId]);
+        res.json(rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error fetching version history");
     }
 });
 
