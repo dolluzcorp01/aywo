@@ -42,9 +42,9 @@ const Preview = () => {
     useEffect(() => {
         const fetchPublishedForm = async () => {
             try {
-                const response = await apiFetch(`/api/published_form/get-published-form/${formId}/${pageId}`, {
-                    method: 'GET',
-                });
+                const response = await apiFetch(`/api/published_form/get-published-form/${formId}/${pageId}?mode=preview`,
+                    { method: 'GET' }
+                );
 
                 if (!response.ok) throw new Error("Failed to fetch form");
 
@@ -1981,7 +1981,41 @@ const Preview = () => {
                         style={{ backgroundColor: form.questions_background_color }}
                     >
                         {fields.map((field) => (
-                            <div key={field.id} style={{ marginBottom: "1rem", padding: "0.5rem", borderRadius: "6px" }}>
+                            <div
+                                key={field.id}
+                                style={{
+                                    marginBottom: "1rem",
+                                    padding: "0.5rem",
+                                    borderRadius: "6px"
+                                }}
+                            >
+                                {/* Labels */}
+                                {!["Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) && (
+                                    <>
+                                        <label
+                                            style={{
+                                                fontSize: "1rem",
+                                                background: "transparent",
+                                                marginBottom: "2px",
+                                                color: formQuestionColor,
+                                                fontFamily: selectedFont
+                                            }}
+                                        >
+                                            {field.label}
+                                            {field.required && <span style={{ color: "red", marginLeft: "30px" }}>*</span>}
+                                        </label>
+                                        {field.caption && (
+                                            <small style={{
+                                                color: "gray",
+                                                display: "block",
+                                                marginBottom: "6px",
+                                                fontFamily: form.selected_font || 'inherit'
+                                            }}>
+                                                {field.caption}
+                                            </small>
+                                        )}
+                                    </>
+                                )}
                                 {renderField(field)}
                             </div>
                         ))}

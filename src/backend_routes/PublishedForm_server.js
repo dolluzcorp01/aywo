@@ -126,11 +126,19 @@ router.post("/submit-form", upload.any(), async (req, res) => {
 
 router.get("/get-published-form/:formId/:pageId", async (req, res) => {
     const { formId, pageId } = req.params;
-
+    const { mode } = req.query;
+    
     try {
-        // ✅ 1. Fetch the form if published
-        const formQuery = "SELECT * FROM dforms WHERE id = ? AND published = 1";
-        const [form] = await queryPromise(db, formQuery, [formId]);
+        // ✅ 1. Fetch form
+        let formQuery = "SELECT * FROM dforms WHERE id = ?";
+        const queryParams = [formId];
+
+        // ✅ Add condition only if not preview mode
+        if (mode !== "preview") {
+            formQuery += " AND published = 1";
+        }
+
+        const [form] = await queryPromise(db, formQuery, queryParams);
 
         if (!form) {
             return res.status(404).json({ error: "Form not found or not published" });

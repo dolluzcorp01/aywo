@@ -40,9 +40,9 @@ const PublishedForm = () => {
     useEffect(() => {
         const fetchPublishedForm = async () => {
             try {
-                const response = await apiFetch(`/api/published_form/get-published-form/${formId}/${pageId}`, {
-                    method: 'GET',
-                });
+                const response = await apiFetch(`/api/published_form/get-published-form/${formId}/${pageId}?mode=published`,
+                    { method: 'GET' }
+                );
 
                 if (!response.ok) throw new Error("Failed to fetch form");
 
