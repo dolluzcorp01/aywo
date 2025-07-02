@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Modal } from 'bootstrap';
+import confetti from 'canvas-confetti';
 import "./Form_builder_header.css";
 
 const Navbar = styled.nav`
@@ -247,6 +248,12 @@ const Form_builder_header = () => {
                 console.warn("Clipboard copy skipped because the document is not focused.");
             }
 
+            confetti({
+                particleCount: 200,
+                spread: 200,
+                origin: { y: 0.6 }
+            });
+
             // ✅ Success message
             Swal.fire({
                 title: "Success!",
@@ -410,7 +417,7 @@ const Form_builder_header = () => {
                         </span>
                         <span
                             className={`center-nav-btn ${window.location.pathname.includes("share") ? "active" : ""}`}
-                            onClick={() => navigate(`/share/${formId}/page-${form.page_id}`)}
+                            onClick={() => navigate(`/share/${formId}`)}
                         >
                             Share
                         </span>
@@ -425,6 +432,16 @@ const Form_builder_header = () => {
             </div>
 
             <div className="form_builder_header-right">
+                {window.location.pathname.includes("form-builder") && (
+                    <button
+                        className="form_builder_header-clock-btn"
+                        style={{ marginLeft: "-5px" }}
+                        onClick={() => setEdithistory(true)}
+                    >
+                        <i className="fa-regular fa-clock"></i>
+                    </button>
+                )}
+
                 <div
                     className="form_builder_header-profile-section"
                     style={{ marginRight: "5px" }}
@@ -448,17 +465,17 @@ const Form_builder_header = () => {
                     )}
                 </div>
                 <div className="action-btns">
+                    {(window.location.pathname.includes("form-builder") || window.location.pathname.includes("share")) && (
+                        <button
+                            className="form_builder_header-preview-btn"
+                            onClick={() => navigate(`/preview/${formId}/page-${form.page_id}/device-desktop`)}
+                        >
+                            Preview
+                        </button>
+                    )}
+
                     {window.location.pathname.includes("form-builder") && (
                         <>
-                            <button
-                                className="form_builder_header-clock-btn"
-                                style={{ marginLeft: "-5px" }}
-                                onClick={() => setEdithistory(true)}
-                            >
-                                <i className="fa-regular fa-clock"></i>
-                            </button>
-
-                            <button className="form_builder_header-preview-btn" onClick={() => navigate(`/preview/${formId}/page-${form.page_id}/device-desktop`)}>Preview</button>
                             <button className="form_builder_header-publish-btn" onClick={() => publishForm()}>
                                 Publish <i className="fa-solid fa-bolt"></i>
                             </button>

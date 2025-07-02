@@ -8,6 +8,7 @@ import FormBuilderLayout from "./FormBuilderLayout";
 import PublishedForm from "./PublishedForm";
 import Responses from "./Responses";
 import Preview from "./Preview";
+import Share from "./Share";
 
 function App() {
   return (
@@ -70,6 +71,16 @@ function App() {
         element={
           <FormBuilderLayout>
             <Preview />
+          </FormBuilderLayout>
+        }
+      />
+
+      {/* ✅ Share route */}
+      <Route
+        path="/Share/:formId"
+        element={
+          <FormBuilderLayout>
+            <Share />
           </FormBuilderLayout>
         }
       />
