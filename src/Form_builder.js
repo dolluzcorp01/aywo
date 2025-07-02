@@ -142,32 +142,21 @@ const FormBuilder = () => {
         }
     };
 
-    useEffect(() => {
-        const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
-        const formId = match ? match[1] : null;
-        const pageParam = match ? match[2] : null;
+    const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
+    const formId = match ? match[1] : null;
+    const pageParam = match ? match[2] : null;
 
-        if (formId && pageParam) {
-            // Check if it's the ending page
-            if (pageParam === "end") {
-                fetchForm(formId, "end");
-            } else {
-                fetchForm(formId, pageParam);
-            }
-        } else {
-            setShowModal(true);
-        }
-    }, [location.pathname]);
+    const searchParams = new URLSearchParams(location.search);
+    const version = searchParams.get('version');
 
-    useEffect(() => {
-        const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
-        const formId = match ? match[1] : null;
-        if (formId) fetchFormPages(formId);
-    }, [location]);
-
-    const fetchForm = async (formId, pageId) => {
+    async function fetchForm(formId, pageId, version) {
         try {
-            const response = await fetch(`/api/form_builder/get-specific-form/${formId}/page/${pageId}`, {
+            let url = `/api/form_builder/get-specific-form/${formId}/page/${pageId}`;
+            if (version) {
+                url += `?version=${version}`;
+            }
+
+            const response = await fetch(url, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json"
@@ -284,6 +273,30 @@ const FormBuilder = () => {
             Swal.fire("Error", "Server error occurred while fetching the form.", "error");
         }
     };
+
+    useEffect(() => {
+        if (formId && pageParam) {
+            if (version && isNaN(version)) {
+                Swal.fire("Invalid Version", "Version must be a number.", "error");
+                return; // 🚫 stop execution if invalid
+            }
+
+            // Check if it's the ending page
+            if (pageParam === "end") {
+                fetchForm(formId, "end");
+            } else {
+                fetchForm(formId, pageParam, version);
+            }
+        } else {
+            setShowModal(true);
+        }
+    }, [location.pathname, location.search]); // ✅ include location.search!
+
+    useEffect(() => {
+        const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
+        const formId = match ? match[1] : null;
+        if (formId) fetchFormPages(formId);
+    }, [location]);
 
     const fetchFormPages = async (formId) => {
         try {

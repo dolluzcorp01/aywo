@@ -42,6 +42,14 @@ function App() {
           </FormBuilderLayout>
         }
       />
+      <Route
+        path="/form-builder/:formId/page-:pageId"
+        element={
+          <FormBuilderLayout>
+            <FormBuilder />
+          </FormBuilderLayout>
+        }
+      />
 
       {/* Published form (no layout) */}
       <Route path="/forms/:formId/:pageId" element={<PublishedForm />} />

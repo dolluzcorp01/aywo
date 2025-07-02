@@ -830,6 +830,7 @@ router.post("/check-pages-btnfields", verifyJWT, async (req, res) => {
 router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res) => {
     const { formId, pageId } = req.params;
     const userId = req.user_id;
+    const { version } = req.query;
 
     if (!userId) {
         return res.status(401).json({ error: "Unauthorized" });
@@ -863,13 +864,32 @@ router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res
         }
 
         // 3. Fetch fields belonging to this form and page
-        const fieldsQuery = `
-            SELECT * FROM dform_fields 
-            WHERE form_id = ? AND page_id = ? AND fields_version = (
-                SELECT MAX(fields_version) FROM dform_fields WHERE form_id = ? AND page_id = ?
-            )
-        `;
-        const fields = await queryPromise(db, fieldsQuery, [formId, pageId, formId, pageId]);
+        let fieldsQuery = '';
+        let fieldsParams = [];
+        if (version) {
+            // ✅ Use the specific version
+            fieldsQuery = `
+    SELECT * FROM dform_fields 
+    WHERE form_id = ? AND page_id = ? AND fields_version = ?
+  `;
+            fieldsParams = [formId, pageId, version];
+        } else {
+            // ✅ Default to latest version
+            fieldsQuery = `
+    SELECT * FROM dform_fields 
+    WHERE form_id = ? AND page_id = ? AND fields_version = (
+      SELECT MAX(fields_version) FROM dform_fields WHERE form_id = ? AND page_id = ?
+    )
+  `;
+            fieldsParams = [formId, pageId, formId, pageId];
+        }
+
+        const fields = await queryPromise(db, fieldsQuery, fieldsParams);
+
+        // ✅ Version exists check
+        if (version && fields.length === 0 && version !== '1') {
+            return res.status(404).json({ error: `Version ${version} not found for this form/page.` });
+        }
 
         // 4. Enrich each field with options and matrix data
         const enrichedFields = await Promise.all(

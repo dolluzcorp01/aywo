@@ -44,6 +44,10 @@ const Form_builder_header = () => {
     const [edithistory, setEdithistory] = useState(false);
     const [versionHistory, setVersionHistory] = useState([]);
 
+    const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
+    const formIdforfetch = match ? match[1] : null;
+    const pageIdforfetch = match ? match[2] : null;
+
     useEffect(() => {
         populateProfileDetails();
 
@@ -317,6 +321,40 @@ const Form_builder_header = () => {
                     <i className="fa fa-home"></i>
                 </a>
 
+                {edithistory && (
+                    <div className="edithistory-modal-backdrop">
+                        <div className="edithistory-modal-box">
+                            <button className="edithistory-close-btn" onClick={() => setEdithistory(false)}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                            <h5 className="edithistory-modal-title">Form edit history</h5>
+                            <p>Showing recent versions</p>
+
+                            <div className="version-list">
+                                {versionHistory.map((item, idx) => (
+                                    <div
+                                        className="version-item"
+                                        key={idx}
+                                        onClick={() => {
+                                            navigate(
+                                                `/form-builder/form-${formIdforfetch}/page-${pageIdforfetch}?version=${item.fields_version}`
+                                            );
+                                            setEdithistory(false);
+                                        }}
+                                        style={{ cursor: "pointer" }} // Optional: show pointer cursor
+                                    >
+                                        <div className="version-user-icon">P</div>
+                                        <div className="version-details">
+                                            <span className="user-name">Pavithran VV</span>
+                                            <span className="version-time">{formatDate(item.created_at)}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {form && (
                     <div className="form_builder_header-form-title-row">
                         <p
@@ -468,30 +506,6 @@ const Form_builder_header = () => {
                                     Continue
                                 </button>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {edithistory && (
-                <div className="edithistory-modal-backdrop">
-                    <div className="edithistory-modal-box">
-                        <button className="edithistory-close-btn" onClick={() => setEdithistory(false)}>
-                            <i className="fa-solid fa-xmark"></i>
-                        </button>
-                        <h5 className="edithistory-modal-title">Form edit history</h5>
-                        <p>Showing recent versions</p>
-
-                        <div className="version-list">
-                            {versionHistory.map((item, idx) => (
-                                <div className="version-item" key={idx}>
-                                    <div className="version-user-icon">P</div>
-                                    <div className="version-details">
-                                        <span className="user-name">Pavithran VV</span>
-                                        <span className="version-time">{formatDate(item.created_at)}</span>
-                                    </div>
-                                </div>
-                            ))}
                         </div>
                     </div>
                 </div>
