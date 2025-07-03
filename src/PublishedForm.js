@@ -5,6 +5,7 @@ import Swal from "sweetalert2";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import Select from 'react-select';
 import { FaStar } from "react-icons/fa";
+import confetti from 'canvas-confetti';
 import "./PublishedForm.css";
 
 const PublishedForm = () => {
@@ -1950,7 +1951,13 @@ const PublishedForm = () => {
 
             const data = await res.json();
             if (res.ok) {
+                confetti({
+                    particleCount: 200,
+                    spread: 200,
+                    origin: { y: 0.6 }
+                });
                 Swal.fire("Form Submitted", "Your form has been submitted successfully!", "success");
+
                 Object.keys(localStorage).forEach((key) => {
                     if (key.startsWith("form_")) {
                         localStorage.removeItem(key);
