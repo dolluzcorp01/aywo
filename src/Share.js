@@ -11,6 +11,8 @@ const Share = () => {
     const [formData, setFormData] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const [toastMessage, setToastMessage] = useState("");
+
     const match = location.pathname.match(/\/share\/form-(\d+)/);
     const formId = match ? match[1] : null;
 
@@ -144,11 +146,68 @@ const Share = () => {
 
     // ✅ Published version
     return (
-        <div className='share-container'>
+        <div className="share-container">
             <div className="share-page-published">
-                <h2>{formData.title}</h2>
-                <p style={{ color: 'green' }}>✅ This form is published</p>
-                {/* Add your published share view here */}
+                <div className="share-header">
+                    <div className="share-icon">
+                        <i className="fa-solid fa-share-nodes"></i>
+                    </div>
+                    <h2>Share</h2>
+                    <span className="ready-badge">✅ Ready to share</span>
+                </div>
+
+                <p style={{ color: "rgb(75 85 99)", fontSize: "1.125rem" }}>
+                    Publish your form to share it with others
+                </p>
+
+                <div className="share-card">
+                    <div className="share-url-container">
+                        <input
+                            type="text"
+                            className="share-url-input"
+                            value={
+                                formData
+                                    ? `${window.location.origin}/forms/form-${formData.form_id}/page-${formData.page_id}`
+                                    : ''
+                            }
+                            readOnly
+                        />
+                        <button
+                            className="copy-btn"
+                            onClick={() => {
+                                const shareUrl = `${window.location.origin}/forms/form-${formData.form_id}/page-${formData.page_id}`;
+                                navigator.clipboard.writeText(shareUrl);
+
+                                setToastMessage("Copied link to clipboard!");
+                                // Hide after 5 sec
+                                setTimeout(() => setToastMessage(""), 5000);
+                            }}
+                        >
+                            <i className="fa-solid fa-file-import fa-flip-horizontal"></i> Copy
+                        </button>
+
+                        {toastMessage && (
+                            <div className="toast-popup">
+                                <div className="toast-icon-container">
+                                    <span className="toast-icon"><i class="fa-solid fa-circle-check"></i></span>
+                                </div>
+                                <div className="toast-text">{toastMessage}</div>
+                                <button className="toast-close" onClick={() => setToastMessage("")}>
+                                    &times;
+                                </button>
+                            </div>
+                        )}
+
+                    </div>
+
+                    <div className="share-social-icons">
+                        <i className="fa-solid fa-qrcode"></i>
+                        <i className="fa-brands fa-twitter"></i>
+                        <i className="fa-brands fa-facebook"></i>
+                        <i className="fa-brands fa-linkedin"></i>
+                        <i className="fa-brands fa-reddit"></i>
+                    </div>
+                </div>
             </div>
         </div>
     );
