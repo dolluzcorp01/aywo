@@ -8,6 +8,7 @@ import { useNotification } from "./NotificationContext";
 import React, { useState, useEffect, useRef } from "react";
 import { FaThLarge } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import TemplatesPage from "./Templates";
 import "./Home.css";
 
 const SearchPopup = styled.div`
@@ -1522,7 +1523,7 @@ function Home() {
               ) : (
                 // Show template preview when isPreview is true
                 <div className="template-preview">
-                  <img src={selectedTemplate.image} alt={selectedTemplate.name} className="full-template-image" style={{ width: "100%", borderRadius: "8px" }} />
+                  <TemplatesPage formId={"1"} pageId={"1"} />
                   <div className="button-group" style={{ marginTop: "20px", textAlign: "center" }}>
                     <button className="btn btn-secondary me-2" onClick={handleBackClick}>Back</button>
                     <button className="btn btn-primary" onClick={handleUseTemplateclick}>Use This Template</button>

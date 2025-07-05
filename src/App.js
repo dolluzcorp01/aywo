@@ -9,6 +9,7 @@ import PublishedForm from "./PublishedForm";
 import Responses from "./Responses";
 import Preview from "./Preview";
 import Share from "./Share";
+import Templates from "./Templates";
 
 function App() {
   return (
@@ -82,6 +83,14 @@ function App() {
           <FormBuilderLayout>
             <Share />
           </FormBuilderLayout>
+        }
+      />
+
+      {/* ✅ Templates route */}
+      <Route
+        path="/Templates/:formId/:pageId"
+        element={
+          <Templates />
         }
       />
 

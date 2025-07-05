@@ -203,23 +203,10 @@
     justify-content: space-between;
 }
 
-.form-builder .update-form-btn,
 .form-builder .save-form-btn {
     width: 100%;
     flex: 1;
     padding: 10px 12px;
-}
-
-/* Update button */
-.form-builder .update-form-btn {
-    background: orangered;
-    color: white;
-    padding: 0px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 10px;
-    white-space: nowrap;
 }
 
 /* Save button */
@@ -232,10 +219,6 @@
     cursor: pointer;
     margin-top: 10px;
     white-space: nowrap;
-}
-
-.form-builder .update-form-btn:hover {
-    background: #cc3700;
 }
 
 .form-builder .save-form-btn:hover {

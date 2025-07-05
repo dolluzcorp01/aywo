@@ -952,129 +952,13 @@ router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res
     }
 });
 
-// ✅ Update form (Protected Route)
-router.put("/update-form/:formId", verifyJWT, async (req, res) => {
-    const { formId } = req.params;
-    const { title, title_font_size, title_x, title_y, title_width, title_height, form_background_color, form_color, title_color, title_background,
-        submit_button_x, submit_button_y, submit_button_width, submit_button_height, submit_button_color, submit_button_background, fields } = req.body;
-    const userId = req.user_id;
-
-    if (!userId) return res.status(401).json({ error: "Unauthorized" });
-    if (!title.trim()) return res.status(400).json({ error: "Form title cannot be empty." });
-
-    if (!fields || !Array.isArray(fields) || fields.length === 0) {
-        return res.status(400).json({ error: "At least one field is required." });
-    }
-
-    let connection;
-    try {
-        connection = await new Promise((resolve, reject) => {
-            db.getConnection((err, conn) => {
-                if (err) reject(err);
-                else resolve(conn);
-            });
-        });
-
-        await connection.beginTransaction();
-
-        // ✅ Check for duplicate title (excluding the current form)
-        const isDuplicate = await checkDuplicateFormTitle(userId, title, formId);
-        if (isDuplicate) {
-            await connection.rollback();
-            return res.status(409).json({ error: "A form with this title already exists." });
-        }
-
-        // ✅ Update form details including colors and button properties
-        const updateFormQuery = `
-            UPDATE forms 
-            SET title = ?, title_font_size = ?, title_x = ?, title_y = ?, title_width = ?, title_height = ?, 
-                form_background_color = ?, form_color = ?, title_color = ?, title_background = ?, 
-                submit_button_x = ?, submit_button_y = ?, submit_button_width = ?, submit_button_height = ?, 
-                submit_button_color = ?, submit_button_background = ? 
-            WHERE form_id = ? AND user_id = ?`;
-        await queryPromise(connection, updateFormQuery, [
-            title,
-            title_font_size,
-            title_x || 50,
-            title_y || 20,
-            title_width || 300,
-            title_height || 50,
-            form_background_color || "lightgray",
-            form_color || "#ffffff",
-            title_color || "#000000",
-            title_background || "#ffffff",
-            submit_button_x || 50,
-            submit_button_y || 400,
-            submit_button_width || 150,
-            submit_button_height || 50,
-            submit_button_color || "#ffffff",
-            submit_button_background || "#007bff",
-            formId,
-            userId
-        ]);
-
-        // ✅ Delete old fields and associated options
-        await queryPromise(connection, "DELETE FROM form_field_options WHERE field_id IN (SELECT field_id FROM form_fields WHERE form_id = ?)", [formId]);
-        await queryPromise(connection, "DELETE FROM form_field_grid_options WHERE field_id IN (SELECT field_id FROM form_fields WHERE form_id = ?)", [formId]);
-        await queryPromise(connection, "DELETE FROM form_fields WHERE form_id = ?", [formId]);
-
-        // ✅ Insert updated fields
-        for (const field of fields) {
-            if (!field.label.trim()) {
-                await connection.rollback();
-                return res.status(400).json({ error: "Field labels cannot be empty." });
-            }
-
-            const insertFieldQuery = `
-            INSERT INTO form_fields (form_id, field_type, label, x, y, width, height, bgColor, labelColor, fontSize, min_value, max_value) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-            const result = await queryPromise(connection, insertFieldQuery, [
-                formId,
-                field.field_type,
-                field.label,
-                field.x || 50,
-                field.y || 80,
-                field.width || 200,
-                field.height || 50,
-                field.bgColor || "#8B5E5E",
-                field.labelColor || "#FFFFFF",
-                field.fontSize || 16,
-                field.min_value || 1, // Default value of 1
-                field.max_value || 5  // Default value of 5
-            ]);
-
-            const fieldId = result.insertId; // Get the newly inserted field ID
-
-            // ✅ Insert options if the field is Dropdown or Multiple Choice
-            if ((field.field_type === "Dropdown" || field.field_type === "Multiple Choice") && field.options && Array.isArray(field.options)) {
-                for (const option of field.options) {
-                    await queryPromise(connection, "INSERT INTO form_field_options (field_id, option_text) VALUES (?, ?)", [fieldId, option]);
-                }
-            }
-
-            // Insert field and options (similar to save-form)
-            if (field.field_type === "Multiple Choice Grid" && field.grid_options) {
-                for (const { row_label, column_label } of field.grid_options) {
-                    await queryPromise(connection,
-                        "INSERT INTO form_field_grid_options (field_id, row_label, column_label) VALUES (?, ?, ?)",
-                        [fieldId, row_label, column_label]
-                    );
-                }
-            }
-        }
-
-        await connection.commit();
-        res.json({ message: "Form updated successfully!" });
-    } catch (error) {
-        console.error("Error updating form:", error);
-        if (connection) await connection.rollback();
-        res.status(500).json({ error: "Internal server error. Please try again." });
-    } finally {
-        if (connection) connection.release();
-    }
-});
-
 // ✅ Delete a form (Fixed Version)
+function safeDelete(filePath) {
+    if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+    }
+}
+
 router.delete("/delete-form/:formId", verifyJWT, async (req, res) => {
     const { formId } = req.params;
     const userId = req.user_id;
@@ -1086,36 +970,125 @@ router.delete("/delete-form/:formId", verifyJWT, async (req, res) => {
     let connection;
     try {
         connection = await new Promise((resolve, reject) => {
-            db.getConnection((err, conn) => {
-                if (err) reject(err);
-                else resolve(conn);
-            });
+            db.getConnection((err, conn) => (err ? reject(err) : resolve(conn)));
         });
 
-        await connection.beginTransaction(); // ✅ Start transaction
+        await connection.beginTransaction();
 
-        // ✅ Correct delete order
-        await queryPromise(connection, "DELETE FROM response_fields WHERE response_id IN (SELECT response_id FROM form_responses WHERE form_id = ?)", [formId]);
-        await queryPromise(connection, "DELETE FROM form_responses WHERE form_id = ?", [formId]);
-        await queryPromise(connection, "DELETE FROM form_fields WHERE form_id = ?", [formId]);
+        // ✅ 1. Gather all file paths before deleting rows
+        const [formRow] = await queryPromise(connection, `SELECT background_image FROM dforms WHERE id = ?`, [formId]);
 
-        // ✅ Finally, delete the form itself
-        const result = await queryPromise(connection, "DELETE FROM forms WHERE form_id = ? AND user_id = ?", [formId, userId]);
+        const uploadsInResponses = await queryPromise(
+            connection,
+            `SELECT answer FROM dform_response_fields WHERE response_id IN (
+         SELECT response_id FROM dform_responses WHERE form_id = ?
+      )`,
+            [formId]
+        );
+
+        const uploadsInFileUploads = await queryPromise(
+            connection,
+            `SELECT file_path FROM dfield_file_uploads WHERE form_id = ?`,
+            [formId]
+        );
+
+        const uploadsInOptions = await queryPromise(
+            connection,
+            `SELECT image_path FROM dfield_options WHERE field_id IN (
+         SELECT id FROM dform_fields WHERE form_id = ?
+      )`,
+            [formId]
+        );
+
+        // ✅ 2. Delete DB rows in proper order
+        await queryPromise(
+            connection,
+            `DELETE FROM dform_response_fields WHERE response_id IN (
+        SELECT response_id FROM dform_responses WHERE form_id = ?
+      )`, [formId]
+        );
+        await queryPromise(connection, `DELETE FROM dform_responses WHERE form_id = ?`, [formId]);
+
+        const fields = await queryPromise(connection, `SELECT id FROM dform_fields WHERE form_id = ?`, [formId]);
+        const fieldIds = fields.map(f => f.id);
+
+        if (fieldIds.length) {
+            await queryPromise(connection, `DELETE FROM dfield_matrix WHERE field_id IN (?)`, [fieldIds]);
+            await queryPromise(connection, `DELETE FROM dfield_options WHERE field_id IN (?)`, [fieldIds]);
+            await queryPromise(connection, `DELETE FROM dfield_file_uploads WHERE field_id IN (?)`, [fieldIds]);
+        }
+
+        await queryPromise(connection, `DELETE FROM dform_thankyou WHERE form_id = ?`, [formId]);
+        await queryPromise(connection, `DELETE FROM dform_fields WHERE form_id = ?`, [formId]);
+        await queryPromise(connection, `DELETE FROM dform_pages WHERE form_id = ?`, [formId]);
+
+        const result = await queryPromise(
+            connection,
+            `DELETE FROM dforms WHERE id = ? AND user_id = ?`, [formId, userId]
+        );
 
         if (result.affectedRows === 0) {
             await connection.rollback();
             return res.status(404).json({ error: "Form not found or unauthorized" });
         }
 
-        await connection.commit(); // ✅ Commit transaction if everything is fine
-        res.json({ message: "Form deleted successfully" });
+        await connection.commit();
 
-    } catch (error) {
-        console.error("Error deleting form:", error);
-        if (connection) await connection.rollback(); // ❌ Rollback if any issue occurs
+        // ✅ 3. Delete physical files
+        // -- background_image --
+        if (formRow && formRow.background_image) {
+            const bgPath = path.join(__dirname, "..", formRow.background_image.replace(/\\/g, "/"));
+            safeDelete(bgPath);
+        }
+
+        // -- file uploads --
+        uploadsInFileUploads.forEach(upload => {
+            if (upload.file_path) {
+                const filePath = path.join(__dirname, "..", upload.file_path.replace(/\\/g, "/"));
+                safeDelete(filePath);
+            }
+        });
+
+        // -- option images --
+        uploadsInOptions.forEach(opt => {
+            if (opt.image_path) {
+                const optPath = path.join(__dirname, "..", opt.image_path.replace(/\\/g, "/"));
+                safeDelete(optPath);
+            }
+        });
+
+        // -- response uploads --
+        uploadsInResponses.forEach(resp => {
+            if (resp.answer) {
+                let parsed;
+                try {
+                    parsed = JSON.parse(resp.answer);
+                } catch {
+                    parsed = resp.answer;
+                }
+
+                if (Array.isArray(parsed)) {
+                    parsed.forEach(val => {
+                        if (typeof val === "string" && val.startsWith("/uploads/")) {
+                            const ansPath = path.join(__dirname, "..", val);
+                            safeDelete(ansPath);
+                        }
+                    });
+                } else if (typeof parsed === "string" && parsed.startsWith("/uploads/")) {
+                    const ansPath = path.join(__dirname, "..", parsed);
+                    safeDelete(ansPath);
+                }
+            }
+        });
+
+        res.json({ message: "Form and files deleted successfully!" });
+
+    } catch (err) {
+        console.error("❌ Error deleting form:", err);
+        if (connection) await connection.rollback();
         res.status(500).json({ error: "Internal server error" });
     } finally {
-        if (connection) connection.release(); // ✅ Release database connection
+        if (connection) connection.release();
     }
 });
 
@@ -1138,11 +1111,31 @@ router.put("/publish-form/:formId", verifyJWT, async (req, res) => {
     }
 });
 
+async function copyFileWithNewName(originalPath, destFolder) {
+    return new Promise((resolve, reject) => {
+        if (!originalPath) return resolve(null);
+
+        const fileName = path.basename(originalPath);
+        const newFileName = `${Date.now()}-${fileName}`;
+        const destPath = path.join(destFolder, newFileName);
+
+        fs.copyFile(originalPath, destPath, (err) => {
+            if (err) {
+                console.error("File copy error:", err);
+                return reject(err);
+            }
+            resolve(destPath); // this is your new DB path
+        });
+    });
+}
+
 router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
     const userId = req.user_id;
     const { formId } = req.params;
+    const { title: newTitle } = req.body;
 
     let connection;
+
     try {
         connection = await new Promise((resolve, reject) => {
             db.getConnection((err, conn) => (err ? reject(err) : resolve(conn)));
@@ -1150,62 +1143,198 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
 
         await connection.beginTransaction();
 
-        // Get original form
-        const [originalForm] = await queryPromise(connection, "SELECT * FROM forms WHERE form_id = ?", [formId]);
+        // 1️⃣ Get original form
+        const [originalForm] = await queryPromise(connection, `SELECT * FROM dforms WHERE id = ?`, [formId]);
         if (!originalForm) return res.status(404).json({ error: "Original form not found." });
 
-        const newTitle = originalForm.title + " (Copy)";
+        const newBgImagePath = await copyFileWithNewName(
+            originalForm.background_image,
+            "form_bg_img_uploads"
+        );
 
-        // Insert new form
-        const formInsertQuery = `INSERT INTO forms (user_id, title, title_font_size, title_x, title_y, title_width, title_height,
-        form_background_color, form_color, title_color, title_background, submit_button_x, submit_button_y, submit_button_width, submit_button_height,
-        submit_button_color, submit_button_background)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        // 2️⃣ Insert new form
+        const titleToUse = newTitle || (originalForm.form_title + " (Copy)");
 
+        const formInsertQuery = `
+      INSERT INTO dforms 
+      (user_id, title, internal_note, starred, is_closed, published, background_color, background_image,
+       questions_background_color, primary_color, questions_color, answers_color, font)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
         const { insertId: newFormId } = await queryPromise(connection, formInsertQuery, [
-            userId, newTitle, originalForm.title_font_size, originalForm.title_x, originalForm.title_y,
-            originalForm.title_width, originalForm.title_height, originalForm.form_background_color, originalForm.form_color,
-            originalForm.title_color, originalForm.title_background,
-            originalForm.submit_button_x, originalForm.submit_button_y, originalForm.submit_button_width,
-            originalForm.submit_button_height, originalForm.submit_button_color, originalForm.submit_button_background
+            userId,
+            titleToUse,
+            originalForm.internal_note,
+            originalForm.starred,
+            false,  // Not closed
+            false,  // Not published
+            originalForm.background_color,
+            newBgImagePath,
+            originalForm.questions_background_color,
+            originalForm.primary_color,
+            originalForm.questions_color,
+            originalForm.answers_color,
+            originalForm.font
         ]);
 
-        // Copy fields
-        const formFields = await queryPromise(connection, "SELECT * FROM form_fields WHERE form_id = ?", [formId]);
-        for (const field of formFields) {
-            const { insertId: newFieldId } = await queryPromise(connection, `
-          INSERT INTO form_fields (form_id, field_type, label, x, y, width, height, bgColor, labelColor, fontSize, min_value, max_value)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
-                newFormId, field.field_type, field.label, field.x, field.y, field.width,
-                field.height, field.bgColor, field.labelColor, field.fontSize,
-                field.min_value, field.max_value
-            ]);
+        // 3️⃣ Copy pages
+        const pages = await queryPromise(connection, `SELECT * FROM dform_pages WHERE form_id = ?`, [formId]);
 
-            // Copy options
-            if (["Dropdown", "Multiple Choice"].includes(field.field_type)) {
-                const options = await queryPromise(connection, "SELECT * FROM form_field_options WHERE field_id = ?", [field.field_id]);
-                for (const option of options) {
-                    await queryPromise(connection, "INSERT INTO form_field_options (field_id, option_text) VALUES (?, ?)", [newFieldId, option.option_text]);
-                }
-            }
+        let versionCounter = 2;
 
-            // Copy grid options
-            if (field.field_type === "Multiple Choice Grid") {
-                const gridOptions = await queryPromise(connection, "SELECT * FROM form_field_grid_options WHERE field_id = ?", [field.field_id]);
-                for (const grid of gridOptions) {
+        // 👇 Hardcode ThankYou field before the loop
+        const thankYouFieldResult = await queryPromise(connection, `
+        INSERT INTO dform_fields 
+            (form_id, page_id, type, label, placeholder, caption, default_value, description, alert_type,
+            font_size, required, sort_order, min_value, max_value, heading_alignment,
+            btnalignment, btnbgColor, btnlabelColor, fields_version, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        `, [
+            newFormId,
+            "end",      // ✅ Hardcoded page_id for ThankYou
+            "ThankYou",// ✅ type
+            "ThankYou",// ✅ label
+            "", "", "", "", "info",
+            16,        // ✅ font_size
+            "No",      // ✅ required
+            0,         // ✅ sort_order
+            null, null, null, null, null, null,
+            1          // ✅ version for ThankYou field
+        ]);
+
+        // Extract the new ThankYou field ID
+        const thankYouFieldId = thankYouFieldResult.insertId;
+
+        for (const page of pages) {
+            await queryPromise(connection, `
+        INSERT INTO dform_pages (page_number, form_id, page_title, sort_order)
+        VALUES (?, ?, ?, ?)
+      `, [page.page_number, newFormId, page.page_title, page.sort_order]);
+
+            // 4️⃣ Copy fields for each page
+            // ✅ Correct query string
+            const fieldsQuery = `
+            SELECT * FROM dform_fields 
+            WHERE form_id = ? AND page_id = ? AND fields_version = (
+                SELECT MAX(fields_version) 
+                FROM dform_fields 
+                WHERE form_id = ? AND page_id = ?
+            )`;
+
+            const fieldsParams = [formId, page.page_number, formId, page.page_number];
+            const fields = await queryPromise(connection, fieldsQuery, fieldsParams);
+
+            const currentVersion = versionCounter++;
+
+            for (const field of fields) {
+
+                const { insertId: newFieldId } = await queryPromise(connection, `
+          INSERT INTO dform_fields 
+          (form_id, page_id, type, label, placeholder, caption, default_value, description, alert_type,
+           font_size, required, sort_order, min_value, max_value, heading_alignment,
+           btnalignment, btnbgColor, btnlabelColor, fields_version)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+                    newFormId,
+                    page.page_number.toString(),
+                    field.type,
+                    field.label,
+                    field.placeholder,
+                    field.caption,
+                    field.default_value,
+                    field.description,
+                    field.alert_type,
+                    field.font_size,
+                    field.required,
+                    field.sort_order,
+                    field.min_value,
+                    field.max_value,
+                    field.heading_alignment,
+                    field.btnalignment,
+                    field.btnbgColor,
+                    field.btnlabelColor,
+                    currentVersion
+                ]);
+
+                // 5️⃣ Copy options
+                const options = await queryPromise(connection, `SELECT * FROM dfield_options WHERE field_id = ?`, [field.id]);
+                for (const opt of options) {
+                    let newOptionImagePath = null;
+
+                    if (opt.image_path) {
+                        newOptionImagePath = await copyFileWithNewName(opt.image_path, "field_file_uploads");
+                    }
+
                     await queryPromise(connection, `
-              INSERT INTO form_field_grid_options (field_id, row_label, column_label)
-              VALUES (?, ?, ?)`, [newFieldId, grid.row_label, grid.column_label]);
+            INSERT INTO dfield_options (field_id, option_text, options_style, sort_order, image_path)
+            VALUES (?, ?, ?, ?, ?)
+          `, [
+                        newFieldId,
+                        opt.option_text,
+                        opt.options_style,
+                        opt.sort_order,
+                        newOptionImagePath
+                    ]);
+                }
+
+                // 6️⃣ Copy matrix rows/columns
+                const matrix = await queryPromise(connection, `SELECT * FROM dfield_matrix WHERE field_id = ?`, [field.id]);
+                for (const m of matrix) {
+                    await queryPromise(connection, `
+            INSERT INTO dfield_matrix (field_id, row_label, column_label)
+            VALUES (?, ?, ?)
+          `, [newFieldId, m.row_label, m.column_label]);
+                }
+
+                // 7️⃣ Copy file uploads if any
+                const uploads = await queryPromise(connection, `SELECT * FROM dfield_file_uploads WHERE field_id = ?`, [field.id]);
+                for (const upload of uploads) {
+                    let newUploadFilePath = null;
+
+                    if (upload.file_path) {
+                        newUploadFilePath = await copyFileWithNewName(upload.file_path, "field_file_uploads");
+                    }
+
+                    await queryPromise(connection, `
+            INSERT INTO dfield_file_uploads
+              (field_id, form_id, file_type, file_path, youtube_url, file_field_size, file_field_Alignment)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `, [
+                        newFieldId,
+                        newFormId,
+                        upload.file_type,
+                        newUploadFilePath,
+                        upload.youtube_url,
+                        upload.file_field_size,
+                        upload.file_field_Alignment
+                    ]);
                 }
             }
         }
 
+        // 8️⃣ Duplicate thank you if exists
+        const thankyou = await queryPromise(connection, `SELECT * FROM dform_thankyou WHERE form_id = ?`, [formId]);
+        if (thankyou.length) {
+            const origTY = thankyou[0];
+            await queryPromise(connection, `
+        INSERT INTO dform_thankyou
+          (form_id, field_id, show_tick_icon, thankyou_heading, thankyou_subtext)
+        VALUES (?, ?, ?, ?, ?)
+      `, [
+                newFormId,
+                thankYouFieldId,
+                origTY.show_tick_icon,
+                origTY.thankyou_heading,
+                origTY.thankyou_subtext
+            ]);
+        }
+
         await connection.commit();
-        res.json({ message: "Form duplicated successfully", newForm: { ...originalForm, form_id: newFormId, title: newTitle } });
+        res.json({ message: "Form duplicated successfully!", newFormId });
 
     } catch (err) {
         if (connection) await connection.rollback();
-        console.error("Error duplicating form:", err);
+        console.error("❌ Error duplicating form:", err);
         res.status(500).json({ error: "Failed to duplicate form" });
     } finally {
         if (connection) connection.release();
