@@ -350,12 +350,6 @@ body {
     font-size: 18px;
 }
 
-/* Make Close "X" White */
-.home-container .updated-header .btn-close {
-    filter: invert(1);
-    opacity: 1;
-}
-
 /* Layout for Blank & Template inside modal */
 .home-container .modal-options {
     display: flex;
