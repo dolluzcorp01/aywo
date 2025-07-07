@@ -340,13 +340,14 @@ const PublishedForm = () => {
             case "Short Answer":
                 return <input type="text" {...commonProps} />;
             case "Heading":
-                const headingAlign = field.alignment || "center"; // force default to center
+                const headingAlign = field.alignment || "center";
 
                 return (
-                    <div style={{ textAlign: headingAlign }}>
+                    <div style={{ textAlign: headingAlign, border: "none", outline: "none", boxShadow: "none" }}>
                         <input
                             type="text"
                             value={field.label}
+                            readOnly
                             onChange={(e) => {
                                 const updatedFields = fields.map(f =>
                                     f.id === field.id ? { ...f, label: e.target.value } : f
@@ -357,14 +358,14 @@ const PublishedForm = () => {
                                 fontSize: field.font_size || "24px",
                                 fontWeight: "bold",
                                 border: "none",
+                                outline: "none",
                                 background: "transparent",
-                                width: "auto",
-                                minWidth: "100px",
+                                width: "100%",
                                 margin: "8px 0",
                                 color: formAnswersColor,
                                 fontFamily: selectedFont,
                                 textAlign: headingAlign,
-                                display: "inline-block"
+                                display: "block",
                             }}
                         />
                     </div>
