@@ -1,12 +1,14 @@
 import Swal from "sweetalert2";
 import { apiFetch } from "./utils/api";
 import styled from 'styled-components';
-import Contact_info from "./assets/img/Contact_info.jpg";
+import Employee_emergency_contact_pg_1 from "./assets/img/Employee_emergency_contact_pg_1.png";
+import Employee_emergency_contact_pg_2 from "./assets/img/Employee_emergency_contact_pg_2.png";
+import Employee_emergency_contact_pg_3 from "./assets/img/Employee_emergency_contact_pg_3.png";
+import Employee_emergency_contact_pg_end from "./assets/img/Employee_emergency_contact_pg_end.png";
 import Appointment_booking from "./assets/img/Appointment_booking.jpg";
 import Job_Application from "./assets/img/Job_Application.jpg";
 import { useNotification } from "./NotificationContext";
 import React, { useState, useEffect, useRef } from "react";
-import { FaThLarge } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import TemplatesPage from "./Templates";
 import "./Home.css";
@@ -167,7 +169,6 @@ function Home() {
   const renameModalRef = useRef(null);
 
   const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isPreview, setIsPreview] = useState(false);
 
   const [isSearchPopupOpen, setIsSearchPopupOpen] = useState(false);
@@ -183,6 +184,8 @@ function Home() {
 
   const [isNoteMode, setIsNoteMode] = useState(false);
   const [internalNote, setInternalNote] = useState("");
+
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   const options = [
     { value: "created_at_desc", label: "Newest First", icon: "fa-arrow-down" },
@@ -227,11 +230,51 @@ function Home() {
     };
   }, []);
 
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [selectedChild, setSelectedChild] = useState(null);
+
   const templates = [
-    { name: "Contact Form", image: Contact_info, url: "template-1" },
-    { name: "Appointment Booking", image: Appointment_booking, url: "template-2" },
-    { name: "Job Application", image: Job_Application, url: "template-3" },
+    {
+      name: "Employee Emergency Contact",
+      image: Employee_emergency_contact_pg_1,
+      url: "template-1",
+      template_formId: 1,
+      child_templates: [
+        { name: "Child Template 1", image: Employee_emergency_contact_pg_1, template_formId: 1, template_pageId: 1 },
+        { name: "Child Template 2", image: Employee_emergency_contact_pg_2, template_formId: 1, template_pageId: 2 },
+        { name: "Child Template 3", image: Employee_emergency_contact_pg_3, template_formId: 1, template_pageId: 3 },
+        { name: "Child Template 3", image: Employee_emergency_contact_pg_end, template_formId: 1, template_pageId: "end" }
+      ]
+    },
+    {
+      name: "Appointment Booking",
+      image: Appointment_booking,
+      url: "template-2",
+      template_formId: 2,
+      child_templates: [
+        { name: "Child Template 1", image: Employee_emergency_contact_pg_1, template_formId: 1, template_pageId: 1 },
+        { name: "Child Template 2", image: Employee_emergency_contact_pg_2, template_formId: 1, template_pageId: 2 },
+        { name: "Child Template 3", image: Employee_emergency_contact_pg_3, template_formId: 1, template_pageId: 3 },
+        { name: "Child Template 3", image: Employee_emergency_contact_pg_end, template_formId: 1, template_pageId: "end" }
+      ]
+    },
+    {
+      name: "Job Application",
+      image: Job_Application,
+      url: "template-3",
+      template_formId: 3,
+      child_templates: [
+        { name: "Child Template 1", image: Employee_emergency_contact_pg_1, template_formId: 1, template_pageId: 1 },
+        { name: "Child Template 2", image: Employee_emergency_contact_pg_2, template_formId: 1, template_pageId: 2 },
+        { name: "Child Template 3", image: Employee_emergency_contact_pg_3, template_formId: 1, template_pageId: 3 },
+        { name: "Child Template 3", image: Employee_emergency_contact_pg_end, template_formId: 1, template_pageId: "end" }
+      ]
+    }
   ];
+
+  const progressPercent = selectedTemplate && selectedChild
+    ? ((selectedTemplate.child_templates.indexOf(selectedChild) + 1) / selectedTemplate.child_templates.length) * 100
+    : 0;
 
   const handleTemplateClick = () => {
     setShowTemplateModal(true);
@@ -281,7 +324,7 @@ function Home() {
       .finally(() => setProfileLoading(false));
 
     fetchForms();
-  }, [navigate, sortBy]); // Now fetchForms is accessible
+  }, [navigate, sortBy]); // Now fetchForms is accessible5
 
   const fetchForms = () => {
     setFormsLoading(true);
@@ -301,6 +344,28 @@ function Home() {
       })
       .catch((error) => {
         console.error("Error fetching forms:", error);
+        setError(error.message);
+      })
+      .finally(() => setFormsLoading(false));
+  };
+
+  const fetchTemplates = (formId) => {
+    setFormsLoading(true);
+    apiFetch(`/api/form_builder/get-templates?formId=${formId}`, {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then(err => { throw new Error(err.message || "Failed to fetch templates"); });
+        }
+        return response.json();
+      })
+      .then((data) => {
+
+      })
+      .catch((error) => {
+        console.error("Error fetching templates:", error);
         setError(error.message);
       })
       .finally(() => setFormsLoading(false));
@@ -1474,7 +1539,7 @@ function Home() {
           <div className="modal-content">
             <div className="modal-header updated-header">
               <h5 className="modal-title">Create a New Form</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" style={{ color: "black", outline: "none", border: "none" }}><i class="fa-solid fa-xmark"></i></button>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" style={{ color: "black", border: "none", outline: "none", }}><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div className="modal-body">
               <h5 className="modal-subtitle mt-2">Choose how to get started</h5>
@@ -1503,37 +1568,110 @@ function Home() {
         <div className="modal-dialog modal-lg modal-dialog-centered">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title">Select a Template</h5>
-              <button type="button" className="btn-close" onClick={() => setShowTemplateModal(false)}><i class="fa-solid fa-xmark"></i></button>
+              <h5 className="modal-title">Pick a Template</h5>
+              <button type="button" className="btn-close" onClick={() => setShowTemplateModal(false)}>
+                <i className="fa-solid fa-xmark"></i>
+              </button>
             </div>
             <div className="modal-body" style={{ height: "500px", overflowY: "auto" }}>
-              {!isPreview ? (
-                // Show template grid first
-                <div className="template-grid">
-                  {templates.map((template, index) => (
-                    <div key={index} className="template-card" onClick={() => {
+              <div className="template-grid">
+                {templates.map((template, index) => (
+                  <div
+                    key={index}
+                    className="template-card"
+                    onClick={() => {
                       setSelectedTemplate(template);
-                      setIsPreview(true); // Switch to preview mode after selecting a template
-                    }}>
-                      <img src={template.image} alt={template.name} className="template-image" />
-                      <p className="template-name">{template.name}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                // Show template preview when isPreview is true
-                <div className="template-preview">
-                  <TemplatesPage formId={"1"} pageId={"1"} />
-                  <div className="button-group" style={{ marginTop: "20px", textAlign: "center" }}>
-                    <button className="btn btn-secondary me-2" onClick={handleBackClick}>Back</button>
-                    <button className="btn btn-primary" onClick={handleUseTemplateclick}>Use This Template</button>
+                      setSelectedChild(template.child_templates[0]);
+                      setShowTemplateModal(false); // Close picker modal
+                      setShowPreviewModal(true);   // Open preview modal
+                    }}
+                  >
+                    <img src={template.image} alt={template.name} className="template-image" />
+                    <p className="template-name">{template.name}</p>
                   </div>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <div className={`modal fade ${showPreviewModal ? "show d-block" : ""}`} id="templatePreviewModal" tabIndex="-1" aria-hidden="true">
+        <div className="modal-dialog modal-xxl modal-dialog-centered template-preview-modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Template Preview</h5>
+              <button type="button" className="btn-close"
+                onClick={() => {
+                  setShowPreviewModal(false);
+                  setShowTemplateModal(true);
+                }}>
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <div className="modal-body" style={{ padding: "50px", paddingTop: "30px" }}>
+              <div className="template-preview">
+                <div className="template-thumbnails">
+                  {selectedTemplate?.child_templates?.map((child, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        cursor: "pointer",
+                        border: selectedChild === child ? "3px solid rgb(91, 136, 207)" : "2px solid #ccc"
+                      }}
+                      onClick={() => setSelectedChild(child)}
+                    >
+                      <div><img src={child.image} alt={child.name} style={{ width: "100%", borderRadius: "4px" }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="template-full-preview" style={{ position: "relative" }}>
+                  <div className="progress-bar-overlay" style={{
+                    position: "absolute",
+                    top: 0,
+                    height: "5px",
+                    left: "14px",
+                    right: "15px",
+                    backgroundColor: "rgb(91, 136, 207)",
+                    borderTopLeftRadius: "6px",
+                    borderTopRightRadius: "6px"
+                  }}></div>
+
+                  {selectedChild && (
+                    <div style={{
+                      background: "#fff",
+                      borderRadius: "6px",
+                      padding: "16px",
+                      boxShadow: "0 0 4px rgba(0,0,0,0.1)",
+                      minHeight: "100%"
+                    }}>
+                      <TemplatesPage
+                        formId={selectedChild.template_formId}
+                        pageId={selectedChild.template_pageId}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer" style={{ justifyContent: "space-between" }}>
+              <button className="btn btn-secondary" style={{ color: "gray", background: "transparent", border: "none", marginLeft: "20px" }}
+                onClick={() => {
+                  setShowPreviewModal(false);
+                  setShowTemplateModal(true);
+                }}>
+                Back
+              </button>
+              <button className="btn btn-primary" style={{ color: "black", backgroundColor: "rgb(255 199 56)", border: "none", marginRight: "20px" }}
+                onClick={handleUseTemplateclick}>
+                Use this template →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div >
   );
 }

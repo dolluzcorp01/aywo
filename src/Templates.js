@@ -31,8 +31,7 @@ const Templates = ({ formId, pageId, ...props }) => {
     const pictureBgColors = ["#ffb3ba", "#bae1ff", "#baffc9", "#ffffba", "#e3baff", "#ffdfba"];
     const [formbgImage, setFormbgImage] = useState(null);
 
-    const match = location.pathname.match(/\/templates\/form-(\d+)\/page-(\d+)/);
-
+    const match = location.pathname.match(/\/templates\/form-(\d+)\/page-(\d+|end)/);
     const finalFormId = formId || (match ? match[1] : null);
     const finalPageId = pageId || (match ? match[2] : null);
 
@@ -41,14 +40,13 @@ const Templates = ({ formId, pageId, ...props }) => {
     useEffect(() => {
         const fetchPublishedForm = async () => {
             try {
-                const response = await apiFetch(`/api/published_form/get-published-form/${finalFormId}/${finalPageId}?mode=preview`,
+                const response = await apiFetch(`/api/form_builder/get-templates-form/${finalFormId}/${finalPageId}?mode=preview`,
                     { method: 'GET' }
                 );
 
                 if (!response.ok) throw new Error("Failed to fetch form");
 
                 const data = await response.json();
-                console.log("📄 Form data:", data);
                 if (data.form.background_image) {
                     setFormbgImage(`${API_BASE}/${data.form.background_image.replace(/\\/g, "/")}`);
                 }
@@ -121,32 +119,31 @@ const Templates = ({ formId, pageId, ...props }) => {
             }
         };
 
-        const fetchFormPages = async () => {
-            try {
-                const res = await fetch(`/api/form_builder/get-form-pages/${finalFormId}`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                });
-
-                const data = await res.json();
-                if (res.ok) {
-                    setFormPages(data.pages || []);
-                } else {
-                    Swal.fire("Error", data.error || "Unable to fetch pages", "error");
-                }
-            } catch (error) {
-                console.error("❌ Error loading pages:", error);
-            }
+        const fetchTemplates = async () => {
+            apiFetch(`/api/form_builder/get-templates?formId=${finalFormId}`, {
+                method: "GET",
+                credentials: "include",
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw new Error(err.message || "Failed to fetch templates"); });
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    setFormPages((data.pages || []).sort((a, b) => a.sort_order - b.sort_order));
+                })
+                .catch((error) => {
+                    console.error("Error fetching templates:", error);
+                })
         };
 
         if (finalFormId && finalPageId) {
             fetchPublishedForm();
-            fetchFormPages();
+            fetchTemplates();
         }
 
-    }, [formId, pageId]);
+    }, [finalFormId, finalPageId]);
 
     const [colors, setColors] = useState({
         background: "#F8F9FA",
@@ -197,97 +194,6 @@ const Templates = ({ formId, pageId, ...props }) => {
         return match ? match[1] : "";
     };
 
-    useEffect(() => {
-        if (!formLoaded) return;
-
-        const saved = localStorage.getItem(`form_${formId}_page_${pageId}`);
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            setResponses(parsed);
-
-            // Optionally update field display values from localStorage too
-            const updatedFields = fields.map(field => {
-                const response = parsed[field.id];
-                if (!response) return field;
-
-                if (field.type === "Multiple Choice") {
-                    const selectedIndex = field.options.findIndex(opt => {
-                        const text = typeof opt === "object" ? opt.option_text : opt;
-                        return text === response.value;
-                    });
-                    return { ...field, selectedOption: selectedIndex };
-                }
-
-                if (field.type === "Date Picker" || field.type === "Time Picker" || field.type === "Date Time Picker") {
-                    return { ...field, default_value: response.value };
-                }
-
-                if (field.type === "Ranking") {
-                    const savedRanking = response.value || []; // ["Option 2", "Option 1", "Option 3"]
-
-                    const reorderedOptions = [];
-                    const seen = new Set();
-
-                    // Step 1: Place saved ranking in order
-                    savedRanking.forEach(text => {
-                        const match = field.options.find(opt => {
-                            const label = typeof opt === "object" ? opt.option_text : opt;
-                            return label === text;
-                        });
-
-                        if (match) {
-                            reorderedOptions.push(match);
-                            seen.add(text);
-                        }
-                    });
-
-                    // Step 2: Add remaining options not in saved data (e.g., newly added ones)
-                    const remainingOptions = field.options.filter(opt => {
-                        const label = typeof opt === "object" ? opt.option_text : opt;
-                        return !seen.has(label);
-                    });
-
-                    return {
-                        ...field,
-                        options: [...reorderedOptions, ...remainingOptions]
-                    };
-                }
-
-                if (field.type === "Choice Matrix") {
-                    const matrixValue = response.value || {};
-
-                    const getText = (val) => typeof val === "object" ? val.option_text : val;
-
-                    const selectedMatrix = (field.rows || []).map((rowItem) => {
-                        const rowLabel = getText(rowItem).trim().toLowerCase();
-
-                        const selectedColLabel = matrixValue[rowLabel];
-                        const colIndex = (field.columns || []).findIndex(col => {
-                            const colLabel = getText(col).trim().toLowerCase();
-                            return colLabel === (selectedColLabel || "").trim().toLowerCase();
-                        });
-
-                        return colIndex >= 0 ? colIndex : null;
-                    });
-
-                    return { ...field, selectedMatrix };
-                }
-
-                if (field.type === "Checkbox") {
-                    return { ...field, default_value: response.value };
-                }
-
-                if (typeof response.value === "string" || typeof response.value === "number") {
-                    return { ...field, default_value: response.value };
-                }
-
-                return field;
-            });
-
-            setFields(updatedFields);
-        }
-    }, [formLoaded]);
-
     const handleFieldChange = (fieldId, fieldType, newValue) => {
 
     };
@@ -323,23 +229,35 @@ const Templates = ({ formId, pageId, ...props }) => {
             case "Short Answer":
                 return <input type="text" {...commonProps} />;
             case "Heading":
+                const headingAlign = field.alignment || "center";
+
                 return (
-                    <input
-                        type="text"
-                        value={field.label}
-                        readOnly
-                        style={{
-                            fontSize: field.font_size || "24px",
-                            fontWeight: "bold",
-                            border: "none",
-                            outline: "none",
-                            background: "transparent",
-                            width: "100%",
-                            margin: "8px 0",
-                            color: formAnswersColor,
-                            fontFamily: selectedFont
-                        }}
-                    />
+                    <div style={{ textAlign: headingAlign }}>
+                        <input
+                            type="text"
+                            value={field.label}
+                            readOnly
+                            onChange={(e) => {
+                                const updatedFields = fields.map(f =>
+                                    f.id === field.id ? { ...f, label: e.target.value } : f
+                                );
+                                setFields(updatedFields);
+                            }}
+                            style={{
+                                fontSize: field.font_size || "24px",
+                                fontWeight: "bold",
+                                border: "none",
+                                background: "transparent",
+                                width: "100%",
+                                margin: "8px 0",
+                                color: formAnswersColor,
+                                fontFamily: selectedFont,
+                                textAlign: headingAlign,
+                                display: "block",
+                                outline: "none",
+                            }}
+                        />
+                    </div>
                 );
             case "Email":
                 return (
@@ -1865,28 +1783,26 @@ const Templates = ({ formId, pageId, ...props }) => {
     };
 
     const handleNextPage = () => {
-        const currentPageId = parseInt(pageId);
+        const currentPageId = parseInt(finalPageId);
         const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
 
         const currentIndex = sortedPages.findIndex(p => p.page_number === currentPageId);
 
         if (currentIndex !== -1 && currentIndex < sortedPages.length - 1) {
             const nextPage = sortedPages[currentIndex + 1];
-            navigate(`/preview/form-${formId}/page-${nextPage.page_number}`);
         } else {
             console.log("This is the last page or page not found");
         }
     };
 
     const handleBackPage = () => {
-        const currentPageId = parseInt(pageId);
+        const currentPageId = parseInt(finalPageId);
         const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
 
         const currentIndex = sortedPages.findIndex(p => p.page_number === currentPageId);
 
         if (currentIndex > 0) {
             const previousPage = sortedPages[currentIndex - 1];
-            navigate(`/preview/form-${formId}/page-${previousPage.page_number}`);
         } else {
             console.log("This is the first page");
         }
@@ -1895,7 +1811,7 @@ const Templates = ({ formId, pageId, ...props }) => {
     if (!form) return <p>Templates Loading...</p>;
 
     return (
-        <div className={`Preview-form-container`}>
+        <div className={`Preview-form-container`} style={{ borderRadius: "10px" }}>
 
             <div
                 className={`Preview-form-body ${formbgImage ? "with-bg-image" : ""}`}
@@ -1911,14 +1827,14 @@ const Templates = ({ formId, pageId, ...props }) => {
 
                     return !isFirstPage && (
                         <div className="preview-back-arrow" onClick={handleBackPage}>
-                            <i className="fa-solid fa-arrow-left"></i>
+                            <i className="fa-solid fa-arrow-left" style={{ color: form.questions_background_color }}></i>
                         </div>
                     );
                 })()}
 
                 <div
                     className="Preview-form-content"
-                    style={{ backgroundColor: form.questions_background_color }}
+                    style={{ backgroundColor: form.questions_background_color, marginTop: "5%", marginBottom: "5%" }}
                 >
                     {fields.map((field) => (
                         <div
@@ -1938,7 +1854,7 @@ const Templates = ({ formId, pageId, ...props }) => {
                                             background: "transparent",
                                             marginBottom: "2px",
                                             color: formQuestionColor,
-                                            fontFamily: selectedFont, 
+                                            fontFamily: selectedFont,
                                         }}
                                     >
                                         {field.label}

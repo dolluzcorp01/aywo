@@ -49,7 +49,6 @@ const Preview = () => {
                 if (!response.ok) throw new Error("Failed to fetch form");
 
                 const data = await response.json();
-                console.log("📄 Form data:", data);
                 if (data.form.background_image) {
                     setFormbgImage(`${API_BASE}/${data.form.background_image.replace(/\\/g, "/")}`);
                 }
@@ -324,7 +323,7 @@ const Preview = () => {
                 return <input type="text" {...commonProps} />;
             case "Heading":
                 const headingAlign = field.alignment || "center";
-                
+
                 return (
                     <div style={{ textAlign: headingAlign }}>
                         <input
@@ -1917,7 +1916,7 @@ const Preview = () => {
 
                         return !isFirstPage && (
                             <div className="preview-back-arrow" onClick={handleBackPage}>
-                                <i className="fa-solid fa-arrow-left"></i>
+                                <i className="fa-solid fa-arrow-left" style={{ color: form.questions_background_color }}></i>
                             </div>
                         );
                     })()}

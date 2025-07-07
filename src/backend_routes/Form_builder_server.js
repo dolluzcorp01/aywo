@@ -586,6 +586,67 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
     }
 });
 
+// ✅ Fetch Templates (Protected Route)
+router.get("/get-templates", verifyJWT, async (req, res) => {
+    try {
+        const userId = req.user_id;
+        const rawFormId = req.query.formId;
+        const formId = rawFormId ? rawFormId.match(/\d+$/)?.[0] : null;
+
+        if (formId) {
+            let query = `
+                        SELECT 
+                        f.id AS form_id,
+                        f.user_id,
+                        f.title,
+                        f.created_at,
+                        p.id AS page_id,
+                        p.page_number,
+                        p.page_title,
+                        p.sort_order
+                        FROM temlpates_dforms f
+                        LEFT JOIN temlpates_dform_pages p ON f.id = p.form_id
+                        WHERE f.id = ?
+                    `;
+            const params = [formId];
+            const result = await queryPromise(db, query, params);
+            if (result.length === 0) {
+                return res.status(404).json({ error: "Template not found" });
+            }
+            return res.json({
+                form_id: result[0].form_id,
+                user_id: result[0].user_id,
+                title: result[0].title,
+                created_at: result[0].created_at,
+                pages: result.map(r => ({
+                    page_id: r.page_id,
+                    page_number: r.page_number,
+                    page_title: r.page_title,
+                    sort_order: r.sort_order
+                }))
+            });
+        } else {
+            // Return all templates for user
+            let query = `
+                        SELECT 
+                        f.id AS form_id,
+                        f.user_id,
+                        f.title,
+                        f.created_at
+                        FROM temlpates_dforms f
+                        WHERE f.user_id = ?
+                    `;
+            const forms = await queryPromise(db, query, [userId]);
+            return res.json(forms);
+        }
+
+
+    } catch (error) {
+        console.error("Error fetching forms:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 // ✅ Fetch all page names
 router.get("/get-form-pages/:formId", async (req, res) => {
     const { formId } = req.params;
@@ -1457,6 +1518,73 @@ router.get('/:formId/version-history', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send("Error fetching version history");
+    }
+});
+
+router.get("/get-templates-form/:formId/:pageId", async (req, res) => {
+    const { formId, pageId } = req.params;
+
+    try {
+        // ✅ 1. Fetch form
+        let formQuery = "SELECT * FROM temlpates_dforms WHERE id = ?";
+        const queryParams = [formId];
+
+
+        const [form] = await queryPromise(db, formQuery, queryParams);
+
+        if (!form) {
+            return res.status(404).json({ error: "Form not found or not published" });
+        }
+
+        // ✅ 2. Fetch page data
+        const pageQuery = "SELECT * FROM temlpates_dform_pages WHERE form_id = ? AND page_number = ?";
+        const [page] = await queryPromise(db, pageQuery, [formId, pageId]);
+
+        if (!page && pageId !== "end") {
+            return res.status(404).json({ error: "Page not found" });
+        }
+
+        // ✅ 3. Fetch latest-version fields for this page
+        const fieldsQuery = `
+            SELECT * FROM temlpates_dform_fields f
+            WHERE f.form_id = ? AND f.page_id = ?
+            AND f.fields_version = (
+                SELECT MAX(f2.fields_version)
+                FROM temlpates_dform_fields f2
+                WHERE f2.form_id = f.form_id AND f2.page_id = f.page_id 
+            )
+        `;
+        const fields = await queryPromise(db, fieldsQuery, [formId, pageId]);
+
+        const fieldIds = fields.map(f => f.id);
+        let options = [], matrix = [], defaults = [], uploads = [];
+
+        if (fieldIds.length > 0) {
+            options = await queryPromise(db, `SELECT * FROM temlpates_dfield_options WHERE field_id IN (${fieldIds.join(",")})`);
+            matrix = await queryPromise(db, `SELECT * FROM temlpates_dfield_matrix WHERE field_id IN (${fieldIds.join(",")})`);
+            defaults = await queryPromise(db, `SELECT * FROM temlpates_dfield_default_values WHERE form_id = ?`, [formId]);
+            uploads = await queryPromise(db, `SELECT * FROM temlpates_dfield_file_uploads WHERE form_id = ?`, [formId]);
+            thankyou = await queryPromise(db, `SELECT * FROM temlpates_dform_thankyou WHERE field_id IN (${fieldIds.join(",")}) AND form_id = ? LIMIT 1`, [formId]);
+        }
+
+        const fieldsWithDetails = fields.map(field => ({
+            ...field,
+            options: options.filter(opt => opt.field_id === field.id),
+            matrix: matrix.filter(m => m.field_id === field.id),
+            default_value: defaults.find(def => def.field_id === field.id)?.field_value || null,
+            uploads: uploads.filter(u => u.field_id === field.id),
+            thankyou: thankyou.find(t => t.field_id === field.id) || null
+        }));
+
+        res.json({
+            form,
+            page,
+            fields: fieldsWithDetails
+        });
+
+    } catch (error) {
+        console.error("❌ Error fetching published form:", error);
+        res.status(500).json({ error: "Internal server error" });
     }
 });
 

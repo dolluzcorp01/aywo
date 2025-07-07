@@ -2827,7 +2827,7 @@ const FormBuilder = () => {
                 }
 
                 // Remove options if field type should not have them
-                if (!["Dropdown", "Multiple Choice", "Multiple Select", "Checkbox", "Checkboxes", "Picture", "Ranking"].includes(field.type)) {
+                if (!["Dropdown", "Multiple Choice", "Multiple Select", "Checkboxes", "Picture", "Ranking"].includes(field.type)) {
                     delete field.options;
                 }
 
