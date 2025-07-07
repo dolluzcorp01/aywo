@@ -1504,7 +1504,7 @@ function Home() {
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title">Select a Template</h5>
-              <button type="button" className="btn-close" onClick={() => setShowTemplateModal(false)}></button>
+              <button type="button" className="btn-close" onClick={() => setShowTemplateModal(false)}><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div className="modal-body" style={{ height: "500px", overflowY: "auto" }}>
               {!isPreview ? (
