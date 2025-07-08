@@ -32,7 +32,7 @@ const fieldIcons = {
     ),
     "Switch": <FaToggleOn />,
     "Multiple Choice": <FaList />,
-    "Checkboxes": <FaBoxes />,
+    "Multiple Select Checkboxes": <FaBoxes />,
     "Choice Matrix": <FaGripHorizontal />,
     "Checkbox": <FaCheckSquare />,
 
@@ -691,7 +691,7 @@ const FormBuilder = () => {
             case "Multiple Choice":
             case "Multiple Select":
             case "Checkbox":
-            case "Checkboxes":
+            case "Multiple Select Checkboxes":
                 newField.options = [
                     { option_text: "Option 1" },
                     { option_text: "Option 2" }
@@ -1195,7 +1195,7 @@ const FormBuilder = () => {
                         />
                     </div>
                 );
-            case "Checkboxes":
+            case "Multiple Select Checkboxes":
                 return field.options.map((opt, idx) => (
                     <div key={idx} className="form-check">
                         <input
@@ -2713,7 +2713,7 @@ const FormBuilder = () => {
 
             // Add this before building FormData
             for (const field of fields) {
-                if (["Dropdown", "Multiple Choice", "Multiple Select", "Checkboxes", "Picture"].includes(field.type)) {
+                if (["Dropdown", "Multiple Choice", "Multiple Select", "Multiple Select Checkboxes", "Picture"].includes(field.type)) {
                     if (Array.isArray(field.options)) {
                         const hasEmptyOptionText = field.options.some(opt => !opt.option_text?.trim());
                         if (hasEmptyOptionText) {
@@ -2827,7 +2827,7 @@ const FormBuilder = () => {
                 }
 
                 // Remove options if field type should not have them
-                if (!["Dropdown", "Multiple Choice", "Multiple Select", "Checkboxes", "Picture", "Ranking"].includes(field.type)) {
+                if (!["Dropdown", "Multiple Choice", "Multiple Select", "Multiple Select Checkboxes", "Picture", "Ranking"].includes(field.type)) {
                     delete field.options;
                 }
 
@@ -2988,7 +2988,7 @@ const FormBuilder = () => {
                                         <div className="field-grid">
                                             {[
                                                 "Dropdown", "Picture", "Multiple Select", "Switch", "Multiple Choice", "Checkbox",
-                                                "Checkboxes", "Choice Matrix"
+                                                "Multiple Select Checkboxes", "Choice Matrix"
                                             ]
                                                 .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
                                                 .map(type => <FieldButton key={type} type={type} section="Choices" />)}
@@ -3818,7 +3818,7 @@ const FormBuilder = () => {
                                     </>
                                 )}
 
-                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Multiple Select Checkboxes", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Placeholder</label>
                                         <input
@@ -3835,7 +3835,7 @@ const FormBuilder = () => {
                                     </>
                                 )}
 
-                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Checkboxes", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Multiple Select Checkboxes", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <>
                                         <label>Default value<span title="Initial value" style={{ cursor: "help" }}>🛈</span></label>
                                         <input
@@ -3926,7 +3926,7 @@ const FormBuilder = () => {
                                     </div>
                                 )}
 
-                                {["Dropdown", "Multiple Choice", "Multiple Select", "Checkboxes"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                {["Dropdown", "Multiple Choice", "Multiple Select", "Multiple Select Checkboxes"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                     <div style={{ marginTop: "20px" }}>
                                         <label>Options</label>
 

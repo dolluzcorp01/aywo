@@ -537,7 +537,7 @@ const PublishedForm = () => {
                         />
                     </div>
                 );
-            case "Checkboxes":
+            case "Multiple Select Checkboxes":
                 return field.options.map((opt, idx) => (
                     <div key={idx} className="form-check">
                         <input

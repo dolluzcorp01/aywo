@@ -30,7 +30,7 @@ const fieldIcons = {
     ),
     "Switch": <FaToggleOn />,
     "Multiple Choice": <FaList />,
-    "Checkboxes": <FaBoxes />,
+    "Multiple Select Checkboxes": <FaBoxes />,
     "Choice Matrix": <FaGripHorizontal />,
     "Checkbox": <FaCheckSquare />,
 
