@@ -940,6 +940,7 @@ const Templates = ({ formId, pageId, ...props }) => {
                         }}
                         onFocus={() => setFocusedFieldId(field.id)}
                         onBlur={() => setFocusedFieldId(null)}
+                        onClick={(e) => e.target.showPicker?.()}
                         onChange={(e) => {
                             const updatedFields = fields.map(f =>
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
@@ -955,6 +956,7 @@ const Templates = ({ formId, pageId, ...props }) => {
                         type="time"
                         {...commonProps}
                         value={responses[field.id]?.value ?? field.default_value ?? ""}
+                        onClick={(e) => e.target.showPicker?.()}
                         onChange={(e) => {
                             const updatedFields = fields.map(f =>
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
@@ -970,6 +972,7 @@ const Templates = ({ formId, pageId, ...props }) => {
                         type="datetime-local"
                         {...commonProps}
                         value={responses[field.id]?.value ?? field.default_value ?? ""}
+                        onClick={(e) => e.target.showPicker?.()}
                         onChange={(e) => {
                             const updatedFields = fields.map(f =>
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
@@ -987,6 +990,7 @@ const Templates = ({ formId, pageId, ...props }) => {
                             {...commonProps}
                             placeholder="From"
                             value={responses[field.id]?.value?.from || ""}
+                            onClick={(e) => e.target.showPicker?.()}
                             onChange={(e) => {
                                 const fromDate = e.target.value;
                                 const current = responses[field.id]?.value || {};
@@ -1012,6 +1016,7 @@ const Templates = ({ formId, pageId, ...props }) => {
                             {...commonProps}
                             placeholder="To"
                             value={responses[field.id]?.value?.to || ""}
+                            onClick={(e) => e.target.showPicker?.()}
                             onChange={(e) => {
                                 const toDate = e.target.value;
                                 const current = responses[field.id]?.value || {};

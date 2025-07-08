@@ -1539,7 +1539,7 @@ function Home() {
           <div className="modal-content">
             <div className="modal-header updated-header">
               <h5 className="modal-title">Create a New Form</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" style={{ color: "black", border: "none", outline: "none", }}><i class="fa-solid fa-xmark"></i></button>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" style={{ color: "black", border: "none", outline: "none", }}><i className="fa-solid fa-xmark"></i></button>
             </div>
             <div className="modal-body">
               <h5 className="modal-subtitle mt-2">Choose how to get started</h5>

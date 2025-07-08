@@ -487,7 +487,7 @@ const Form_builder_header = () => {
 
                     {window.location.pathname.includes("preview") && (
                         <button className="form_builder_header-publish-btn" style={{ fontSize: "0.9rem", fontWeight: "500" }} onClick={() => navigate(`/form-builder/${formId}/page-${form.page_id}`)}>
-                            <i class="fa-solid fa-xmark"></i> Exit preview
+                            <i className="fa-solid fa-xmark"></i> Exit preview
                         </button>
                     )}
 

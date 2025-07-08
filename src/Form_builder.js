@@ -1720,6 +1720,9 @@ const FormBuilder = () => {
                         type="date"
                         {...commonProps}
                         value={field.default_value || ""}
+                        onClick={(e) => {
+                            e.target.showPicker?.();
+                        }}
                         onChange={(e) => {
                             const updatedFields = fields.map(f =>
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
@@ -1734,6 +1737,9 @@ const FormBuilder = () => {
                         type="time"
                         {...commonProps}
                         value={field.default_value || ""}
+                        onClick={(e) => {
+                            e.target.showPicker?.();
+                        }}
                         onChange={(e) => {
                             const updatedFields = fields.map(f =>
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
@@ -1748,6 +1754,9 @@ const FormBuilder = () => {
                         type="datetime-local"
                         {...commonProps}
                         value={field.default_value || ""}
+                        onClick={(e) => {
+                            e.target.showPicker?.();
+                        }}
                         onChange={(e) => {
                             const updatedFields = fields.map(f =>
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
@@ -1759,8 +1768,18 @@ const FormBuilder = () => {
             case "Date Range":
                 return (
                     <div className="d-flex gap-2">
-                        <input type="date"  {...commonProps} className="form-control" placeholder="From" />
-                        <input type="date"  {...commonProps} className="form-control" placeholder="To" />
+                        <input
+                            type="date"
+                            {...commonProps}
+                            placeholder="From"
+                            onClick={(e) => e.target.showPicker?.()}
+                        />
+                        <input
+                            type="date"
+                            {...commonProps}
+                            placeholder="To"
+                            onClick={(e) => e.target.showPicker?.()}
+                        />
                     </div>
                 );
             case "Document Type":

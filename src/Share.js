@@ -189,7 +189,7 @@ const Share = () => {
                         {toastMessage && (
                             <div className="toast-popup">
                                 <div className="toast-icon-container">
-                                    <span className="toast-icon"><i class="fa-solid fa-circle-check"></i></span>
+                                    <span className="toast-icon"><i className="fa-solid fa-circle-check"></i></span>
                                 </div>
                                 <div className="toast-text">{toastMessage}</div>
                                 <button className="toast-close" onClick={() => setToastMessage("")}>

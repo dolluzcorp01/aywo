@@ -1039,6 +1039,7 @@ const PublishedForm = () => {
                         type="date"
                         className="form-control"
                         value={responses[field.id]?.value ?? field.default_value ?? ""}
+                        onClick={(e) => e.target.showPicker?.()}
                         style={{
                             width: field.halfWidth ? "50%" : "100%",
                             color: formAnswersColor,
@@ -1065,6 +1066,7 @@ const PublishedForm = () => {
                         type="time"
                         {...commonProps}
                         value={responses[field.id]?.value ?? field.default_value ?? ""}
+                        onClick={(e) => e.target.showPicker?.()}
                         onChange={(e) => {
                             const updatedFields = fields.map(f =>
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
@@ -1080,6 +1082,7 @@ const PublishedForm = () => {
                         type="datetime-local"
                         {...commonProps}
                         value={responses[field.id]?.value ?? field.default_value ?? ""}
+                        onClick={(e) => e.target.showPicker?.()}
                         onChange={(e) => {
                             const updatedFields = fields.map(f =>
                                 f.id === field.id ? { ...f, default_value: e.target.value } : f
@@ -1097,6 +1100,7 @@ const PublishedForm = () => {
                             {...commonProps}
                             placeholder="From"
                             value={responses[field.id]?.value?.from || ""}
+                            onClick={(e) => e.target.showPicker?.()}
                             onChange={(e) => {
                                 const fromDate = e.target.value;
                                 const current = responses[field.id]?.value || {};
@@ -1122,6 +1126,7 @@ const PublishedForm = () => {
                             {...commonProps}
                             placeholder="To"
                             value={responses[field.id]?.value?.to || ""}
+                            onClick={(e) => e.target.showPicker?.()}
                             onChange={(e) => {
                                 const toDate = e.target.value;
                                 const current = responses[field.id]?.value || {};
