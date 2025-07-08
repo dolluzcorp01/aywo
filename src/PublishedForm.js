@@ -1919,10 +1919,22 @@ const PublishedForm = () => {
             } else if (field.type === "Choice Matrix") {
                 const expectedRows = field.rows || [];
                 const answeredRows = value ? Object.keys(value.value || {}) : [];
-                const missingRow = expectedRows.find(row => !answeredRows.includes(row));
+
+                const missingRow = expectedRows.find(
+                    row => !answeredRows.some(answered => answered.toLowerCase() === row.toLowerCase())
+                );
 
                 if (missingRow) {
-                    Swal.fire("Missing Field", `Please select an option for "${missingRow}" in "${field.label}"`, "warning");
+                    Swal.fire(
+                        "Missing Field",
+                        `Please select an option for "${missingRow}" in "${field.label}"`,
+                        "warning"
+                    );
+                    return;
+                }
+            } else if (field.type === "Multiple Select Checkboxes") {
+                if (!value || !Array.isArray(value.value) || value.value.length === 0) {
+                    Swal.fire("Missing Field", `Please select at least one option for "${field.label}"`, "warning");
                     return;
                 }
             }
@@ -2010,13 +2022,26 @@ const PublishedForm = () => {
                     return;
                 }
             }
-            else if (field.type === "Choice Matrix" && field.required) {
+            else if (field.type === "Choice Matrix") {
                 const expectedRows = field.rows || [];
-                const answeredRows = value ? Object.keys(value) : [];
-                const missingRow = expectedRows.find(row => !answeredRows.includes(row));
+                const answeredRows = value ? Object.keys(value.value || {}) : [];
+
+                const missingRow = expectedRows.find(
+                    row => !answeredRows.some(answered => answered.toLowerCase() === row.toLowerCase())
+                );
 
                 if (missingRow) {
-                    Swal.fire("Missing Field", `Please select an option for "${missingRow}" in "${field.label}"`, "warning");
+                    Swal.fire(
+                        "Missing Field",
+                        `Please select an option for "${missingRow}" in "${field.label}"`,
+                        "warning"
+                    );
+                    return;
+                }
+            }
+            else if (field.type === "Multiple Select Checkboxes") {
+                if (!value || !Array.isArray(value.value) || value.value.length === 0) {
+                    Swal.fire("Missing Field", `Please select at least one option for "${field.label}"`, "warning");
                     return;
                 }
             }
