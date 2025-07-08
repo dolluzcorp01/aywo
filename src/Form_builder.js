@@ -3516,27 +3516,31 @@ const FormBuilder = () => {
                                                                 <div className="form-field-content">
                                                                     {!["Heading", "Banner", "Divider", "Image", "Video", "YouTubeVideo", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) ? (
                                                                         <>
-                                                                            <input
-                                                                                type="text"
-                                                                                value={field.label}
-                                                                                onChange={(e) => {
-                                                                                    e.stopPropagation(); // Prevent field click from firing
-                                                                                    const updatedFields = fields.map(f =>
-                                                                                        f.id === field.id ? { ...f, label: e.target.value } : f
-                                                                                    );
-                                                                                    setFields(updatedFields);
-                                                                                }}
-                                                                                style={{
-                                                                                    fontSize: "1rem",
-                                                                                    border: "none",
-                                                                                    background: "transparent",
-                                                                                    width: "fit-content",
-                                                                                    marginBottom: "2px",
-                                                                                    color: formQuestionColor,
-                                                                                    fontFamily: selectedFont
-                                                                                }}
-                                                                            />
-                                                                            {field.required && <span style={{ color: 'red' }}>*</span>}
+                                                                            <div style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                                                                <span
+                                                                                    contentEditable
+                                                                                    suppressContentEditableWarning={true}
+                                                                                    onBlur={(e) => {
+                                                                                        const updatedFields = fields.map(f =>
+                                                                                            f.id === field.id ? { ...f, label: e.target.textContent } : f
+                                                                                        );
+                                                                                        setFields(updatedFields);
+                                                                                    }}
+                                                                                    style={{
+                                                                                        fontSize: "1rem",
+                                                                                        background: "transparent",
+                                                                                        outline: "none",
+                                                                                        color: formQuestionColor,
+                                                                                        fontFamily: selectedFont,
+                                                                                    }}
+                                                                                >
+                                                                                    {field.label}
+                                                                                </span>
+                                                                                {field.required && (
+                                                                                    <span style={{ color: 'red', marginLeft: '2px' }}>*</span>
+                                                                                )}
+                                                                            </div>
+
                                                                             {field.caption && (
                                                                                 <small style={{ color: 'gray', display: 'block', marginBottom: '6px', fontFamily: selectedFont }}>
                                                                                     {field.caption}

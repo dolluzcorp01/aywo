@@ -2114,7 +2114,7 @@ const PublishedForm = () => {
                                         }}
                                     >
                                         {field.label}
-                                        {field.required && <span style={{ color: "red", marginLeft: "30px" }}>*</span>}
+                                        {field.required && <span style={{ color: "red", marginLeft: "5px" }}>*</span>}
                                     </label>
                                     {field.caption && (
                                         <small
