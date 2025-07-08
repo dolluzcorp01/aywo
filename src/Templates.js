@@ -1834,7 +1834,7 @@ const Templates = ({ formId, pageId, ...props }) => {
 
                 <div
                     className="Preview-form-content"
-                    style={{ backgroundColor: form.questions_background_color, marginTop: "5%", marginBottom: "5%" }}
+                    style={{ backgroundColor: form.questions_background_color, marginTop: "5%", marginBottom: "5%", marginRight: "12%", marginLeft: "12%" }}
                 >
                     {fields.map((field) => (
                         <div

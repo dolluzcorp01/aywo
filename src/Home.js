@@ -1600,7 +1600,7 @@ function Home() {
         <div className="modal-dialog modal-xxl modal-dialog-centered template-preview-modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title">Template Preview</h5>
+              <h5 className="modal-title">Pick a template</h5>
               <button type="button" className="btn-close"
                 onClick={() => {
                   setShowPreviewModal(false);
@@ -1609,7 +1609,7 @@ function Home() {
                 <i className="fa-solid fa-xmark"></i>
               </button>
             </div>
-            <div className="modal-body" style={{ padding: "50px", paddingTop: "30px" }}>
+            <div className="modal-body" style={{ padding: "50px", paddingTop: "30px", paddingRight: "40px", paddingBottom: "20px" }}>
               <div className="template-preview">
                 <div className="template-thumbnails">
                   {selectedTemplate?.child_templates?.map((child, index) => (
@@ -1642,7 +1642,6 @@ function Home() {
                     <div style={{
                       background: "#fff",
                       borderRadius: "6px",
-                      padding: "16px",
                       boxShadow: "0 0 4px rgba(0,0,0,0.1)",
                       minHeight: "100%"
                     }}>

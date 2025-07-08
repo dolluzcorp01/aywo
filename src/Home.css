@@ -710,15 +710,16 @@ body {
 }
 
 .template-preview-modal-dialog {
-    max-width: 80%;
-    width: 80%;
-    height: 60%;
+    max-width: 75%;
+    width: 75%;
+    margin-top: 15px;
+    margin-bottom: auto;
 }
 
 .template-preview {
     display: flex;
     gap: 10px;
-    height: 500px;
+    height: 400px;
 }
 
 .template-thumbnails {
