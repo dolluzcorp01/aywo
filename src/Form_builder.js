@@ -3548,28 +3548,32 @@ const FormBuilder = () => {
                                                                             />
                                                                         </button>
 
-                                                                        <button
-                                                                            className="change-type"
-                                                                            onClick={(e) => changeFieldType(field.id, e)}
-                                                                            data-tooltip-title={`Change field type\A${field.type}`}
-                                                                        >
-                                                                            <FaExchangeAlt />
-                                                                        </button>
+                                                                        {!["Next", "Submit"].includes(field.type) && (
+                                                                            <>
+                                                                                <button
+                                                                                    className="change-type"
+                                                                                    onClick={(e) => changeFieldType(field.id, e)}
+                                                                                    data-tooltip-title={`Change field type\A${field.type}`}
+                                                                                >
+                                                                                    <FaExchangeAlt />
+                                                                                </button>
 
-                                                                        <button
-                                                                            onClick={() => duplicateField(field.id)}
-                                                                            data-tooltip-title="Duplicate field"
-                                                                        >
-                                                                            <FaClone />
-                                                                        </button>
+                                                                                <button
+                                                                                    onClick={() => duplicateField(field.id)}
+                                                                                    data-tooltip-title="Duplicate field"
+                                                                                >
+                                                                                    <FaClone />
+                                                                                </button>
+                                                                                <button
+                                                                                    className="delete"
+                                                                                    onClick={() => deleteField(field.id)}
+                                                                                    data-tooltip-title="Delete field"
+                                                                                >
+                                                                                    <FaRegTrashAlt />
+                                                                                </button>
+                                                                            </>
+                                                                        )}
 
-                                                                        <button
-                                                                            className="delete"
-                                                                            onClick={() => deleteField(field.id)}
-                                                                            data-tooltip-title="Delete field"
-                                                                        >
-                                                                            <FaRegTrashAlt />
-                                                                        </button>
                                                                     </div>
                                                                 )}
 
