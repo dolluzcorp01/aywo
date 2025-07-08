@@ -1744,6 +1744,7 @@ const PublishedForm = () => {
                             className="form-control mb-2"
                             placeholder="Thank You"
                             value={field.thankyou_heading}
+                            readOnly
                             onChange={(e) => {
                                 const updatedFields = fields.map(f =>
                                     f.id === field.id ? { ...f, thankyou_heading: e.target.value } : f
@@ -1770,6 +1771,7 @@ const PublishedForm = () => {
                             className="form-control"
                             placeholder="Made with dForms, the easy way to make stunning forms"
                             value={field.thankyou_subtext || "Made with dForms, the easy way to make stunning forms"}
+                            readOnly
                             onChange={(e) => {
                                 const updatedFields = fields.map(f =>
                                     f.id === field.id ? { ...f, thankyou_subtext: e.target.value } : f
@@ -1812,6 +1814,9 @@ const PublishedForm = () => {
                             onMouseLeave={(e) => {
                                 e.currentTarget.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.05)";
                                 e.currentTarget.style.border = "1px solid #e0e0e0";
+                            }}
+                            onClick={() => {
+                                window.open('/login', '_blank');
                             }}
                         >
                             Make your own <span style={{ fontWeight: "900", fontSize: "1.3rem" }}>dForms</span>

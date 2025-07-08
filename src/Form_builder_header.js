@@ -49,6 +49,9 @@ const Form_builder_header = () => {
     const formIdforfetch = match ? match[1] : null;
     const pageIdforfetch = match ? match[2] : null;
 
+    const preview_pg_match = location.pathname.match(/\/preview\/form-(\d+)\/page-(\d+|end)\/device-(\w+)/);
+    const preview_pg_pageId = preview_pg_match ? preview_pg_match[2] : null;
+
     useEffect(() => {
         populateProfileDetails();
 
@@ -396,13 +399,13 @@ const Form_builder_header = () => {
                     <div className="device-toggle">
                         <span
                             className={`center-nav-btn ${window.location.pathname.includes("device-desktop") ? "active" : ""}`}
-                            onClick={() => navigate(`/preview/form-${formId.replace(/^form-/, '')}/page-${form.page_id}/device-desktop`)}
+                            onClick={() => navigate(`/preview/form-${formId.replace(/^form-/, '')}/page-${preview_pg_pageId}/device-desktop`)}
                         >
                             Desktop
                         </span>
                         <span
                             className={`center-nav-btn ${window.location.pathname.includes("device-mobile") ? "active" : ""}`}
-                            onClick={() => navigate(`/preview/form-${formId.replace(/^form-/, '')}/page-${form.page_id}/device-mobile`)}
+                            onClick={() => navigate(`/preview/form-${formId.replace(/^form-/, '')}/page-${preview_pg_pageId}/device-mobile`)}
                         >
                             Mobile
                         </span>
