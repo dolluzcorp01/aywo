@@ -225,6 +225,12 @@
     background: #0056b3;
 }
 
+.form-builder .save-form-btn:disabled {
+    background: #80bfff;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
 /* Customization inputs */
 .form-builder .customize-header {
     display: flex;

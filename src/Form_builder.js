@@ -149,6 +149,147 @@ const FormBuilder = () => {
     const searchParams = new URLSearchParams(location.search);
     const version = searchParams.get('version');
 
+    const [originalFields, setOriginalFields] = useState([]);
+    const [isSaveEnabled, setIsSaveEnabled] = useState(false);
+
+    const [originalFormColors, setOriginalFormColors] = useState({
+        formBgColor: "",
+        formColor: "",
+        formPrimaryColor: "",
+        formQuestionColor: "",
+        formAnswersColor: "",
+        selectedFont: ""
+    });
+
+    function areFormColorsEqual(current, original) {
+        return (
+            current.formBgColor === original.formBgColor &&
+            current.formColor === original.formColor &&
+            current.formPrimaryColor === original.formPrimaryColor &&
+            current.formQuestionColor === original.formQuestionColor &&
+            current.formAnswersColor === original.formAnswersColor &&
+            current.selectedFont === original.selectedFont
+        );
+    }
+
+    function equalUserInput(a, b) {
+        return (a ?? "") === (b ?? "");
+    }
+
+    function areFieldsEqual(arr1, arr2) {
+        if (arr1.length !== arr2.length) return false;
+
+        for (let i = 0; i < arr1.length; i++) {
+            const f1 = arr1[i];
+            const f2 = arr2[i];
+
+            if (f1.type !== f2.type) return false;
+
+            if (!["Submit", "Next"].includes(f1.type)) {
+                if (f1.id !== f2.id) return false;
+            }
+
+            if (["Submit", "Next"].includes(f1.type)) {
+                const keysToCheck = ["type", "label", "btnalignment", "btnbgColor", "btnlabelColor"];
+                for (const key of keysToCheck) {
+                    let val1 = f1[key] ?? null;
+                    let val2 = f2[key] ?? null;
+                    if (key === "font_size") {
+                        if (parseInt(val1) !== parseInt(val2)) return false;
+                    } else {
+                        if (val1 !== val2) return false;
+                    }
+                }
+                continue;
+            }
+
+            for (const key in f1) {
+                const val1 = f1[key];
+                const val2 = f2[key];
+
+                if (["value", "address", "city", "state", "zip"].includes(key)) {
+                    if (!equalUserInput(val1, val2)) return false;
+                    continue;
+                }
+
+                if (key === "default_value" && ["Checkbox", "Switch"].includes(f1.type)) {
+                    const v1 = val1 === true || val1 === "true";
+                    const v2 = val2 === true || val2 === "true";
+                    if (v1 !== v2) return false;
+                    continue;
+                }
+
+                // ✅ Special compare for Picture options
+                if (key === "options" && f1.type === "Picture") {
+                    if (val1.length !== val2.length) return false;
+
+                    for (let j = 0; j < val1.length; j++) {
+                        const opt1 = val1[j];
+                        const opt2 = val2[j];
+
+                        if (opt1.id !== opt2.id) return false;
+                        if ((opt1.option_text ?? "") !== (opt2.option_text ?? "")) return false;
+                        if ((opt1.image_path ?? "") !== (opt2.image_path ?? "")) return false;
+                        if ((opt1.options_style ?? "") !== (opt2.options_style ?? "")) return false;
+                        if ((opt1.sort_order ?? 0) !== (opt2.sort_order ?? 0)) return false;
+                    }
+                    continue;
+                }
+
+                if (Array.isArray(val1) && Array.isArray(val2)) {
+                    if (val1.length !== val2.length) return false;
+                    for (let j = 0; j < val1.length; j++) {
+                        if (typeof val1[j] === 'object') {
+                            if (JSON.stringify(val1[j]) !== JSON.stringify(val2[j])) return false;
+                        } else {
+                            if (val1[j] !== val2[j]) return false;
+                        }
+                    }
+                } else if (typeof val1 === 'object' && val1 !== null) {
+                    if (JSON.stringify(val1) !== JSON.stringify(val2)) return false;
+                } else {
+                    if (val1 !== val2) return false;
+                }
+            }
+
+            for (const key in f2) {
+                if (!(key in f1)) return false;
+            }
+        }
+
+        return true;
+    }
+
+    useEffect(() => {
+        const sameFields = areFieldsEqual(fields, originalFields);
+        const sameFormColors = areFormColorsEqual(
+            {
+                formBgColor,
+                formColor,
+                formPrimaryColor,
+                formQuestionColor,
+                formAnswersColor,
+                selectedFont
+            },
+            originalFormColors
+        );
+
+        const isSame = sameFields && sameFormColors;
+        setIsSaveEnabled(!isSame);
+        console.log("Fields changed:", fields, originalFields);
+
+    }, [
+        fields,
+        originalFields,
+        formBgColor,
+        formColor,
+        formPrimaryColor,
+        formQuestionColor,
+        formAnswersColor,
+        selectedFont,
+        originalFormColors
+    ]);
+
     async function fetchForm(formId, pageId, version) {
         try {
             let url = `/api/form_builder/get-specific-form/${formId}/page/${pageId}`;
@@ -184,13 +325,23 @@ const FormBuilder = () => {
             setformPrimaryColor(data.primary_color || "#3b82f6");
             setformQuestionColor(data.questions_color || "black");
             setformAnswersColor(data.answers_color || "rgb(55, 65, 81)");
-
+            setSelectedFont(data.font || "");
             setColors({
                 background: data.background_color || "#f8f9fa",
                 questionsBackground: data.questions_background_color || "#fff",
                 primary: data.primary_color || "#3b82f6",
                 questions: data.questions_color || "#333333",
                 answers: data.answers_color || "#000000",
+            });
+
+
+            setOriginalFormColors({
+                formBgColor: data.background_color || "#f8f9fa",
+                formColor: data.questions_background_color || "#fff",
+                formPrimaryColor: data.primary_color || "#3b82f6",
+                formQuestionColor: data.questions_color || "black",
+                formAnswersColor: data.answers_color || "rgb(55, 65, 81)",
+                selectedFont: data.font || ""
             });
 
             setFormTitle(typeof data.title === "string" ? data.title : "testform");
@@ -262,9 +413,13 @@ const FormBuilder = () => {
                 });
 
                 setFields(processedFields);
+                setOriginalFields(processedFields);
+                setIsSaveEnabled(false);
             } else {
                 console.warn("⚠️ Unexpected fields data:", data.fields);
                 setFields([]);
+                setOriginalFields([]);
+                setIsSaveEnabled(false);
                 Swal.fire("Warning", "Form data loaded but fields are invalid or missing.", "warning");
             }
 
@@ -2946,7 +3101,7 @@ const FormBuilder = () => {
                             {window.location.pathname.endsWith('/page-end') ? (
                                 <div className="field-group-scrollable mt-2">
                                     <div className="field-group mt-1">
-                                        <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)}>
+                                        <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)} disabled={!isSaveEnabled}>
                                             Save Form
                                         </button>
                                     </div>
@@ -2980,7 +3135,7 @@ const FormBuilder = () => {
                             ) : (
                                 <div className="field-group-scrollable mt-2">
                                     <div className="field-group mt-1">
-                                        <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)}>
+                                        <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)} disabled={!isSaveEnabled}>
                                             Save Form
                                         </button>
                                     </div>
@@ -3520,7 +3675,7 @@ const FormBuilder = () => {
                                                                                 <span
                                                                                     contentEditable
                                                                                     suppressContentEditableWarning={true}
-                                                                                    onBlur={(e) => {
+                                                                                    onInput={(e) => {
                                                                                         const updatedFields = fields.map(f =>
                                                                                             f.id === field.id ? { ...f, label: e.target.textContent } : f
                                                                                         );
@@ -3536,6 +3691,7 @@ const FormBuilder = () => {
                                                                                 >
                                                                                     {field.label}
                                                                                 </span>
+
                                                                                 {field.required && (
                                                                                     <span style={{ color: 'red', marginLeft: '2px' }}>*</span>
                                                                                 )}
@@ -3698,7 +3854,10 @@ const FormBuilder = () => {
                                             const updatedFields = fields.map(f => {
                                                 if (f.id !== editImageOption.fieldId) return f;
                                                 const updatedOptions = [...f.options];
-                                                updatedOptions[editImageOption.index].option_text = e.target.value;
+                                                updatedOptions[editImageOption.index] = {
+                                                    ...updatedOptions[editImageOption.index],
+                                                    option_text: e.target.value
+                                                };
                                                 return { ...f, options: updatedOptions };
                                             });
                                             setFields(updatedFields);
