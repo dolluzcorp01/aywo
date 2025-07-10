@@ -388,7 +388,7 @@ function Home() {
           showConfirmButton: false,
           timer: 1500,
         });
-        setForms((prev) => [...prev, data.newForm]);
+        setForms((prev) => [...prev, data.newFormId]);
       } else {
         console.error("Duplication failed:", data.error);
         Swal.fire({
