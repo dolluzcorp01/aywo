@@ -1191,7 +1191,6 @@ const FormBuilder = () => {
                         <input
                             type="text"
                             value={field.label}
-                            readOnly
                             onChange={(e) => {
                                 const updatedFields = fields.map(f =>
                                     f.id === field.id ? { ...f, label: e.target.value } : f
@@ -1321,7 +1320,7 @@ const FormBuilder = () => {
                             const value = e.target.value;
                             if (/^\d*$/.test(value)) {
                                 const updatedFields = fields.map(f =>
-                                    f.id === field.id ? { ...f, value } : f
+                                    f.id === field.id ? { ...f, value, default_value: value } : f
                                 );
                                 setFields(updatedFields);
                             }
@@ -3675,6 +3674,11 @@ const FormBuilder = () => {
                                                                                 <span
                                                                                     contentEditable
                                                                                     suppressContentEditableWarning={true}
+                                                                                    ref={(el) => {
+                                                                                        if (el && el.innerText !== field.label) {
+                                                                                            el.innerText = field.label;
+                                                                                        }
+                                                                                    }}
                                                                                     onInput={(e) => {
                                                                                         const updatedFields = fields.map(f =>
                                                                                             f.id === field.id ? { ...f, label: e.target.textContent } : f
@@ -3688,9 +3692,7 @@ const FormBuilder = () => {
                                                                                         color: formQuestionColor,
                                                                                         fontFamily: selectedFont,
                                                                                     }}
-                                                                                >
-                                                                                    {field.label}
-                                                                                </span>
+                                                                                />
 
                                                                                 {field.required && (
                                                                                     <span style={{ color: 'red', marginLeft: '2px' }}>*</span>
@@ -4398,9 +4400,9 @@ const FormBuilder = () => {
                                             value={fields.find(f => f.id === selectedFieldId)?.default_value || ""}
                                             onChange={(e) => {
                                                 const value = e.target.value;
-                                                if (/^\d*$/.test(value)) { // Only digits
+                                                if (/^\d*$/.test(value)) {
                                                     const updatedFields = fields.map(f =>
-                                                        f.id === selectedFieldId ? { ...f, default_value: value } : f
+                                                        f.id === selectedFieldId ? { ...f, value, default_value: value } : f
                                                     );
                                                     setFields(updatedFields);
                                                 }

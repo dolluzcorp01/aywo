@@ -496,7 +496,7 @@ const Preview = () => {
                                 handleFieldChange(field.id, field.type, value);
                             }
                         }}
-                        value={responses[field.id]?.value ?? ""}  // ✅ fix here
+                        value={responses[field.id]?.value ?? field.default_value ?? ""}  // ✅ fix here
                     />
                 );
             case "Checkbox":
@@ -507,7 +507,7 @@ const Preview = () => {
                             className="form-check-input"
                             id={`checkbox-${field.id}`}
                             name={`checkbox-${field.id}`}
-                            checked={responses[field.id]?.value === "true"}
+                            checked={responses[field.id]?.value ?? field.default_value === "true"}
                             onChange={(e) => {
                                 const isChecked = e.target.checked.toString(); // ✅ Get "true"/"false"
                                 const updatedFields = fields.map(f =>
@@ -685,7 +685,7 @@ const Preview = () => {
                     />
                 );
             case "Switch":
-                const switchValue = responses[field.id]?.value === "true"; // convert string to boolean
+                const switchValue = responses[field.id]?.value ?? field.default_value === "true"; // convert string to boolean
 
                 return (
                     <div className="form-check form-switch">
@@ -995,8 +995,6 @@ const Preview = () => {
                                                             ...(responses[field.id]?.value || {}),
                                                             [row.trim().toLowerCase()]: (typeof col === "object" ? col.option_text : col).trim().toLowerCase()
                                                         };
-
-                                                        console.log("⬆️ Saving updatedMatrixValue:", updatedMatrixValue);
 
                                                         handleFieldChange(field.id, field.type, updatedMatrixValue);
                                                     }}

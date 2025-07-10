@@ -513,7 +513,7 @@ const PublishedForm = () => {
                                 handleFieldChange(field.id, field.type, value);
                             }
                         }}
-                        value={responses[field.id]?.value ?? ""}  // ✅ fix here
+                        value={responses[field.id]?.value ?? field.default_value ?? ""}  // ✅ fix here
                     />
                 );
             case "Checkbox":
@@ -524,7 +524,7 @@ const PublishedForm = () => {
                             className="form-check-input"
                             id={`checkbox-${field.id}`}
                             name={`checkbox-${field.id}`}
-                            checked={responses[field.id]?.value === "true"}
+                            checked={responses[field.id]?.value ?? field.default_value === "true"}
                             onChange={(e) => {
                                 const isChecked = e.target.checked.toString(); // ✅ Get "true"/"false"
                                 const updatedFields = fields.map(f =>
@@ -702,7 +702,7 @@ const PublishedForm = () => {
                     />
                 );
             case "Switch":
-                const switchValue = responses[field.id]?.value === "true"; // convert string to boolean
+                const switchValue = responses[field.id]?.value ?? field.default_value === "true"; // convert string to boolean
 
                 return (
                     <div className="form-check form-switch">
@@ -1012,8 +1012,6 @@ const PublishedForm = () => {
                                                             ...(responses[field.id]?.value || {}),
                                                             [row.trim().toLowerCase()]: (typeof col === "object" ? col.option_text : col).trim().toLowerCase()
                                                         };
-
-                                                        console.log("⬆️ Saving updatedMatrixValue:", updatedMatrixValue);
 
                                                         handleFieldChange(field.id, field.type, updatedMatrixValue);
                                                     }}
@@ -1905,18 +1903,36 @@ const PublishedForm = () => {
 
         for (const field of allRequiredFields) {
             const value = responses[field.id];
+            const finalValue = value?.value ?? field.default_value ?? "";
+
+            if (["Next", "Submit"].includes(field.type)) {
+                continue;
+            }
+
             if (field.type === "Address") {
-                if (
-                    !value ||
-                    !value.value?.address?.trim() ||
-                    !value.value?.city?.trim() ||
-                    !value.value?.state?.trim() ||
-                    !value.value?.zip?.trim()
-                ) {
-                    Swal.fire("Missing Field", `Please fill out all parts of "${field.label}"`, "warning");
+                const addr = value?.value ?? field.default_value ?? {};
+
+                if (!addr.address?.trim()) {
+                    Swal.fire("Missing Field", `Please fill out the **street address** for "${field.label}"`, "warning");
                     return;
                 }
-            } else if (field.type === "Choice Matrix") {
+                if (!addr.city?.trim()) {
+                    Swal.fire("Missing Field", `Please fill out the **city** for "${field.label}"`, "warning");
+                    return;
+                }
+                if (!addr.state?.trim()) {
+                    Swal.fire("Missing Field", `Please fill out the **state** for "${field.label}"`, "warning");
+                    return;
+                }
+                if (!addr.zip?.trim()) {
+                    Swal.fire("Missing Field", `Please fill out the **zip code** for "${field.label}"`, "warning");
+                    return;
+                }
+
+                continue; // ✅ All parts OK
+            }
+
+            if (field.type === "Choice Matrix") {
                 const expectedRows = field.rows || [];
                 const answeredRows = value ? Object.keys(value.value || {}) : [];
 
@@ -1932,15 +1948,18 @@ const PublishedForm = () => {
                     );
                     return;
                 }
-            } else if (field.type === "Multiple Select Checkboxes") {
+                continue;
+            }
+            if (field.type === "Multiple Select Checkboxes") {
                 if (!value || !Array.isArray(value.value) || value.value.length === 0) {
                     Swal.fire("Missing Field", `Please select at least one option for "${field.label}"`, "warning");
                     return;
                 }
+                continue;
             }
 
             // Basic required check
-            if (!value || value.value === undefined || value.value === "") {
+            if (finalValue === "") {
                 Swal.fire("Missing Field", `Please fill out "${field.label}"`, "warning");
                 return;
             }
@@ -1958,6 +1977,24 @@ const PublishedForm = () => {
                         ...value,
                         value: "file_attached"
                     };
+                }
+            }
+            if (field.type === "Email") {
+                const value = responses[field.id];
+                const email = value?.value ?? field.default_value ?? "";
+
+                // ⚡ Only validate if the user typed something
+                if (email.trim()) {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                    if (!emailRegex.test(email.trim())) {
+                        Swal.fire(
+                            "Invalid Email",
+                            `Please enter a valid email address for "${field.label}".`,
+                            "warning"
+                        );
+                        return; // ⛔ Stop form submission
+                    }
                 }
             }
         }
@@ -1987,9 +2024,8 @@ const PublishedForm = () => {
                 });
                 setResponses({});
 
-                // 🔁 Redirect to end page
-                const currentPath = window.location.pathname; // e.g. /forms/form-1/page-1
-                const formMatch = currentPath.match(/\/forms\/(form-\d+)\//); // extract "form-1"
+                const currentPath = window.location.pathname;
+                const formMatch = currentPath.match(/\/forms\/(form-\d+)\//);
                 if (formMatch && formMatch[1]) {
                     const formId = formMatch[1];
                     window.location.href = `/forms/${formId}/page-end`;
@@ -2009,20 +2045,58 @@ const PublishedForm = () => {
 
         for (const field of currentPageFields) {
             const value = responses[field.id];
+            const finalValue = value?.value ?? field.default_value ?? "";
 
-            if (field.type === "Address" && field.required) {
-                if (
-                    !value ||
-                    !value.address?.trim() ||
-                    !value.city?.trim() ||
-                    !value.state?.trim() ||
-                    !value.zip?.trim()
-                ) {
-                    Swal.fire("Missing Field", `Please fill out all parts of "${field.label}"`, "warning");
-                    return;
+            if (["Next", "Submit"].includes(field.type)) {
+                continue;
+            }
+
+            if (field.type === "Email") {
+                const value = responses[field.id];
+                const email = value?.value ?? field.default_value ?? "";
+
+                if (field.required) {
+                    if (!email.trim()) {
+                        Swal.fire("Missing Field", `Please fill out "${field.label}".`, "warning");
+                        return;
+                    }
+                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+                        Swal.fire("Invalid Email", `Please enter a valid email for "${field.label}".`, "warning");
+                        return;
+                    }
+                } else {
+                    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+                        Swal.fire("Invalid Email", `Please enter a valid email for "${field.label}".`, "warning");
+                        return;
+                    }
+                    continue;
                 }
             }
-            else if (field.type === "Choice Matrix") {
+
+            if (field.required && field.type === "Address") {
+                const addr = value?.value ?? field.default_value ?? {};
+
+                if (!addr.address?.trim()) {
+                    Swal.fire("Missing Field", `Please fill out the **street address** for "${field.label}"`, "warning");
+                    return;
+                }
+                if (!addr.city?.trim()) {
+                    Swal.fire("Missing Field", `Please fill out the **city** for "${field.label}"`, "warning");
+                    return;
+                }
+                if (!addr.state?.trim()) {
+                    Swal.fire("Missing Field", `Please fill out the **state** for "${field.label}"`, "warning");
+                    return;
+                }
+                if (!addr.zip?.trim()) {
+                    Swal.fire("Missing Field", `Please fill out the **zip code** for "${field.label}"`, "warning");
+                    return;
+                }
+
+                continue; // ✅ All parts OK
+            }
+
+            if (field.required && field.type === "Choice Matrix") {
                 const expectedRows = field.rows || [];
                 const answeredRows = value ? Object.keys(value.value || {}) : [];
 
@@ -2038,15 +2112,19 @@ const PublishedForm = () => {
                     );
                     return;
                 }
+                continue;
             }
-            else if (field.type === "Multiple Select Checkboxes") {
+
+            if (field.required && field.type === "Multiple Select Checkboxes") {
                 if (!value || !Array.isArray(value.value) || value.value.length === 0) {
                     Swal.fire("Missing Field", `Please select at least one option for "${field.label}"`, "warning");
                     return;
                 }
+                continue;
             }
 
-            if (field.required && !responses[field.id]) {
+            // Basic required check
+            if (field.required && finalValue === "") {
                 Swal.fire("Missing Field", `Please fill out "${field.label}"`, "warning");
                 return;
             }

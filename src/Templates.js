@@ -903,8 +903,6 @@ const Templates = ({ formId, pageId, ...props }) => {
                                                             [row.trim().toLowerCase()]: (typeof col === "object" ? col.option_text : col).trim().toLowerCase()
                                                         };
 
-                                                        console.log("⬆️ Saving updatedMatrixValue:", updatedMatrixValue);
-
                                                         handleFieldChange(field.id, field.type, updatedMatrixValue);
                                                     }}
                                                     className="form-check-input"
