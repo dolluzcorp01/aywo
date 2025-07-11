@@ -152,6 +152,28 @@ const FormBuilder = () => {
     const [originalFields, setOriginalFields] = useState([]);
     const [isSaveEnabled, setIsSaveEnabled] = useState(false);
 
+    const handlePageNavigation = (pageNumber) => {
+        if (isSaveEnabled) {
+            Swal.fire({
+                title: "Unsaved changes",
+                text: "You have unsaved changes. Do you want to leave without saving?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Leave without saving",
+                cancelButtonText: "Stay on page",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    navigate(`/form-builder/form-${formPages[0].form_id}/page-${pageNumber}`);
+                }
+                // If they click cancel: do nothing
+            });
+        } else {
+            navigate(`/form-builder/form-${formPages[0].form_id}/page-${pageNumber}`);
+        }
+    };
+
     const [originalFormColors, setOriginalFormColors] = useState({
         formBgColor: "",
         formColor: "",
@@ -3940,7 +3962,7 @@ const FormBuilder = () => {
                                                                 }}
                                                                 onClick={(e) => {
                                                                     if (e.defaultPrevented) return;
-                                                                    navigate(`/form-builder/form-${formPages[0].form_id}/page-${page.page_number}`);
+                                                                    handlePageNavigation(page.page_number);
                                                                 }}
                                                             >
                                                                 <i className={`fas ${isActive ? "fa-file-alt" : "fa-ellipsis-vertical"}`}></i>
