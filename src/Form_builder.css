@@ -681,3 +681,39 @@ input::placeholder {
     background-attachment: fixed;
     padding: 20px 0;
 }
+
+.popup-menu {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.popup-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: #000;
+}
+
+.popup-item i {
+    color: #6b7280;
+    transition: color 0.2s ease;
+}
+
+.popup-item:hover i {
+    color: #000;
+}
+
+.popup-item.set-first-page i {
+    color: #60a5fa !important;
+}
+
+.popup-item.trash-item i {
+    color: #ef4444 !important;
+}
+
+.popup-item.trash-item:hover i {
+    color: #dc2626 !important;
+}

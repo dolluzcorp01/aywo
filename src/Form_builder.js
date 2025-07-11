@@ -122,6 +122,21 @@ const FormBuilder = () => {
     const [activeBtnColorPicker, setActiveBtnColorPicker] = useState(null);
     const [formbgImage, setFormbgImage] = useState(null);
 
+    const [menuOpenForPageId, setMenuOpenForPageId] = useState(null);
+
+    const handleMenuToggle = (e, pageId) => {
+        e.stopPropagation(); // prevent triggering page click
+        setMenuOpenForPageId(prev => (prev === pageId ? null : pageId));
+    };
+
+    useEffect(() => {
+        const handleClickOutside = () => {
+            setMenuOpenForPageId(null);
+        };
+        document.addEventListener("click", handleClickOutside);
+        return () => document.removeEventListener("click", handleClickOutside);
+    }, []);
+
     const handleBackgroundImageUpload = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -3955,7 +3970,7 @@ const FormBuilder = () => {
                                                                 ref={provided.innerRef}
                                                                 {...provided.draggableProps}
                                                                 {...provided.dragHandleProps}
-                                                                className={`no-select d-flex align-items-center gap-1 ${isActive ? "active-page" : "text-muted"}`}
+                                                                className={`position-relative no-select d-flex align-items-center gap-1 ${isActive ? "active-page" : "text-muted"}`}
                                                                 style={{
                                                                     cursor: snapshot.isDragging ? 'grabbing' : 'pointer',
                                                                     ...provided.draggableProps.style
@@ -3965,13 +3980,59 @@ const FormBuilder = () => {
                                                                     handlePageNavigation(page.page_number);
                                                                 }}
                                                             >
-                                                                <i className={`fas ${isActive ? "fa-file-alt" : "fa-ellipsis-vertical"}`}></i>
+                                                                {/* Icon - three dots for active, form icon otherwise */}
+                                                                <i
+                                                                    className={`fas ${isActive ? "fa-ellipsis-vertical" : "fa-file-alt"}`}
+                                                                    onClick={(e) => {
+                                                                        if (isActive) {
+                                                                            handleMenuToggle(e, page.id);
+                                                                            e.preventDefault(); // prevent navigation
+                                                                            e.stopPropagation(); // only popup opens
+                                                                        }
+                                                                    }}
+                                                                    style={{ cursor: isActive ? "pointer" : "default" }}
+                                                                ></i>
+
                                                                 <span>{page.page_title || `Page ${index + 1}`}</span>
+
+                                                                {/* Context Menu */}
+                                                                {menuOpenForPageId === page.id && (
+                                                                    <div
+                                                                        className="popup-menu position-absolute bg-white shadow rounded p-2"
+                                                                        style={{
+                                                                            bottom: '150%',
+                                                                            left: '-5px',
+                                                                            zIndex: 1000,
+                                                                            minWidth: '170px'
+                                                                        }}
+                                                                    >
+                                                                        {index !== 0 && (
+                                                                            <div className="popup-item set-first-page" onClick={() => { /* set first page logic */ }}>
+                                                                                <i className="fa-solid fa-flag me-2"></i> Set as First Page
+                                                                            </div>
+                                                                        )}
+
+                                                                        <div className="popup-item" onClick={() => { /* Rename logic */ }}>
+                                                                            <i className="fas fa-pen me-2"></i> Rename
+                                                                        </div>
+                                                                        <div className="popup-item" onClick={() => { /* Copy logic */ }}>
+                                                                            <i className="fa-regular fa-file me-2"></i> Copy
+                                                                        </div>
+                                                                        <div className="popup-item" onClick={() => { /* Duplicate logic */ }}>
+                                                                            <i className="fas fa-clone me-2"></i> Duplicate
+                                                                        </div>
+                                                                        <div className="popup-item trash-item text-danger" onClick={() => { /* Delete logic */ }}>
+                                                                            <i className="fas fa-trash me-2"></i> Delete
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
                                                             </div>
                                                         )}
                                                     </Draggable>
                                                 );
                                             })}
+
                                             {provided.placeholder}
                                             <div className="d-flex align-items-center gap-1 text-muted" onClick={() => { handleEndingPage() }}>
                                                 <i className="fas fa-check-circle"></i>
