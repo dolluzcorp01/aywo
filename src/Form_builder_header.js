@@ -52,8 +52,47 @@ const Form_builder_header = () => {
     const preview_pg_match = location.pathname.match(/\/preview\/form-(\d+)\/page-(\d+|end)\/device-(\w+)/);
     const preview_pg_pageId = preview_pg_match ? preview_pg_match[2] : null;
 
+    const [formPages, setFormPages] = useState([]);
+    const currentPageId = preview_pg_pageId;
+    const device = preview_pg_match ? preview_pg_match[3] : null;
+
+    const [selectedPage, setSelectedPage] = useState(null);
+
+    const [isOpen, setIsOpen] = useState(false);
+    useEffect(() => {
+        if (formPages.length > 0) {
+            const foundPage = formPages.find(p => p.page_number === Number(currentPageId));
+            setSelectedPage(foundPage || formPages[0]);
+        }
+    }, [formPages, currentPageId]);
+
+    const fetchFormPages = async (formId) => {
+        try {
+            const cleanFormId = formId.replace("form-", "");
+
+            const res = await fetch(`/api/form_builder/get-form-pages/${cleanFormId}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include"
+            });
+
+            const data = await res.json();
+            console.log("page data", data)
+            if (res.ok) {
+                setFormPages(data.pages || []);
+            } else {
+                Swal.fire("Error", data.error || "Unable to fetch pages", "error");
+            }
+        } catch (error) {
+            console.error("❌ Error loading pages:", error);
+        }
+    };
+
     useEffect(() => {
         populateProfileDetails();
+        fetchFormPages(formId);
 
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -445,28 +484,31 @@ const Form_builder_header = () => {
                     </button>
                 )}
 
-                <div
-                    className="form_builder_header-profile-section"
-                    style={{ marginRight: "5px" }}
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-                    {profileDetails ? (
-                        <>
-                            <RoundedCircle
-                                className="form_builder_header-profile-img"
-                                style={{
-                                    backgroundColor: profileDetails.profile_color,
-                                    color: 'white',
-                                    fontSize: '18px',
-                                    fontWeight: 'bold',
-                                }}
-                            >
-                                {profileDetails.profile_letters}
-                            </RoundedCircle>
-                        </>
-                    ) : (
-                        "Loading..."
-                    )}
-                </div>
+                {!window.location.pathname.includes("preview") && (
+                    <div
+                        className="form_builder_header-profile-section"
+                        style={{ marginRight: "5px" }}
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+                        {profileDetails ? (
+                            <>
+                                <RoundedCircle
+                                    className="form_builder_header-profile-img"
+                                    style={{
+                                        backgroundColor: profileDetails.profile_color,
+                                        color: 'white',
+                                        fontSize: '18px',
+                                        fontWeight: 'bold',
+                                    }}
+                                >
+                                    {profileDetails.profile_letters}
+                                </RoundedCircle>
+                            </>
+                        ) : (
+                            "Loading..."
+                        )}
+                    </div>
+                )}
+
                 <div className="action-btns">
                     {(window.location.pathname.includes("form-builder") || window.location.pathname.includes("share")) && (
                         <button
@@ -486,9 +528,78 @@ const Form_builder_header = () => {
                     )}
 
                     {window.location.pathname.includes("preview") && (
-                        <button className="form_builder_header-publish-btn" style={{ fontSize: "0.9rem", fontWeight: "500" }} onClick={() => navigate(`/form-builder/${formId}/page-${form.page_id}`)}>
-                            <i className="fa-solid fa-xmark"></i> Exit preview
-                        </button>
+                        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                            <div className="form_builder_page-dropdown" style={{ position: 'relative' }}>
+                                <div
+                                    className="form_builder_page-select"
+                                    onClick={() => setIsOpen(!isOpen)}
+                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                                >
+                                    {selectedPage ? (
+                                        <span>
+                                            <i className="fa-solid fa-file-alt recently-viewed-icon" style={{ marginRight: '6px', color: "rgb(245, 158, 11)" }}></i>
+                                            {selectedPage.page_title?.trim() !== ""
+                                                ? selectedPage.page_title
+                                                : `Page ${selectedPage.page_number}`}
+                                        </span>
+                                    ) : (
+                                        "Loading..."
+                                    )}
+                                    <i className={`fa-solid ${isOpen ? "fa-chevron-up" : "fa-chevron-down"}`}></i>
+                                </div>
+
+                                {isOpen && selectedPage && (
+                                    <div
+                                        className="form_builder_page-options"
+                                        style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: 0,
+                                            right: 0,
+                                            backgroundColor: 'white',
+                                            border: '1px solid #ccc',
+                                            borderRadius: '6px',
+                                            marginTop: '4px',
+                                            zIndex: 1000,
+                                        }}
+                                    >
+                                        {formPages.map((page) => (
+                                            <div
+                                                key={page.id}
+                                                className="form_builder_page-option"
+                                                style={{
+                                                    padding: '8px 12px',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    backgroundColor: page.page_number === selectedPage.page_number ? '#2563eb' : 'white',
+                                                    color: page.page_number === selectedPage.page_number ? 'white' : 'black',
+
+                                                }}
+                                                onClick={() => {
+                                                    setSelectedPage(page);
+                                                    setIsOpen(false);
+                                                    navigate(`/preview/${formId}/page-${page.page_number}/device-${device}`);
+                                                }}
+                                            >
+                                                <i className="fa-solid fa-file-alt recently-viewed-icon" style={{ marginRight: '6px', color: "rgb(245, 158, 11)" }}></i>
+                                                {page.page_title?.trim() !== ""
+                                                    ? page.page_title
+                                                    : `Page ${page.page_number}`}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <button
+                                className="form_builder_header-publish-btn"
+                                style={{ fontSize: "0.9rem", fontWeight: "500" }}
+                                onClick={() => navigate(`/form-builder/${formId}/page-${form.page_id}`)}
+                            >
+                                <i className="fa-solid fa-xmark"></i> Exit preview
+                            </button>
+                        </div>
                     )}
 
                     {window.location.pathname.includes("responses") && (
