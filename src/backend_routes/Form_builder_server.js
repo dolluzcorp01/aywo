@@ -1431,6 +1431,137 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
     }
 });
 
+router.post("/duplicate-page", verifyJWT, async (req, res) => {
+    const { pageId, formId, newPageTitle } = req.body;
+    const pageTitle = newPageTitle || originalPage.page_title + " (Copy)";
+    const userId = req.user_id;
+
+    if (!userId || !pageId || !formId) {
+        return res.status(400).json({ error: "Missing required fields." });
+    }
+
+    try {
+        // 🚨 Before inserting the new page
+        const existingPageWithTitle = await queryPromise(
+            db,
+            `SELECT 1 FROM dform_pages WHERE form_id = ? AND page_title = ? LIMIT 1`,
+            [formId, pageTitle]
+        );
+
+        if (existingPageWithTitle.length > 0) {
+            return res.status(400).json({ error: "A page with this title already exists. Please choose a different title." });
+        }
+
+        const [[{ max_order }], [{ max_page_number }]] = await Promise.all([
+            queryPromise(db, `SELECT MAX(sort_order) AS max_order FROM dform_pages WHERE form_id = ?`, [formId]),
+            queryPromise(db, `SELECT MAX(page_number) AS max_page_number FROM dform_pages WHERE form_id = ?`, [formId])
+        ]);
+
+        const nextSortOrder = (max_order || 0) + 1;
+        const nextPageNumber = (max_page_number || 0) + 1;
+
+        const [originalPage] = await queryPromise(db, `SELECT * FROM dform_pages WHERE id = ?`, [pageId]);
+        if (!originalPage) return res.status(404).json({ error: "Original page not found" });
+
+        const insertPageResult = await queryPromise(db, `
+      INSERT INTO dform_pages (page_number, form_id, page_title, sort_order)
+      VALUES (?, ?, ?, ?)`,
+            [nextPageNumber, formId, pageTitle, nextSortOrder]
+        );
+
+        const newPageId = insertPageResult.insertId;
+
+        // Duplicate fields (latest version only)
+        const fields = await queryPromise(db, `
+      SELECT * FROM dform_fields 
+      WHERE form_id = ? AND page_id = ? AND fields_version = (
+        SELECT MAX(fields_version) 
+        FROM dform_fields 
+        WHERE form_id = ? AND page_id = ?
+      )`,
+            [formId, originalPage.page_number, formId, originalPage.page_number]
+        );
+
+        let newVersion = 1;
+
+        for (const field of fields) {
+            const { insertId: newFieldId } = await queryPromise(db, `
+        INSERT INTO dform_fields
+        (form_id, page_id, type, label, placeholder, caption, default_value, description, alert_type,
+         font_size, required, sort_order, min_value, max_value, heading_alignment,
+         btnalignment, btnbgColor, btnlabelColor, fields_version)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    formId, nextPageNumber.toString(), field.type, field.label, field.placeholder,
+                    field.caption, field.default_value, field.description, field.alert_type,
+                    field.font_size, field.required, field.sort_order, field.min_value,
+                    field.max_value, field.heading_alignment, field.btnalignment,
+                    field.btnbgColor, field.btnlabelColor, newVersion
+                ]
+            );
+
+            // Options
+            const options = await queryPromise(db, `SELECT * FROM dfield_options WHERE field_id = ?`, [field.id]);
+            for (const opt of options) {
+                let newOptionImagePath = null;
+                if (opt.image_path) {
+                    newOptionImagePath = await copyFileWithNewName(opt.image_path, "field_file_uploads");
+                }
+
+                await queryPromise(db, `
+  INSERT INTO dfield_options (field_id, option_text, options_style, sort_order, image_path)
+  VALUES (?, ?, ?, ?, ?)`,
+                    [newFieldId, opt.option_text, opt.options_style, opt.sort_order, newOptionImagePath]
+                );
+            }
+
+            // Matrix
+            const matrix = await queryPromise(db, `SELECT * FROM dfield_matrix WHERE field_id = ?`, [field.id]);
+            for (const m of matrix) {
+                await queryPromise(db, `
+          INSERT INTO dfield_matrix (field_id, row_label, column_label)
+          VALUES (?, ?, ?)`,
+                    [newFieldId, m.row_label, m.column_label]
+                );
+            }
+
+            // File uploads
+            const uploads = await queryPromise(db, `SELECT * FROM dfield_file_uploads WHERE field_id = ?`, [field.id]);
+            for (const upload of uploads) {
+                let newUploadFilePath = null;
+                if (upload.file_path) {
+                    newUploadFilePath = await copyFileWithNewName(upload.file_path, "field_file_uploads");
+                }
+
+                await queryPromise(db, `
+  INSERT INTO dfield_file_uploads
+  (field_id, form_id, file_type, file_path, youtube_url, file_field_size, file_field_Alignment)
+  VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        newFieldId,
+                        formId,
+                        upload.file_type,
+                        newUploadFilePath,
+                        upload.youtube_url,
+                        upload.file_field_size,
+                        upload.file_field_Alignment
+                    ]
+                );
+            }
+        }
+
+        res.json({
+            message: "Page duplicated successfully!",
+            newPageId,
+            newPageNumber: nextPageNumber
+        });
+
+    } catch (err) {
+        console.error("❌ Duplicate page error:", err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 // ✅ Save internal note (Protected Route)
 router.post("/save-note/:formId", verifyJWT, async (req, res) => {
     const { formId } = req.params;

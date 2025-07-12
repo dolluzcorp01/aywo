@@ -79,7 +79,6 @@ const Form_builder_header = () => {
             });
 
             const data = await res.json();
-            console.log("page data", data)
             if (res.ok) {
                 setFormPages(data.pages || []);
             } else {

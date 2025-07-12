@@ -717,3 +717,14 @@ input::placeholder {
 .popup-item.trash-item:hover i {
     color: #dc2626 !important;
 }
+
+.scroll-arrow-btn {
+    background: transparent;
+    border: none;
+    color: gray;
+}
+
+.scroll-arrow-btn:hover {
+    color: black;
+    cursor: pointer;
+}
