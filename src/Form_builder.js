@@ -124,6 +124,51 @@ const FormBuilder = () => {
 
     const [menuOpenForPageId, setMenuOpenForPageId] = useState(null);
 
+    const [renamingPageId, setRenamingPageId] = useState(null);
+    const [renamePageTitle, setRenamePageTitle] = useState("");
+
+    const handlePageRenameSubmit = (pageId) => {
+        if (!renamePageTitle.trim()) {
+            Swal.fire("Error", "Page title cannot be empty.", "error");
+            return;
+        }
+        Swal.fire({
+            title: "Confirm Rename",
+            text: "Do you want to rename this page?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Yes, Rename",
+            cancelButtonText: "Cancel",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                apiFetch(`/api/form_builder/rename-page/${pageId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title: renamePageTitle }),
+                    credentials: "include",
+                })
+                    .then((res) => {
+                        if (!res.ok) {
+                            return res.json().then(err => { throw new Error(err.error || "Failed to rename page"); });
+                        }
+                        return res.json();
+                    })
+                    .then(() => {
+                        setFormPages(prev =>
+                            prev.map(p => p.id === pageId ? { ...p, page_title: renamePageTitle } : p)
+                        );
+                        setRenamingPageId(null);
+                        setRenamePageTitle("");
+                        Swal.fire("Renamed!", "Page renamed successfully.", "success");
+                    })
+                    .catch((error) => {
+                        console.error("Error renaming page:", error);
+                        Swal.fire("Error", error.message, "error");
+                    });
+            }
+        });
+    };
+
     const handleMenuToggle = (e, pageId) => {
         e.stopPropagation(); // prevent triggering page click
         setMenuOpenForPageId(prev => (prev === pageId ? null : pageId));
@@ -132,6 +177,7 @@ const FormBuilder = () => {
     useEffect(() => {
         const handleClickOutside = () => {
             setMenuOpenForPageId(null);
+            setRenamingPageId(null);
         };
         document.addEventListener("click", handleClickOutside);
         return () => document.removeEventListener("click", handleClickOutside);
@@ -313,7 +359,6 @@ const FormBuilder = () => {
 
         const isSame = sameFields && sameFormColors;
         setIsSaveEnabled(!isSame);
-        console.log("Fields changed:", fields, originalFields);
 
     }, [
         fields,
@@ -4005,6 +4050,7 @@ const FormBuilder = () => {
                                                                             zIndex: 1000,
                                                                             minWidth: '170px'
                                                                         }}
+                                                                        onClick={(e) => e.stopPropagation()}
                                                                     >
                                                                         {index !== 0 && (
                                                                             <div className="popup-item set-first-page" onClick={() => { /* set first page logic */ }}>
@@ -4012,9 +4058,51 @@ const FormBuilder = () => {
                                                                             </div>
                                                                         )}
 
-                                                                        <div className="popup-item" onClick={() => { /* Rename logic */ }}>
-                                                                            <i className="fas fa-pen me-2"></i> Rename
-                                                                        </div>
+                                                                        {renamingPageId === page.id ? (
+                                                                            <div className="popup-item position-relative" style={{ paddingRight: "20px" }}>
+                                                                                <input
+                                                                                    type="text"
+                                                                                    className="form-control form-control-sm"
+                                                                                    value={renamePageTitle}
+                                                                                    onChange={(e) => setRenamePageTitle(e.target.value)}
+                                                                                    onKeyDown={(e) => {
+                                                                                        if (e.key === "Enter") handlePageRenameSubmit(page.id);
+                                                                                        if (e.key === "Escape") setRenamingPageId(null);
+                                                                                    }}
+                                                                                    autoFocus
+                                                                                />
+                                                                                <button
+                                                                                    className="btn btn-sm btn-primary ms-2"
+                                                                                    onClick={() => handlePageRenameSubmit(page.id)}
+                                                                                >
+                                                                                    Save
+                                                                                </button>
+
+                                                                                {/* Small Close Icon */}
+                                                                                <i
+                                                                                    className="fas fa-xmark text-muted"
+                                                                                    style={{
+                                                                                        position: "absolute",
+                                                                                        top: "6px",
+                                                                                        right: "6px",
+                                                                                        fontSize: "0.75rem",
+                                                                                        cursor: "pointer",
+                                                                                    }}
+                                                                                    onClick={() => setRenamingPageId(null)}
+                                                                                ></i>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div
+                                                                                className="popup-item"
+                                                                                onClick={() => {
+                                                                                    setRenamingPageId(page.id);
+                                                                                    setRenamePageTitle(page.page_title || `Page ${page.page_number}`);
+                                                                                }}
+                                                                            >
+                                                                                <i className="fas fa-pen me-2"></i> Rename
+                                                                            </div>
+                                                                        )}
+
                                                                         <div className="popup-item" onClick={() => { /* Copy logic */ }}>
                                                                             <i className="fa-regular fa-file me-2"></i> Copy
                                                                         </div>

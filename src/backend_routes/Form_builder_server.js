@@ -491,6 +491,35 @@ router.put("/rename-form/:formId", verifyJWT, async (req, res) => {
     }
 });
 
+router.put("/rename-page/:pageId", verifyJWT, async (req, res) => {
+    const { pageId } = req.params;
+    const { title } = req.body;
+    const userId = req.user_id;
+
+    if (!title || !userId) {
+        return res.status(400).json({ error: "Missing data" });
+    }
+
+    try {
+        // Check page ownership
+        const page = await queryPromise(db, `
+      SELECT dp.* FROM dform_pages dp 
+      JOIN dforms f ON dp.form_id = f.id 
+      WHERE dp.id = ? AND f.user_id = ?
+    `, [pageId, userId]);
+
+        if (!page.length) {
+            return res.status(404).json({ error: "Page not found or unauthorized" });
+        }
+
+        await queryPromise(db, `UPDATE dform_pages SET page_title = ? WHERE id = ?`, [title, pageId]);
+        res.json({ message: "Page renamed successfully" });
+    } catch (err) {
+        console.error("Error renaming page:", err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 // ✅ Fetch user forms (Protected Route)
 router.get("/get-forms", verifyJWT, async (req, res) => {
     try {
