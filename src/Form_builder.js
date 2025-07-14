@@ -273,6 +273,82 @@ const FormBuilder = () => {
         }
     };
 
+    const handleDeletePage = (pageId, page_number) => {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "This page will be deleted!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Yes, delete it!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                apiFetch(`/api/form_builder/delete-page/${pageId}`, {
+                    method: "DELETE",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ page_number }) // ✅ must match param name
+                })
+                    .then((response) => {
+                        if (!response.ok) {
+                            throw new Error("Failed to delete page");
+                        }
+                        return response.json();
+                    })
+                    .then(() => {
+                        setFormPages(prev => {
+                            const updatedPages = prev.filter(p => p.id !== pageId);
+
+                            // ✅ Navigate if needed
+                            if (updatedPages.length > 0) {
+                                const currentIndex = prev.findIndex(p => p.id === pageId);
+                                let targetPageNumber;
+
+                                if (prev[currentIndex + 1]) {
+                                    targetPageNumber = prev[currentIndex + 1].page_number;
+                                } else if (prev[currentIndex - 1]) {
+                                    targetPageNumber = prev[currentIndex - 1].page_number;
+                                }
+
+                                if (targetPageNumber) {
+                                    navigate(`/form-builder/form-${formId}/page-${targetPageNumber}`);
+                                }
+                            }
+
+                            // ✅ Call check-pages-btnfields with updated pages!
+                            apiFetch(`/api/form_builder/check-pages-btnfields`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                credentials: "include",
+                                body: JSON.stringify({
+                                    pageIds: updatedPages.map(p => p.id),
+                                    lastPageId: updatedPages[updatedPages.length - 1]?.id,
+                                    formId
+                                })
+                            })
+                                .then(res => res.json())
+                                .then(data => {
+                                    console.log("✅ check-pages-btnfields result:", data);
+                                    // Update local state if needed!
+                                })
+                                .catch(err => console.error("Failed to check pages btn fields:", err));
+
+                            return updatedPages;
+                        });
+
+                        Swal.fire("Deleted!", "Your page has been deleted.", "success");
+                    })
+                    .catch((error) => {
+                        console.error("Error deleting page:", error);
+                        Swal.fire("Error", "Failed to delete page", "error");
+                    });
+            }
+        });
+    };
+
     const handleBackgroundImageUpload = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -638,6 +714,7 @@ const FormBuilder = () => {
             const data = await res.json();
             if (res.ok) {
                 setFormPages(data.pages || []);
+                console.log("✅ Loaded form pages:", data.pages);
             } else {
                 Swal.fire("Error", data.error || "Unable to fetch pages", "error");
             }
@@ -4093,14 +4170,12 @@ const FormBuilder = () => {
                             <div
                                 ref={pagesContainerRef}
                                 style={{
-                                    overflowX: 'auto',
                                     whiteSpace: 'nowrap',
                                     display: 'flex',
                                     gap: '12px',
                                     flex: '1 1 auto'
                                 }}
                             >
-
 
                                 <DragDropContext onDragEnd={handleDragEnd}>
                                     <Droppable droppableId="pages" direction="horizontal">
@@ -4257,9 +4332,15 @@ const FormBuilder = () => {
                                                                                 </div>
                                                                             )}
 
-                                                                            <div className="popup-item trash-item text-danger" onClick={() => { /* Delete logic */ }}>
-                                                                                <i className="fas fa-trash me-2"></i> Delete
-                                                                            </div>
+                                                                            {formPages.length > 1 && (
+                                                                                <div
+                                                                                    className="popup-item trash-item text-danger"
+                                                                                    onClick={() => handleDeletePage(page.id, page.page_number)}
+                                                                                >
+                                                                                    <i className="fas fa-trash me-2"></i> Delete
+                                                                                </div>
+                                                                            )}
+
                                                                         </div>
                                                                     )}
                                                                 </div>

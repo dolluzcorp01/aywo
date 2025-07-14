@@ -1103,6 +1103,10 @@ router.delete("/delete-form/:formId", verifyJWT, async (req, res) => {
         const fieldIds = fields.map(f => f.id);
 
         if (fieldIds.length) {
+            // 🗑️ Delete dependent rows in dfield_default_values first
+            await queryPromise(connection, `DELETE FROM dfield_default_values WHERE field_id IN (?)`, [fieldIds]);
+
+            // ✅ Then the rest as you already have it:
             await queryPromise(connection, `DELETE FROM dfield_matrix WHERE field_id IN (?)`, [fieldIds]);
             await queryPromise(connection, `DELETE FROM dfield_options WHERE field_id IN (?)`, [fieldIds]);
             await queryPromise(connection, `DELETE FROM dfield_file_uploads WHERE field_id IN (?)`, [fieldIds]);
@@ -1175,6 +1179,112 @@ router.delete("/delete-form/:formId", verifyJWT, async (req, res) => {
 
     } catch (err) {
         console.error("❌ Error deleting form:", err);
+        if (connection) await connection.rollback();
+        res.status(500).json({ error: "Internal server error" });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
+router.delete("/delete-page/:pageId", verifyJWT, async (req, res) => {
+    const { pageId } = req.params;
+    const { page_number } = req.body;
+    const userId = req.user_id;
+
+    if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    let connection;
+    try {
+        connection = await new Promise((resolve, reject) => {
+            db.getConnection((err, conn) => (err ? reject(err) : resolve(conn)));
+        });
+
+        await connection.beginTransaction();
+
+        // ✅ Check if page belongs to the user's form
+        const [pageRow] = await queryPromise(
+            connection,
+            `SELECT form_id FROM dform_pages WHERE id = ?`,
+            [pageId]
+        );
+
+        if (!pageRow) {
+            await connection.rollback();
+            return res.status(404).json({ error: "Page not found" });
+        }
+
+        const [formRow] = await queryPromise(
+            connection,
+            `SELECT id FROM dforms WHERE id = ? AND user_id = ?`,
+            [pageRow.form_id, userId]
+        );
+
+        if (!formRow) {
+            await connection.rollback();
+            return res.status(403).json({ error: "Not authorized to delete this page" });
+        }
+
+        const formId = pageRow.form_id;
+
+        // ✅ Gather file paths linked to fields on this page
+        const fields = await queryPromise(
+            connection,
+            `SELECT id FROM dform_fields WHERE page_id = ? AND form_id = ?`,
+            [page_number, formId]
+        );
+        const fieldIds = fields.map(f => f.id);
+
+        let uploadsInFileUploads = [];
+        let uploadsInOptions = [];
+
+        if (fieldIds.length) {
+            uploadsInFileUploads = await queryPromise(
+                connection,
+                `SELECT file_path FROM dfield_file_uploads WHERE field_id IN (?)`,
+                [fieldIds]
+            );
+
+            uploadsInOptions = await queryPromise(
+                connection,
+                `SELECT image_path FROM dfield_options WHERE field_id IN (?)`,
+                [fieldIds]
+            );
+        }
+
+        // ✅ Delete related rows
+        if (fieldIds.length) {
+            await queryPromise(connection, `DELETE FROM dfield_default_values WHERE field_id IN (?)`, [fieldIds]);
+            await queryPromise(connection, `DELETE FROM dfield_matrix WHERE field_id IN (?)`, [fieldIds]);
+            await queryPromise(connection, `DELETE FROM dfield_options WHERE field_id IN (?)`, [fieldIds]);
+            await queryPromise(connection, `DELETE FROM dfield_file_uploads WHERE field_id IN (?)`, [fieldIds]);
+        }
+
+        await queryPromise(connection, `DELETE FROM dform_fields WHERE page_id = ? AND form_id = ?`, [String(page_number), formId]);
+        await queryPromise(connection, `DELETE FROM dform_pages WHERE id = ?`, [pageId]);
+
+        await connection.commit();
+
+        // ✅ Delete physical files
+        uploadsInFileUploads.forEach(upload => {
+            if (upload.file_path) {
+                const filePath = path.join(__dirname, "..", upload.file_path.replace(/\\/g, "/"));
+                safeDelete(filePath);
+            }
+        });
+
+        uploadsInOptions.forEach(opt => {
+            if (opt.image_path) {
+                const optPath = path.join(__dirname, "..", opt.image_path.replace(/\\/g, "/"));
+                safeDelete(optPath);
+            }
+        });
+
+        res.json({ message: "Page and files deleted successfully!" });
+
+    } catch (err) {
+        console.error("❌ Error deleting page:", err);
         if (connection) await connection.rollback();
         res.status(500).json({ error: "Internal server error" });
     } finally {
