@@ -154,8 +154,39 @@ const FormBuilder = () => {
     const [pageToDuplicate, setPageToDuplicate] = useState(null);
 
     const openDuplicateModal = (page) => {
+        const originalTitle = page.page_title.trim();
+        let baseTitle = originalTitle;
+
+        // 👇 Remove existing (Copy) or (Copy X)
+        const copyRegex = /\s*\(Copy(?:\s*\d*)?\)$/i;
+        if (copyRegex.test(baseTitle)) {
+            baseTitle = baseTitle.replace(copyRegex, '').trim();
+        }
+
+        // Count existing copies
+        let copyCount = 0;
+
+        formPages.forEach(p => {
+            const title = p.page_title.trim();
+            if (title === `${baseTitle} (Copy)`) {
+                copyCount = Math.max(copyCount, 1);
+            }
+            const match = title.match(new RegExp(`^${baseTitle}\\s*\\(Copy\\s*(\\d+)\\)$`, 'i'));
+            if (match && Number(match[1]) > copyCount) {
+                copyCount = Number(match[1]);
+            }
+        });
+
+        // ✅ Generate next copy title
+        let newTitle;
+        if (copyCount === 0) {
+            newTitle = `${baseTitle} (Copy)`;
+        } else {
+            newTitle = `${baseTitle} (Copy ${copyCount + 1})`;
+        }
+
         setPageToDuplicate(page);
-        setDuplicatePageTitle(`${page.page_title} (Copy)`);
+        setDuplicatePageTitle(newTitle);
         setDuplicateModalVisible(true);
     };
 
@@ -714,7 +745,6 @@ const FormBuilder = () => {
             const data = await res.json();
             if (res.ok) {
                 setFormPages(data.pages || []);
-                console.log("✅ Loaded form pages:", data.pages);
             } else {
                 Swal.fire("Error", data.error || "Unable to fetch pages", "error");
             }
