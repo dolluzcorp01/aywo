@@ -4215,7 +4215,8 @@ const FormBuilder = () => {
                             <div
                                 ref={pagesContainerRef}
                                 style={{
-                                    overflow: "auto",
+                                    overflowX: "auto",
+                                    overflowY: "hidden",
                                     whiteSpace: 'nowrap',
                                     position: 'relative',
                                     display: 'flex',
