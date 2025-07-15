@@ -149,9 +149,32 @@ const FormBuilder = () => {
     };
 
     const [menuOpenForPageId, setMenuOpenForPageId] = useState(null);
-    const [duplicateModalVisible, setDuplicateModalVisible] = useState(false);
+    const [menuPosition, setMenuPosition] = useState({ top: 100, left: window.innerWidth / 2 });
     const [duplicatePageTitle, setDuplicatePageTitle] = useState("");
     const [pageToDuplicate, setPageToDuplicate] = useState(null);
+
+    const handleMenuToggle = (e, pageId) => {
+        e.stopPropagation();
+        const rect = e.currentTarget.getBoundingClientRect();
+        setMenuPosition({
+            top: rect.bottom - 230,
+            left: rect.left + rect.width / 2 + 100
+        });
+        setMenuOpenForPageId(prev => (prev === pageId ? null : pageId));
+    };
+
+    const popupRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (popupRef.current && !popupRef.current.contains(event.target)) {
+                setMenuOpenForPageId(null);
+                setRenamingPageId(null);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     const openDuplicateModal = (page) => {
         const originalTitle = page.page_title.trim();
@@ -184,25 +207,9 @@ const FormBuilder = () => {
         } else {
             newTitle = `${baseTitle} (Copy ${copyCount + 1})`;
         }
-
         setPageToDuplicate(page);
         setDuplicatePageTitle(newTitle);
-        setDuplicateModalVisible(true);
     };
-
-    const handleMenuToggle = (e, pageId) => {
-        e.stopPropagation(); // prevent triggering page click
-        setMenuOpenForPageId(prev => (prev === pageId ? null : pageId));
-    };
-
-    useEffect(() => {
-        const handleClickOutside = () => {
-            setMenuOpenForPageId(null);
-            setRenamingPageId(null);
-        };
-        document.addEventListener("click", handleClickOutside);
-        return () => document.removeEventListener("click", handleClickOutside);
-    }, []);
 
     //Rename pages
     const [renamingPageId, setRenamingPageId] = useState(null);
@@ -251,9 +258,11 @@ const FormBuilder = () => {
     };
 
     //Duplicate pages
-    const handleDuplicatePage = async (page) => {
-        const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
+    const handleDuplicatePage = async () => {
+        const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
         const formId = match ? match[1] : null;
+        const page_number = match ? Number(match[2]) : null;
+        const page = formPages.find(p => p.page_number === page_number);
 
         if (!formId || !page?.id) {
             Swal.fire("Error", "Form or Page ID not found", "error");
@@ -294,6 +303,13 @@ const FormBuilder = () => {
                 });
 
                 Swal.fire("Success", "Page duplicated successfully!", "success");
+                const modal = document.getElementById('DuplicateModalCenter');
+                if (modal) {
+                    modal.classList.remove("show");
+                    modal.style.display = "none";
+                }
+                document.body.classList.remove("modal-open");
+                document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
                 navigate(`/form-builder/form-${formId}/page-${result.newPageNumber}`);
             } else {
                 Swal.fire("Error", result.error || "Duplication failed", "error");
@@ -4196,17 +4212,17 @@ const FormBuilder = () => {
                             >
                                 + Add page
                             </button>
-
                             <div
                                 ref={pagesContainerRef}
                                 style={{
+                                    overflow: "auto",
                                     whiteSpace: 'nowrap',
+                                    position: 'relative',
                                     display: 'flex',
                                     gap: '12px',
                                     flex: '1 1 auto'
                                 }}
                             >
-
                                 <DragDropContext onDragEnd={handleDragEnd}>
                                     <Droppable droppableId="pages" direction="horizontal">
                                         {(provided) => (
@@ -4249,137 +4265,12 @@ const FormBuilder = () => {
 
                                                                     <span>{page.page_title || `Page ${index + 1}`}</span>
 
-                                                                    {/* Context Menu */}
-                                                                    {menuOpenForPageId === page.id && (
-                                                                        <div
-                                                                            className="popup-menu position-absolute bg-white shadow rounded p-2"
-                                                                            style={{
-                                                                                bottom: '150%',
-                                                                                left: '-5px',
-                                                                                zIndex: 1000,
-                                                                                minWidth: '170px'
-                                                                            }}
-                                                                            onClick={(e) => e.stopPropagation()}
-                                                                        >
-                                                                            {index !== 0 && (
-                                                                                <div className="popup-item set-first-page" onClick={() => { /* set first page logic */ }}>
-                                                                                    <i className="fa-solid fa-flag me-2"></i> Set as First Page
-                                                                                </div>
-                                                                            )}
-
-                                                                            {renamingPageId === page.id ? (
-                                                                                <div className="popup-item position-relative" style={{ paddingRight: "20px" }}>
-                                                                                    <input
-                                                                                        type="text"
-                                                                                        className="form-control form-control-sm"
-                                                                                        value={renamePageTitle}
-                                                                                        onChange={(e) => setRenamePageTitle(e.target.value)}
-                                                                                        onKeyDown={(e) => {
-                                                                                            if (e.key === "Enter") handlePageRenameSubmit(page.id);
-                                                                                            if (e.key === "Escape") setRenamingPageId(null);
-                                                                                        }}
-                                                                                        autoFocus
-                                                                                    />
-                                                                                    <button
-                                                                                        className="btn btn-sm btn-primary ms-2"
-                                                                                        onClick={() => handlePageRenameSubmit(page.id)}
-                                                                                    >
-                                                                                        Save
-                                                                                    </button>
-
-                                                                                    {/* Small Close Icon */}
-                                                                                    <i
-                                                                                        className="fas fa-xmark text-muted"
-                                                                                        style={{
-                                                                                            position: "absolute",
-                                                                                            top: "6px",
-                                                                                            right: "6px",
-                                                                                            fontSize: "0.75rem",
-                                                                                            cursor: "pointer",
-                                                                                        }}
-                                                                                        onClick={() => setRenamingPageId(null)}
-                                                                                    ></i>
-                                                                                </div>
-                                                                            ) : (
-                                                                                <div
-                                                                                    className="popup-item"
-                                                                                    onClick={() => {
-                                                                                        setRenamingPageId(page.id);
-                                                                                        setRenamePageTitle(page.page_title || `Page ${page.page_number}`);
-                                                                                    }}
-                                                                                >
-                                                                                    <i className="fas fa-pen me-2"></i> Rename
-                                                                                </div>
-                                                                            )}
-
-                                                                            <div className="popup-item" onClick={() => { /* Copy logic */ }}>
-                                                                                <i className="fa-regular fa-file me-2"></i> Copy
-                                                                            </div>
-                                                                            <div
-                                                                                className="popup-item"
-                                                                                onClick={() => openDuplicateModal(page)}
-                                                                            >
-                                                                                <i className="fas fa-clone me-2"></i> Duplicate
-                                                                            </div>
-
-                                                                            {duplicateModalVisible && (
-                                                                                <div
-                                                                                    className="modal fade show"
-                                                                                    style={{ display: "block" }}
-                                                                                    tabIndex="-1"
-                                                                                    role="dialog"
-                                                                                    aria-hidden="true"
-                                                                                >
-                                                                                    <div className="modal-dialog modal-dialog-centered" role="document">
-                                                                                        <div className="modal-content custom-modal p-0">
-                                                                                            <div className="modal-header border-0 pb-0">
-                                                                                                <h5 className="modal-title">Name your form page</h5>
-                                                                                                <button type="button"
-                                                                                                    onClick={(e) => {
-                                                                                                        e.stopPropagation();
-                                                                                                        setDuplicateModalVisible(false);
-                                                                                                    }}
-                                                                                                    className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
-                                                                                            </div>
-                                                                                            <div className="modal-body pt-2">
-                                                                                                <input
-                                                                                                    type="text"
-                                                                                                    className="form-control"
-                                                                                                    value={duplicatePageTitle}
-                                                                                                    onChange={(e) => setDuplicatePageTitle(e.target.value)}
-                                                                                                />
-                                                                                            </div>
-                                                                                            <div className="modal-footer border-0 pt-0 justify-content-end">
-                                                                                                <button
-                                                                                                    className="btn btn-primary"
-                                                                                                    onClick={() => handleDuplicatePage(page)}
-                                                                                                >
-                                                                                                    Continue
-                                                                                                </button>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            )}
-
-                                                                            {formPages.length > 1 && (
-                                                                                <div
-                                                                                    className="popup-item trash-item text-danger"
-                                                                                    onClick={() => handleDeletePage(page.id, page.page_number)}
-                                                                                >
-                                                                                    <i className="fas fa-trash me-2"></i> Delete
-                                                                                </div>
-                                                                            )}
-
-                                                                        </div>
-                                                                    )}
                                                                 </div>
                                                             )
                                                             }
                                                         </Draggable>
                                                     );
                                                 })}
-
                                                 {provided.placeholder}
                                                 <div className="d-flex align-items-center gap-1 text-muted" onClick={() => { handleEndingPage() }}>
                                                     <i className="fas fa-check-circle"></i>
@@ -4390,7 +4281,6 @@ const FormBuilder = () => {
                                     </Droppable>
                                 </DragDropContext>
                             </div>
-
                             {showArrows && (
                                 <div className="d-flex align-items-center gap-1 ms-2">
                                     <button className="scroll-arrow-btn p-1" onClick={() => scrollPages(-200)}>
@@ -4402,6 +4292,126 @@ const FormBuilder = () => {
                                 </div>
                             )}
                         </div>
+
+                        {menuOpenForPageId && (
+                            <>
+                                <div
+                                    ref={popupRef}
+                                    className="popup-menu position-fixed bg-white shadow rounded p-2"
+                                    style={{
+                                        top: menuPosition.top,
+                                        left: menuPosition.left,
+                                        transform: "translateX(-50%)",
+                                        background: "white",
+                                        border: "1px solid #ddd",
+                                        borderRadius: "8px",
+                                        boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                                        zIndex: 9999,
+                                        minWidth: "200px",
+                                        padding: "10px"
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+
+                                    {/* Set as First Page (show only if not the first page) */}
+                                    {menuOpenForPageId !== formPages[0]?.id && (
+                                        <div className="popup-item set-first-page" onClick={() => { /* set first page logic */ setMenuOpenForPageId(null); }}>
+                                            <i className="fa-solid fa-flag me-2"></i> Set as First Page
+                                        </div>
+                                    )}
+
+                                    {/* Rename (Inline Input) */}
+                                    {renamingPageId === menuOpenForPageId ? (
+                                        <div className="popup-item position-relative" style={{ paddingRight: "20px" }}>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                value={renamePageTitle}
+                                                onChange={(e) => setRenamePageTitle(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    const page = formPages.find(p => p.id === menuOpenForPageId);
+                                                    if (e.key === "Enter") handlePageRenameSubmit(page.id);
+                                                    if (e.key === "Escape") setRenamingPageId(null);
+                                                }}
+                                                autoFocus
+                                            />
+                                            <button
+                                                className="btn btn-sm btn-primary ms-2 mt-1"
+                                                onClick={() => {
+                                                    const page = formPages.find(p => p.id === menuOpenForPageId);
+                                                    handlePageRenameSubmit(page.id)
+                                                    setMenuOpenForPageId(null);
+                                                }}
+                                            >
+                                                Save
+                                            </button>
+                                            <i
+                                                className="fas fa-xmark text-muted"
+                                                style={{
+                                                    position: "absolute",
+                                                    top: "6px",
+                                                    right: "6px",
+                                                    fontSize: "0.75rem",
+                                                    cursor: "pointer",
+                                                }}
+                                                onClick={() => setRenamingPageId(null)}
+                                            ></i>
+                                        </div>
+                                    ) : (
+                                        <div
+                                            className="popup-item"
+                                            onClick={() => {
+                                                const page = formPages.find(p => p.id === menuOpenForPageId);
+                                                setRenamingPageId(page.id);
+                                                setRenamePageTitle(page.page_title || `Page ${page.page_number}`);
+                                            }}
+                                        >
+                                            <i className="fas fa-pen me-2"></i> Rename
+                                        </div>
+                                    )}
+
+                                    {/* Copy */}
+                                    <div
+                                        className="popup-item"
+                                        onClick={() => {
+                                            /* Copy logic */
+                                            setMenuOpenForPageId(null);
+                                        }}
+                                    >
+                                        <i className="fa-regular fa-file me-2"></i> Copy
+                                    </div>
+
+                                    {/* Duplicate */}
+                                    <div
+                                        className="popup-item"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#DuplicateModalCenter"
+                                        onClick={() => {
+                                            setMenuOpenForPageId(null);
+                                            const page = formPages.find(p => p.id === menuOpenForPageId);
+                                            openDuplicateModal(page);
+                                        }}
+                                    >
+                                        <i className="fas fa-clone me-2"></i> Duplicate
+                                    </div>
+
+                                    {/* Delete */}
+                                    {formPages.length > 1 && (
+                                        <div
+                                            className="popup-item trash-item text-danger"
+                                            onClick={() => {
+                                                const page = formPages.find(p => p.id === menuOpenForPageId);
+                                                handleDeletePage(page.id, page.page_number);
+                                                setMenuOpenForPageId(null);
+                                            }}
+                                        >
+                                            <i className="fas fa-trash me-2"></i> Delete
+                                        </div>
+                                    )}
+                                </div>
+
+                            </>
+                        )}
 
                     </div>
 
@@ -5301,37 +5311,6 @@ const FormBuilder = () => {
             </div>
 
             <div
-                className={`modal fade ${showModal ? "show d-block" : ""}`}
-                id="exampleModalCenter"
-                tabIndex="-1"
-                role="dialog"
-                aria-labelledby="exampleModalCenterTitle"
-                aria-hidden={!showModal}
-                style={{ backgroundColor: showModal ? "rgba(0,0,0,0.5)" : "transparent" }}
-            >
-                <div className="modal-dialog modal-dialog-centered" role="document">
-                    <div className="modal-content custom-modal p-0">
-                        <div className="modal-header border-0 pb-0">
-                            <h5 className="modal-title">Name your form</h5>
-                            <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} onClick={() => { setShowModal(false) }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
-                        </div>
-                        <div className="modal-body pt-2">
-                            <input
-                                type="text"
-                                id="formNameInput"
-                                className="form-control custom-input"
-                                value={formTitle}
-                                onChange={(e) => setFormTitle(e.target.value)}
-                            />
-                        </div>
-                        <div className="modal-footer border-0 pt-0 justify-content-end">
-                            <button type="button" id="continueButton" className="btn btn-primary custom-continue-btn" onClick={handleContinue}>Continue</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div
                 className={`modal fade ${showNewPageModal ? "show d-block" : ""}`}
                 id="exampleModalCenter"
                 tabIndex="-1"
@@ -5357,6 +5336,36 @@ const FormBuilder = () => {
                         </div>
                         <div className="modal-footer border-0 pt-0 justify-content-end">
                             <button type="button" id="continueButton" className="btn btn-primary custom-continue-btn" onClick={handleNewPageContinue}>Continue</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="modal fade" id="DuplicateModalCenter" tabIndex="-1" role="dialog" aria-hidden="true" >
+                <div className="modal-dialog modal-dialog-centered" role="document">
+                    <div className="modal-content custom-modal p-0">
+                        <div className="modal-header border-0 pb-0">
+                            <h5 className="modal-title">Name your page</h5>
+                            <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div className="modal-body pt-2">
+                            <input
+                                type="text"
+                                className="form-control"
+                                value={duplicatePageTitle}
+                                onChange={(e) => setDuplicatePageTitle(e.target.value)}
+                            />
+                        </div>
+                        <div className="modal-footer border-0 pt-0 justify-content-end">
+                            <button
+                                className="btn btn-primary"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDuplicatePage();
+                                }}
+                            >
+                                Continue test
+                            </button>
                         </div>
                     </div>
                 </div>
