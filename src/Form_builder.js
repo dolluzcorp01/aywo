@@ -257,6 +257,81 @@ const FormBuilder = () => {
         });
     };
 
+    const handleSetAsFirstPage = async (page_number) => {
+        setSkipSaveCheck(true);
+        const reorderedPages = [...formPages];
+        const pageIndex = reorderedPages.findIndex(p => p.page_number === page_number);
+
+        if (pageIndex === -1) return;  // Page not found
+
+        // Remove and move to the start
+        const [pageToMove] = reorderedPages.splice(pageIndex, 1);
+        reorderedPages.unshift(pageToMove);
+
+        setFormPages(reorderedPages);
+
+        const updatedOrder = reorderedPages.map((page, index) => ({
+            id: page.id,
+            sort_order: index + 1
+        }));
+
+        const lastPageId = formPages[formPages.length - 1]?.id;
+
+        const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
+        const formId = match ? match[1] : null;
+
+        try {
+            await fetch('/api/form_builder/update-page-order', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ pages: updatedOrder })
+            });
+
+            const res = await fetch("/api/form_builder/check-pages-btnfields", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    pageIds: reorderedPages.map(p => p.id),
+                    lastPageId,
+                    formId
+                })
+            });
+
+            const data = await res.json();
+            const { submitbtnField, nextbtnfield } = data;
+
+            const newFields = fields.map(field => {
+                if (field.type === "Submit" || field.type === "Next") {
+                    if (submitbtnField && field.id === submitbtnField.id) {
+                        return {
+                            ...field,
+                            type: "Next",
+                            field_type: "Next",
+                            label: submitbtnField.label || "Next"
+                        };
+                    }
+
+                    if (nextbtnfield && field.id === nextbtnfield.id) {
+                        return {
+                            ...field,
+                            type: "Submit",
+                            field_type: "Submit",
+                            label: nextbtnfield.label || "Submit"
+                        };
+                    }
+                }
+                return field;
+            }).filter(Boolean);
+
+            setFields(newFields);
+
+        } catch (error) {
+            console.error("❌ Error setting page as first:", error);
+        }
+    };
+
     //Duplicate pages
     const handleDuplicatePage = async () => {
         const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
@@ -425,6 +500,7 @@ const FormBuilder = () => {
 
     const [originalFields, setOriginalFields] = useState([]);
     const [isSaveEnabled, setIsSaveEnabled] = useState(false);
+    const [skipSaveCheck, setSkipSaveCheck] = useState(false);
 
     const handlePageNavigation = (pageNumber) => {
         if (isSaveEnabled) {
@@ -557,6 +633,8 @@ const FormBuilder = () => {
     }
 
     useEffect(() => {
+        if (skipSaveCheck) return;
+
         const sameFields = areFieldsEqual(fields, originalFields);
         const sameFormColors = areFormColorsEqual(
             {
@@ -782,7 +860,7 @@ const FormBuilder = () => {
 
     const handleDragEnd = async (result) => {
         if (!result.destination) return;
-
+        setSkipSaveCheck(true);
         const reorderedPages = Array.from(formPages);
         const [movedPage] = reorderedPages.splice(result.source.index, 1);
         reorderedPages.splice(result.destination.index, 0, movedPage);
@@ -4316,7 +4394,13 @@ const FormBuilder = () => {
 
                                     {/* Set as First Page (show only if not the first page) */}
                                     {menuOpenForPageId !== formPages[0]?.id && (
-                                        <div className="popup-item set-first-page" onClick={() => { /* set first page logic */ setMenuOpenForPageId(null); }}>
+                                        <div className="popup-item set-first-page"
+                                            onClick={() => {
+                                                setMenuOpenForPageId(null);
+                                                const page = formPages.find(p => p.id === menuOpenForPageId);
+                                                handleSetAsFirstPage(page.page_number);
+                                            }}
+                                        >
                                             <i className="fa-solid fa-flag me-2"></i> Set as First Page
                                         </div>
                                     )}
@@ -5306,6 +5390,37 @@ const FormBuilder = () => {
                             >
                                 Done
                             </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                className={`modal fade ${showModal ? "show d-block" : ""}`}
+                id="exampleModalCenter"
+                tabIndex="-1"
+                role="dialog"
+                aria-labelledby="exampleModalCenterTitle"
+                aria-hidden={!showModal}
+                style={{ backgroundColor: showModal ? "rgba(0,0,0,0.5)" : "transparent" }}
+            >
+                <div className="modal-dialog modal-dialog-centered" role="document">
+                    <div className="modal-content custom-modal p-0">
+                        <div className="modal-header border-0 pb-0">
+                            <h5 className="modal-title">Name your form</h5>
+                            <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} onClick={() => { setShowModal(false) }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div className="modal-body pt-2">
+                            <input
+                                type="text"
+                                id="formNameInput"
+                                className="form-control custom-input"
+                                value={formTitle}
+                                onChange={(e) => setFormTitle(e.target.value)}
+                            />
+                        </div>
+                        <div className="modal-footer border-0 pt-0 justify-content-end">
+                            <button type="button" id="continueButton" className="btn btn-primary custom-continue-btn" onClick={handleContinue}>Continue</button>
                         </div>
                     </div>
                 </div>
