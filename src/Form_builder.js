@@ -156,8 +156,11 @@ const FormBuilder = () => {
     const handleMenuToggle = (e, pageId) => {
         e.stopPropagation();
         const rect = e.currentTarget.getBoundingClientRect();
+
+        const isSinglePage = formPages.length === 1;
+        const yOffset = isSinglePage ? 166 : 240;  // ✅ Lower if only Rename/Copy/Duplicate shown
         setMenuPosition({
-            top: rect.bottom - 230,
+            top: rect.bottom - yOffset,
             left: rect.left + rect.width / 2 + 100
         });
         setMenuOpenForPageId(prev => (prev === pageId ? null : pageId));
