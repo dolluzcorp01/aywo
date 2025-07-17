@@ -70,7 +70,7 @@ router.post("/google-signup", (req, res) => {
 
             if (userResult.length > 0) {
               const user_id = userResult[0].user_id;
-              const token = jwt.sign({ user_id }, JWT_SECRET, { expiresIn: "1h" });
+              const token = jwt.sign({ user_id }, JWT_SECRET);
 
               res.cookie("token", token, { httpOnly: true, secure: true, sameSite: "Strict" });
               return res.status(201).json({
@@ -107,7 +107,7 @@ router.post("/google-signin", (req, res) => {
     if (result.length > 0) {
       // User exists, generate JWT token for login
       const user_id = result[0].user_id;
-      const token = jwt.sign({ user_id }, JWT_SECRET, { expiresIn: "1h" });
+      const token = jwt.sign({ user_id }, JWT_SECRET);
 
       res.cookie("token", token, { httpOnly: true, secure: true, sameSite: "Strict" });
       return res.status(200).json({ success: true, message: "Google login successful", token });
@@ -166,7 +166,7 @@ router.post('/signup', (req, res) => {
             const user_id = userResult[0].user_id;
 
             // Generate JWT Token
-            const token = jwt.sign({ user_id }, JWT_SECRET, { expiresIn: '1h' });
+            const token = jwt.sign({ user_id }, JWT_SECRET);
 
             // Set JWT token in cookie
             res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
@@ -211,7 +211,7 @@ router.post('/verifyLogin', (req, res) => {
 
       const isPasswordCorrect = bcrypt.compareSync(password, storedHashedPassword);
       if (isPasswordCorrect) {
-        const token = jwt.sign({ user_id }, JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ user_id }, JWT_SECRET);
         res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'None' });
         return res.json({ success: true, token });
       }
@@ -320,7 +320,7 @@ router.post('/VerifyOrValidate', (req, res) => {
 
           if (userResults.length > 0) {
             const user_id = userResults[0].user_id;
-            const token = jwt.sign({ user_id }, JWT_SECRET, { expiresIn: "1h" });
+            const token = jwt.sign({ user_id }, JWT_SECRET);
 
             // ✅ Set JWT token in secure cookie
             res.cookie("token", token, { httpOnly: true, secure: true, sameSite: "None" });

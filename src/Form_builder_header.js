@@ -105,7 +105,6 @@ const Form_builder_header = () => {
 
     const populateProfileDetails = async () => {
         try {
-
             const response = await apiFetch('/api/leftnavbar/get-user-profile', {
                 method: 'GET',
                 credentials: 'include',
