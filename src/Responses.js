@@ -174,11 +174,23 @@ const Responses = () => {
             .finally(() => setLoading(false));
     }, [formId]);
 
+    // Show/hide clear icon when date changes
+    const toggleClearIcon = () => {
+        if ($('#minDate').val() || $('#maxDate').val()) {
+            $('#clearDateFilter').show();
+        } else {
+            $('#clearDateFilter').hide();
+        }
+    };
+
     useEffect(() => {
         if (responses.length > 0 && columns.length > 0 && tableRef.current) {
             if (dataTableRef.current) {
                 dataTableRef.current.destroy();
+                dataTableRef.current = null;
             }
+
+            $.fn.dataTable.ext.search = [];
 
             dataTableRef.current = $(tableRef.current).DataTable({
                 data: responses,
@@ -189,9 +201,126 @@ const Responses = () => {
                 paging: true,
                 ordering: true,
                 info: true,
-                dom: '<"top-bar-wrapper"lf>rt<"bottom"ip><"clear">'
+                dom: '<"top-bar-wrapper"lf<"date-filter-wrapper">>rt<"bottom"ip><"clear">'
+            });
+
+            $('.date-filter-wrapper').html(`
+            <div style="position:relative; display:inline-block;">
+                <button id="toggleDateFilter" style="
+                background:none;
+                border:1px solid #ccc;
+                border-radius:4px;
+                cursor:pointer;
+                padding:6px 12px;
+                font-size: 14px;
+                display:flex;
+                align-items:center;
+                gap:4px;
+                ">
+                <i class="fa-solid fa-calendar-days" style="color: #2D3748;"></i> Date Range
+                </button>
+                <div id="dateRangeInputs" style="
+                display:none;
+                position:absolute;
+                left:0;
+                top:110%;
+                background:#fff;
+                border:1px solid #ddd;
+                border-radius: 6px;
+                padding:12px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index:999;
+                min-width: 280px;
+                ">
+                <div style="display:flex; align-items:center; margin-bottom:12px; gap:10px;">
+                    <div style="display:flex; gap:8px; flex:1;">
+                        <input type="date" id="minDate" placeholder="From" style="flex:1; padding:6px 10px; border:1px solid #ccc; border-radius:4px;" />
+                        <span style="color:#555;">→</span>
+                        <input type="date" id="maxDate" placeholder="To" style="flex:1; padding:6px 10px; border:1px solid #ccc; border-radius:4px;" />
+                    </div>
+                    <!-- CLOSE ICON RIGHT AFTER INPUTS -->
+                    <i id="clearDateFilter" class="fa-solid fa-xmark" style="
+                        display:none;
+                        padding:6px;
+                        border-radius:50%;
+                        background:#eee;
+                        color:#555;
+                        font-size:13px;
+                        cursor:pointer;
+                        border:1px solid #ccc;
+                        transition: background 0.2s;
+                    " title="Clear date range"></i>
+                    </div>
+
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button type="button" class="quick-date" data-days="0" style="font-size:12px; padding:4px 8px;">Today</button>
+                    <button type="button" class="quick-date" data-days="7" style="font-size:12px; padding:4px 8px;">Last 7 days</button>
+                    <button type="button" class="quick-date" data-days="28" style="font-size:12px; padding:4px 8px;">Last 4 weeks</button>
+                    <button type="button" class="quick-date" data-days="365" style="font-size:12px; padding:4px 8px;">Last 12 months</button>
+                </div>
+                </div>
+            </div>
+            `);
+
+            $(document).on('click', '#toggleDateFilter', function () {
+                $('#dateRangeInputs').toggle();
+            });
+
+            $(document).on('click', '#clearDateFilter', function () {
+                $('#minDate').val('');
+                $('#maxDate').val('');
+                dataTableRef.current.draw();
+                toggleClearIcon();
+            });
+
+            $(document).on('click', '.quick-date', function () {
+                const days = parseInt($(this).data('days'), 10);
+                const today = new Date();
+                const minDate = new Date();
+                minDate.setDate(today.getDate() - days);
+
+                // Format to yyyy-mm-dd for input[type="date"]
+                const formatDate = (date) => date.toISOString().split('T')[0];
+
+                $('#minDate').val(formatDate(minDate));
+                $('#maxDate').val(formatDate(today));
+
+                dataTableRef.current.draw();
+                toggleClearIcon();
+            });
+
+            $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                const minDate = $('#minDate').val();
+                const maxDate = $('#maxDate').val();
+                const submittedAt = data[1];
+                if (submittedAt) {
+                    const date = new Date(submittedAt);
+                    if (
+                        (minDate === '' || new Date(minDate) <= date) &&
+                        (maxDate === '' || date <= new Date(maxDate))
+                    ) {
+                        return true;
+                    }
+                    return false;
+                }
+                return true;
+            });
+
+            $('#minDate, #maxDate').on('change', function () {
+                dataTableRef.current.draw();
+                toggleClearIcon();
             });
         }
+
+        return () => {
+            if (dataTableRef.current) {
+                dataTableRef.current.destroy();
+                dataTableRef.current = null;
+            }
+            $.fn.dataTable.ext.search = [];
+            $(document).off('click', '#toggleDateFilter');
+            $(document).off('click', '#clearDateFilter');
+        };
     }, [responses, columns]);
 
     useEffect(() => {

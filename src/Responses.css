@@ -245,3 +245,12 @@ div.bottom {
     min-width: 1200px;
     width: max-content;
 }
+
+div.top-bar-wrapper {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
