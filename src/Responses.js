@@ -201,7 +201,98 @@ const Responses = () => {
                 paging: true,
                 ordering: true,
                 info: true,
-                dom: '<"top-bar-wrapper"lf<"date-filter-wrapper">>rt<"bottom"ip><"clear">'
+                dom: '<"top-bar-wrapper"lf<"date-filter-wrapper"><"column-toggle-wrapper">>rt<"bottom"ip><"clear">'
+            });
+
+            $('.column-toggle-wrapper').html(`
+            <button id="toggleColumnDropdown" style="
+                background:none;
+                border:1px solid #ccc;
+                border-radius:4px;
+                cursor:pointer;
+                padding:6px 12px;
+                font-size:14px;
+                display:flex;
+                align-items:center;
+                gap:4px;
+            ">
+                <i class="fa-solid fa-eye-slash" style="color: #2D3748;"></i> Hide Columns
+            </button>
+            `);
+
+            const generateDropdownHTML = () => {
+                return `
+                <div id="columnToggleList">
+                    ${columns.map((col, i) => `
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                            <label class="switch">
+                                <input type="checkbox" class="toggle-col" data-column-index="${i}" checked />
+                                <span class="slider"></span>
+                            </label>
+                            <span style="font-size:14px; flex:1;">${col.title}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="text-align:right; margin-top:10px;">
+                    <button id="toggleAllColumns"
+                        style="
+                            background:#f9f9f9;
+                            border:1px solid #ccc;
+                            padding:6px 12px;
+                            border-radius:4px;
+                            font-size:13px;
+                            cursor:pointer;
+                            color: gray;
+                            border: 2px solid #3B82F6;
+                        ">Hide all</button>
+                </div>
+            `;
+            };
+
+            let allVisible = true;
+
+            $(document).on('click', '#toggleAllColumns', function () {
+                allVisible = !allVisible;
+                $('.toggle-col').each(function () {
+                    this.checked = allVisible;
+                    const column = dataTableRef.current.column($(this).data('column-index'));
+                    column.visible(this.checked);
+                });
+                $(this).text(allVisible ? 'Hide all' : 'Show all');
+            });
+
+            $(document).on('click', '#toggleColumnDropdown', function (e) {
+                const $menu = $('#globalColumnDropdownMenu');
+                const rect = e.currentTarget.getBoundingClientRect();
+
+                $menu.html(generateDropdownHTML());
+                $menu.css({
+                    display: 'block',
+                    top: rect.bottom + window.scrollY + 'px',
+                    left: rect.left + window.scrollX + 'px'
+                });
+
+                // Bind events after rendering
+                $('.toggle-col').on('change', function () {
+                    const column = dataTableRef.current.column($(this).data('column-index'));
+                    column.visible(this.checked);
+                });
+
+                $('#toggleAllColumns').on('click', function () {
+                    allVisible = !allVisible;
+                    $('.toggle-col').each(function () {
+                        this.checked = allVisible;
+                        const column = dataTableRef.current.column($(this).data('column-index'));
+                        column.visible(this.checked);
+                    });
+                    $(this).text(allVisible ? 'Hide all' : 'Show all');
+                });
+            });
+
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('#globalColumnDropdownMenu, #toggleColumnDropdown').length) {
+                    $('#globalColumnDropdownMenu').hide();
+                }
             });
 
             $('.date-filter-wrapper').html(`
@@ -318,22 +409,36 @@ const Responses = () => {
                 dataTableRef.current = null;
             }
             $.fn.dataTable.ext.search = [];
-            $(document).off('click', '#toggleDateFilter');
-            $(document).off('click', '#clearDateFilter');
+            $(document).off('click', '#toggleColumnDropdown');
+            $(document).off('click', '#toggleAllColumns');
+            $(document).off('click', '.toggle-col');
         };
     }, [responses, columns]);
 
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setDropdownOpen(false);
+        const handleOutsideClick = (e) => {
+            const $datePopup = $('#dateRangeInputs');
+            const $dateButton = $('#toggleDateFilter');
+            const $columnPopup = $('#columnDropdownMenu');
+            const $columnButton = $('#toggleColumnDropdown');
+
+            // Close date popup
+            if (!$datePopup.is(e.target) && $datePopup.has(e.target).length === 0 &&
+                !$dateButton.is(e.target) && $dateButton.has(e.target).length === 0) {
+                $datePopup.hide();
+            }
+
+            // Close column popup
+            if (!$columnPopup.is(e.target) && $columnPopup.has(e.target).length === 0 &&
+                !$columnButton.is(e.target) && $columnButton.has(e.target).length === 0) {
+                $columnPopup.hide();
             }
         };
 
-        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener('mousedown', handleOutsideClick);
 
         return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener('mousedown', handleOutsideClick);
         };
     }, []);
 
@@ -495,18 +600,35 @@ const Responses = () => {
                     {responses.length === 0 ? (
                         <p>No responses available.</p>
                     ) : (
-                        <div className="data-table-scroll-wrapper" style={{ marginTop: "20px" }}>
-                            <table ref={tableRef} className="display">
-                                <thead>
-                                    <tr>
-                                        {columns.map((col, index) => (
-                                            <th key={index}>{col.title}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
+                        <>
+                            <div className="data-table-scroll-wrapper" style={{ marginTop: "20px" }}>
+                                <table ref={tableRef} className="display">
+                                    <thead>
+                                        <tr>
+                                            {columns.map((col, index) => (
+                                                <th key={index}>{col.title}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                            <div id="globalColumnDropdownMenu"
+                                style={{
+                                    display: 'none',
+                                    position: 'absolute',
+                                    zIndex: 9999,
+                                    background: '#fff',
+                                    border: '1px solid #ddd',
+                                    borderRadius: '6px',
+                                    padding: '12px',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                    minWidth: '260px',
+                                    maxHeight: '400px',
+                                    overflowY: 'auto'
+                                }}
+                            ></div>
+                        </>
                     )}
                 </div>
 
