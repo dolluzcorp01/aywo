@@ -45,7 +45,8 @@ router.post("/google-signup", (req, res) => {
     if (result.length > 0) {
       // Email already exists, generate a JWT token for login
       const user_id = result[0].user_id;
-      const token = jwt.sign({ user_id }, JWT_SECRET, { expiresIn: "1h" });
+      const token = jwt.sign({ user_id }, JWT_SECRET);
+      // No expiresIn used = token lasts until manually removed
 
       res.cookie("token", token, { httpOnly: true, secure: true, sameSite: "Strict" });
       return res.status(200).json({ success: true, message: "User logged in successfully", token });
@@ -242,7 +243,7 @@ router.post('/checkUserExists', (req, res) => {
 // 🔹 Generate OTP Function
 const generateOTP = (userInput, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiryTime = new Date(Date.now() + 5 * 60000); 
+  const expiryTime = new Date(Date.now() + 5 * 60000);
   const db = getDBConnection('form_builder');
 
   const query = `INSERT INTO otpstorage (UserInput, OTP, ExpiryTime) VALUES (?, ?, ?) 
