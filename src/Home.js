@@ -895,7 +895,7 @@ function Home() {
                     onClick={(e) => {
                       if (form.response_count > 0) {
                         e.stopPropagation();
-                        navigate(`/responses/${form.form_id}`);
+                        navigate(`/responses/form-${form.form_id}`);
                       }
                     }}
                   >
@@ -962,7 +962,7 @@ function Home() {
                       onClick={(e) => {
                         if (form.response_count > 0) {
                           e.stopPropagation();
-                          navigate(`/responses/${form.form_id}`);
+                          navigate(`/responses/form-${form.form_id}`);
                         }
                       }}
                     >
@@ -1238,7 +1238,7 @@ function Home() {
                       onClick={(e) => {
                         if (form.response_count > 0) {
                           e.stopPropagation();
-                          navigate(`/responses/${form.form_id}`);
+                          navigate(`/responses/form-${form.form_id}`);
                         }
                       }}
                     >
@@ -1262,7 +1262,7 @@ function Home() {
                     onClick={(e) => {
                       if (form.response_count > 0) {
                         e.stopPropagation();
-                        navigate(`/responses/${form.form_id}`);
+                        navigate(`/responses/form-${form.form_id}`);
                       }
                     }}
                   >
