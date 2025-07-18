@@ -690,7 +690,6 @@ const FormBuilder = () => {
             }
 
             const data = await response.json();
-
             // Set background image if available
             if (data.background_image) {
                 setFormbgImage(`${API_BASE}/${data.background_image.replace(/\\/g, "/")}`);
@@ -709,7 +708,6 @@ const FormBuilder = () => {
                 questions: data.questions_color || "#333333",
                 answers: data.answers_color || "#000000",
             });
-
 
             setOriginalFormColors({
                 formBgColor: data.background_color || "#f8f9fa",
@@ -1218,6 +1216,12 @@ const FormBuilder = () => {
         };
 
         switch (type) {
+            case "Heading": // 👇 ADD THIS BLOCK
+                newField.label = "Heading";
+                newField.caption = "Description";
+                newField.font_size = "24px";
+                newField.alignment = "center";
+                break;
             case "Dropdown":
             case "Multiple Choice":
             case "Multiple Select":
@@ -1489,6 +1493,71 @@ const FormBuilder = () => {
         document.documentElement.style.setProperty('--form-primary-color', formPrimaryColor);
     }, [formPrimaryColor]);
 
+    const HeadingField = ({ field, fields, setFields, formQuestionColor, selectedFont }) => {
+        const headingAlign = field.alignment || "center";
+        const textareaRef = useRef(null);
+
+        useEffect(() => {
+            if (textareaRef.current) {
+                textareaRef.current.style.height = "auto";
+                textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+            }
+        }, [field.label]);
+
+        const handleHeadingChange = (e) => {
+            const updatedFields = fields.map(f =>
+                f.id === field.id ? { ...f, label: e.target.value } : f
+            );
+            setFields(updatedFields);
+
+            const el = e.target;
+            el.style.height = "auto";
+            el.style.height = `${el.scrollHeight}px`;
+        };
+
+        return (
+            <div style={{ textAlign: headingAlign }}>
+                {/* Main heading */}
+                <textarea
+                    ref={textareaRef}
+                    value={field.label}
+                    onChange={handleHeadingChange}
+                    style={{
+                        fontSize: field.font_size || "24px",
+                        fontWeight: "bold",
+                        border: "none",
+                        background: "transparent",
+                        width: "100%",
+                        margin: "8px 0 4px 0",
+                        color: formQuestionColor,
+                        fontFamily: selectedFont,
+                        textAlign: headingAlign,
+                        resize: "none",
+                        overflow: "hidden",
+                        outline: "none",
+                        whiteSpace: "pre-wrap",
+                    }}
+                    rows={1}
+                />
+
+                {/* Caption under heading */}
+                {field.caption && (
+                    <div
+                        style={{
+                            fontSize: "0.85rem",
+                            color: "#6b7280", // Tailwind's gray-500
+                            fontFamily: selectedFont,
+                            textAlign: headingAlign,
+                            marginBottom: "6px"
+                        }}
+                    >
+                        {field.caption}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     const renderField = (field) => {
         const commonProps = {
             className: "form-control",
@@ -1560,34 +1629,15 @@ const FormBuilder = () => {
                     />
                 );
             case "Heading":
-                const headingAlign = field.alignment || "center";
-
                 return (
-                    <div style={{ textAlign: headingAlign }}>
-                        <input
-                            type="text"
-                            value={field.label}
-                            onChange={(e) => {
-                                const updatedFields = fields.map(f =>
-                                    f.id === field.id ? { ...f, label: e.target.value } : f
-                                );
-                                setFields(updatedFields);
-                            }}
-                            style={{
-                                fontSize: field.font_size || "24px",
-                                fontWeight: "bold",
-                                border: "none",
-                                background: "transparent",
-                                width: "100%",
-                                margin: "8px 0",
-                                color: formQuestionColor,
-                                fontFamily: selectedFont,
-                                textAlign: headingAlign,
-                                display: "block",
-                                outline: "none",
-                            }}
-                        />
-                    </div>
+                    <HeadingField
+                        key={field.id}
+                        field={field}
+                        fields={fields}
+                        setFields={setFields}
+                        formQuestionColor={formQuestionColor}
+                        selectedFont={selectedFont}
+                    />
                 );
             case "Banner":
                 const alert_type = field.alert_type || "info"; // Default to 'info'
@@ -3267,7 +3317,7 @@ const FormBuilder = () => {
                         const hasEmptyOptionText = field.options.some(opt => {
                             if (typeof opt === "string") return !opt.trim();
                             if (typeof opt === "object") return !opt.option_text?.trim();
-                            return true; 
+                            return true;
                         });
 
                         if (hasEmptyOptionText) {
@@ -4630,6 +4680,23 @@ const FormBuilder = () => {
                                                 const updatedFields = fields.map(f =>
                                                     f.id === selectedFieldId ? { ...f, font_size: `${e.target.value}px` } : f
                                                 );
+                                                setFields(updatedFields);
+                                            }}
+                                        />
+
+                                        <label>Caption</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={fields.find(f => f.id === selectedFieldId)?.caption ?? ""}
+                                            placeholder="Description"
+                                            onChange={(e) => {
+                                                const updatedFields = fields.map(f => {
+                                                    if (f.id === selectedFieldId) {
+                                                        return { ...f, caption: e.target.value || "Description" };
+                                                    }
+                                                    return f;
+                                                });
                                                 setFields(updatedFields);
                                             }}
                                         />

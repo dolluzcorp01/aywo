@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { apiFetch, API_BASE } from "./utils/api";
 import Swal from "sweetalert2";
@@ -308,6 +308,71 @@ const PublishedForm = () => {
         localStorage.setItem(`form_${formId}_page_${pageId}`, JSON.stringify(updatedResponses));
     };
 
+    const HeadingField = ({ field, fields, setFields, formQuestionColor, selectedFont }) => {
+        const headingAlign = field.alignment || "center";
+        const textareaRef = useRef(null);
+
+        useEffect(() => {
+            if (textareaRef.current) {
+                textareaRef.current.style.height = "auto";
+                textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+            }
+        }, [field.label]);
+
+        const handleHeadingChange = (e) => {
+            const updatedFields = fields.map(f =>
+                f.id === field.id ? { ...f, label: e.target.value } : f
+            );
+            setFields(updatedFields);
+
+            const el = e.target;
+            el.style.height = "auto";
+            el.style.height = `${el.scrollHeight}px`;
+        };
+
+        return (
+            <div style={{ textAlign: headingAlign }}>
+                {/* Main heading */}
+                <textarea
+                    ref={textareaRef}
+                    value={field.label}
+                    onChange={handleHeadingChange}
+                    style={{
+                        fontSize: field.font_size || "24px",
+                        fontWeight: "bold",
+                        border: "none",
+                        background: "transparent",
+                        width: "100%",
+                        margin: "8px 0 4px 0",
+                        color: formQuestionColor,
+                        fontFamily: selectedFont,
+                        textAlign: headingAlign,
+                        resize: "none",
+                        overflow: "hidden",
+                        outline: "none",
+                        whiteSpace: "pre-wrap",
+                    }}
+                    rows={1}
+                />
+
+                {/* Caption under heading */}
+                {field.caption && (
+                    <div
+                        style={{
+                            fontSize: "0.85rem",
+                            color: "#6b7280", // Tailwind's gray-500
+                            fontFamily: selectedFont,
+                            textAlign: headingAlign,
+                            marginBottom: "6px"
+                        }}
+                    >
+                        {field.caption}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     const renderField = (field) => {
         const commonProps = {
             className: "form-control",
@@ -339,35 +404,15 @@ const PublishedForm = () => {
             case "Short Answer":
                 return <input type="text" {...commonProps} />;
             case "Heading":
-                const headingAlign = field.alignment || "center";
-
                 return (
-                    <div style={{ textAlign: headingAlign, border: "none", outline: "none", boxShadow: "none" }}>
-                        <input
-                            type="text"
-                            value={field.label}
-                            readOnly
-                            onChange={(e) => {
-                                const updatedFields = fields.map(f =>
-                                    f.id === field.id ? { ...f, label: e.target.value } : f
-                                );
-                                setFields(updatedFields);
-                            }}
-                            style={{
-                                fontSize: field.font_size || "24px",
-                                fontWeight: "bold",
-                                border: "none",
-                                outline: "none",
-                                background: "transparent",
-                                width: "100%",
-                                margin: "8px 0",
-                                color: formQuestionColor,
-                                fontFamily: selectedFont,
-                                textAlign: headingAlign,
-                                display: "block",
-                            }}
-                        />
-                    </div>
+                    <HeadingField
+                        key={field.id}
+                        field={field}
+                        fields={fields}
+                        setFields={setFields}
+                        formQuestionColor={formQuestionColor}
+                        selectedFont={selectedFont}
+                    />
                 );
             case "Email":
                 return (
