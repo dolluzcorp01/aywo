@@ -6,7 +6,8 @@ import Employee_emergency_contact_pg_2 from "./assets/img/Employee_emergency_con
 import Employee_emergency_contact_pg_3 from "./assets/img/Employee_emergency_contact_pg_3.png";
 import Employee_emergency_contact_pg_end from "./assets/img/Employee_emergency_contact_pg_end.png";
 import Appointment_booking from "./assets/img/Appointment_booking.jpg";
-import Job_Application from "./assets/img/Job_Application.jpg";
+import Job_Application_Form_pg_1 from "./assets/img/Job_Application_Form_pg_1.png";
+import Job_Application_Form_pg_end from "./assets/img/Job_Application_Form_pg_end.png";
 import { useNotification } from "./NotificationContext";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -247,9 +248,19 @@ function Home() {
       ]
     },
     {
+      name: "Job Application",
+      image: Job_Application_Form_pg_1,
+      url: "template-2",
+      template_formId: 3,
+      child_templates: [
+        { name: "Child Template 1", image: Job_Application_Form_pg_1, template_formId: 2, template_pageId: 1 },
+        { name: "Child Template 3", image: Job_Application_Form_pg_end, template_formId: 2, template_pageId: "end" }
+      ]
+    },
+    {
       name: "Appointment Booking",
       image: Appointment_booking,
-      url: "template-2",
+      url: "template-3",
       template_formId: 2,
       child_templates: [
         { name: "Child Template 1", image: Employee_emergency_contact_pg_1, template_formId: 1, template_pageId: 1 },
@@ -258,18 +269,6 @@ function Home() {
         { name: "Child Template 3", image: Employee_emergency_contact_pg_end, template_formId: 1, template_pageId: "end" }
       ]
     },
-    {
-      name: "Job Application",
-      image: Job_Application,
-      url: "template-3",
-      template_formId: 3,
-      child_templates: [
-        { name: "Child Template 1", image: Employee_emergency_contact_pg_1, template_formId: 1, template_pageId: 1 },
-        { name: "Child Template 2", image: Employee_emergency_contact_pg_2, template_formId: 1, template_pageId: 2 },
-        { name: "Child Template 3", image: Employee_emergency_contact_pg_3, template_formId: 1, template_pageId: 3 },
-        { name: "Child Template 3", image: Employee_emergency_contact_pg_end, template_formId: 1, template_pageId: "end" }
-      ]
-    }
   ];
 
   const progressPercent = selectedTemplate && selectedChild
@@ -1565,15 +1564,21 @@ function Home() {
       </div>
 
       <div className={`modal fade ${showTemplateModal ? "show d-block" : ""}`} id="templateModal" tabIndex="-1" aria-hidden="true">
-        <div className="modal-dialog modal-lg modal-dialog-centered">
+        <div className="modal-dialog modal-xxl modal-dialog-centered template-picker-modal-dialog">
           <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Pick a Template</h5>
-              <button type="button" className="btn-close" onClick={() => setShowTemplateModal(false)}>
-                <i className="fa-solid fa-xmark"></i>
-              </button>
+            <div className="modal-header d-flex justify-content-between align-items-center">
+              <h5 className="modal-title m-0">Pick a Template</h5>
+
+              <div className="d-flex align-items-center gap-3">
+                <h5 style={{ color: "rgb(26, 115, 232)", fontWeight: "600" }} className="m-0">
+                  <i className="fa-solid fa-file-alt me-1"></i> Forms
+                </h5>
+                <button type="button" className="btn-close" onClick={() => setShowTemplateModal(false)}>
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              </div>
             </div>
-            <div className="modal-body" style={{ height: "500px", overflowY: "auto" }}>
+            <div className="modal-body" style={{ height: "420px", overflowY: "auto" }}>
               <div className="template-grid">
                 {templates.map((template, index) => (
                   <div
@@ -1592,6 +1597,14 @@ function Home() {
                 ))}
               </div>
             </div>
+            <div className="modal-footer" style={{ justifyContent: "space-between" }}>
+              <button className="btn btn-secondary" style={{ color: "gray", background: "transparent", border: "none", marginLeft: "20px" }}
+                onClick={() => {
+                  setShowTemplateModal(false);
+                }}>
+                Back
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1599,15 +1612,20 @@ function Home() {
       <div className={`modal fade ${showPreviewModal ? "show d-block" : ""}`} id="templatePreviewModal" tabIndex="-1" aria-hidden="true">
         <div className="modal-dialog modal-xxl modal-dialog-centered template-preview-modal-dialog">
           <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Pick a template</h5>
-              <button type="button" className="btn-close"
-                onClick={() => {
+            <div className="modal-header d-flex justify-content-between align-items-center">
+              <h5 className="modal-title m-0">Pick a Template</h5>
+
+              <div className="d-flex align-items-center gap-3">
+                <h5 style={{ color: "rgb(26, 115, 232)", fontWeight: "600" }} className="m-0">
+                  <i className="fa-solid fa-file-alt me-1"></i> Forms
+                </h5>
+                <button type="button" className="btn-close" onClick={() => {
                   setShowPreviewModal(false);
                   setShowTemplateModal(true);
                 }}>
-                <i className="fa-solid fa-xmark"></i>
-              </button>
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              </div>
             </div>
             <div className="modal-body" style={{ padding: "50px", paddingTop: "30px", paddingRight: "40px", paddingBottom: "20px" }}>
               <div className="template-preview">
@@ -1632,12 +1650,12 @@ function Home() {
                     top: 0,
                     height: "5px",
                     left: "14px",
-                    right: "15px",
                     backgroundColor: "rgb(91, 136, 207)",
                     borderTopLeftRadius: "6px",
-                    borderTopRightRadius: "6px"
+                    borderTopRightRadius: "6px",
+                    width: `${progressPercent}%`,
+                    transition: "width 0.3s ease"
                   }}></div>
-
                   {selectedChild && (
                     <div style={{
                       background: "#fff",

@@ -343,7 +343,7 @@ const Preview = () => {
                                 background: "transparent",
                                 width: "100%",
                                 margin: "8px 0",
-                                color: formAnswersColor,
+                                color: formQuestionColor,
                                 fontFamily: selectedFont,
                                 textAlign: headingAlign,
                                 display: "block",
