@@ -795,26 +795,6 @@ const PublishedForm = () => {
                                             fontFamily: selectedFont
                                         }}
                                     />
-                                    <button
-                                        onClick={() => {
-                                            const newOptions = field.options.filter((_, i) => i !== idx);
-                                            const updatedFields = fields.map(f =>
-                                                f.id === field.id ? { ...f, options: newOptions } : f
-                                            );
-                                            setFields(updatedFields);
-                                        }}
-                                        style={{
-                                            background: "transparent",
-                                            border: "none",
-                                            color: "#666",
-                                            fontWeight: "bold",
-                                            fontSize: "16px",
-                                            marginLeft: "8px",
-                                            cursor: "pointer",
-                                        }}
-                                    >
-                                        ×
-                                    </button>
                                 </div>
                             ) : (
                                 // Standard Style
@@ -874,26 +854,6 @@ const PublishedForm = () => {
                                             fontFamily: selectedFont
                                         }}
                                     />
-                                    <button
-                                        onClick={() => {
-                                            const newOptions = field.options.filter((_, i) => i !== idx);
-                                            const updatedFields = fields.map(f =>
-                                                f.id === field.id ? { ...f, options: newOptions } : f
-                                            );
-                                            setFields(updatedFields);
-                                        }}
-                                        style={{
-                                            background: "transparent",
-                                            border: "none",
-                                            color: "#666",
-                                            fontWeight: "bold",
-                                            fontSize: "16px",
-                                            marginLeft: "8px",
-                                            cursor: "pointer",
-                                        }}
-                                    >
-                                        ×
-                                    </button>
                                 </div>
                             )
                         ))}

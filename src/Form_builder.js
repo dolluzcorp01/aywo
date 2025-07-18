@@ -3264,7 +3264,12 @@ const FormBuilder = () => {
             for (const field of fields) {
                 if (["Dropdown", "Multiple Choice", "Multiple Select", "Multiple Select Checkboxes", "Picture"].includes(field.type)) {
                     if (Array.isArray(field.options)) {
-                        const hasEmptyOptionText = field.options.some(opt => !opt.option_text?.trim());
+                        const hasEmptyOptionText = field.options.some(opt => {
+                            if (typeof opt === "string") return !opt.trim();
+                            if (typeof opt === "object") return !opt.option_text?.trim();
+                            return true; 
+                        });
+
                         if (hasEmptyOptionText) {
                             Swal.fire("Validation Error", `One or more options in "${field.label}" are empty.`, "warning");
                             return;
@@ -4972,7 +4977,7 @@ const FormBuilder = () => {
                                     </>
                                 )}
 
-                                {["Image", "PDF", "Video", "Heading"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
+                                {["Image", "PDF", "Video"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
                                     const field = fields.find(f => f.id === selectedFieldId);
 
                                     // Fallback to uploaded values if field values are undefined
