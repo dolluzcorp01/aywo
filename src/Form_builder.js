@@ -5411,7 +5411,7 @@ const FormBuilder = () => {
                     <div className="modal-content custom-modal p-0">
                         <div className="modal-header border-0 pb-0">
                             <h5 className="modal-title">Name your form</h5>
-                            <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} onClick={() => { setShowModal(false) }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
+                            <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} onClick={() => { navigate("/home"); }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
                         </div>
                         <div className="modal-body pt-2">
                             <input
