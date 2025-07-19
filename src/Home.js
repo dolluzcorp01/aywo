@@ -5,9 +5,10 @@ import Employee_emergency_contact_pg_1 from "./assets/img/Employee_emergency_con
 import Employee_emergency_contact_pg_2 from "./assets/img/Employee_emergency_contact_pg_2.png";
 import Employee_emergency_contact_pg_3 from "./assets/img/Employee_emergency_contact_pg_3.png";
 import Employee_emergency_contact_pg_end from "./assets/img/Employee_emergency_contact_pg_end.png";
-import Appointment_booking from "./assets/img/Appointment_booking.jpg";
 import Job_Application_Form_pg_1 from "./assets/img/Job_Application_Form_pg_1.png";
 import Job_Application_Form_pg_end from "./assets/img/Job_Application_Form_pg_end.png";
+import Health_Care_Form_pg_1 from "./assets/img/Health_Care_Form_pg_1.png";
+import Health_Care_Form_pg_end from "./assets/img/Health_Care_Form_pg_end.png";
 import { useNotification } from "./NotificationContext";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -258,15 +259,13 @@ function Home() {
       ]
     },
     {
-      name: "Appointment Booking",
-      image: Appointment_booking,
+      name: "Health Care",
+      image: Health_Care_Form_pg_1,
       url: "template-3",
       template_formId: 2,
       child_templates: [
-        { name: "Child Template 1", image: Employee_emergency_contact_pg_1, template_formId: 1, template_pageId: 1 },
-        { name: "Child Template 2", image: Employee_emergency_contact_pg_2, template_formId: 1, template_pageId: 2 },
-        { name: "Child Template 3", image: Employee_emergency_contact_pg_3, template_formId: 1, template_pageId: 3 },
-        { name: "Child Template 3", image: Employee_emergency_contact_pg_end, template_formId: 1, template_pageId: "end" }
+        { name: "Child Template 1", image: Health_Care_Form_pg_1, template_formId: 3, template_pageId: 1 },
+        { name: "Child Template 3", image: Health_Care_Form_pg_end, template_formId: 3, template_pageId: "end" }
       ]
     },
   ];

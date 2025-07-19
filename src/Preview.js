@@ -1599,7 +1599,7 @@ const Preview = () => {
                 const previewSize = field.previewSize || field.uploads?.[0]?.file_field_size || 300;
 
                 return (
-                    <div className="media-preview-wrapper" style={{ textAlign: alignment }}>
+                    <div className="media-preview-wrapper" style={{ backgroundColor: formColor, textAlign: alignment, outline: "none", border: "none" }}>
                         {imageUrl ? (
                             <img
                                 src={imageUrl}

@@ -49,7 +49,9 @@ app.use('/uploads', express.static('uploads')); // Serve uploaded files
 
 const path = require('path');
 app.use('/field_file_uploads', express.static(path.join(__dirname, 'field_file_uploads')));
+app.use('/field_file_uploads_templates', express.static(path.join(__dirname, 'field_file_uploads_templates')));
 app.use('/form_bg_img_uploads', express.static(path.join(__dirname, 'form_bg_img_uploads')));
+app.use('/form_bg_img_uploads_templates', express.static(path.join(__dirname, 'form_bg_img_uploads_templates')));
 
 console.log('✅ Routes have been set up');
 

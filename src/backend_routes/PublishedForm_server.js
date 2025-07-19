@@ -44,8 +44,8 @@ router.post("/submit-form", upload.any(), async (req, res) => {
     }
 
     const file = req.file;
-    if (!form_id || !responses || Object.keys(responses).length === 0) {
-        return res.status(400).json({ error: "Responses are required." });
+    if (!form_id) {
+        return res.status(400).json({ error: "Form id is missing." });
     }
 
     let connection;
@@ -127,7 +127,7 @@ router.post("/submit-form", upload.any(), async (req, res) => {
 router.get("/get-published-form/:formId/:pageId", async (req, res) => {
     const { formId, pageId } = req.params;
     const { mode } = req.query;
-    
+
     try {
         // ✅ 1. Fetch form
         let formQuery = "SELECT * FROM dforms WHERE id = ?";

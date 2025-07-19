@@ -2916,7 +2916,7 @@ const FormBuilder = () => {
                 const previewSize = field.previewSize || field.uploads?.[0]?.file_field_size || 300;
 
                 return (
-                    <div className="media-preview-wrapper" style={{ textAlign: alignment }}>
+                    <div className="media-preview-wrapper" style={{ backgroundColor: formColor, textAlign: alignment, outline: "none", border: "none" }}>
                         {imageUrl ? (
                             <img
                                 src={imageUrl}
@@ -2937,6 +2937,16 @@ const FormBuilder = () => {
                             type="file"
                             accept="image/*"
                             {...commonProps}
+                            style={{
+                                backgroundColor: formColor, // Ensure file input matches form background
+                                color: formAnswersColor,
+                                border: `1px solid ${focusedFieldId === field.id ? formPrimaryColor : "rgba(75, 85, 99, 0.2)"}`,
+                                fontFamily: selectedFont,
+                                fontSize: field.font_size || "16px",
+                                width: field.halfWidth ? "50%" : "100%",
+                                boxShadow: "none",
+                                padding: "8px"
+                            }}
                             onChange={(e) => {
                                 const file = e.target.files[0];
                                 if (file && file.size > 1 * 1024 * 1024) {

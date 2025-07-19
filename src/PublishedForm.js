@@ -1616,7 +1616,7 @@ const PublishedForm = () => {
                 const previewSize = field.previewSize || field.uploads?.[0]?.file_field_size || 300;
 
                 return (
-                    <div className="media-preview-wrapper" style={{ textAlign: alignment }}>
+                    <div className="media-preview-wrapper" style={{ backgroundColor: formColor, textAlign: alignment, outline: "none", border: "none" }}>
                         {imageUrl ? (
                             <img
                                 src={imageUrl}
@@ -2169,8 +2169,9 @@ const PublishedForm = () => {
             {(() => {
                 const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
                 const isFirstPage = sortedPages.findIndex(p => p.page_number === parseInt(pageId)) === 0;
+                const isEndPage = pageId === "end";
 
-                return !isFirstPage && (
+                return !isFirstPage && !isEndPage && (
                     <div
                         onClick={handleBackPage}
                         style={{
