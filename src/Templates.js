@@ -199,7 +199,7 @@ const Templates = ({ formId, pageId, ...props }) => {
     };
 
     const HeadingField = ({ field, fields, setFields, formQuestionColor, selectedFont }) => {
-        const headingAlign = field.alignment || "center";
+        const headingAlign = field.heading_alignment || "center";
         const textareaRef = useRef(null);
 
         useEffect(() => {
@@ -250,7 +250,7 @@ const Templates = ({ formId, pageId, ...props }) => {
                     <div
                         style={{
                             fontSize: "0.85rem",
-                            color: "#6b7280", // Tailwind's gray-500
+                            color: "#6b7280",
                             fontFamily: selectedFont,
                             textAlign: headingAlign,
                             marginBottom: "6px"

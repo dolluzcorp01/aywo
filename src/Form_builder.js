@@ -1544,7 +1544,7 @@ const FormBuilder = () => {
     }, [formPrimaryColor]);
 
     const HeadingField = ({ field, fields, setFields, formQuestionColor, selectedFont }) => {
-        const headingAlign = field.alignment || "center";
+        const headingAlign = field.heading_alignment || "center";
         const textareaRef = useRef(null);
 
         useEffect(() => {
@@ -1595,7 +1595,7 @@ const FormBuilder = () => {
                     <div
                         style={{
                             fontSize: "0.85rem",
-                            color: "#6b7280", // Tailwind's gray-500
+                            color: "#6b7280",
                             fontFamily: selectedFont,
                             textAlign: headingAlign,
                             marginBottom: "6px"
@@ -4760,6 +4760,41 @@ const FormBuilder = () => {
                                                 setFields(updatedFields);
                                             }}
                                         />
+
+                                        {/* Heading Alignment */}
+                                        <label className="mt-3">Heading Alignment</label>
+                                        <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+                                            {["left", "center", "right"].map((align) => {
+                                                const icons = {
+                                                    left: "⬅️",
+                                                    center: "↔️",
+                                                    right: "➡️"
+                                                };
+                                                return (
+                                                    <button
+                                                        key={align}
+                                                        onClick={() => {
+                                                            const updatedFields = fields.map(f =>
+                                                                f.id === selectedFieldId ? { ...f, alignment: align } : f
+                                                            );
+                                                            setFields(updatedFields);
+                                                        }}
+                                                        style={{
+                                                            padding: "6px 10px",
+                                                            fontSize: "1.2rem",
+                                                            border: fields.find(f => f.id === selectedFieldId)?.alignment === align
+                                                                ? "2px solid #007bff"
+                                                                : "1px solid lightgray",
+                                                            borderRadius: "5px",
+                                                            background: "white",
+                                                            cursor: "pointer"
+                                                        }}
+                                                    >
+                                                        {icons[align]}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </>
                                 )}
 
