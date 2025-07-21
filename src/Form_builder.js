@@ -4753,7 +4753,7 @@ const FormBuilder = () => {
                                             onChange={(e) => {
                                                 const updatedFields = fields.map(f => {
                                                     if (f.id === selectedFieldId) {
-                                                        return { ...f, caption: e.target.value || "Description" };
+                                                        return { ...f, caption: e.target.value };
                                                     }
                                                     return f;
                                                 });
@@ -5445,7 +5445,7 @@ const FormBuilder = () => {
                                 className="btn-close"
                                 data-bs-dismiss="modal"
                                 aria-label="Close"
-                            ></button>
+                            ><i class="fa-solid fa-xmark"></i></button>
                         </div>
                         <div className="modal-body">
                             {/* Search Bar */}
