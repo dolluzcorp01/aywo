@@ -79,6 +79,7 @@ const FormBuilder = () => {
     const pickerRef = useRef(null);
 
     const [formTitle, setFormTitle] = useState("");
+    const [templateFormTitle, setTemplateFormTitle] = useState("");
 
     const [fields, setFields] = useState([]);
     const [fieldTypeMenu, setFieldTypeMenu] = useState(null); // stores id of field and position
@@ -118,6 +119,7 @@ const FormBuilder = () => {
     const [isMobile, setIsMobile] = useState(false);
 
     const [showModal, setShowModal] = useState(false);
+    const [showTemplateModal, setShowTemplateModal] = useState(false);
     const [showNewPageModal, setShowNewPageModal] = useState(false);
     const [activeBtnColorPicker, setActiveBtnColorPicker] = useState(null);
     const [formbgImage, setFormbgImage] = useState(null);
@@ -804,22 +806,30 @@ const FormBuilder = () => {
     };
 
     useEffect(() => {
+        const pathname = location.pathname;
+        const isTemplate = pathname.includes("/form-builder/template-");
+        const isForm = pathname.includes("/form-builder/form-");
+
+        if (isTemplate) {
+            setShowTemplateModal(true); // 👈 Show template naming modal
+            return;
+        }
+
         if (formId && pageParam) {
             if (version && isNaN(version)) {
                 Swal.fire("Invalid Version", "Version must be a number.", "error");
-                return; // 🚫 stop execution if invalid
+                return;
             }
 
-            // Check if it's the ending page
             if (pageParam === "end") {
                 fetchForm(formId, "end");
             } else {
                 fetchForm(formId, pageParam, version);
             }
         } else {
-            setShowModal(true);
+            setShowModal(true); // 👈 Show default modal
         }
-    }, [location.pathname, location.search]); // ✅ include location.search!
+    }, [location.pathname, location.search]);
 
     useEffect(() => {
         const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
@@ -963,6 +973,46 @@ const FormBuilder = () => {
                 Swal.fire("Success", "Form created successfully!", "success");
                 setShowModal(false);
                 navigate(`/form-builder/form-${result.form_id}/page-${result.page_id}`);
+            } else {
+                Swal.fire("Error", result.message || "Form creation failed", "error");
+            }
+        } catch (error) {
+            console.error("❌ Form creation failed:", error);
+            Swal.fire("Error", "Server error occurred.", "error");
+        }
+    };
+
+    const handleTemplateFormContinue = async () => {
+        if (!templateFormTitle.trim()) {
+            Swal.fire("Validation", "Form name cannot be empty.", "warning");
+            return;
+        }
+        const pathname = location.pathname;
+        const match = pathname.match(/template-(\d+)/);
+        const formId = match?.[1];
+        try {
+            const response = await apiFetch(`/api/form_builder/duplicate-template/${formId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title: templateFormTitle }),
+                credentials: "include",
+            });
+            const result = await response.json();
+
+            if (response.status === 401) {
+                Swal.fire("Unauthorized", "User not logged in or missing user ID.", "error");
+                return;
+            }
+
+            if (response.status === 409) {
+                Swal.fire("Duplicate", "A form with this name already exists. Please choose a different name.", "error");
+                return;
+            }
+
+            if (response.ok && result.newFormId) {
+                Swal.fire("Success", "Form created successfully!", "success");
+                setShowTemplateModal(false);
+                navigate(`/form-builder/form-${result.newFormId}/page-1`);
             } else {
                 Swal.fire("Error", result.message || "Form creation failed", "error");
             }
@@ -5482,10 +5532,10 @@ const FormBuilder = () => {
 
             <div
                 className={`modal fade ${showModal ? "show d-block" : ""}`}
-                id="exampleModalCenter"
+                id="createFormModalCenter"
                 tabIndex="-1"
                 role="dialog"
-                aria-labelledby="exampleModalCenterTitle"
+                aria-labelledby="createFormModalCenterTitle"
                 aria-hidden={!showModal}
                 style={{ backgroundColor: showModal ? "rgba(0,0,0,0.5)" : "transparent" }}
             >
@@ -5512,11 +5562,42 @@ const FormBuilder = () => {
             </div>
 
             <div
-                className={`modal fade ${showNewPageModal ? "show d-block" : ""}`}
-                id="exampleModalCenter"
+                className={`modal fade ${showTemplateModal ? "show d-block" : ""}`}
+                id="TemplateFormModalCenter"
                 tabIndex="-1"
                 role="dialog"
-                aria-labelledby="exampleModalCenterTitle"
+                aria-labelledby="TemplateFormModalCenterTitle"
+                aria-hidden={!showTemplateModal}
+                style={{ backgroundColor: showTemplateModal ? "rgba(0,0,0,0.5)" : "transparent" }}
+            >
+                <div className="modal-dialog modal-dialog-centered" role="document">
+                    <div className="modal-content custom-modal p-0">
+                        <div className="modal-header border-0 pb-0">
+                            <h5 className="modal-title">Name your form</h5>
+                            <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} onClick={() => { navigate("/home"); }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div className="modal-body pt-2">
+                            <input
+                                type="text"
+                                id="formNameInput"
+                                className="form-control custom-input"
+                                value={templateFormTitle}
+                                onChange={(e) => setTemplateFormTitle(e.target.value)}
+                            />
+                        </div>
+                        <div className="modal-footer border-0 pt-0 justify-content-end">
+                            <button type="button" id="continueButton" className="btn btn-primary custom-continue-btn" onClick={handleTemplateFormContinue}>Continue</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                className={`modal fade ${showNewPageModal ? "show d-block" : ""}`}
+                id="newPageModalCenter"
+                tabIndex="-1"
+                role="dialog"
+                aria-labelledby="newPageModalCenterTitle"
                 aria-hidden={!showNewPageModal}
                 style={{ backgroundColor: showNewPageModal ? "rgba(0,0,0,0.5)" : "transparent" }}
             >
@@ -5565,7 +5646,7 @@ const FormBuilder = () => {
                                     handleDuplicatePage();
                                 }}
                             >
-                                Continue test
+                                Continue
                             </button>
                         </div>
                     </div>

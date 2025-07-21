@@ -37,6 +37,14 @@ function App() {
         }
       />
       <Route
+        path="/form-builder/:template"
+        element={
+          <FormBuilderLayout>
+            <FormBuilder />
+          </FormBuilderLayout>
+        }
+      />
+      <Route
         path="/form-builder/:formId/:pageId"
         element={
           <FormBuilderLayout>

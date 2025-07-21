@@ -1329,6 +1329,224 @@ async function copyFileWithNewName(originalPath, destFolder) {
     });
 }
 
+router.post("/duplicate-template/:formId", verifyJWT, async (req, res) => {
+    const userId = req.user_id;
+    const { formId } = req.params;
+    const { title: newTitle } = req.body;
+
+    let connection;
+
+    try {
+        connection = await new Promise((resolve, reject) => {
+            db.getConnection((err, conn) => (err ? reject(err) : resolve(conn)));
+        });
+
+        await connection.beginTransaction();
+
+        // 1️⃣ Get original form
+        const [originalForm] = await queryPromise(connection, `SELECT * FROM temlpates_dforms WHERE id = ?`, [formId]);
+        if (!originalForm) return res.status(404).json({ error: "Original form not found." });
+
+        const newBgImagePath = await copyFileWithNewName(
+            originalForm.background_image,
+            "form_bg_img_uploads"
+        );
+
+        // 2️⃣ Insert new form
+        const titleToUse = newTitle || (originalForm.form_title + " (Copy)");
+
+        // ❗ Check for duplicate title
+        const isDuplicate = await checkDuplicateFormTitle(userId, titleToUse);
+        if (isDuplicate) {
+            return res.status(400).json({ error: "A form with this title already exists." });
+        }
+
+        const formInsertQuery = `
+      INSERT INTO dforms 
+      (user_id, title, internal_note, starred, is_closed, published, background_color, background_image,
+       questions_background_color, primary_color, questions_color, answers_color, font)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+        const { insertId: newFormId } = await queryPromise(connection, formInsertQuery, [
+            userId,
+            titleToUse,
+            originalForm.internal_note,
+            originalForm.starred,
+            false,  // Not closed
+            false,  // Not published
+            originalForm.background_color,
+            newBgImagePath,
+            originalForm.questions_background_color,
+            originalForm.primary_color,
+            originalForm.questions_color,
+            originalForm.answers_color,
+            originalForm.font
+        ]);
+
+        // 3️⃣ Copy pages
+        const pages = await queryPromise(connection, `SELECT * FROM temlpates_dform_pages WHERE form_id = ?`, [formId]);
+
+        let versionCounter = 2;
+
+        // 👇 Hardcode ThankYou field before the loop
+        const thankYouFieldResult = await queryPromise(connection, `
+        INSERT INTO dform_fields 
+            (form_id, page_id, type, label, placeholder, caption, default_value, description, alert_type,
+            font_size, required, sort_order, min_value, max_value, heading_alignment,
+            btnalignment, btnbgColor, btnlabelColor, fields_version, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        `, [
+            newFormId,
+            "end",      // ✅ Hardcoded page_id for ThankYou
+            "ThankYou",// ✅ type
+            "ThankYou",// ✅ label
+            "", "", "", "", "info",
+            16,        // ✅ font_size
+            "No",      // ✅ required
+            0,         // ✅ sort_order
+            null, null, null, null, null, null,
+            1          // ✅ version for ThankYou field
+        ]);
+
+        // Extract the new ThankYou field ID
+        const thankYouFieldId = thankYouFieldResult.insertId;
+
+        for (const page of pages) {
+            await queryPromise(connection, `
+        INSERT INTO dform_pages (page_number, form_id, page_title, sort_order)
+        VALUES (?, ?, ?, ?)
+      `, [page.page_number, newFormId, page.page_title, page.sort_order]);
+
+            // 4️⃣ Copy fields for each page
+            // ✅ Correct query string
+            const fieldsQuery = `
+            SELECT * FROM temlpates_dform_fields 
+            WHERE form_id = ? AND page_id = ? AND fields_version = (
+                SELECT MAX(fields_version) 
+                FROM temlpates_dform_fields 
+                WHERE form_id = ? AND page_id = ?
+            )`;
+
+            const fieldsParams = [formId, page.page_number, formId, page.page_number];
+            const fields = await queryPromise(connection, fieldsQuery, fieldsParams);
+
+            const currentVersion = versionCounter++;
+
+            for (const field of fields) {
+
+                const { insertId: newFieldId } = await queryPromise(connection, `
+          INSERT INTO dform_fields 
+          (form_id, page_id, type, label, placeholder, caption, default_value, description, alert_type,
+           font_size, required, sort_order, min_value, max_value, heading_alignment,
+           btnalignment, btnbgColor, btnlabelColor, fields_version)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+                    newFormId,
+                    page.page_number.toString(),
+                    field.type,
+                    field.label,
+                    field.placeholder,
+                    field.caption,
+                    field.default_value,
+                    field.description,
+                    field.alert_type,
+                    field.font_size,
+                    field.required,
+                    field.sort_order,
+                    field.min_value,
+                    field.max_value,
+                    field.heading_alignment,
+                    field.btnalignment,
+                    field.btnbgColor,
+                    field.btnlabelColor,
+                    currentVersion
+                ]);
+
+                // 5️⃣ Copy options
+                const options = await queryPromise(connection, `SELECT * FROM temlpates_dfield_options WHERE field_id = ?`, [field.id]);
+                for (const opt of options) {
+                    let newOptionImagePath = null;
+
+                    if (opt.image_path) {
+                        newOptionImagePath = await copyFileWithNewName(opt.image_path, "field_file_uploads");
+                    }
+
+                    await queryPromise(connection, `
+            INSERT INTO dfield_options (field_id, option_text, options_style, sort_order, image_path)
+            VALUES (?, ?, ?, ?, ?)
+          `, [
+                        newFieldId,
+                        opt.option_text,
+                        opt.options_style,
+                        opt.sort_order,
+                        newOptionImagePath
+                    ]);
+                }
+
+                // 6️⃣ Copy matrix rows/columns
+                const matrix = await queryPromise(connection, `SELECT * FROM temlpates_dfield_matrix WHERE field_id = ?`, [field.id]);
+                for (const m of matrix) {
+                    await queryPromise(connection, `
+            INSERT INTO dfield_matrix (field_id, row_label, column_label)
+            VALUES (?, ?, ?)
+          `, [newFieldId, m.row_label, m.column_label]);
+                }
+
+                // 7️⃣ Copy file uploads if any
+                const uploads = await queryPromise(connection, `SELECT * FROM temlpates_dfield_file_uploads WHERE field_id = ?`, [field.id]);
+                for (const upload of uploads) {
+                    let newUploadFilePath = null;
+
+                    if (upload.file_path) {
+                        newUploadFilePath = await copyFileWithNewName(upload.file_path, "field_file_uploads");
+                    }
+
+                    await queryPromise(connection, `
+            INSERT INTO dfield_file_uploads
+              (field_id, form_id, file_type, file_path, youtube_url, file_field_size, file_field_Alignment)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `, [
+                        newFieldId,
+                        newFormId,
+                        upload.file_type,
+                        newUploadFilePath,
+                        upload.youtube_url,
+                        upload.file_field_size,
+                        upload.file_field_Alignment
+                    ]);
+                }
+            }
+        }
+
+        // 8️⃣ Duplicate thank you if exists
+        const thankyou = await queryPromise(connection, `SELECT * FROM temlpates_dform_thankyou WHERE form_id = ?`, [formId]);
+        if (thankyou.length) {
+            const origTY = thankyou[0];
+            await queryPromise(connection, `
+        INSERT INTO dform_thankyou
+          (form_id, field_id, show_tick_icon, thankyou_heading, thankyou_subtext)
+        VALUES (?, ?, ?, ?, ?)
+      `, [
+                newFormId,
+                thankYouFieldId,
+                origTY.show_tick_icon,
+                origTY.thankyou_heading,
+                origTY.thankyou_subtext
+            ]);
+        }
+
+        await connection.commit();
+        res.json({ message: "Form created successfully!", newFormId });
+
+    } catch (err) {
+        if (connection) await connection.rollback();
+        console.error("❌ Error createding form:", err);
+        res.status(500).json({ error: "Failed to created form" });
+    } finally {
+        if (connection) connection.release();
+    }
+});
+
 router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
     const userId = req.user_id;
     const { formId } = req.params;
@@ -1354,6 +1572,12 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
 
         // 2️⃣ Insert new form
         const titleToUse = newTitle || (originalForm.form_title + " (Copy)");
+
+        // ❗ Check for duplicate title
+        const isDuplicate = await checkDuplicateFormTitle(userId, titleToUse);
+        if (isDuplicate) {
+            return res.status(400).json({ error: "A form with this title already exists." });
+        }
 
         const formInsertQuery = `
       INSERT INTO dforms 
@@ -1730,7 +1954,7 @@ router.post("/close-form/:formId", verifyJWT, async (req, res) => {
 
         const [updatedForm] = await queryPromise(
             db,
-            "SELECT * FROM forms WHERE form_id = ?",
+            "SELECT * FROM dforms WHERE id = ?",
             [formId]
         );
 
