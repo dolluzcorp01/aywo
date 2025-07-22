@@ -201,7 +201,7 @@ const Responses = () => {
                 paging: true,
                 ordering: true,
                 info: true,
-                dom: '<"top-bar-wrapper"lf<"date-filter-wrapper"><"column-toggle-wrapper">>rt<"bottom"ip><"clear">'
+                dom: '<"top-bar-wrapper"lf<"date-filter-wrapper"><"column-toggle-wrapper"><"custom-filter-wrapper">>rt<"bottom"ip><"clear">'
             });
 
             $('.column-toggle-wrapper').html(`
@@ -265,6 +265,11 @@ const Responses = () => {
                 const $menu = $('#globalColumnDropdownMenu');
                 const rect = e.currentTarget.getBoundingClientRect();
 
+                if ($menu.is(':visible')) {
+                    $menu.hide();
+                    return;
+                }
+
                 $menu.html(generateDropdownHTML());
                 $menu.css({
                     display: 'block',
@@ -293,6 +298,62 @@ const Responses = () => {
                 if (!$(e.target).closest('#globalColumnDropdownMenu, #toggleColumnDropdown').length) {
                     $('#globalColumnDropdownMenu').hide();
                 }
+            });
+
+            $('.custom-filter-wrapper').html(`
+                <div style="position:relative; display:inline-block; margin-left:12px;">
+                    <button id="toggleCustomFilter" style="
+                        background:none;
+                        border:1px solid #ccc;
+                        border-radius:4px;
+                        cursor:pointer;
+                        padding:6px 12px;
+                        font-size: 14px;
+                        display:flex;
+                        align-items:center;
+                        gap:4px;
+                    ">
+                    <i class="fa-solid fa-filter" style="color: #2D3748;"></i> Filter
+                    </button>
+
+                    <div id="customFilterPanel" style="
+                        display:none;
+                        position:absolute;
+                        top:110%;
+                        left:0;
+                        background:#fff;
+                        border:1px solid #ddd;
+                        border-radius: 6px;
+                        padding: 12px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                        z-index:999;
+                        width:420px;
+                    ">
+                       <div style="display: grid; grid-template-columns: 1fr 1fr 2fr auto; gap: 8px; align-items: center;">
+                            <select id="filterField" style="padding: 6px 8px; width: 100%;">
+                                ${columns.map(col => `<option value="${col.title}">${col.title}</option>`).join('')}
+                            </select>
+                            <select id="filterOperator" style="padding: 6px 8px; width: 100%;">
+                                <option value="equals">equals</option>
+                                <option value="contains">contains</option>
+                            </select>
+                            <input type="text" id="filterValue" style="padding: 6px 8px; width: 100%;" placeholder="Value" />
+                            <button id="applyCustomFilter" style="
+                                background: #000;
+                                color: #fff;
+                                padding: 6px 12px;
+                                border: none;
+                                border-radius: 4px;
+                                cursor: pointer;
+                                white-space: nowrap;
+                            ">Apply</button>
+                        </div>
+                    </div>
+                </div>
+            `);
+
+            $(document).on('click', '#toggleCustomFilter', function () {
+                $('#customFilterPanel').toggle();
             });
 
             $('.date-filter-wrapper').html(`
@@ -357,6 +418,46 @@ const Responses = () => {
                 $('#dateRangeInputs').toggle();
             });
 
+            let customFilterActive = false;
+            let customFilterParams = {};
+
+            $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                if (!customFilterActive) return true;
+
+                const field = customFilterParams.field;
+                const operator = customFilterParams.operator;
+                const value = customFilterParams.value.toLowerCase();
+
+                const colIndex = columns.findIndex(col => col.title === field);
+                if (colIndex === -1) return true;
+
+                const cellValue = (data[colIndex] || '').toString().toLowerCase();
+
+                if (operator === 'equals') {
+                    return cellValue === value;
+                } else if (operator === 'contains') {
+                    return cellValue.includes(value);
+                }
+                return true;
+            });
+
+            // Always unbind before binding to avoid duplicate handlers
+            $(document).off('click', '#applyCustomFilter').on('click', '#applyCustomFilter', function () {
+                const field = $('#filterField').val();
+                const operator = $('#filterOperator').val();
+                const value = $('#filterValue').val().trim();
+
+                if (!value) {
+                    customFilterActive = false;
+                    customFilterParams = {};
+                } else {
+                    customFilterActive = true;
+                    customFilterParams = { field, operator, value };
+                }
+
+                dataTableRef.current.draw();
+            });
+
             $(document).on('click', '#clearDateFilter', function () {
                 $('#minDate').val('');
                 $('#maxDate').val('');
@@ -419,8 +520,10 @@ const Responses = () => {
         const handleOutsideClick = (e) => {
             const $datePopup = $('#dateRangeInputs');
             const $dateButton = $('#toggleDateFilter');
-            const $columnPopup = $('#columnDropdownMenu');
+            const $columnPopup = $('#globalColumnDropdownMenu');
             const $columnButton = $('#toggleColumnDropdown');
+            const $customFilter = $('#customFilterPanel');
+            const $customFilterButton = $('#toggleCustomFilter');
 
             // Close date popup
             if (!$datePopup.is(e.target) && $datePopup.has(e.target).length === 0 &&
@@ -433,10 +536,15 @@ const Responses = () => {
                 !$columnButton.is(e.target) && $columnButton.has(e.target).length === 0) {
                 $columnPopup.hide();
             }
+
+            // Close custom filter panel
+            if (!$customFilter.is(e.target) && $customFilter.has(e.target).length === 0 &&
+                !$customFilterButton.is(e.target) && $customFilterButton.has(e.target).length === 0) {
+                $customFilter.hide();
+            }
         };
 
         document.addEventListener('mousedown', handleOutsideClick);
-
         return () => {
             document.removeEventListener('mousedown', handleOutsideClick);
         };
