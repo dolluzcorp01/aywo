@@ -11,6 +11,9 @@ import Health_Care_Form_pg_1 from "./assets/img/Health_Care_Form_pg_1.png";
 import Health_Care_Form_pg_end from "./assets/img/Health_Care_Form_pg_end.png";
 import Training_Application_Form_pg_1 from "./assets/img/Training_Application_Form_pg_1.png";
 import Training_Application_Form_pg_end from "./assets/img/Training_Application_Form_pg_end.png";
+import Holiday_Party_Form_pg_1 from "./assets/img/Holiday_Party_Form_pg_1.png";
+import Holiday_Party_Form_pg_2 from "./assets/img/Holiday_Party_Form_pg_2.png";
+import Holiday_Party_Form_pg_end from "./assets/img/Holiday_Party_Form_pg_end.png";
 import { useNotification } from "./NotificationContext";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -278,6 +281,17 @@ function Home() {
       child_templates: [
         { name: "Child Template 1", image: Training_Application_Form_pg_1, template_formId: 4, template_pageId: 1 },
         { name: "Child Template 3", image: Training_Application_Form_pg_end, template_formId: 4, template_pageId: "end" }
+      ]
+    },
+    {
+      name: "Holiday Party",
+      image: Holiday_Party_Form_pg_1,
+      url: "template-5",
+      template_formId: 5,
+      child_templates: [
+        { name: "Child Template 1", image: Holiday_Party_Form_pg_1, template_formId: 5, template_pageId: 1 },
+        { name: "Child Template 1", image: Holiday_Party_Form_pg_2, template_formId: 5, template_pageId: 2 },
+        { name: "Child Template 3", image: Holiday_Party_Form_pg_end, template_formId: 5, template_pageId: "end" }
       ]
     },
   ];
