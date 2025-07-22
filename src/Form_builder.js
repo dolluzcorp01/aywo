@@ -1544,7 +1544,7 @@ const FormBuilder = () => {
     }, [formPrimaryColor]);
 
     const HeadingField = ({ field, fields, setFields, formQuestionColor, selectedFont }) => {
-        const headingAlign = field.heading_alignment || "center";
+        const headingAlign = field.alignment || "center";
         const textareaRef = useRef(null);
 
         useEffect(() => {

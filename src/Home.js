@@ -9,6 +9,8 @@ import Job_Application_Form_pg_1 from "./assets/img/Job_Application_Form_pg_1.pn
 import Job_Application_Form_pg_end from "./assets/img/Job_Application_Form_pg_end.png";
 import Health_Care_Form_pg_1 from "./assets/img/Health_Care_Form_pg_1.png";
 import Health_Care_Form_pg_end from "./assets/img/Health_Care_Form_pg_end.png";
+import Training_Application_Form_pg_1 from "./assets/img/Training_Application_Form_pg_1.png";
+import Training_Application_Form_pg_end from "./assets/img/Training_Application_Form_pg_end.png";
 import { useNotification } from "./NotificationContext";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -252,7 +254,7 @@ function Home() {
       name: "Job Application",
       image: Job_Application_Form_pg_1,
       url: "template-2",
-      template_formId: 3,
+      template_formId: 2,
       child_templates: [
         { name: "Child Template 1", image: Job_Application_Form_pg_1, template_formId: 2, template_pageId: 1 },
         { name: "Child Template 3", image: Job_Application_Form_pg_end, template_formId: 2, template_pageId: "end" }
@@ -262,10 +264,20 @@ function Home() {
       name: "Health Care",
       image: Health_Care_Form_pg_1,
       url: "template-3",
-      template_formId: 2,
+      template_formId: 3,
       child_templates: [
         { name: "Child Template 1", image: Health_Care_Form_pg_1, template_formId: 3, template_pageId: 1 },
         { name: "Child Template 3", image: Health_Care_Form_pg_end, template_formId: 3, template_pageId: "end" }
+      ]
+    },
+    {
+      name: "Training Application",
+      image: Training_Application_Form_pg_1,
+      url: "template-4",
+      template_formId: 4,
+      child_templates: [
+        { name: "Child Template 1", image: Training_Application_Form_pg_1, template_formId: 4, template_pageId: 1 },
+        { name: "Child Template 3", image: Training_Application_Form_pg_end, template_formId: 4, template_pageId: "end" }
       ]
     },
   ];
