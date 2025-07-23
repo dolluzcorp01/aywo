@@ -305,8 +305,45 @@ const PublishedForm = () => {
         };
 
         setResponses(updatedResponses);
-        localStorage.setItem(`form_${formId}_page_${pageId}`, JSON.stringify(updatedResponses));
+
+        const payload = {
+            data: updatedResponses,
+            timestamp: Date.now() // current time in ms
+        };
+
+        localStorage.setItem(`form_${formId}_page_${pageId}`, JSON.stringify(payload));
     };
+
+    const cleanupExpiredFormStorage = () => {
+        const EXPIRATION_TIME = 60 * 60 * 1000; // 1 hour in ms
+        const now = Date.now();
+
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith("form_")) {
+                try {
+                    const item = JSON.parse(localStorage.getItem(key));
+                    if (item && item.timestamp && now - item.timestamp > EXPIRATION_TIME) {
+                        localStorage.removeItem(key);
+                    }
+                } catch (e) {
+                    console.warn(`Failed to parse or check key: ${key}`);
+                    localStorage.removeItem(key); // fallback in case of corrupt data
+                }
+            }
+        });
+    };
+
+    useEffect(() => {
+        // Run cleanup immediately on mount
+        cleanupExpiredFormStorage();
+
+        // Then every 1 minute
+        const interval = setInterval(() => {
+            cleanupExpiredFormStorage();
+        }, 60 * 1000);
+
+        return () => clearInterval(interval);
+    }, []);
 
     const HeadingField = ({ field, fields, setFields, formQuestionColor, selectedFont }) => {
         const headingAlign = field.heading_alignment || "center";
