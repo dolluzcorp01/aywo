@@ -127,6 +127,9 @@ const FormBuilder = () => {
     const pagesContainerRef = useRef();
     const [showArrows, setShowArrows] = useState(false);
 
+    const urlmatch = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
+    const pageId = urlmatch ? Number(urlmatch[2]) : null;
+
     // Check overflow on mount & when pages change
     useEffect(() => {
         const checkOverflow = () => {
@@ -3268,67 +3271,98 @@ const FormBuilder = () => {
                     </div>
                 );
             case "Submit":
-                const submitAlignment = field.btnalignment || "left";
-                let submitAlignmentStyle = {};
-                if (submitAlignment === "center") {
-                    submitAlignmentStyle = { margin: "0 auto", display: "block" };
-                } else if (submitAlignment === "right") {
-                    submitAlignmentStyle = { marginLeft: "auto", display: "block" };
-                } else {
-                    submitAlignmentStyle = { display: "inline-block" };
-                }
+                const sortedSubmitPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
+                const isFirstSubmitPage = sortedSubmitPages.findIndex(p => p.page_number === parseInt(pageId)) === 0;
 
                 return (
-                    <button
-                        type="submit"
-                        className="btn"
-                        style={{
-                            padding: "6px 12px",
-                            fontSize: "1.2rem",
-                            fontFamily: selectedFont,
-                            backgroundColor: field.btnbgColor || formPrimaryColor,
-                            color: field.btnlabelColor || "#ffffff",
-                            border: focusedFieldId === field.id ? "2px solid #007bff" : "1px solid lightgray",
-                            borderRadius: "5px",
-                            ...submitAlignmentStyle
-                        }}
-                        onFocus={() => setFocusedFieldId(field.id)}
-                        onBlur={() => setFocusedFieldId(null)}
-                    >
-                        {field.label || "Submit"}
-                    </button>
+                    <div style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        marginTop: "1rem"
+                    }}>
+                        {!isFirstSubmitPage ? (
+                            <button
+                                type="button"
+                                className="btn"
+                                style={{
+                                    padding: "6px 12px",
+                                    fontSize: "1.2rem",
+                                    fontFamily: selectedFont,
+                                    backgroundColor: field.btnbgColor || formPrimaryColor,
+                                    color: field.btnlabelColor || "#ffffff",
+                                    border: "1px solid lightgray",
+                                    borderRadius: "5px"
+                                }}
+                            >
+                                <i className="fa-solid fa-arrow-left me-2"></i> Previous
+                            </button>
+                        ) : <div></div>}
+
+                        <button
+                            type="submit"
+                            className="btn"
+                            style={{
+                                padding: "6px 12px",
+                                fontSize: "1.2rem",
+                                fontFamily: selectedFont,
+                                backgroundColor: field.btnbgColor || formPrimaryColor,
+                                color: field.btnlabelColor || "#ffffff",
+                                border: focusedFieldId === field.id ? "2px solid #007bff" : "1px solid lightgray",
+                                borderRadius: "5px"
+                            }}
+                            onFocus={() => setFocusedFieldId(field.id)}
+                            onBlur={() => setFocusedFieldId(null)}
+                        >
+                            {field.label || "Submit"}
+                        </button>
+                    </div>
                 );
             case "Next":
-                const nextAlignment = field.btnalignment || "left";
-                let nextAlignmentStyle = {};
-                if (nextAlignment === "center") {
-                    nextAlignmentStyle = { margin: "0 auto", display: "block" };
-                } else if (nextAlignment === "right") {
-                    nextAlignmentStyle = { marginLeft: "auto", display: "block" };
-                } else {
-                    nextAlignmentStyle = { display: "inline-block" };
-                }
+                const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
+                const isFirstPage = sortedPages.findIndex(p => p.page_number === parseInt(pageId)) === 0;
 
                 return (
-                    <button
-                        type="button"
-                        className="btn"
-                        style={{
-                            padding: "6px 12px",
-                            fontSize: "1.2rem",
-                            fontFamily: selectedFont,
-                            backgroundColor: field.btnbgColor || formPrimaryColor,
-                            color: field.btnlabelColor || "#ffffff",
-                            border: focusedFieldId === field.id ? "2px solid #6c757d" : "1px solid lightgray",
-                            borderRadius: "5px",
-                            ...nextAlignmentStyle
-                        }}
-                        onFocus={() => setFocusedFieldId(field.id)}
-                        onBlur={() => setFocusedFieldId(null)}
-                    >
-                        {field.label}
-                        <i className="fa-solid fa-arrow-right ms-2"></i>
-                    </button>
+                    <div style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        marginTop: "1rem"
+                    }}>
+                        {!isFirstPage ? (
+                            <button
+                                type="button"
+                                className="btn"
+                                style={{
+                                    padding: "6px 12px",
+                                    fontSize: "1.2rem",
+                                    fontFamily: selectedFont,
+                                    backgroundColor: field.btnbgColor || formPrimaryColor,
+                                    color: field.btnlabelColor || "#ffffff",
+                                    border: "1px solid lightgray",
+                                    borderRadius: "5px"
+                                }}
+                            >
+                                <i className="fa-solid fa-arrow-left me-2"></i> Previous
+                            </button>
+                        ) : <div></div>}
+
+                        <button
+                            type="button"
+                            className="btn"
+                            style={{
+                                padding: "6px 12px",
+                                fontSize: "1.2rem",
+                                fontFamily: selectedFont,
+                                backgroundColor: field.btnbgColor || formPrimaryColor,
+                                color: field.btnlabelColor || "#ffffff",
+                                border: focusedFieldId === field.id ? "2px solid #6c757d" : "1px solid lightgray",
+                                borderRadius: "5px"
+                            }}
+                            onFocus={() => setFocusedFieldId(field.id)}
+                            onBlur={() => setFocusedFieldId(null)}
+                        >
+                            {field.label} <i className="fa-solid fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
                 );
             default:
                 return <input type="text" {...commonProps} />;
@@ -5313,43 +5347,6 @@ const FormBuilder = () => {
                                                     setFields(updatedFields);
                                                 }}
                                             />
-
-                                            {/* Alignment Buttons */}
-                                            <div className="mt-3">
-                                                <label>Alignment</label>
-                                                <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
-                                                    {["left", "center", "right"].map((align) => {
-                                                        const icons = {
-                                                            left: "⬅️",
-                                                            center: "↔️",
-                                                            right: "➡️"
-                                                        };
-                                                        return (
-                                                            <button
-                                                                key={align}
-                                                                onClick={() => {
-                                                                    const updatedFields = fields.map(f =>
-                                                                        f.id === selectedFieldId ? { ...f, btnalignment: align } : f
-                                                                    );
-                                                                    setFields(updatedFields);
-                                                                }}
-                                                                style={{
-                                                                    padding: "6px 10px",
-                                                                    fontSize: "1.2rem",
-                                                                    border: btnalignment === align
-                                                                        ? "2px solid #007bff"
-                                                                        : "1px solid lightgray",
-                                                                    borderRadius: "5px",
-                                                                    background: "white",
-                                                                    cursor: "pointer"
-                                                                }}
-                                                            >
-                                                                {icons[align]}
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
 
                                             {/* Background Color */}
                                             <div className="d-flex align-items-center justify-content-between mb-3" style={{ position: "relative" }}>

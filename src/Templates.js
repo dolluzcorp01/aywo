@@ -1762,69 +1762,102 @@ const Templates = ({ formId, pageId, ...props }) => {
                     </div>
                 );
             case "Submit":
-                const submitAlignment = field.btnalignment || "left";
-                let submitAlignmentStyle = {};
-                if (submitAlignment === "center") {
-                    submitAlignmentStyle = { margin: "0 auto", display: "block" };
-                } else if (submitAlignment === "right") {
-                    submitAlignmentStyle = { marginLeft: "auto", display: "block" };
-                } else {
-                    submitAlignmentStyle = { display: "inline-block" };
-                }
+                const sortedSubmitPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
+                const isFirstSubmitPage = sortedSubmitPages.findIndex(p => p.page_number === parseInt(pageId)) === 0;
 
                 return (
-                    <button
-                        type="submit"
-                        className="btn"
-                        onClick={handleSubmitForm}
-                        style={{
-                            padding: "6px 12px",
-                            fontSize: "1.2rem",
-                            fontFamily: selectedFont,
-                            backgroundColor: field.btnbgColor || formPrimaryColor,
-                            color: field.btnlabelColor || "#ffffff",
-                            border: focusedFieldId === field.id ? "2px solid #007bff" : "1px solid lightgray",
-                            borderRadius: "5px",
-                            ...submitAlignmentStyle
-                        }}
-                        onFocus={() => setFocusedFieldId(field.id)}
-                        onBlur={() => setFocusedFieldId(null)}
-                    >
-                        {field.label || "Submit"}
-                    </button>
+                    <div style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        marginTop: "1rem"
+                    }}>
+                        {!isFirstSubmitPage ? (
+                            <button
+                                type="button"
+                                onClick={handleBackPage}
+                                className="btn"
+                                style={{
+                                    padding: "6px 12px",
+                                    fontSize: "1.2rem",
+                                    fontFamily: selectedFont,
+                                    backgroundColor: field.btnbgColor || formPrimaryColor,
+                                    color: field.btnlabelColor || "#ffffff",
+                                    border: "1px solid lightgray",
+                                    borderRadius: "5px"
+                                }}
+                            >
+                                <i className="fa-solid fa-arrow-left me-2"></i> Previous
+                            </button>
+                        ) : <div></div>}
+
+                        <button
+                            type="submit"
+                            className="btn"
+                            onClick={handleSubmitForm}
+                            style={{
+                                padding: "6px 12px",
+                                fontSize: "1.2rem",
+                                fontFamily: selectedFont,
+                                backgroundColor: field.btnbgColor || formPrimaryColor,
+                                color: field.btnlabelColor || "#ffffff",
+                                border: focusedFieldId === field.id ? "2px solid #007bff" : "1px solid lightgray",
+                                borderRadius: "5px"
+                            }}
+                            onFocus={() => setFocusedFieldId(field.id)}
+                            onBlur={() => setFocusedFieldId(null)}
+                        >
+                            {field.label || "Submit"}
+                        </button>
+                    </div>
                 );
             case "Next":
-                const nextAlignment = field.btnalignment || "left";
-                let nextAlignmentStyle = {};
-                if (nextAlignment === "center") {
-                    nextAlignmentStyle = { margin: "0 auto", display: "block" };
-                } else if (nextAlignment === "right") {
-                    nextAlignmentStyle = { marginLeft: "auto", display: "block" };
-                } else {
-                    nextAlignmentStyle = { display: "inline-block" };
-                }
+                const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
+                const isFirstPage = sortedPages.findIndex(p => p.page_number === parseInt(pageId)) === 0;
 
                 return (
-                    <button
-                        type="button"
-                        onClick={handleNextPage}
-                        className="btn"
-                        style={{
-                            padding: "6px 12px",
-                            fontSize: "1.2rem",
-                            fontFamily: selectedFont,
-                            backgroundColor: field.btnbgColor || formPrimaryColor,
-                            color: field.btnlabelColor || "#ffffff",
-                            border: focusedFieldId === field.id ? "2px solid #6c757d" : "1px solid lightgray",
-                            borderRadius: "5px",
-                            ...nextAlignmentStyle
-                        }}
-                        onFocus={() => setFocusedFieldId(field.id)}
-                        onBlur={() => setFocusedFieldId(null)}
-                    >
-                        {field.label}
-                        <i className="fa-solid fa-arrow-right ms-2"></i>
-                    </button>
+                    <div style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        marginTop: "1rem"
+                    }}>
+                        {!isFirstPage ? (
+                            <button
+                                type="button"
+                                onClick={handleBackPage}
+                                className="btn"
+                                style={{
+                                    padding: "6px 12px",
+                                    fontSize: "1.2rem",
+                                    fontFamily: selectedFont,
+                                    backgroundColor: field.btnbgColor || formPrimaryColor,
+                                    color: field.btnlabelColor || "#ffffff",
+                                    border: "1px solid lightgray",
+                                    borderRadius: "5px"
+                                }}
+                            >
+                                <i className="fa-solid fa-arrow-left me-2"></i> Previous
+                            </button>
+                        ) : <div></div>}
+
+                        <button
+                            type="button"
+                            onClick={handleNextPage}
+                            className="btn"
+                            style={{
+                                padding: "6px 12px",
+                                fontSize: "1.2rem",
+                                fontFamily: selectedFont,
+                                backgroundColor: field.btnbgColor || formPrimaryColor,
+                                color: field.btnlabelColor || "#ffffff",
+                                border: focusedFieldId === field.id ? "2px solid #6c757d" : "1px solid lightgray",
+                                borderRadius: "5px"
+                            }}
+                            onFocus={() => setFocusedFieldId(field.id)}
+                            onBlur={() => setFocusedFieldId(null)}
+                        >
+                            {field.label} <i className="fa-solid fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
                 );
             default:
                 return <input type="text" {...commonProps} />;
@@ -1865,7 +1898,6 @@ const Templates = ({ formId, pageId, ...props }) => {
 
     return (
         <div className={`Preview-form-container`} style={{ borderRadius: "10px" }}>
-
             <div
                 className={`Preview-form-body ${formbgImage ? "with-bg-image" : ""}`}
                 style={{
@@ -1873,18 +1905,6 @@ const Templates = ({ formId, pageId, ...props }) => {
                     backgroundImage: formbgImage ? `url(${formbgImage})` : "none"
                 }}
             >
-
-                {(() => {
-                    const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
-                    const isFirstPage = sortedPages.findIndex(p => p.page_number === parseInt(pageId)) === 0;
-
-                    return !isFirstPage && (
-                        <div className="preview-back-arrow" onClick={handleBackPage}>
-                            <i className="fa-solid fa-arrow-left" style={{ color: form.questions_background_color }}></i>
-                        </div>
-                    );
-                })()}
-
                 <div
                     className="Preview-form-content"
                     style={{ backgroundColor: form.questions_background_color, marginTop: "5%", marginBottom: "5%", marginRight: "12%", marginLeft: "12%" }}
