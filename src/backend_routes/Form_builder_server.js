@@ -1138,7 +1138,7 @@ router.delete("/delete-form/:formId", verifyJWT, async (req, res) => {
         // -- file uploads --
         uploadsInFileUploads.forEach(upload => {
             if (upload.file_path) {
-                const filePath = path.join(__dirname, "..", upload.file_path.replace(/\\/g, "/"));
+                const filePath = path.resolve(process.cwd(), upload.file_path.replace(/\\/g, "/"));
                 safeDelete(filePath);
             }
         });
@@ -1269,7 +1269,7 @@ router.delete("/delete-page/:pageId", verifyJWT, async (req, res) => {
         // ✅ Delete physical files
         uploadsInFileUploads.forEach(upload => {
             if (upload.file_path) {
-                const filePath = path.join(__dirname, "..", upload.file_path.replace(/\\/g, "/"));
+                const filePath = path.resolve(process.cwd(), upload.file_path.replace(/\\/g, "/"));
                 safeDelete(filePath);
             }
         });
