@@ -157,6 +157,8 @@ const FormBuilder = () => {
     const [menuPosition, setMenuPosition] = useState({ top: 100, left: window.innerWidth / 2 });
     const [duplicatePageTitle, setDuplicatePageTitle] = useState("");
     const [pageToDuplicate, setPageToDuplicate] = useState(null);
+    const [copiedFormId, setCopiedFormId] = useState("");
+    const [copiedPageId, setCopiedPageId] = useState("");
 
     const handleMenuToggle = (e, pageId) => {
         e.stopPropagation();
@@ -361,6 +363,64 @@ const FormBuilder = () => {
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
                 body: JSON.stringify({ pageId: page.id, formId, newPageTitle: duplicatePageTitle }),
+            });
+
+            const result = await res.json();
+            if (!res.ok) {
+                Swal.fire("Error", result.error || "Duplication failed", "error");
+                return;
+            }
+
+            if (res.ok) {
+                // ✅ Call check-pages-btnfields
+                const reorderedPages = [...formPages, { id: result.newPageId }];
+                const lastPageId = formPages[formPages.length - 1]?.id;
+
+                await fetch("/api/form_builder/check-pages-btnfields", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        pageIds: reorderedPages.map(p => p.id),
+                        lastPageId,
+                        formId,
+                    })
+                });
+
+                Swal.fire("Success", "Page duplicated successfully!", "success");
+                const modal = document.getElementById('DuplicateModalCenter');
+                if (modal) {
+                    modal.classList.remove("show");
+                    modal.style.display = "none";
+                }
+                document.body.classList.remove("modal-open");
+                document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+                navigate(`/form-builder/form-${formId}/page-${result.newPageNumber}`);
+            } else {
+                Swal.fire("Error", result.error || "Duplication failed", "error");
+            }
+        } catch (err) {
+            console.error("Duplicate page error:", err);
+            Swal.fire("Error", "Server error occurred", "error");
+        }
+    };
+
+    const handleCopyPage = async () => {
+        const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
+        const current_formId = match ? match[1] : null;
+
+
+        if (!current_formId || !copiedFormId || !copiedPageId) {
+            Swal.fire("Error", "Form or Page ID not found", "error");
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/form_builder/copy-page`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ current_formId, copiedFormId, copiedPageId }),
             });
 
             const result = await res.json();
@@ -1041,57 +1101,120 @@ const FormBuilder = () => {
             return;
         }
 
-        try {
-            const response = await fetch("/api/form_builder/createnewpage", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ form_id: formId, title: pageTitle }),
-                credentials: "include",
-            });
+        // ✅ Check if user pasted a copy code
+        if (pageTitle.startsWith("dforms-copy:")) {
+            const encoded = pageTitle.split("dforms-copy:")[1];
+            try {
+                const decoded = atob(encoded); // "formId:pageId"
+                const [copiedFormId, copiedPageId] = decoded.split(":");
+                if (!copiedFormId || !copiedPageId) throw new Error("Invalid copy code");
 
-            const result = await response.json();
+                const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
+                const currentFormId = match ? match[1] : null;
 
-            if (response.status === 401) {
-                Swal.fire("Unauthorized", "User not logged in or missing user ID.", "error");
-                return;
-            }
-
-            if (response.ok && result.page_id) {
-                const lastPageId = formPages[formPages.length - 1]?.id;
-
-                const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
-                const formId = match ? match[1] : null;
-
-                // ✅ Add result.page_id to reorderedPages if not already included
-                const reorderedPages = [...formPages];
-                const isAlreadyIncluded = reorderedPages.some(p => p.id === result.page_id);
-
-                if (!isAlreadyIncluded) {
-                    reorderedPages.push({ id: result.page_id });  // Add minimal object; update if needed
-                }
-
-                const res = await fetch("/api/form_builder/check-pages-btnfields", {
+                const res = await fetch(`/api/form_builder/copy-page`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include",
                     body: JSON.stringify({
-                        pageIds: reorderedPages.map(p => p.id),
-                        lastPageId,
-                        formId
-                    })
+                        current_formId: currentFormId,
+                        copiedFormId,
+                        copiedPageId,
+                        newPageTitle
+                    }),
+                });
+                const result = await res.json();
+
+                if (res.ok && result.newPageId) {
+                    const lastPageId = formPages[formPages.length - 1]?.id;
+
+                    const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
+                    const formId = match ? match[1] : null;
+
+                    // ✅ Add result.page_id to reorderedPages if not already included
+                    const reorderedPages = [...formPages];
+                    const isAlreadyIncluded = reorderedPages.some(p => p.id === result.newPageId);
+
+                    if (!isAlreadyIncluded) {
+                        reorderedPages.push({ id: result.newPageId });  // Add minimal object; update if needed
+                    }
+
+                    const res = await fetch("/api/form_builder/check-pages-btnfields", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({
+                            pageIds: reorderedPages.map(p => p.id),
+                            lastPageId,
+                            formId
+                        })
+                    });
+
+                    Swal.fire("Success", "New page created successfully!", "success");
+                    setShowNewPageModal(false);
+                    navigate(`/form-builder/form-${formId}/page-${result.newPageNumber}`);
+                } else {
+                    Swal.fire("Error", result.message || "Page creation failed", "error");
+                }
+            } catch (err) {
+                console.error(err);
+                Swal.fire("Error", "Copy failed. Please try again.", "error");
+            }
+            return;
+        }
+        else {
+            try {
+                const response = await fetch("/api/form_builder/createnewpage", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ form_id: formId, title: pageTitle }),
+                    credentials: "include",
                 });
 
-                Swal.fire("Success", "New page created successfully!", "success");
-                setShowNewPageModal(false);
-                navigate(`/form-builder/form-${formId}/page-${result.page_number}`);
-            } else {
-                Swal.fire("Error", result.message || "Page creation failed", "error");
+                const result = await response.json();
+
+                if (response.status === 401) {
+                    Swal.fire("Unauthorized", "User not logged in or missing user ID.", "error");
+                    return;
+                }
+
+                if (response.ok && result.page_id) {
+                    const lastPageId = formPages[formPages.length - 1]?.id;
+
+                    const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
+                    const formId = match ? match[1] : null;
+
+                    // ✅ Add result.page_id to reorderedPages if not already included
+                    const reorderedPages = [...formPages];
+                    const isAlreadyIncluded = reorderedPages.some(p => p.id === result.page_id);
+
+                    if (!isAlreadyIncluded) {
+                        reorderedPages.push({ id: result.page_id });  // Add minimal object; update if needed
+                    }
+
+                    const res = await fetch("/api/form_builder/check-pages-btnfields", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({
+                            pageIds: reorderedPages.map(p => p.id),
+                            lastPageId,
+                            formId
+                        })
+                    });
+
+                    Swal.fire("Success", "New page created successfully!", "success");
+                    setShowNewPageModal(false);
+                    navigate(`/form-builder/form-${formId}/page-${result.page_number}`);
+                } else {
+                    Swal.fire("Error", result.message || "Page creation failed", "error");
+                }
+            } catch (error) {
+                console.error("❌ Page creation failed:", error);
+                Swal.fire("Error", "Server error occurred.", "error");
             }
-        } catch (error) {
-            console.error("❌ Page creation failed:", error);
-            Swal.fire("Error", "Server error occurred.", "error");
         }
     };
 
@@ -4611,8 +4734,23 @@ const FormBuilder = () => {
                                     <div
                                         className="popup-item"
                                         onClick={() => {
-                                            /* Copy logic */
                                             setMenuOpenForPageId(null);
+
+                                            const page = formPages.find(p => p.id === menuOpenForPageId);
+                                            const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
+                                            const copiedFormId = match ? match[1] : null;
+                                            const copiedPageId = page?.id;
+
+                                            if (copiedFormId && copiedPageId) {
+                                                const raw = `${copiedFormId}:${copiedPageId}`;
+                                                const encoded = btoa(raw); // base64 encode
+                                                const code = `dforms-copy:${encoded}`;
+                                                navigator.clipboard.writeText(code);
+
+                                                Swal.fire("Copied!", "Copy code copied to clipboard. Paste it in Add page", "success");
+                                            } else {
+                                                Swal.fire("Error", "Failed to generate copy code.", "error");
+                                            }
                                         }}
                                     >
                                         <i className="fa-regular fa-file me-2"></i> Copy
