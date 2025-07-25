@@ -405,64 +405,6 @@ const FormBuilder = () => {
         }
     };
 
-    const handleCopyPage = async () => {
-        const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
-        const current_formId = match ? match[1] : null;
-
-
-        if (!current_formId || !copiedFormId || !copiedPageId) {
-            Swal.fire("Error", "Form or Page ID not found", "error");
-            return;
-        }
-
-        try {
-            const res = await fetch(`/api/form_builder/copy-page`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ current_formId, copiedFormId, copiedPageId }),
-            });
-
-            const result = await res.json();
-            if (!res.ok) {
-                Swal.fire("Error", result.error || "Duplication failed", "error");
-                return;
-            }
-
-            if (res.ok) {
-                // ✅ Call check-pages-btnfields
-                const reorderedPages = [...formPages, { id: result.newPageId }];
-                const lastPageId = formPages[formPages.length - 1]?.id;
-
-                await fetch("/api/form_builder/check-pages-btnfields", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        pageIds: reorderedPages.map(p => p.id),
-                        lastPageId,
-                        formId,
-                    })
-                });
-
-                Swal.fire("Success", "Page duplicated successfully!", "success");
-                const modal = document.getElementById('DuplicateModalCenter');
-                if (modal) {
-                    modal.classList.remove("show");
-                    modal.style.display = "none";
-                }
-                document.body.classList.remove("modal-open");
-                document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
-                navigate(`/form-builder/form-${formId}/page-${result.newPageNumber}`);
-            } else {
-                Swal.fire("Error", result.error || "Duplication failed", "error");
-            }
-        } catch (err) {
-            console.error("Duplicate page error:", err);
-            Swal.fire("Error", "Server error occurred", "error");
-        }
-    };
-
     const handleDeletePage = (pageId, page_number) => {
         Swal.fire({
             title: "Are you sure?",
