@@ -728,3 +728,33 @@ input::placeholder {
     color: black;
     cursor: pointer;
 }
+
+.custom-toggle {
+    width: 40px;
+    height: 20px;
+    border-radius: 20px;
+    background-color: #ccc;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.custom-toggle::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.3s;
+}
+
+.custom-toggle.active {
+    background-color: #0d6efd;
+}
+
+.custom-toggle.active::before {
+    transform: translateX(20px);
+}

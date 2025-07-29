@@ -1219,6 +1219,8 @@ const FormBuilder = () => {
         document.getElementById("fontCloseBtn")?.click();
     };
 
+    const fieldWrapperRef = useRef(null);
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (pickerRef.current && !pickerRef.current.contains(event.target)) {
@@ -1226,6 +1228,13 @@ const FormBuilder = () => {
             }
             if (pickerRef.current && !pickerRef.current.contains(event.target)) {
                 setActiveBtnColorPicker(null);
+            }
+            if (
+                fieldWrapperRef.current &&
+                !fieldWrapperRef.current.contains(event.target)
+            ) {
+                setSelectedFieldId(null);
+                setShowCustomize(false);
             }
             setFieldTypeMenu(null);
         };
@@ -4244,7 +4253,12 @@ const FormBuilder = () => {
                                                         {(provided) => (
                                                             <div
                                                                 className="form-field-wrapper"
-                                                                ref={provided.innerRef}
+                                                                ref={(el) => {
+                                                                    provided.innerRef(el);
+                                                                    if (selectedFieldId === field.id) {
+                                                                        fieldWrapperRef.current = el;
+                                                                    }
+                                                                }}
                                                                 {...provided.draggableProps}
                                                                 {...provided.dragHandleProps}
                                                                 style={{
@@ -4732,7 +4746,7 @@ const FormBuilder = () => {
 
                     </div>
 
-                    {customizeVisible && selectedFieldId && (
+                    {customizeVisible && (
                         <div className="customize-section" style={{ color: 'gray', zIndex: "0" }}>
                             <div className="customize-header" style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginBottom: '20px' }}>
                                 <i
