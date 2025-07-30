@@ -595,13 +595,21 @@ const Form_builder_header = () => {
                                                 cursor: 'pointer',
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                backgroundColor: selectedPage === "end" ? '#2563eb' : 'white',
-                                                color: selectedPage === "end" ? 'white' : 'black',
+                                                backgroundColor: selectedPage?.page_number === "end" ? '#2563eb' : 'white',
+                                                color: selectedPage?.page_number === "end" ? 'white' : 'black',
                                             }}
                                             onClick={() => {
-                                                setSelectedPage("end");
                                                 setIsOpen(false);
                                                 navigate(`/preview/${formId}/page-end/device-${device}`);
+                                                // Delay setting selectedPage to avoid conflict with useEffect
+                                                setTimeout(() => {
+                                                    const endPageObj = {
+                                                        page_number: "end",
+                                                        page_title: "Page end",
+                                                        id: "page-end"
+                                                    };
+                                                    setSelectedPage(endPageObj);
+                                                }, 100);
                                             }}
                                         >
                                             <i className="fa-solid fa-file-alt recently-viewed-icon" style={{ marginRight: '6px', color: "rgb(245, 158, 11)" }}></i>
