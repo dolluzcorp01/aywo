@@ -371,6 +371,7 @@ const PublishedForm = () => {
             <div style={{ textAlign: headingAlign }}>
                 {/* Main heading */}
                 <textarea
+                    readOnly
                     ref={textareaRef}
                     value={field.label}
                     onChange={handleHeadingChange}
