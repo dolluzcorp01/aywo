@@ -561,31 +561,53 @@ const Form_builder_header = () => {
                                             zIndex: 1000,
                                         }}
                                     >
-                                        {formPages.map((page) => (
-                                            <div
-                                                key={page.id}
-                                                className="form_builder_page-option"
-                                                style={{
-                                                    padding: '8px 12px',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    backgroundColor: page.page_number === selectedPage.page_number ? '#2563eb' : 'white',
-                                                    color: page.page_number === selectedPage.page_number ? 'white' : 'black',
+                                        {[...formPages]
+                                            .sort((a, b) => a.sort_order - b.sort_order) // Ensure sorted order
+                                            .map((page) => (
+                                                <div
+                                                    key={page.id}
+                                                    className="form_builder_page-option"
+                                                    style={{
+                                                        padding: '8px 12px',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        backgroundColor: page.page_number === selectedPage.page_number ? '#2563eb' : 'white',
+                                                        color: page.page_number === selectedPage.page_number ? 'white' : 'black',
+                                                    }}
+                                                    onClick={() => {
+                                                        setSelectedPage(page);
+                                                        setIsOpen(false);
+                                                        navigate(`/preview/${formId}/page-${page.page_number}/device-${device}`);
+                                                    }}
+                                                >
+                                                    <i className="fa-solid fa-file-alt recently-viewed-icon" style={{ marginRight: '6px', color: "rgb(245, 158, 11)" }}></i>
+                                                    {page.page_title?.trim() !== "" ? page.page_title : `Page ${page.page_number}`}
+                                                </div>
+                                            ))}
 
-                                                }}
-                                                onClick={() => {
-                                                    setSelectedPage(page);
-                                                    setIsOpen(false);
-                                                    navigate(`/preview/${formId}/page-${page.page_number}/device-${device}`);
-                                                }}
-                                            >
-                                                <i className="fa-solid fa-file-alt recently-viewed-icon" style={{ marginRight: '6px', color: "rgb(245, 158, 11)" }}></i>
-                                                {page.page_title?.trim() !== ""
-                                                    ? page.page_title
-                                                    : `Page ${page.page_number}`}
-                                            </div>
-                                        ))}
+                                        {/* 🔽 Hardcoded Page End option */}
+                                        <div
+                                            key="page-end"
+                                            className="form_builder_page-option"
+                                            style={{
+                                                padding: '8px 12px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                backgroundColor: selectedPage === "end" ? '#2563eb' : 'white',
+                                                color: selectedPage === "end" ? 'white' : 'black',
+                                            }}
+                                            onClick={() => {
+                                                setSelectedPage("end");
+                                                setIsOpen(false);
+                                                navigate(`/preview/${formId}/page-end/device-${device}`);
+                                            }}
+                                        >
+                                            <i className="fa-solid fa-file-alt recently-viewed-icon" style={{ marginRight: '6px', color: "rgb(245, 158, 11)" }}></i>
+                                            Page end
+                                        </div>
+
                                     </div>
                                 )}
                             </div>
