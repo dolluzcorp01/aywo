@@ -4489,7 +4489,7 @@ const FormBuilder = () => {
                                 style={{ flexShrink: 0 }}
                                 onClick={() => {
                                     const nextPageNumber = formPages.length + 1;
-                                    setNewPageTitle(`page ` + nextPageNumber);
+                                    setNewPageTitle(`Page ` + nextPageNumber);
                                     setShowNewPageModal(true);
                                 }}
                             >
