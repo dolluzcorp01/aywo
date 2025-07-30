@@ -70,7 +70,7 @@ router.post("/create", verifyJWT, async (req, res) => {
         // Insert first page
         const pageQuery = `
             INSERT INTO dform_pages (form_id, page_title, sort_order, page_number)
-            VALUES (?, 'page', 1, 1)
+            VALUES (?, 'Page', 1, 1)
         `;
         const pageResult = await queryPromise(db, pageQuery, [formId]);
 
