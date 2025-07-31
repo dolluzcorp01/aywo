@@ -38,19 +38,25 @@ router.get("/get-responses/:formId", async (req, res) => {
 
         const responseIds = formResponses.map(res => res.response_id);
         const responseFieldsQuery = `
-            SELECT rf.response_id, rf.field_id, ff.label, rf.answer, ff.type 
+            SELECT rf.response_id, rf.field_id, ff.label, rf.answer, ff.type, ff.form_id, df.title AS formTitle 
             FROM dform_response_fields rf
             JOIN dform_fields ff ON rf.field_id = ff.id
+            LEFT JOIN dforms df ON df.id = ff.form_id
             WHERE rf.response_id IN (${responseIds.map(() => "?").join(",")})
         `;
         const responseFields = await queryPromise(db, responseFieldsQuery, responseIds);
 
-        const structuredResponses = formResponses.map(response => ({
-            response_id: response.response_id,
-            submitted_at: response.submitted_at,
-            answers: responseFields
-                .filter(({ response_id }) => response_id === response.response_id)
-                .map(({ field_id, label, answer, type }) => {
+        const structuredResponses = formResponses.map(response => {
+            const thisResponseAnswers = responseFields.filter(({ response_id }) => response_id === response.response_id);
+
+            const { form_id, formTitle } = thisResponseAnswers[0] || {};
+
+            return {
+                form_id,
+                formTitle,
+                response_id: response.response_id,
+                submitted_at: response.submitted_at,
+                answers: thisResponseAnswers.map(({ field_id, label, answer, type }) => {
                     const isFile = answer && /^\/?uploads\/.+\.\w+$/.test(answer);
 
                     return {
@@ -60,8 +66,9 @@ router.get("/get-responses/:formId", async (req, res) => {
                         filePath: isFile ? answer : null,
                         type
                     };
-                }),
-        }));
+                })
+            };
+        });
 
         res.json(structuredResponses);
     } catch (err) {
