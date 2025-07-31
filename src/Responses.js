@@ -542,6 +542,10 @@ const Responses = () => {
                 !$customFilterButton.is(e.target) && $customFilterButton.has(e.target).length === 0) {
                 $customFilter.hide();
             }
+
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setDropdownOpen(false);
+            }
         };
 
         document.addEventListener('mousedown', handleOutsideClick);
@@ -714,7 +718,7 @@ const Responses = () => {
                                     <thead>
                                         <tr>
                                             {columns.map((col, index) => (
-                                                <th key={index}>{col.title}</th>
+                                                <th key={index} style={{ whiteSpace: "nowrap" }}>{col.title}</th>
                                             ))}
                                         </tr>
                                     </thead>
