@@ -28,7 +28,7 @@ const RoundedCircle = styled.span`
   align-items: center;
 `;
 
-const Form_builder_header = () => {
+const Form_builder_header = ({ isSaveEnabled }) => {
     const navigate = useNavigate();
     const [form, setForm] = useState(null);
     const { formId } = useParams();
@@ -228,6 +228,11 @@ const Form_builder_header = () => {
     };
 
     const publishForm = async () => {
+        if (isSaveEnabled) {
+            Swal.fire("Unsaved Changes", "Please save your changes before publishing the form.", "warning");
+            return;
+        }
+
         if (!formId) {
             Swal.fire("Error", "Please save the form before publishing.", "error");
             return;
@@ -517,12 +522,14 @@ const Form_builder_header = () => {
                         </button>
                     )}
 
-                    {window.location.pathname.includes("form-builder") && (
-                        <>
-                            <button className="form_builder_header-publish-btn" onClick={() => publishForm()}>
-                                Publish <i className="fa-solid fa-bolt"></i>
-                            </button>
-                        </>
+                    {window.location.pathname.includes("form-builder") && form && (
+                        <button
+                            className={`form_builder_header-publish-btn ${form.published === 1 && !isSaveEnabled ? 'dimmed' : ''}`}
+                            onClick={() => publishForm()}
+                            disabled={form.published === 1 && !isSaveEnabled}
+                        >
+                            Publish <i className="fa-solid fa-bolt"></i>
+                        </button>
                     )}
 
                     {window.location.pathname.includes("preview") && (

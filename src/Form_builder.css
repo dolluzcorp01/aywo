@@ -758,3 +758,7 @@ input::placeholder {
 .custom-toggle.active::before {
     transform: translateX(20px);
 }
+
+.hiddenFormBuilderHeaderPage {
+    display: none !important;
+}

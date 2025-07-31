@@ -15,6 +15,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { ChromePicker } from 'react-color';
 import Select from 'react-select';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import FormBuilderHeaderPage from "./Form_builder_header";
 import "./Form_builder.css";
 
 const fieldIcons = {
@@ -3658,2102 +3659,2108 @@ const FormBuilder = () => {
     if (loading) return <p>Loading...</p>;
 
     return (
-        <div className="form-builder">
-            {isMobile ? (
-                <MobileWarning />
-            ) : (
-                <>
-                    {showFieldSidebar && (
-                        <div className="form-fields-sidebar">
-                            <div className="search-wrapper">
-                                <FaSearch className="search-icon" />
-                                <input
-                                    type="text"
-                                    placeholder="Search fields"
-                                    className="search-bar"
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                            </div>
+        <>
+            <div>
+                <FormBuilderHeaderPage isSaveEnabled={isSaveEnabled} />
+            </div>
 
-                            {window.location.pathname.endsWith('/page-end') ? (
-                                <div className="field-group-scrollable mt-2">
-                                    <div className="field-group mt-1">
-                                        <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)} disabled={!isSaveEnabled}>
-                                            Save Form
-                                        </button>
-                                    </div>
-                                    <div className="field-group mt-1">
-                                        <h4>Display text</h4>
-                                        <div className="field-grid">
-                                            {["Heading", "Paragraph", "Banner"]
-                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                                .map(type => <FieldButton key={type} type={type} section="Frequently used" />)}
-                                        </div>
-                                    </div>
-
-                                    <div className="field-group mt-1">
-                                        <h4>Navigation & Layout</h4>
-                                        <div className="field-grid">
-                                            {["Divider", "ThankYou"]
-                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                                .map(type => <FieldButton key={type} type={type} section="Navigation & Layout" />)}
-                                        </div>
-                                    </div>
-
-                                    <div className="field-group mt-1">
-                                        <h4>Media</h4>
-                                        <div className="field-grid">
-                                            {["Image", "Video", "PDF", "YouTubeVideo"]
-                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                                .map(type => <FieldButton key={type} type={type} section="Media" />)}
-                                        </div>
-                                    </div>
+            <div className="form-builder">
+                {isMobile ? (
+                    <MobileWarning />
+                ) : (
+                    <>
+                        {showFieldSidebar && (
+                            <div className="form-fields-sidebar">
+                                <div className="search-wrapper">
+                                    <FaSearch className="search-icon" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search fields"
+                                        className="search-bar"
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
                                 </div>
-                            ) : (
-                                <div className="field-group-scrollable mt-2">
-                                    <div className="field-group mt-1">
-                                        <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)} disabled={!isSaveEnabled}>
-                                            Save Form
-                                        </button>
-                                    </div>
-                                    <div className="field-group mt-1">
-                                        <h4>Frequently used</h4>
-                                        <div className="field-grid">
-                                            {["Short Answer", "Multiple Choice", "Email"]
-                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                                .map(type => <FieldButton key={type} type={type} section="Frequently used" />)}
-                                        </div>
-                                    </div>
 
-                                    <div className="field-group mt-1">
-                                        <h4>Display text</h4>
-                                        <div className="field-grid">
-                                            {["Heading", "Paragraph", "Banner"]
-                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                                .map(type => <FieldButton key={type} type={type} section="Display text" />)}
-                                        </div>
-                                    </div>
-
-                                    <div className="field-group mt-1">
-                                        <h4>Choices</h4>
-                                        <div className="field-grid">
-                                            {[
-                                                "Dropdown", "Picture", "Multiple Select", "Switch", "Multiple Choice", "Checkbox",
-                                                "Multiple Select Checkboxes", "Choice Matrix"
-                                            ]
-                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                                .map(type => <FieldButton key={type} type={type} section="Choices" />)}
-                                        </div>
-                                    </div>
-
-                                    <div className="field-group mt-1">
-                                        <h4>Time</h4>
-                                        <div className="field-grid">
-                                            {["Date Picker", "Date Time Picker", "Time Picker", "Date Range"]
-                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                                .map(type => <FieldButton key={type} type={type} section="Time" />)}
-                                        </div>
-                                    </div>
-
-                                    <div className="field-group mt-1">
-                                        <h4>Rating & Ranking</h4>
-                                        <div className="field-grid">
-                                            {["Ranking", "Star Rating", "Slider", "Opinion Scale"]
-                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                                .map(type => <FieldButton key={type} type={type} section="Rating & Ranking" />)}
-                                        </div>
-                                    </div>
-
-                                    <div className="field-group mt-1">
-                                        <h4>Text</h4>
-                                        <div className="field-grid">
-                                            {["Short Answer", "Long Answer"]
-                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                                .map(type => <FieldButton key={type} type={type} section="Text" />)}
-                                        </div>
-                                    </div>
-
-                                    <div className="field-group mt-1">
-                                        <h4>Contact Info</h4>
-                                        <div className="field-grid">
-                                            {["Email", "Number", "Address", "Document Type"]
-                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                                .map(type => <FieldButton key={type} type={type} section="Contact Info" />)}
-                                        </div>
-                                    </div>
-
-                                    <div className="field-group mt-1">
-                                        <h4>Navigation & Layout</h4>
-                                        <div className="field-grid">
-                                            {["Divider"]
-                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                                .map(type => <FieldButton key={type} type={type} section="Navigation & Layout" />)}
-                                        </div>
-                                    </div>
-
-                                    <div className="field-group mt-1">
-                                        <h4>Media</h4>
-                                        <div className="field-grid">
-                                            {["Image", "Video", "PDF", "YouTubeVideo"]
-                                                .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
-                                                .map(type => <FieldButton key={type} type={type} section="Media" />)}
-                                        </div>
-                                    </div>
-
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {showDesignSidebar && (
-                        <div className="form-designs-sidebar" style={{ color: "gray" }}>
-                            <div
-                                className="designbar-header"
-                                style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                    padding: "5px",
-                                    paddingLeft: "15px",
-                                    paddingRight: "15px",
-                                    paddingBottom: "20px",
-                                    borderBottom: "1px solid #ccc",
-                                    marginLeft: "-12px",
-                                    marginRight: "-12px",
-                                }}
-                            >
-                                <span style={{ fontWeight: "bold", fontSize: "16px" }}>
-                                    Form Designer
-                                </span>
-                                <i
-                                    className="fa-solid fa-xmark"
-                                    style={{ fontSize: "20px", cursor: "pointer", color: "black" }}
-                                    onClick={() => {
-                                        setShowDesignSidebar(false);
-                                        setShowFieldSidebar(true);
-                                    }}
-                                ></i>
-                            </div>
-
-                            {/* Tabs for Current / All themes */}
-                            <div style={{ display: "flex", margin: "14px" }}>
-                                <button
-                                    style={{
-                                        flex: 1,
-                                        padding: "5px 10px",
-                                        backgroundColor: activeTab === "current" ? "#374151" : "white",
-                                        color: activeTab === "current" ? "white" : "#374151",
-                                        fontWeight: activeTab === "current" ? "bold" : "500",
-                                        border: "1px solid #ccc",
-                                        borderRight: "none",
-                                        borderTopLeftRadius: "6px",
-                                        borderBottomLeftRadius: "6px",
-                                        cursor: "pointer",
-                                    }}
-                                    onClick={() => setActiveTab("current")}
-                                >
-                                    Current
-                                </button>
-                                <button
-                                    style={{
-                                        flex: 1,
-                                        padding: "5px 10px",
-                                        backgroundColor: activeTab === "themes" ? "#374151" : "white",
-                                        color: activeTab === "themes" ? "white" : "#374151",
-                                        fontWeight: activeTab === "themes" ? "bold" : "500",
-                                        border: "1px solid #ccc",
-                                        borderLeft: "none",
-                                        borderTopRightRadius: "6px",
-                                        borderBottomRightRadius: "6px",
-                                        cursor: "pointer",
-                                    }}
-                                    onClick={() => setActiveTab("themes")}
-                                >
-                                    All themes
-                                </button>
-                            </div>
-
-                            {/* Content based on tab */}
-                            <div style={{ height: "100%", maxHeight: "calc(100vh - 100px)", overflowY: "auto", padding: "14px" }}>
-                                {activeTab === "current" ? (
-                                    <>
-                                        {colorOptions.map(({ label, key, info }) => (
-                                            <div key={key} style={{ position: "relative", marginBottom: "30px" }}>
-                                                <div
-                                                    style={{
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "space-between"
-                                                    }}
-                                                >
-                                                    <div>
-                                                        {label}
-                                                        {info && (
-                                                            <i
-                                                                className="fa-solid fa-circle-question"
-                                                                style={{
-                                                                    fontSize: "12px",
-                                                                    marginLeft: "6px",
-                                                                    color: "#555",
-                                                                    cursor: "pointer"
-                                                                }}
-                                                                title={info}
-                                                            ></i>
-                                                        )}
-                                                    </div>
-                                                    <div
-                                                        onClick={(e) => {
-                                                            e.stopPropagation(); // Prevent triggering outside click
-                                                            setActiveColorPicker(key);
-                                                        }}
-                                                        style={{
-                                                            width: "30px",
-                                                            height: "25px",
-                                                            backgroundColor: colors[key],
-                                                            border: "1px solid #ccc",
-                                                            borderRadius: "4px",
-                                                            cursor: "pointer",
-                                                            marginLeft: "10px"
-                                                        }}
-                                                    />
-                                                </div>
-
-                                                {activeColorPicker === key && (
-                                                    <div
-                                                        ref={pickerRef}
-                                                        style={{
-                                                            position: "absolute",
-                                                            top: "30px",
-                                                            right: "0%",
-                                                            marginLeft: "10px",
-                                                            zIndex: 9999,
-                                                        }}
-                                                        onClick={(e) => e.stopPropagation()} // Prevent closing on inner click
-                                                    >
-                                                        <ChromePicker
-                                                            color={colors[key]}
-                                                            onChange={(updatedColor) =>
-                                                                handleColorChange(key, updatedColor.hex)
-                                                            }
-                                                        />
-                                                        <div
-                                                            onClick={() => setActiveColorPicker(null)}
-                                                            style={{
-                                                                marginTop: "5px",
-                                                                color: "#374151",
-                                                                cursor: "pointer",
-                                                                fontSize: "12px"
-                                                            }}
-                                                        >
-                                                            Close
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-
-                                        <div style={{ marginBottom: "10px" }}>
-                                            <div style={{ marginBottom: "20px" }}>Font</div>
-                                            <input
-                                                type="text"
-                                                placeholder="Default"
-                                                value={selectedFont}
-                                                readOnly
-                                                style={{ width: "100%", padding: "5px", cursor: "pointer" }}
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#fontModal"
-                                            />
-                                        </div>
-
-                                        <div style={{ marginBottom: "10px" }}>
-                                            <div style={{ marginBottom: "20px" }}>Background Image</div>
-                                            <input
-                                                type="file"
-                                                id="bgImageInput"
-                                                accept="image/*"
-                                                style={{ display: "none" }}
-                                                onChange={handleBackgroundImageUpload}
-                                            />
-
-                                            <button
-                                                style={{
-                                                    backgroundColor: "rgb(30, 41, 59)",
-                                                    color: "white",
-                                                    border: "none",
-                                                    padding: "8px 16px",
-                                                    borderRadius: "5px",
-                                                    cursor: "pointer"
-                                                }}
-                                                onClick={() => document.getElementById("bgImageInput").click()}
-                                            >
-                                                Add Image
+                                {window.location.pathname.endsWith('/page-end') ? (
+                                    <div className="field-group-scrollable mt-2">
+                                        <div className="field-group mt-1">
+                                            <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)} disabled={!isSaveEnabled}>
+                                                Save Form
                                             </button>
-
-                                            {formbgImage && (
-                                                <div style={{ position: "relative", display: "inline-block", marginTop: "10px" }}>
-                                                    {/* Close Icon */}
-                                                    <i
-                                                        className="fa-solid fa-xmark"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setFormbgImage(null)
-                                                        }}
-                                                        style={{
-                                                            position: "absolute",
-                                                            top: "-8px",
-                                                            right: "-8px",
-                                                            backgroundColor: "#e5e7eb",
-                                                            color: "#374151",
-                                                            borderRadius: "50%",
-                                                            padding: "6px",
-                                                            cursor: "pointer",
-                                                            fontSize: "12px",
-                                                            boxShadow: "0 0 4px rgba(0,0,0,0.1)",
-                                                            zIndex: 1
-                                                        }}
-                                                    ></i>
-
-                                                    {/* Image */}
-                                                    <img
-                                                        src={formbgImage}
-                                                        alt="Background Preview"
-                                                        style={{
-                                                            maxWidth: "100%",
-                                                            maxHeight: "150px",
-                                                            border: "1px solid #ccc",
-                                                            borderRadius: "5px"
-                                                        }}
-                                                    />
-                                                </div>
-                                            )}
-
+                                        </div>
+                                        <div className="field-group mt-1">
+                                            <h4>Display text</h4>
+                                            <div className="field-grid">
+                                                {["Heading", "Paragraph", "Banner"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Frequently used" />)}
+                                            </div>
                                         </div>
 
-                                    </>
+                                        <div className="field-group mt-1">
+                                            <h4>Navigation & Layout</h4>
+                                            <div className="field-grid">
+                                                {["Divider", "ThankYou"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Navigation & Layout" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Media</h4>
+                                            <div className="field-grid">
+                                                {["Image", "Video", "PDF", "YouTubeVideo"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Media" />)}
+                                            </div>
+                                        </div>
+                                    </div>
                                 ) : (
-                                    <div className="themediv" style={{ padding: "10px" }}>
-                                        {/* Themes list */}
-                                        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                                            {/* Light Theme */}
-                                            <div
-                                                onClick={() => {
-                                                    setFormBgColor("#f8f9fa");
-                                                    setformColor("#fff");
-                                                    setformPrimaryColor("#3b82f6");
-                                                    setformQuestionColor("black");
-                                                    setformAnswersColor("black");
-                                                    setColors({
-                                                        background: "#f8f9fa",
-                                                        questionsBackground: "#fff",
-                                                        primary: "#3b82f6",
-                                                        questions: "black",
-                                                        answers: "black",
-                                                    });
-                                                }}
-                                                style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#fff", position: "relative", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
-                                                <div style={{ fontWeight: "600", color: "gray", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Light</div>
-                                                <div style={{ display: "flex", alignItems: "center", padding: "10px", paddingBottom: "15px", paddingTop: "20px", justifyContent: "space-between" }}>
-                                                    <div style={{ display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
-                                                        <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
-                                                        <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>Text</span>
-                                                    </div>
-                                                    <span style={{ backgroundColor: "#3b82f6", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
-                                                </div>
-                                            </div>
-
-                                            {/* Dark Theme */}
-                                            <div
-                                                onClick={() => {
-                                                    setFormBgColor("#111827");
-                                                    setformColor("#111827");
-                                                    setformPrimaryColor("#3b82f6");
-                                                    setformQuestionColor("white");
-                                                    setformAnswersColor("white");
-                                                    setColors({
-                                                        background: "#111827",
-                                                        questionsBackground: "#111827",
-                                                        primary: "#3b82f6",
-                                                        questions: "#white",
-                                                        answers: "#white",
-                                                    });
-                                                }}
-                                                style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#111827", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
-                                                <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(229, 231, 235, 0.2)" }}>Dark</div>
-                                                <div style={{ display: "flex", alignItems: "center", padding: "10px", paddingBottom: "15px", paddingTop: "20px", justifyContent: "space-between" }}>
-                                                    <div style={{ display: "flex", alignItems: "center", border: "1px solid rgba(229, 231, 235, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
-                                                        <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
-                                                        <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>Text</span>
-                                                    </div>
-                                                    <span style={{ backgroundColor: "#3b82f6", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
-                                                </div>
-                                            </div>
-
-                                            {/* Eco-friendly Theme */}
-                                            <div
-                                                onClick={() => {
-                                                    setFormBgColor("#f9fafb");
-                                                    setformColor("white");
-                                                    setformPrimaryColor("#2f5f61");
-                                                    setformQuestionColor("#6b7280");
-                                                    setformAnswersColor("#6b7280");
-                                                    setColors({
-                                                        background: "#f9fafb",
-                                                        questionsBackground: "#white",
-                                                        primary: "#2f5f61",
-                                                        questions: "#6b7280",
-                                                        answers: "#6b7280",
-                                                    });
-                                                }}
-                                                style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#f9fafb", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
-                                                <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Eco-friendly</div>
-                                                <div style={{ display: "flex", alignItems: "center", padding: "10px", paddingBottom: "15px", paddingTop: "20px", justifyContent: "space-between" }}>
-                                                    <div style={{ display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
-                                                        <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
-                                                        <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>Text</span>
-                                                    </div>
-                                                    <span style={{ backgroundColor: "#2f5f61", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
-                                                </div>
-                                            </div>
-
-                                            {/* Navy Pop Theme */}
-                                            <div
-                                                onClick={() => {
-                                                    setFormBgColor("#1e293b");
-                                                    setformColor("#1e293b");
-                                                    setformPrimaryColor("#fbbf24");
-                                                    setformQuestionColor("#cbd5e1");
-                                                    setformAnswersColor("#cbd5e1");
-                                                    setColors({
-                                                        background: "#1e293b",
-                                                        questionsBackground: "#1e293b",
-                                                        primary: "#fbbf24",
-                                                        questions: "#cbd5e1",
-                                                        answers: "#cbd5e1",
-                                                    });
-                                                }}
-                                                style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#1e293b", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
-                                                <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Navy Pop</div>
-                                                <div style={{ backgroundColor: "#1e293b", padding: "10px", paddingBottom: "15px", paddingTop: "20px", borderBottomLeftRadius: "10px", borderBottomRightRadius: "10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                                                    <div style={{ backgroundColor: "#334155", display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
-                                                        <i className="fa fa-envelope" style={{ color: "#cbd5e1", marginLeft: "10px" }}></i>
-                                                        <span style={{ color: "#cbd5e1", fontSize: "0.8rem" }}>Text</span>
-                                                    </div>
-                                                    <span style={{ backgroundColor: "#fbbf24", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
-                                                </div>
-                                            </div>
-
-                                            {/* Quiet Sands Theme */}
-                                            <div
-                                                onClick={() => {
-                                                    setFormBgColor("#fefcf8");
-                                                    setformColor("#fefcf8");
-                                                    setformPrimaryColor("#fbbf24");
-                                                    setformQuestionColor("#6b7280");
-                                                    setformAnswersColor("#6b7280");
-                                                    setColors({
-                                                        background: "#fefcf8",
-                                                        questionsBackground: "#fefcf8",
-                                                        primary: "#fbbf24",
-                                                        questions: "#6b7280",
-                                                        answers: "#6b7280",
-                                                    });
-                                                }}
-                                                style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#fefcf8", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
-                                                <div style={{ backgroundColor: "#fdfaf5", color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Quiet Sands</div>
-                                                <div style={{ backgroundColor: "#fdfaf5", padding: "10px", paddingBottom: "15px", paddingTop: "20px", borderBottomLeftRadius: "10px", borderBottomRightRadius: "10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                                                    <div style={{ backgroundColor: "white", display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
-                                                        <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
-                                                        <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>Text</span>
-                                                    </div>
-                                                    <span style={{ backgroundColor: "#fbbf24", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
-                                                </div>
-                                            </div>
-
-                                            {/* Charcoal Theme */}
-                                            <div
-                                                onClick={() => {
-                                                    setFormBgColor("#e5e7eb");
-                                                    setformColor("#2b2b2b");
-                                                    setformPrimaryColor("#000");
-                                                    setformQuestionColor("#e5e7eb");
-                                                    setformAnswersColor("#e5e7eb");
-                                                    setColors({
-                                                        background: "#e5e7eb",
-                                                        questionsBackground: "#2b2b2b",
-                                                        primary: "#000",
-                                                        questions: "#e5e7eb",
-                                                        answers: "#e5e7eb",
-                                                    });
-                                                }}
-                                                style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#e5e7eb", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
-                                                <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Charcoal</div>
-                                                <div style={{ backgroundColor: "#2b2b2b", padding: "10px", paddingBottom: "15px", paddingTop: "20px", borderBottomLeftRadius: "10px", borderBottomRightRadius: "10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                                                    <div style={{ backgroundColor: "white", display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
-                                                        <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
-                                                        <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>Text</span>
-                                                    </div>
-                                                    <span style={{ backgroundColor: "#000", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
-                                                </div>
-                                            </div>
-
+                                    <div className="field-group-scrollable mt-2">
+                                        <div className="field-group mt-1">
+                                            <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)} disabled={!isSaveEnabled}>
+                                                Save Form
+                                            </button>
                                         </div>
+                                        <div className="field-group mt-1">
+                                            <h4>Frequently used</h4>
+                                            <div className="field-grid">
+                                                {["Short Answer", "Multiple Choice", "Email"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Frequently used" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Display text</h4>
+                                            <div className="field-grid">
+                                                {["Heading", "Paragraph", "Banner"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Display text" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Choices</h4>
+                                            <div className="field-grid">
+                                                {[
+                                                    "Dropdown", "Picture", "Multiple Select", "Switch", "Multiple Choice", "Checkbox",
+                                                    "Multiple Select Checkboxes", "Choice Matrix"
+                                                ]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Choices" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Time</h4>
+                                            <div className="field-grid">
+                                                {["Date Picker", "Date Time Picker", "Time Picker", "Date Range"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Time" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Rating & Ranking</h4>
+                                            <div className="field-grid">
+                                                {["Ranking", "Star Rating", "Slider", "Opinion Scale"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Rating & Ranking" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Text</h4>
+                                            <div className="field-grid">
+                                                {["Short Answer", "Long Answer"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Text" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Contact Info</h4>
+                                            <div className="field-grid">
+                                                {["Email", "Number", "Address", "Document Type"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Contact Info" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Navigation & Layout</h4>
+                                            <div className="field-grid">
+                                                {["Divider"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Navigation & Layout" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Media</h4>
+                                            <div className="field-grid">
+                                                {["Image", "Video", "PDF", "YouTubeVideo"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Media" />)}
+                                            </div>
+                                        </div>
+
                                     </div>
                                 )}
                             </div>
-                        </div>
-
-                    )}
-
-                    <div className="form-container">
-                        <div className={`form-body ${formbgImage ? "with-bg-image" : ""}`}
-                            style={{
-                                backgroundColor: formBgColor,
-                                backgroundImage: formbgImage ? `url(${formbgImage})` : "none"
-                            }}
-                        >
-                            {/* Theme Button */}
-                            <button
-                                className="theme-button"
-                                onClick={() => {
-                                    setShowDesignSidebar(true);
-                                    setShowFieldSidebar(false);
-                                }}
-                            >
-                                <i className="fa-solid fa-paintbrush" style={{ marginRight: "3px" }}></i> Theme
-                            </button>
-
-                            <div className="form-content" style={{ backgroundColor: formColor }} onClick={() => setShowCustomize(true)}>
-                                <DragDropContext onDragEnd={onDragEnd}>
-                                    <Droppable droppableId="fields" direction="vertical">
-                                        {(provided) => (
-                                            <div ref={provided.innerRef} {...provided.droppableProps}>
-                                                {fields.map((field, index) => (
-                                                    <Draggable key={field.id} draggableId={field.id.toString()} index={index}>
-                                                        {(provided) => (
-                                                            <div
-                                                                className="form-field-wrapper"
-                                                                ref={provided.innerRef}
-                                                                {...provided.draggableProps}
-                                                                {...provided.dragHandleProps}
-                                                                style={{
-                                                                    ...provided.draggableProps.style,
-                                                                    backgroundColor: formColor
-                                                                }}
-                                                                onClick={() => handleFieldClick(field.id)}
-                                                            >
-                                                                <div className="drag-handle" {...provided.dragHandleProps}>
-                                                                    <FaGripVertical />
-                                                                </div>
-
-                                                                <div className="form-field-content">
-                                                                    {!["Heading", "Banner", "Divider", "Image", "Video", "YouTubeVideo", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) ? (
-                                                                        <>
-                                                                            <div style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                                                                <span
-                                                                                    contentEditable
-                                                                                    suppressContentEditableWarning={true}
-                                                                                    ref={(el) => {
-                                                                                        if (el && el.innerText !== field.label) {
-                                                                                            el.innerText = field.label;
-                                                                                        }
-                                                                                    }}
-                                                                                    onInput={(e) => {
-                                                                                        const updatedFields = fields.map(f =>
-                                                                                            f.id === field.id ? { ...f, label: e.target.textContent } : f
-                                                                                        );
-                                                                                        setFields(updatedFields);
-                                                                                    }}
-                                                                                    style={{
-                                                                                        fontSize: "1rem",
-                                                                                        background: "transparent",
-                                                                                        outline: "none",
-                                                                                        color: formQuestionColor,
-                                                                                        fontFamily: selectedFont,
-                                                                                    }}
-                                                                                />
-
-                                                                                {field.required && (
-                                                                                    <span style={{ color: 'red', marginLeft: '2px' }}>*</span>
-                                                                                )}
-                                                                            </div>
-
-                                                                            {field.caption && (
-                                                                                <small style={{ color: 'gray', display: 'block', marginBottom: '6px', fontFamily: selectedFont }}>
-                                                                                    {field.caption}
-                                                                                </small>
-                                                                            )}
-                                                                        </>
-                                                                    ) : null}
-
-                                                                    {renderField(field)}
-                                                                </div>
-
-                                                                {selectedFieldId === field.id && (
-                                                                    <div className="field-actions">
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation(); // Prevent field click from firing
-                                                                                openSettings(field.id);
-                                                                            }}
-                                                                            data-tooltip-title="Open field settings"
-                                                                        >
-                                                                            <FaCog
-                                                                                style={{
-                                                                                    color:
-                                                                                        customizeVisible && selectedFieldId === field.id
-                                                                                            ? 'rgb(59, 130, 246)'
-                                                                                            : 'inherit'
-                                                                                }}
-                                                                            />
-                                                                        </button>
-
-                                                                        {!["Next", "Submit"].includes(field.type) && (
-                                                                            <>
-                                                                                <button
-                                                                                    className="change-type"
-                                                                                    onClick={(e) => changeFieldType(field.id, e)}
-                                                                                    data-tooltip-title={`Change field type\A${field.type}`}
-                                                                                >
-                                                                                    <FaExchangeAlt />
-                                                                                </button>
-
-                                                                                <button
-                                                                                    onClick={() => duplicateField(field.id)}
-                                                                                    data-tooltip-title="Duplicate field"
-                                                                                >
-                                                                                    <FaClone />
-                                                                                </button>
-                                                                                <button
-                                                                                    className="delete"
-                                                                                    onClick={() => deleteField(field.id)}
-                                                                                    data-tooltip-title="Delete field"
-                                                                                >
-                                                                                    <FaRegTrashAlt />
-                                                                                </button>
-                                                                            </>
-                                                                        )}
-
-                                                                    </div>
-                                                                )}
-
-                                                            </div>
-                                                        )}
-                                                    </Draggable>
-                                                ))}
-                                                {provided.placeholder}
-                                            </div>
-                                        )}
-                                    </Droppable>
-                                </DragDropContext>
-                            </div>
-
-                        </div>
-
-                        {fieldTypeMenu && (
-                            <div
-                                className="field-type-menu"
-                                style={{
-                                    position: "absolute",
-                                    top: "calc(var(--menu-top, 155px))",
-                                    left: "calc(var(--menu-left, 70%) + 50px)",
-                                    background: "#fff",
-                                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                                    borderRadius: "10px",
-                                    padding: "16px",
-                                    zIndex: 9999,
-                                }}
-                            >
-                                <h4 style={{ marginBottom: 20, color: "rgb(156 163 175)", fontWeight: "400", fontSize: ".875rem" }}>Change to similar field:</h4>
-                                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-                                    {[
-                                        { type: "Paragraph", label: "Long answer", icon: <FaAlignLeft /> },
-                                        { type: "Email", label: "Email input", icon: <FaEnvelope /> },
-                                        { type: "Date Picker", label: "Date", icon: <FaCalendarAlt /> },
-                                        { type: "Number", label: "Phone number", icon: <FaHashtag /> },
-                                        { type: "Dropdown", label: "Dropdown", icon: <FaCaretDown /> },
-                                        { type: "Checkbox", label: "Checkbox", icon: <FaCheckSquare /> },
-                                    ].map((opt) => (
-                                        <button
-                                            key={opt.type}
-                                            onClick={() => handleTypeChange(fieldTypeMenu.id, opt.type)}
-                                            style={{
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                border: "1px solid #e5e7eb",
-                                                borderRadius: "10px",
-                                                padding: "5px 7px",
-                                                background: "#f9f9f9",
-                                                cursor: "pointer",
-                                                width: "70px",
-                                                Height: "60px",
-                                                overflow: "hidden",
-                                                textAlign: "center",
-                                                boxSizing: "border-box",
-                                            }}
-                                        >
-                                            <div style={{ fontSize: "15px", color: "#0ea5e9" }}>{opt.icon}</div>
-                                            <span
-                                                style={{
-                                                    fontSize: "12px",
-                                                    marginTop: "6px",
-                                                    color: "#1f2937",
-                                                    lineHeight: "1.2",
-                                                    wordWrap: "break-word",
-                                                    whiteSpace: "normal",
-                                                }}
-                                            >
-                                                {opt.label}
-                                            </span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
                         )}
 
-                        {editImageOption && (
-                            <div className="image-option-modal-backdrop">
-                                <div className="image-option-modal-box">
-                                    {/* Close Button */}
+                        {showDesignSidebar && (
+                            <div className="form-designs-sidebar" style={{ color: "gray" }}>
+                                <div
+                                    className="designbar-header"
+                                    style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                        padding: "5px",
+                                        paddingLeft: "15px",
+                                        paddingRight: "15px",
+                                        paddingBottom: "20px",
+                                        borderBottom: "1px solid #ccc",
+                                        marginLeft: "-12px",
+                                        marginRight: "-12px",
+                                    }}
+                                >
+                                    <span style={{ fontWeight: "bold", fontSize: "16px" }}>
+                                        Form Designer
+                                    </span>
+                                    <i
+                                        className="fa-solid fa-xmark"
+                                        style={{ fontSize: "20px", cursor: "pointer", color: "black" }}
+                                        onClick={() => {
+                                            setShowDesignSidebar(false);
+                                            setShowFieldSidebar(true);
+                                        }}
+                                    ></i>
+                                </div>
+
+                                {/* Tabs for Current / All themes */}
+                                <div style={{ display: "flex", margin: "14px" }}>
                                     <button
-                                        className="modal-close-btn"
-                                        onClick={() => setEditImageOption(null)}
+                                        style={{
+                                            flex: 1,
+                                            padding: "5px 10px",
+                                            backgroundColor: activeTab === "current" ? "#374151" : "white",
+                                            color: activeTab === "current" ? "white" : "#374151",
+                                            fontWeight: activeTab === "current" ? "bold" : "500",
+                                            border: "1px solid #ccc",
+                                            borderRight: "none",
+                                            borderTopLeftRadius: "6px",
+                                            borderBottomLeftRadius: "6px",
+                                            cursor: "pointer",
+                                        }}
+                                        onClick={() => setActiveTab("current")}
                                     >
-                                        <i className="fas fa-times"></i>
+                                        Current
                                     </button>
-
-                                    <h5 style={{ fontWeight: "600", fontSize: "1.125rem", marginBottom: "20px" }}>Edit image option</h5>
-                                    <span style={{ fontWeight: "500", fontSize: ".875rem" }}>Lable</span>
-                                    <input
-                                        style={{ marginBottom: "20px" }}
-                                        type="text"
-                                        className="form-control"
-                                        value={fields.find(f => f.id === editImageOption.fieldId).options[editImageOption.index].option_text}
-                                        onChange={(e) => {
-                                            const updatedFields = fields.map(f => {
-                                                if (f.id !== editImageOption.fieldId) return f;
-                                                const updatedOptions = [...f.options];
-                                                updatedOptions[editImageOption.index] = {
-                                                    ...updatedOptions[editImageOption.index],
-                                                    option_text: e.target.value
-                                                };
-                                                return { ...f, options: updatedOptions };
-                                            });
-                                            setFields(updatedFields);
+                                    <button
+                                        style={{
+                                            flex: 1,
+                                            padding: "5px 10px",
+                                            backgroundColor: activeTab === "themes" ? "#374151" : "white",
+                                            color: activeTab === "themes" ? "white" : "#374151",
+                                            fontWeight: activeTab === "themes" ? "bold" : "500",
+                                            border: "1px solid #ccc",
+                                            borderLeft: "none",
+                                            borderTopRightRadius: "6px",
+                                            borderBottomRightRadius: "6px",
+                                            cursor: "pointer",
                                         }}
-                                    />
-                                    <span style={{ fontWeight: "500", fontSize: ".875rem" }}>Image</span>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="form-control mt-2"
-                                        onChange={(e) => {
-                                            const file = e.target.files[0];
-                                            if (file && file.size > 1 * 1024 * 1024) {
-                                                setEditImageOption(null);
-                                                Swal.fire({
-                                                    icon: 'error',
-                                                    title: 'File Too Large',
-                                                    text: 'Please select a file smaller than 1MB.',
-                                                });
-                                                return;
-                                            }
+                                        onClick={() => setActiveTab("themes")}
+                                    >
+                                        All themes
+                                    </button>
+                                </div>
 
-                                            if (!file) return;
-                                            const reader = new FileReader();
-                                            reader.onload = () => {
-                                                const updatedFields = fields.map(f => {
-                                                    if (f.id !== editImageOption.fieldId) return f;
-                                                    const updatedOptions = [...f.options];
-                                                    updatedOptions[editImageOption.index].image_path = reader.result;
-                                                    return { ...f, options: updatedOptions };
-                                                });
-                                                setFields(updatedFields);
-                                            };
-                                            reader.readAsDataURL(file);
-                                        }}
-                                    />
-                                    <div className="modal-actions text-end mt-3">
-                                        <button onClick={() => setEditImageOption(null)} className="btn btn-primary">
-                                            Save
-                                        </button>
-                                    </div>
+                                {/* Content based on tab */}
+                                <div style={{ height: "100%", maxHeight: "calc(100vh - 100px)", overflowY: "auto", padding: "14px" }}>
+                                    {activeTab === "current" ? (
+                                        <>
+                                            {colorOptions.map(({ label, key, info }) => (
+                                                <div key={key} style={{ position: "relative", marginBottom: "30px" }}>
+                                                    <div
+                                                        style={{
+                                                            display: "flex",
+                                                            alignItems: "center",
+                                                            justifyContent: "space-between"
+                                                        }}
+                                                    >
+                                                        <div>
+                                                            {label}
+                                                            {info && (
+                                                                <i
+                                                                    className="fa-solid fa-circle-question"
+                                                                    style={{
+                                                                        fontSize: "12px",
+                                                                        marginLeft: "6px",
+                                                                        color: "#555",
+                                                                        cursor: "pointer"
+                                                                    }}
+                                                                    title={info}
+                                                                ></i>
+                                                            )}
+                                                        </div>
+                                                        <div
+                                                            onClick={(e) => {
+                                                                e.stopPropagation(); // Prevent triggering outside click
+                                                                setActiveColorPicker(key);
+                                                            }}
+                                                            style={{
+                                                                width: "30px",
+                                                                height: "25px",
+                                                                backgroundColor: colors[key],
+                                                                border: "1px solid #ccc",
+                                                                borderRadius: "4px",
+                                                                cursor: "pointer",
+                                                                marginLeft: "10px"
+                                                            }}
+                                                        />
+                                                    </div>
+
+                                                    {activeColorPicker === key && (
+                                                        <div
+                                                            ref={pickerRef}
+                                                            style={{
+                                                                position: "absolute",
+                                                                top: "30px",
+                                                                right: "0%",
+                                                                marginLeft: "10px",
+                                                                zIndex: 9999,
+                                                            }}
+                                                            onClick={(e) => e.stopPropagation()} // Prevent closing on inner click
+                                                        >
+                                                            <ChromePicker
+                                                                color={colors[key]}
+                                                                onChange={(updatedColor) =>
+                                                                    handleColorChange(key, updatedColor.hex)
+                                                                }
+                                                            />
+                                                            <div
+                                                                onClick={() => setActiveColorPicker(null)}
+                                                                style={{
+                                                                    marginTop: "5px",
+                                                                    color: "#374151",
+                                                                    cursor: "pointer",
+                                                                    fontSize: "12px"
+                                                                }}
+                                                            >
+                                                                Close
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+
+                                            <div style={{ marginBottom: "10px" }}>
+                                                <div style={{ marginBottom: "20px" }}>Font</div>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Default"
+                                                    value={selectedFont}
+                                                    readOnly
+                                                    style={{ width: "100%", padding: "5px", cursor: "pointer" }}
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#fontModal"
+                                                />
+                                            </div>
+
+                                            <div style={{ marginBottom: "10px" }}>
+                                                <div style={{ marginBottom: "20px" }}>Background Image</div>
+                                                <input
+                                                    type="file"
+                                                    id="bgImageInput"
+                                                    accept="image/*"
+                                                    style={{ display: "none" }}
+                                                    onChange={handleBackgroundImageUpload}
+                                                />
+
+                                                <button
+                                                    style={{
+                                                        backgroundColor: "rgb(30, 41, 59)",
+                                                        color: "white",
+                                                        border: "none",
+                                                        padding: "8px 16px",
+                                                        borderRadius: "5px",
+                                                        cursor: "pointer"
+                                                    }}
+                                                    onClick={() => document.getElementById("bgImageInput").click()}
+                                                >
+                                                    Add Image
+                                                </button>
+
+                                                {formbgImage && (
+                                                    <div style={{ position: "relative", display: "inline-block", marginTop: "10px" }}>
+                                                        {/* Close Icon */}
+                                                        <i
+                                                            className="fa-solid fa-xmark"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setFormbgImage(null)
+                                                            }}
+                                                            style={{
+                                                                position: "absolute",
+                                                                top: "-8px",
+                                                                right: "-8px",
+                                                                backgroundColor: "#e5e7eb",
+                                                                color: "#374151",
+                                                                borderRadius: "50%",
+                                                                padding: "6px",
+                                                                cursor: "pointer",
+                                                                fontSize: "12px",
+                                                                boxShadow: "0 0 4px rgba(0,0,0,0.1)",
+                                                                zIndex: 1
+                                                            }}
+                                                        ></i>
+
+                                                        {/* Image */}
+                                                        <img
+                                                            src={formbgImage}
+                                                            alt="Background Preview"
+                                                            style={{
+                                                                maxWidth: "100%",
+                                                                maxHeight: "150px",
+                                                                border: "1px solid #ccc",
+                                                                borderRadius: "5px"
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
+
+                                            </div>
+
+                                        </>
+                                    ) : (
+                                        <div className="themediv" style={{ padding: "10px" }}>
+                                            {/* Themes list */}
+                                            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                                                {/* Light Theme */}
+                                                <div
+                                                    onClick={() => {
+                                                        setFormBgColor("#f8f9fa");
+                                                        setformColor("#fff");
+                                                        setformPrimaryColor("#3b82f6");
+                                                        setformQuestionColor("black");
+                                                        setformAnswersColor("black");
+                                                        setColors({
+                                                            background: "#f8f9fa",
+                                                            questionsBackground: "#fff",
+                                                            primary: "#3b82f6",
+                                                            questions: "black",
+                                                            answers: "black",
+                                                        });
+                                                    }}
+                                                    style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#fff", position: "relative", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
+                                                    <div style={{ fontWeight: "600", color: "gray", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Light</div>
+                                                    <div style={{ display: "flex", alignItems: "center", padding: "10px", paddingBottom: "15px", paddingTop: "20px", justifyContent: "space-between" }}>
+                                                        <div style={{ display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
+                                                            <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
+                                                            <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>Text</span>
+                                                        </div>
+                                                        <span style={{ backgroundColor: "#3b82f6", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Dark Theme */}
+                                                <div
+                                                    onClick={() => {
+                                                        setFormBgColor("#111827");
+                                                        setformColor("#111827");
+                                                        setformPrimaryColor("#3b82f6");
+                                                        setformQuestionColor("white");
+                                                        setformAnswersColor("white");
+                                                        setColors({
+                                                            background: "#111827",
+                                                            questionsBackground: "#111827",
+                                                            primary: "#3b82f6",
+                                                            questions: "#white",
+                                                            answers: "#white",
+                                                        });
+                                                    }}
+                                                    style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#111827", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
+                                                    <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(229, 231, 235, 0.2)" }}>Dark</div>
+                                                    <div style={{ display: "flex", alignItems: "center", padding: "10px", paddingBottom: "15px", paddingTop: "20px", justifyContent: "space-between" }}>
+                                                        <div style={{ display: "flex", alignItems: "center", border: "1px solid rgba(229, 231, 235, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
+                                                            <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
+                                                            <span style={{ color: "#9ca3af", fontSize: "0.8rem" }}>Text</span>
+                                                        </div>
+                                                        <span style={{ backgroundColor: "#3b82f6", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Eco-friendly Theme */}
+                                                <div
+                                                    onClick={() => {
+                                                        setFormBgColor("#f9fafb");
+                                                        setformColor("white");
+                                                        setformPrimaryColor("#2f5f61");
+                                                        setformQuestionColor("#6b7280");
+                                                        setformAnswersColor("#6b7280");
+                                                        setColors({
+                                                            background: "#f9fafb",
+                                                            questionsBackground: "#white",
+                                                            primary: "#2f5f61",
+                                                            questions: "#6b7280",
+                                                            answers: "#6b7280",
+                                                        });
+                                                    }}
+                                                    style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#f9fafb", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
+                                                    <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Eco-friendly</div>
+                                                    <div style={{ display: "flex", alignItems: "center", padding: "10px", paddingBottom: "15px", paddingTop: "20px", justifyContent: "space-between" }}>
+                                                        <div style={{ display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
+                                                            <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
+                                                            <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>Text</span>
+                                                        </div>
+                                                        <span style={{ backgroundColor: "#2f5f61", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Navy Pop Theme */}
+                                                <div
+                                                    onClick={() => {
+                                                        setFormBgColor("#1e293b");
+                                                        setformColor("#1e293b");
+                                                        setformPrimaryColor("#fbbf24");
+                                                        setformQuestionColor("#cbd5e1");
+                                                        setformAnswersColor("#cbd5e1");
+                                                        setColors({
+                                                            background: "#1e293b",
+                                                            questionsBackground: "#1e293b",
+                                                            primary: "#fbbf24",
+                                                            questions: "#cbd5e1",
+                                                            answers: "#cbd5e1",
+                                                        });
+                                                    }}
+                                                    style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#1e293b", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
+                                                    <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Navy Pop</div>
+                                                    <div style={{ backgroundColor: "#1e293b", padding: "10px", paddingBottom: "15px", paddingTop: "20px", borderBottomLeftRadius: "10px", borderBottomRightRadius: "10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                                        <div style={{ backgroundColor: "#334155", display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
+                                                            <i className="fa fa-envelope" style={{ color: "#cbd5e1", marginLeft: "10px" }}></i>
+                                                            <span style={{ color: "#cbd5e1", fontSize: "0.8rem" }}>Text</span>
+                                                        </div>
+                                                        <span style={{ backgroundColor: "#fbbf24", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Quiet Sands Theme */}
+                                                <div
+                                                    onClick={() => {
+                                                        setFormBgColor("#fefcf8");
+                                                        setformColor("#fefcf8");
+                                                        setformPrimaryColor("#fbbf24");
+                                                        setformQuestionColor("#6b7280");
+                                                        setformAnswersColor("#6b7280");
+                                                        setColors({
+                                                            background: "#fefcf8",
+                                                            questionsBackground: "#fefcf8",
+                                                            primary: "#fbbf24",
+                                                            questions: "#6b7280",
+                                                            answers: "#6b7280",
+                                                        });
+                                                    }}
+                                                    style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#fefcf8", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
+                                                    <div style={{ backgroundColor: "#fdfaf5", color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Quiet Sands</div>
+                                                    <div style={{ backgroundColor: "#fdfaf5", padding: "10px", paddingBottom: "15px", paddingTop: "20px", borderBottomLeftRadius: "10px", borderBottomRightRadius: "10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                                        <div style={{ backgroundColor: "white", display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
+                                                            <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
+                                                            <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>Text</span>
+                                                        </div>
+                                                        <span style={{ backgroundColor: "#fbbf24", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Charcoal Theme */}
+                                                <div
+                                                    onClick={() => {
+                                                        setFormBgColor("#e5e7eb");
+                                                        setformColor("#2b2b2b");
+                                                        setformPrimaryColor("#000");
+                                                        setformQuestionColor("#e5e7eb");
+                                                        setformAnswersColor("#e5e7eb");
+                                                        setColors({
+                                                            background: "#e5e7eb",
+                                                            questionsBackground: "#2b2b2b",
+                                                            primary: "#000",
+                                                            questions: "#e5e7eb",
+                                                            answers: "#e5e7eb",
+                                                        });
+                                                    }}
+                                                    style={{ border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "10px", padding: "0px", backgroundColor: "#e5e7eb", boxShadow: "0 4px 10px rgba(0, 0, 0, 0.05)" }}>
+                                                    <div style={{ color: "gray", fontWeight: "600", padding: "10px", borderBottom: "1px solid rgba(75, 85, 99, 0.2)" }}>Charcoal</div>
+                                                    <div style={{ backgroundColor: "#2b2b2b", padding: "10px", paddingBottom: "15px", paddingTop: "20px", borderBottomLeftRadius: "10px", borderBottomRightRadius: "10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                                        <div style={{ backgroundColor: "white", display: "flex", alignItems: "center", border: "1px solid rgba(75, 85, 99, 0.2)", borderRadius: "5px", width: "60%", height: "32px", gap: "6px" }}>
+                                                            <i className="fa fa-envelope" style={{ color: "gray", marginLeft: "10px" }}></i>
+                                                            <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>Text</span>
+                                                        </div>
+                                                        <span style={{ backgroundColor: "#000", border: "none", borderRadius: "6px", padding: "10px 16px", color: "#fff", fontWeight: "bold", cursor: "pointer" }}></span>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
+
                         )}
 
-                        <div className="form-container-bottom d-flex align-items-center gap-3" style={{ marginBottom: "-30px", marginTop: "10px" }}>
-                            <button
-                                className="btn btn-primary addpagebtn"
-                                style={{ flexShrink: 0 }}
-                                onClick={() => {
-                                    const nextPageNumber = formPages.length + 1;
-                                    setNewPageTitle(`Page ` + nextPageNumber);
-                                    setShowNewPageModal(true);
-                                }}
-                            >
-                                + Add page
-                            </button>
-                            <div
-                                ref={pagesContainerRef}
+                        <div className="form-container">
+                            <div className={`form-body ${formbgImage ? "with-bg-image" : ""}`}
                                 style={{
-                                    overflowX: "auto",
-                                    overflowY: "hidden",
-                                    whiteSpace: 'nowrap',
-                                    position: 'relative',
-                                    display: 'flex',
-                                    gap: '12px',
-                                    flex: '1 1 auto'
+                                    backgroundColor: formBgColor,
+                                    backgroundImage: formbgImage ? `url(${formbgImage})` : "none"
                                 }}
                             >
-                                <DragDropContext onDragEnd={handleDragEnd}>
-                                    <Droppable droppableId="pages" direction="horizontal">
-                                        {(provided) => (
-                                            <div
-                                                className="d-flex align-items-center gap-3 pages-nav"
-                                                {...provided.droppableProps}
-                                                ref={provided.innerRef}
-                                            >
-                                                {formPages.map((page, index) => {
-                                                    const isActive = location.pathname.includes(`/page-${page.page_number}`);
-                                                    return (
-                                                        <Draggable key={page.id} draggableId={page.id.toString()} index={index}>
-                                                            {(provided, snapshot) => (
+                                {/* Theme Button */}
+                                <button
+                                    className="theme-button"
+                                    onClick={() => {
+                                        setShowDesignSidebar(true);
+                                        setShowFieldSidebar(false);
+                                    }}
+                                >
+                                    <i className="fa-solid fa-paintbrush" style={{ marginRight: "3px" }}></i> Theme
+                                </button>
+
+                                <div className="form-content" style={{ backgroundColor: formColor }} onClick={() => setShowCustomize(true)}>
+                                    <DragDropContext onDragEnd={onDragEnd}>
+                                        <Droppable droppableId="fields" direction="vertical">
+                                            {(provided) => (
+                                                <div ref={provided.innerRef} {...provided.droppableProps}>
+                                                    {fields.map((field, index) => (
+                                                        <Draggable key={field.id} draggableId={field.id.toString()} index={index}>
+                                                            {(provided) => (
                                                                 <div
+                                                                    className="form-field-wrapper"
                                                                     ref={provided.innerRef}
                                                                     {...provided.draggableProps}
                                                                     {...provided.dragHandleProps}
-                                                                    className={`position-relative no-select d-flex align-items-center gap-1 ${isActive ? "active-page" : "text-muted"}`}
                                                                     style={{
-                                                                        cursor: snapshot.isDragging ? 'grabbing' : 'pointer',
-                                                                        ...provided.draggableProps.style
+                                                                        ...provided.draggableProps.style,
+                                                                        backgroundColor: formColor
                                                                     }}
-                                                                    onClick={(e) => {
-                                                                        if (e.defaultPrevented) return;
-                                                                        handlePageNavigation(page.page_number);
-                                                                    }}
+                                                                    onClick={() => handleFieldClick(field.id)}
                                                                 >
-                                                                    {/* Icon - three dots for active, form icon otherwise */}
-                                                                    <i
-                                                                        className={`fas ${isActive ? "fa-ellipsis-vertical" : "fa-file-alt"}`}
-                                                                        onClick={(e) => {
-                                                                            if (isActive) {
-                                                                                handleMenuToggle(e, page.id);
-                                                                                e.preventDefault(); // prevent navigation
-                                                                                e.stopPropagation(); // only popup opens
-                                                                            }
-                                                                        }}
-                                                                        style={{ cursor: isActive ? "pointer" : "default" }}
-                                                                    ></i>
+                                                                    <div className="drag-handle" {...provided.dragHandleProps}>
+                                                                        <FaGripVertical />
+                                                                    </div>
 
-                                                                    <span>{page.page_title || `Page ${index + 1}`}</span>
+                                                                    <div className="form-field-content">
+                                                                        {!["Heading", "Banner", "Divider", "Image", "Video", "YouTubeVideo", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) ? (
+                                                                            <>
+                                                                                <div style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                                                                    <span
+                                                                                        contentEditable
+                                                                                        suppressContentEditableWarning={true}
+                                                                                        ref={(el) => {
+                                                                                            if (el && el.innerText !== field.label) {
+                                                                                                el.innerText = field.label;
+                                                                                            }
+                                                                                        }}
+                                                                                        onInput={(e) => {
+                                                                                            const updatedFields = fields.map(f =>
+                                                                                                f.id === field.id ? { ...f, label: e.target.textContent } : f
+                                                                                            );
+                                                                                            setFields(updatedFields);
+                                                                                        }}
+                                                                                        style={{
+                                                                                            fontSize: "1rem",
+                                                                                            background: "transparent",
+                                                                                            outline: "none",
+                                                                                            color: formQuestionColor,
+                                                                                            fontFamily: selectedFont,
+                                                                                        }}
+                                                                                    />
+
+                                                                                    {field.required && (
+                                                                                        <span style={{ color: 'red', marginLeft: '2px' }}>*</span>
+                                                                                    )}
+                                                                                </div>
+
+                                                                                {field.caption && (
+                                                                                    <small style={{ color: 'gray', display: 'block', marginBottom: '6px', fontFamily: selectedFont }}>
+                                                                                        {field.caption}
+                                                                                    </small>
+                                                                                )}
+                                                                            </>
+                                                                        ) : null}
+
+                                                                        {renderField(field)}
+                                                                    </div>
+
+                                                                    {selectedFieldId === field.id && (
+                                                                        <div className="field-actions">
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation(); // Prevent field click from firing
+                                                                                    openSettings(field.id);
+                                                                                }}
+                                                                                data-tooltip-title="Open field settings"
+                                                                            >
+                                                                                <FaCog
+                                                                                    style={{
+                                                                                        color:
+                                                                                            customizeVisible && selectedFieldId === field.id
+                                                                                                ? 'rgb(59, 130, 246)'
+                                                                                                : 'inherit'
+                                                                                    }}
+                                                                                />
+                                                                            </button>
+
+                                                                            {!["Next", "Submit"].includes(field.type) && (
+                                                                                <>
+                                                                                    <button
+                                                                                        className="change-type"
+                                                                                        onClick={(e) => changeFieldType(field.id, e)}
+                                                                                        data-tooltip-title={`Change field type\A${field.type}`}
+                                                                                    >
+                                                                                        <FaExchangeAlt />
+                                                                                    </button>
+
+                                                                                    <button
+                                                                                        onClick={() => duplicateField(field.id)}
+                                                                                        data-tooltip-title="Duplicate field"
+                                                                                    >
+                                                                                        <FaClone />
+                                                                                    </button>
+                                                                                    <button
+                                                                                        className="delete"
+                                                                                        onClick={() => deleteField(field.id)}
+                                                                                        data-tooltip-title="Delete field"
+                                                                                    >
+                                                                                        <FaRegTrashAlt />
+                                                                                    </button>
+                                                                                </>
+                                                                            )}
+
+                                                                        </div>
+                                                                    )}
 
                                                                 </div>
-                                                            )
-                                                            }
+                                                            )}
                                                         </Draggable>
-                                                    );
-                                                })}
-                                                {provided.placeholder}
-                                                <div className="d-flex align-items-center gap-1 text-muted" onClick={() => { handleEndingPage() }}>
-                                                    <i className="fas fa-check-circle"></i>
-                                                    <span>Ending</span>
+                                                    ))}
+                                                    {provided.placeholder}
                                                 </div>
-                                            </div>
-                                        )}
-                                    </Droppable>
-                                </DragDropContext>
-                            </div>
-                            {showArrows && (
-                                <div className="d-flex align-items-center gap-1 ms-2">
-                                    <button className="scroll-arrow-btn p-1" onClick={() => scrollPages(-200)}>
-                                        <i className="fas fa-chevron-left"></i>
-                                    </button>
-                                    <button className="scroll-arrow-btn p-1" onClick={() => scrollPages(200)}>
-                                        <i className="fas fa-chevron-right"></i>
-                                    </button>
+                                            )}
+                                        </Droppable>
+                                    </DragDropContext>
                                 </div>
-                            )}
-                        </div>
 
-                        {menuOpenForPageId && (
-                            <>
+                            </div>
+
+                            {fieldTypeMenu && (
                                 <div
-                                    ref={popupRef}
-                                    className="popup-menu position-fixed bg-white shadow rounded p-2"
+                                    className="field-type-menu"
                                     style={{
-                                        top: menuPosition.top,
-                                        left: menuPosition.left,
-                                        transform: "translateX(-50%)",
-                                        background: "white",
-                                        border: "1px solid #ddd",
-                                        borderRadius: "8px",
-                                        boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                                        position: "absolute",
+                                        top: "calc(var(--menu-top, 155px))",
+                                        left: "calc(var(--menu-left, 70%) + 50px)",
+                                        background: "#fff",
+                                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                                        borderRadius: "10px",
+                                        padding: "16px",
                                         zIndex: 9999,
-                                        minWidth: "200px",
-                                        padding: "10px"
                                     }}
-                                    onClick={(e) => e.stopPropagation()}
                                 >
-
-                                    {/* Set as First Page (show only if not the first page) */}
-                                    {menuOpenForPageId !== formPages[0]?.id && (
-                                        <div className="popup-item set-first-page"
-                                            onClick={() => {
-                                                setMenuOpenForPageId(null);
-                                                const page = formPages.find(p => p.id === menuOpenForPageId);
-                                                handleSetAsFirstPage(page.page_number);
-                                            }}
-                                        >
-                                            <i className="fa-solid fa-flag me-2"></i> Set as First Page
-                                        </div>
-                                    )}
-
-                                    {/* Rename (Inline Input) */}
-                                    {renamingPageId === menuOpenForPageId ? (
-                                        <div className="popup-item position-relative" style={{ paddingRight: "20px" }}>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={renamePageTitle}
-                                                onChange={(e) => setRenamePageTitle(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    const page = formPages.find(p => p.id === menuOpenForPageId);
-                                                    if (e.key === "Enter") handlePageRenameSubmit(page.id);
-                                                    if (e.key === "Escape") setRenamingPageId(null);
-                                                }}
-                                                autoFocus
-                                            />
+                                    <h4 style={{ marginBottom: 20, color: "rgb(156 163 175)", fontWeight: "400", fontSize: ".875rem" }}>Change to similar field:</h4>
+                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+                                        {[
+                                            { type: "Paragraph", label: "Long answer", icon: <FaAlignLeft /> },
+                                            { type: "Email", label: "Email input", icon: <FaEnvelope /> },
+                                            { type: "Date Picker", label: "Date", icon: <FaCalendarAlt /> },
+                                            { type: "Number", label: "Phone number", icon: <FaHashtag /> },
+                                            { type: "Dropdown", label: "Dropdown", icon: <FaCaretDown /> },
+                                            { type: "Checkbox", label: "Checkbox", icon: <FaCheckSquare /> },
+                                        ].map((opt) => (
                                             <button
-                                                className="btn btn-sm btn-primary ms-2 mt-1"
-                                                onClick={() => {
-                                                    const page = formPages.find(p => p.id === menuOpenForPageId);
-                                                    handlePageRenameSubmit(page.id)
-                                                    setMenuOpenForPageId(null);
+                                                key={opt.type}
+                                                onClick={() => handleTypeChange(fieldTypeMenu.id, opt.type)}
+                                                style={{
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    border: "1px solid #e5e7eb",
+                                                    borderRadius: "10px",
+                                                    padding: "5px 7px",
+                                                    background: "#f9f9f9",
+                                                    cursor: "pointer",
+                                                    width: "70px",
+                                                    Height: "60px",
+                                                    overflow: "hidden",
+                                                    textAlign: "center",
+                                                    boxSizing: "border-box",
                                                 }}
                                             >
-                                                Save
+                                                <div style={{ fontSize: "15px", color: "#0ea5e9" }}>{opt.icon}</div>
+                                                <span
+                                                    style={{
+                                                        fontSize: "12px",
+                                                        marginTop: "6px",
+                                                        color: "#1f2937",
+                                                        lineHeight: "1.2",
+                                                        wordWrap: "break-word",
+                                                        whiteSpace: "normal",
+                                                    }}
+                                                >
+                                                    {opt.label}
+                                                </span>
                                             </button>
-                                            <i
-                                                className="fas fa-xmark text-muted"
-                                                style={{
-                                                    position: "absolute",
-                                                    top: "6px",
-                                                    right: "6px",
-                                                    fontSize: "0.75rem",
-                                                    cursor: "pointer",
-                                                }}
-                                                onClick={() => setRenamingPageId(null)}
-                                            ></i>
-                                        </div>
-                                    ) : (
-                                        <div
-                                            className="popup-item"
-                                            onClick={() => {
-                                                const page = formPages.find(p => p.id === menuOpenForPageId);
-                                                setRenamingPageId(page.id);
-                                                setRenamePageTitle(page.page_title || `Page ${page.page_number}`);
-                                            }}
-                                        >
-                                            <i className="fas fa-pen me-2"></i> Rename
-                                        </div>
-                                    )}
-
-                                    {/* Copy */}
-                                    <div
-                                        className="popup-item"
-                                        onClick={() => {
-                                            setMenuOpenForPageId(null);
-
-                                            const page = formPages.find(p => p.id === menuOpenForPageId);
-                                            const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
-                                            const copiedFormId = match ? match[1] : null;
-                                            const copiedPageId = page?.id;
-
-                                            if (copiedFormId && copiedPageId) {
-                                                const raw = `${copiedFormId}:${copiedPageId}`;
-                                                const encoded = btoa(raw); // base64 encode
-                                                const code = `dforms-copy:${encoded}`;
-                                                navigator.clipboard.writeText(code);
-
-                                                Swal.fire("Copied!", "Copy code copied to clipboard. Paste it in Add page", "success");
-                                            } else {
-                                                Swal.fire("Error", "Failed to generate copy code.", "error");
-                                            }
-                                        }}
-                                    >
-                                        <i className="fa-regular fa-file me-2"></i> Copy
+                                        ))}
                                     </div>
-
-                                    {/* Duplicate */}
-                                    <div
-                                        className="popup-item"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#DuplicateModalCenter"
-                                        onClick={() => {
-                                            setMenuOpenForPageId(null);
-                                            const page = formPages.find(p => p.id === menuOpenForPageId);
-                                            openDuplicateModal(page);
-                                        }}
-                                    >
-                                        <i className="fas fa-clone me-2"></i> Duplicate
-                                    </div>
-
-                                    {/* Delete */}
-                                    {formPages.length > 1 && (
-                                        <div
-                                            className="popup-item trash-item text-danger"
-                                            onClick={() => {
-                                                const page = formPages.find(p => p.id === menuOpenForPageId);
-                                                handleDeletePage(page.id, page.page_number);
-                                                setMenuOpenForPageId(null);
-                                            }}
-                                        >
-                                            <i className="fas fa-trash me-2"></i> Delete
-                                        </div>
-                                    )}
                                 </div>
+                            )}
 
-                            </>
-                        )}
+                            {editImageOption && (
+                                <div className="image-option-modal-backdrop">
+                                    <div className="image-option-modal-box">
+                                        {/* Close Button */}
+                                        <button
+                                            className="modal-close-btn"
+                                            onClick={() => setEditImageOption(null)}
+                                        >
+                                            <i className="fas fa-times"></i>
+                                        </button>
 
-                    </div>
-
-                    {customizeVisible && selectedFieldId && (
-                        <div className="customize-section" style={{ color: 'gray', zIndex: "0" }}>
-                            <div className="customize-header" style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginBottom: '20px' }}>
-                                <i
-                                    className="fa-solid fa-xmark"
-                                    style={{ fontSize: "20px", cursor: "pointer", color: "black", marginRight: '20px' }}
-                                    onClick={() => setCustomizeVisible(false)}
-                                ></i>
-                                <h4 style={{ fontWeight: '500', fontSize: '1.125rem', margin: 0 }}>
-                                    {fields.find(f => f.id === selectedFieldId)?.type} settings
-                                </h4>
-                            </div>
-
-                            <div>
-
-                                {!["Divider", "Image", "Video", "PDF", "YouTubeVideo", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                                    <>
-                                        <label>Label</label>
-                                        <div style={{ color: "#aaa", fontSize: ".875rem", marginBottom: "10px" }}>
-                                            Click text on page to modify
-                                        </div>
-                                    </>
-                                )}
-
-                                {/* Show only Specific Fields */}
-                                {!["Heading", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                                    <>
-                                        <label>Caption</label>
+                                        <h5 style={{ fontWeight: "600", fontSize: "1.125rem", marginBottom: "20px" }}>Edit image option</h5>
+                                        <span style={{ fontWeight: "500", fontSize: ".875rem" }}>Lable</span>
                                         <input
+                                            style={{ marginBottom: "20px" }}
                                             type="text"
                                             className="form-control"
-                                            value={fields.find(f => f.id === selectedFieldId)?.caption || ""}
-                                            onChange={(e) => {
-                                                const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId ? { ...f, caption: e.target.value } : f
-                                                );
-                                                setFields(updatedFields);
-                                            }}
-                                        />
-                                    </>
-                                )}
-
-                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Multiple Select Checkboxes", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                                    <>
-                                        <label>Placeholder</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={fields.find(f => f.id === selectedFieldId)?.placeholder || ""}
-                                            onChange={(e) => {
-                                                const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId ? { ...f, placeholder: e.target.value } : f
-                                                );
-                                                setFields(updatedFields);
-                                            }}
-                                        />
-                                    </>
-                                )}
-
-                                {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Multiple Select Checkboxes", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                                    <>
-                                        <label>Default value<span title="Initial value" style={{ cursor: "help" }}>🛈</span></label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={fields.find(f => f.id === selectedFieldId)?.default_value || ""}
-                                            onChange={(e) => {
-                                                const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId ? { ...f, default_value: e.target.value } : f
-                                                );
-                                                setFields(updatedFields);
-                                            }}
-                                        />
-                                    </>
-                                )}
-
-                                {["Switch", "Checkbox"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "space-between",
-                                            marginBottom: "10px"
-                                        }}
-                                    >
-                                        <label style={{ marginBottom: 0 }}>
-                                            Default value{" "}
-                                            <span title="Switch on to make this field true" style={{ cursor: "help" }}>🛈</span>
-                                        </label>
-
-                                        <span
-                                            className={`custom-toggle ${fields.find(f => f.id === selectedFieldId)?.default_value === "true" ? 'active' : ''}`}
-                                            onClick={() => {
-                                                const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId
-                                                        ? {
-                                                            ...f,
-                                                            default_value: f.default_value === "true" ? "false" : "true"
-                                                        }
-                                                        : f
-                                                );
-                                                setFields(updatedFields);
-                                            }}
-                                            style={{ cursor: "pointer" }}
-                                        ></span>
-                                    </div>
-                                )}
-
-                                {/* ✅ Style section for Heading */}
-                                {fields.find(f => f.id === selectedFieldId)?.type === "Heading" && (
-                                    <>
-                                        <label>Font Size (px)</label>
-                                        <input
-                                            type="number"
-                                            min={12}
-                                            max={48}
-                                            className="form-control"
-                                            value={parseInt(fields.find(f => f.id === selectedFieldId)?.font_size || "24")}
-                                            onChange={(e) => {
-                                                const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId ? { ...f, font_size: `${e.target.value}px` } : f
-                                                );
-                                                setFields(updatedFields);
-                                            }}
-                                        />
-
-                                        <label>Caption</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={fields.find(f => f.id === selectedFieldId)?.caption ?? ""}
-                                            placeholder="Description"
+                                            value={fields.find(f => f.id === editImageOption.fieldId).options[editImageOption.index].option_text}
                                             onChange={(e) => {
                                                 const updatedFields = fields.map(f => {
-                                                    if (f.id === selectedFieldId) {
-                                                        return { ...f, caption: e.target.value };
-                                                    }
-                                                    return f;
+                                                    if (f.id !== editImageOption.fieldId) return f;
+                                                    const updatedOptions = [...f.options];
+                                                    updatedOptions[editImageOption.index] = {
+                                                        ...updatedOptions[editImageOption.index],
+                                                        option_text: e.target.value
+                                                    };
+                                                    return { ...f, options: updatedOptions };
                                                 });
                                                 setFields(updatedFields);
                                             }}
                                         />
-
-                                        {/* Heading Alignment */}
-                                        <label className="mt-3">Heading Alignment</label>
-                                        <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
-                                            {["left", "center", "right"].map((align) => {
-                                                const icons = {
-                                                    left: "⬅️",
-                                                    center: "↔️",
-                                                    right: "➡️"
-                                                };
-                                                return (
-                                                    <button
-                                                        key={align}
-                                                        onClick={() => {
-                                                            const updatedFields = fields.map(f =>
-                                                                f.id === selectedFieldId ? { ...f, alignment: align } : f
-                                                            );
-                                                            setFields(updatedFields);
-                                                        }}
-                                                        style={{
-                                                            padding: "6px 10px",
-                                                            fontSize: "1.2rem",
-                                                            border: fields.find(f => f.id === selectedFieldId)?.alignment === align
-                                                                ? "2px solid #007bff"
-                                                                : "1px solid lightgray",
-                                                            borderRadius: "5px",
-                                                            background: "white",
-                                                            cursor: "pointer"
-                                                        }}
-                                                    >
-                                                        {icons[align]}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </>
-                                )}
-
-                                {/* ✅ Style section for Banner */}
-                                {fields.find(f => f.id === selectedFieldId)?.type === "Banner" && (
-                                    <div style={{ marginTop: "20px" }}>
-                                        <label>Alert type</label>
-                                        <select
-                                            className="form-control"
-                                            value={fields.find(f => f.id === selectedFieldId)?.alert_type || "info"}
+                                        <span style={{ fontWeight: "500", fontSize: ".875rem" }}>Image</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="form-control mt-2"
                                             onChange={(e) => {
-                                                const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId ? { ...f, alert_type: e.target.value } : f
-                                                );
-                                                setFields(updatedFields);
+                                                const file = e.target.files[0];
+                                                if (file && file.size > 1 * 1024 * 1024) {
+                                                    setEditImageOption(null);
+                                                    Swal.fire({
+                                                        icon: 'error',
+                                                        title: 'File Too Large',
+                                                        text: 'Please select a file smaller than 1MB.',
+                                                    });
+                                                    return;
+                                                }
+
+                                                if (!file) return;
+                                                const reader = new FileReader();
+                                                reader.onload = () => {
+                                                    const updatedFields = fields.map(f => {
+                                                        if (f.id !== editImageOption.fieldId) return f;
+                                                        const updatedOptions = [...f.options];
+                                                        updatedOptions[editImageOption.index].image_path = reader.result;
+                                                        return { ...f, options: updatedOptions };
+                                                    });
+                                                    setFields(updatedFields);
+                                                };
+                                                reader.readAsDataURL(file);
                                             }}
-                                        >
-                                            <option value="warning">🟨 Warning</option>
-                                            <option value="error">🟥 Error</option>
-                                            <option value="info">🟦 Info</option>
-                                            <option value="success">🟩 Success</option>
-                                        </select>
+                                        />
+                                        <div className="modal-actions text-end mt-3">
+                                            <button onClick={() => setEditImageOption(null)} className="btn btn-primary">
+                                                Save
+                                            </button>
+                                        </div>
                                     </div>
-                                )}
+                                </div>
+                            )}
 
-                                {["Dropdown", "Multiple Choice", "Multiple Select", "Multiple Select Checkboxes"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                                    <div style={{ marginTop: "20px" }}>
-                                        <label>Options</label>
-
-                                        <DragDropContext onDragEnd={(result) => {
-                                            const { source, destination } = result;
-                                            if (!destination) return;
-                                            reorderOptions(selectedFieldId, source.index, destination.index);
-                                        }}>
-                                            <Droppable droppableId="optionsList">
-                                                {(provided) => (
-                                                    <div ref={provided.innerRef} {...provided.droppableProps}>
-                                                        {fields.find(f => f.id === selectedFieldId)?.options.map((opt, index) => (
-                                                            <Draggable key={index} draggableId={`option-${index}`} index={index}>
-                                                                {(provided) => (
+                            <div className="form-container-bottom d-flex align-items-center gap-3" style={{ marginBottom: "-30px", marginTop: "10px" }}>
+                                <button
+                                    className="btn btn-primary addpagebtn"
+                                    style={{ flexShrink: 0 }}
+                                    onClick={() => {
+                                        const nextPageNumber = formPages.length + 1;
+                                        setNewPageTitle(`Page ` + nextPageNumber);
+                                        setShowNewPageModal(true);
+                                    }}
+                                >
+                                    + Add page
+                                </button>
+                                <div
+                                    ref={pagesContainerRef}
+                                    style={{
+                                        overflowX: "auto",
+                                        overflowY: "hidden",
+                                        whiteSpace: 'nowrap',
+                                        position: 'relative',
+                                        display: 'flex',
+                                        gap: '12px',
+                                        flex: '1 1 auto'
+                                    }}
+                                >
+                                    <DragDropContext onDragEnd={handleDragEnd}>
+                                        <Droppable droppableId="pages" direction="horizontal">
+                                            {(provided) => (
+                                                <div
+                                                    className="d-flex align-items-center gap-3 pages-nav"
+                                                    {...provided.droppableProps}
+                                                    ref={provided.innerRef}
+                                                >
+                                                    {formPages.map((page, index) => {
+                                                        const isActive = location.pathname.includes(`/page-${page.page_number}`);
+                                                        return (
+                                                            <Draggable key={page.id} draggableId={page.id.toString()} index={index}>
+                                                                {(provided, snapshot) => (
                                                                     <div
                                                                         ref={provided.innerRef}
                                                                         {...provided.draggableProps}
+                                                                        {...provided.dragHandleProps}
+                                                                        className={`position-relative no-select d-flex align-items-center gap-1 ${isActive ? "active-page" : "text-muted"}`}
                                                                         style={{
-                                                                            display: "flex",
-                                                                            alignItems: "center",
-                                                                            background: "#f9f9f9",
-                                                                            padding: "8px",
-                                                                            borderRadius: "6px",
-                                                                            marginBottom: "6px",
+                                                                            cursor: snapshot.isDragging ? 'grabbing' : 'pointer',
                                                                             ...provided.draggableProps.style
                                                                         }}
+                                                                        onClick={(e) => {
+                                                                            if (e.defaultPrevented) return;
+                                                                            handlePageNavigation(page.page_number);
+                                                                        }}
                                                                     >
-                                                                        <input
-                                                                            type="text"
-                                                                            value={typeof opt === "object" ? opt.option_text : opt}
-                                                                            className="form-control"
-                                                                            onChange={(e) => {
-                                                                                const updatedFields = fields.map(field => {
-                                                                                    if (field.id === selectedFieldId) {
-                                                                                        const newOptions = [...field.options];
-                                                                                        newOptions[index] = {
-                                                                                            option_text: e.target.value
-                                                                                        };
-                                                                                        return { ...field, options: newOptions };
-                                                                                    }
-                                                                                    return field;
-                                                                                });
-                                                                                setFields(updatedFields);
+                                                                        {/* Icon - three dots for active, form icon otherwise */}
+                                                                        <i
+                                                                            className={`fas ${isActive ? "fa-ellipsis-vertical" : "fa-file-alt"}`}
+                                                                            onClick={(e) => {
+                                                                                if (isActive) {
+                                                                                    handleMenuToggle(e, page.id);
+                                                                                    e.preventDefault(); // prevent navigation
+                                                                                    e.stopPropagation(); // only popup opens
+                                                                                }
                                                                             }}
-                                                                            style={{ flex: 1, marginRight: "10px" }}
-                                                                        />
-                                                                        <span {...provided.dragHandleProps} style={{ cursor: "grab", marginRight: "10px" }}>
-                                                                            <i className="fas fa-grip-vertical"></i>
-                                                                        </span>
-                                                                        <span
-                                                                            style={{ color: "red", cursor: "pointer" }}
-                                                                            onClick={() => {
-                                                                                const updatedFields = fields.map(f =>
-                                                                                    f.id === selectedFieldId
-                                                                                        ? {
-                                                                                            ...f,
-                                                                                            options: f.options.filter((_, i) => i !== index)
-                                                                                        }
-                                                                                        : f
-                                                                                );
-                                                                                setFields(updatedFields);
-                                                                            }}
-                                                                        >
-                                                                            <i className="fas fa-trash-alt"></i>
-                                                                        </span>
-                                                                    </div>
-                                                                )}
-                                                            </Draggable>
-                                                        ))}
-                                                        {provided.placeholder}
-                                                    </div>
-                                                )}
-                                            </Droppable>
-                                        </DragDropContext>
+                                                                            style={{ cursor: isActive ? "pointer" : "default" }}
+                                                                        ></i>
 
-                                        <button
-                                            className="btn btn-sm btn-outline-primary"
-                                            onClick={() => {
-                                                const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId
-                                                        ? {
-                                                            ...f,
-                                                            options: [
-                                                                ...f.options,
-                                                                { option_text: `Option ${f.options.length + 1}` }
-                                                            ]
-                                                        }
-                                                        : f
-                                                );
-                                                setFields(updatedFields);
-                                            }}
-                                            style={{ marginTop: "10px" }}
-                                        >
-                                            + Add Option
+                                                                        <span>{page.page_title || `Page ${index + 1}`}</span>
+
+                                                                    </div>
+                                                                )
+                                                                }
+                                                            </Draggable>
+                                                        );
+                                                    })}
+                                                    {provided.placeholder}
+                                                    <div className="d-flex align-items-center gap-1 text-muted" onClick={() => { handleEndingPage() }}>
+                                                        <i className="fas fa-check-circle"></i>
+                                                        <span>Ending</span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </Droppable>
+                                    </DragDropContext>
+                                </div>
+                                {showArrows && (
+                                    <div className="d-flex align-items-center gap-1 ms-2">
+                                        <button className="scroll-arrow-btn p-1" onClick={() => scrollPages(-200)}>
+                                            <i className="fas fa-chevron-left"></i>
+                                        </button>
+                                        <button className="scroll-arrow-btn p-1" onClick={() => scrollPages(200)}>
+                                            <i className="fas fa-chevron-right"></i>
                                         </button>
                                     </div>
                                 )}
+                            </div>
 
-                                {/* ✅ Style section for Multiple Choice */}
-                                {fields.find(f => f.id === selectedFieldId)?.type === "Multiple Choice" && (
-                                    <div style={{ marginTop: "20px" }}>
-                                        <label style={{ fontWeight: 'bold' }}>Style</label>
-                                        <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
-                                            <div
+                            {menuOpenForPageId && (
+                                <>
+                                    <div
+                                        ref={popupRef}
+                                        className="popup-menu position-fixed bg-white shadow rounded p-2"
+                                        style={{
+                                            top: menuPosition.top,
+                                            left: menuPosition.left,
+                                            transform: "translateX(-50%)",
+                                            background: "white",
+                                            border: "1px solid #ddd",
+                                            borderRadius: "8px",
+                                            boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                                            zIndex: 9999,
+                                            minWidth: "200px",
+                                            padding: "10px"
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+
+                                        {/* Set as First Page (show only if not the first page) */}
+                                        {menuOpenForPageId !== formPages[0]?.id && (
+                                            <div className="popup-item set-first-page"
                                                 onClick={() => {
-                                                    const updatedFields = fields.map(f =>
-                                                        f.id === selectedFieldId ? { ...f, bubble: true } : f
-                                                    );
-                                                    setFields(updatedFields);
-                                                }}
-                                                style={{
-                                                    border: fields.find(f => f.id === selectedFieldId)?.bubble ? '2px solid #2563eb' : '1px solid #ccc',
-                                                    padding: '10px',
-                                                    borderRadius: '8px',
-                                                    cursor: 'pointer',
-                                                    flex: '1',
-                                                    textAlign: 'center'
+                                                    setMenuOpenForPageId(null);
+                                                    const page = formPages.find(p => p.id === menuOpenForPageId);
+                                                    handleSetAsFirstPage(page.page_number);
                                                 }}
                                             >
-                                                <div style={{ fontSize: '20px', marginBottom: '5px' }}>☰</div>
-                                                Bubble
+                                                <i className="fa-solid fa-flag me-2"></i> Set as First Page
                                             </div>
+                                        )}
 
+                                        {/* Rename (Inline Input) */}
+                                        {renamingPageId === menuOpenForPageId ? (
+                                            <div className="popup-item position-relative" style={{ paddingRight: "20px" }}>
+                                                <input
+                                                    type="text"
+                                                    className="form-control form-control-sm"
+                                                    value={renamePageTitle}
+                                                    onChange={(e) => setRenamePageTitle(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        const page = formPages.find(p => p.id === menuOpenForPageId);
+                                                        if (e.key === "Enter") handlePageRenameSubmit(page.id);
+                                                        if (e.key === "Escape") setRenamingPageId(null);
+                                                    }}
+                                                    autoFocus
+                                                />
+                                                <button
+                                                    className="btn btn-sm btn-primary ms-2 mt-1"
+                                                    onClick={() => {
+                                                        const page = formPages.find(p => p.id === menuOpenForPageId);
+                                                        handlePageRenameSubmit(page.id)
+                                                        setMenuOpenForPageId(null);
+                                                    }}
+                                                >
+                                                    Save
+                                                </button>
+                                                <i
+                                                    className="fas fa-xmark text-muted"
+                                                    style={{
+                                                        position: "absolute",
+                                                        top: "6px",
+                                                        right: "6px",
+                                                        fontSize: "0.75rem",
+                                                        cursor: "pointer",
+                                                    }}
+                                                    onClick={() => setRenamingPageId(null)}
+                                                ></i>
+                                            </div>
+                                        ) : (
                                             <div
+                                                className="popup-item"
                                                 onClick={() => {
+                                                    const page = formPages.find(p => p.id === menuOpenForPageId);
+                                                    setRenamingPageId(page.id);
+                                                    setRenamePageTitle(page.page_title || `Page ${page.page_number}`);
+                                                }}
+                                            >
+                                                <i className="fas fa-pen me-2"></i> Rename
+                                            </div>
+                                        )}
+
+                                        {/* Copy */}
+                                        <div
+                                            className="popup-item"
+                                            onClick={() => {
+                                                setMenuOpenForPageId(null);
+
+                                                const page = formPages.find(p => p.id === menuOpenForPageId);
+                                                const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
+                                                const copiedFormId = match ? match[1] : null;
+                                                const copiedPageId = page?.id;
+
+                                                if (copiedFormId && copiedPageId) {
+                                                    const raw = `${copiedFormId}:${copiedPageId}`;
+                                                    const encoded = btoa(raw); // base64 encode
+                                                    const code = `dforms-copy:${encoded}`;
+                                                    navigator.clipboard.writeText(code);
+
+                                                    Swal.fire("Copied!", "Copy code copied to clipboard. Paste it in Add page", "success");
+                                                } else {
+                                                    Swal.fire("Error", "Failed to generate copy code.", "error");
+                                                }
+                                            }}
+                                        >
+                                            <i className="fa-regular fa-file me-2"></i> Copy
+                                        </div>
+
+                                        {/* Duplicate */}
+                                        <div
+                                            className="popup-item"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#DuplicateModalCenter"
+                                            onClick={() => {
+                                                setMenuOpenForPageId(null);
+                                                const page = formPages.find(p => p.id === menuOpenForPageId);
+                                                openDuplicateModal(page);
+                                            }}
+                                        >
+                                            <i className="fas fa-clone me-2"></i> Duplicate
+                                        </div>
+
+                                        {/* Delete */}
+                                        {formPages.length > 1 && (
+                                            <div
+                                                className="popup-item trash-item text-danger"
+                                                onClick={() => {
+                                                    const page = formPages.find(p => p.id === menuOpenForPageId);
+                                                    handleDeletePage(page.id, page.page_number);
+                                                    setMenuOpenForPageId(null);
+                                                }}
+                                            >
+                                                <i className="fas fa-trash me-2"></i> Delete
+                                            </div>
+                                        )}
+                                    </div>
+
+                                </>
+                            )}
+
+                        </div>
+
+                        {customizeVisible && selectedFieldId && (
+                            <div className="customize-section" style={{ color: 'gray', zIndex: "0" }}>
+                                <div className="customize-header" style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginBottom: '20px' }}>
+                                    <i
+                                        className="fa-solid fa-xmark"
+                                        style={{ fontSize: "20px", cursor: "pointer", color: "black", marginRight: '20px' }}
+                                        onClick={() => setCustomizeVisible(false)}
+                                    ></i>
+                                    <h4 style={{ fontWeight: '500', fontSize: '1.125rem', margin: 0 }}>
+                                        {fields.find(f => f.id === selectedFieldId)?.type} settings
+                                    </h4>
+                                </div>
+
+                                <div>
+
+                                    {!["Divider", "Image", "Video", "PDF", "YouTubeVideo", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                        <>
+                                            <label>Label</label>
+                                            <div style={{ color: "#aaa", fontSize: ".875rem", marginBottom: "10px" }}>
+                                                Click text on page to modify
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {/* Show only Specific Fields */}
+                                    {!["Heading", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                        <>
+                                            <label>Caption</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                value={fields.find(f => f.id === selectedFieldId)?.caption || ""}
+                                                onChange={(e) => {
                                                     const updatedFields = fields.map(f =>
-                                                        f.id === selectedFieldId ? { ...f, bubble: false } : f
+                                                        f.id === selectedFieldId ? { ...f, caption: e.target.value } : f
                                                     );
                                                     setFields(updatedFields);
                                                 }}
-                                                style={{
-                                                    border: !fields.find(f => f.id === selectedFieldId)?.bubble ? '2px solid #2563eb' : '1px solid #ccc',
-                                                    padding: '10px',
-                                                    borderRadius: '8px',
-                                                    cursor: 'pointer',
-                                                    flex: '1',
-                                                    textAlign: 'center'
+                                            />
+                                        </>
+                                    )}
+
+                                    {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Multiple Select Checkboxes", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                        <>
+                                            <label>Placeholder</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                value={fields.find(f => f.id === selectedFieldId)?.placeholder || ""}
+                                                onChange={(e) => {
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId ? { ...f, placeholder: e.target.value } : f
+                                                    );
+                                                    setFields(updatedFields);
+                                                }}
+                                            />
+                                        </>
+                                    )}
+
+                                    {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Multiple Select Checkboxes", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                        <>
+                                            <label>Default value<span title="Initial value" style={{ cursor: "help" }}>🛈</span></label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                value={fields.find(f => f.id === selectedFieldId)?.default_value || ""}
+                                                onChange={(e) => {
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId ? { ...f, default_value: e.target.value } : f
+                                                    );
+                                                    setFields(updatedFields);
+                                                }}
+                                            />
+                                        </>
+                                    )}
+
+                                    {["Switch", "Checkbox"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "space-between",
+                                                marginBottom: "10px"
+                                            }}
+                                        >
+                                            <label style={{ marginBottom: 0 }}>
+                                                Default value{" "}
+                                                <span title="Switch on to make this field true" style={{ cursor: "help" }}>🛈</span>
+                                            </label>
+
+                                            <span
+                                                className={`custom-toggle ${fields.find(f => f.id === selectedFieldId)?.default_value === "true" ? 'active' : ''}`}
+                                                onClick={() => {
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId
+                                                            ? {
+                                                                ...f,
+                                                                default_value: f.default_value === "true" ? "false" : "true"
+                                                            }
+                                                            : f
+                                                    );
+                                                    setFields(updatedFields);
+                                                }}
+                                                style={{ cursor: "pointer" }}
+                                            ></span>
+                                        </div>
+                                    )}
+
+                                    {/* ✅ Style section for Heading */}
+                                    {fields.find(f => f.id === selectedFieldId)?.type === "Heading" && (
+                                        <>
+                                            <label>Font Size (px)</label>
+                                            <input
+                                                type="number"
+                                                min={12}
+                                                max={48}
+                                                className="form-control"
+                                                value={parseInt(fields.find(f => f.id === selectedFieldId)?.font_size || "24")}
+                                                onChange={(e) => {
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId ? { ...f, font_size: `${e.target.value}px` } : f
+                                                    );
+                                                    setFields(updatedFields);
+                                                }}
+                                            />
+
+                                            <label>Caption</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                value={fields.find(f => f.id === selectedFieldId)?.caption ?? ""}
+                                                placeholder="Description"
+                                                onChange={(e) => {
+                                                    const updatedFields = fields.map(f => {
+                                                        if (f.id === selectedFieldId) {
+                                                            return { ...f, caption: e.target.value };
+                                                        }
+                                                        return f;
+                                                    });
+                                                    setFields(updatedFields);
+                                                }}
+                                            />
+
+                                            {/* Heading Alignment */}
+                                            <label className="mt-3">Heading Alignment</label>
+                                            <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+                                                {["left", "center", "right"].map((align) => {
+                                                    const icons = {
+                                                        left: "⬅️",
+                                                        center: "↔️",
+                                                        right: "➡️"
+                                                    };
+                                                    return (
+                                                        <button
+                                                            key={align}
+                                                            onClick={() => {
+                                                                const updatedFields = fields.map(f =>
+                                                                    f.id === selectedFieldId ? { ...f, alignment: align } : f
+                                                                );
+                                                                setFields(updatedFields);
+                                                            }}
+                                                            style={{
+                                                                padding: "6px 10px",
+                                                                fontSize: "1.2rem",
+                                                                border: fields.find(f => f.id === selectedFieldId)?.alignment === align
+                                                                    ? "2px solid #007bff"
+                                                                    : "1px solid lightgray",
+                                                                borderRadius: "5px",
+                                                                background: "white",
+                                                                cursor: "pointer"
+                                                            }}
+                                                        >
+                                                            {icons[align]}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {/* ✅ Style section for Banner */}
+                                    {fields.find(f => f.id === selectedFieldId)?.type === "Banner" && (
+                                        <div style={{ marginTop: "20px" }}>
+                                            <label>Alert type</label>
+                                            <select
+                                                className="form-control"
+                                                value={fields.find(f => f.id === selectedFieldId)?.alert_type || "info"}
+                                                onChange={(e) => {
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId ? { ...f, alert_type: e.target.value } : f
+                                                    );
+                                                    setFields(updatedFields);
                                                 }}
                                             >
-                                                <div style={{ fontSize: '18px', marginBottom: '5px' }}>◯</div>
-                                                Standard
+                                                <option value="warning">🟨 Warning</option>
+                                                <option value="error">🟥 Error</option>
+                                                <option value="info">🟦 Info</option>
+                                                <option value="success">🟩 Success</option>
+                                            </select>
+                                        </div>
+                                    )}
+
+                                    {["Dropdown", "Multiple Choice", "Multiple Select", "Multiple Select Checkboxes"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                        <div style={{ marginTop: "20px" }}>
+                                            <label>Options</label>
+
+                                            <DragDropContext onDragEnd={(result) => {
+                                                const { source, destination } = result;
+                                                if (!destination) return;
+                                                reorderOptions(selectedFieldId, source.index, destination.index);
+                                            }}>
+                                                <Droppable droppableId="optionsList">
+                                                    {(provided) => (
+                                                        <div ref={provided.innerRef} {...provided.droppableProps}>
+                                                            {fields.find(f => f.id === selectedFieldId)?.options.map((opt, index) => (
+                                                                <Draggable key={index} draggableId={`option-${index}`} index={index}>
+                                                                    {(provided) => (
+                                                                        <div
+                                                                            ref={provided.innerRef}
+                                                                            {...provided.draggableProps}
+                                                                            style={{
+                                                                                display: "flex",
+                                                                                alignItems: "center",
+                                                                                background: "#f9f9f9",
+                                                                                padding: "8px",
+                                                                                borderRadius: "6px",
+                                                                                marginBottom: "6px",
+                                                                                ...provided.draggableProps.style
+                                                                            }}
+                                                                        >
+                                                                            <input
+                                                                                type="text"
+                                                                                value={typeof opt === "object" ? opt.option_text : opt}
+                                                                                className="form-control"
+                                                                                onChange={(e) => {
+                                                                                    const updatedFields = fields.map(field => {
+                                                                                        if (field.id === selectedFieldId) {
+                                                                                            const newOptions = [...field.options];
+                                                                                            newOptions[index] = {
+                                                                                                option_text: e.target.value
+                                                                                            };
+                                                                                            return { ...field, options: newOptions };
+                                                                                        }
+                                                                                        return field;
+                                                                                    });
+                                                                                    setFields(updatedFields);
+                                                                                }}
+                                                                                style={{ flex: 1, marginRight: "10px" }}
+                                                                            />
+                                                                            <span {...provided.dragHandleProps} style={{ cursor: "grab", marginRight: "10px" }}>
+                                                                                <i className="fas fa-grip-vertical"></i>
+                                                                            </span>
+                                                                            <span
+                                                                                style={{ color: "red", cursor: "pointer" }}
+                                                                                onClick={() => {
+                                                                                    const updatedFields = fields.map(f =>
+                                                                                        f.id === selectedFieldId
+                                                                                            ? {
+                                                                                                ...f,
+                                                                                                options: f.options.filter((_, i) => i !== index)
+                                                                                            }
+                                                                                            : f
+                                                                                    );
+                                                                                    setFields(updatedFields);
+                                                                                }}
+                                                                            >
+                                                                                <i className="fas fa-trash-alt"></i>
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
+                                                                </Draggable>
+                                                            ))}
+                                                            {provided.placeholder}
+                                                        </div>
+                                                    )}
+                                                </Droppable>
+                                            </DragDropContext>
+
+                                            <button
+                                                className="btn btn-sm btn-outline-primary"
+                                                onClick={() => {
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId
+                                                            ? {
+                                                                ...f,
+                                                                options: [
+                                                                    ...f.options,
+                                                                    { option_text: `Option ${f.options.length + 1}` }
+                                                                ]
+                                                            }
+                                                            : f
+                                                    );
+                                                    setFields(updatedFields);
+                                                }}
+                                                style={{ marginTop: "10px" }}
+                                            >
+                                                + Add Option
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* ✅ Style section for Multiple Choice */}
+                                    {fields.find(f => f.id === selectedFieldId)?.type === "Multiple Choice" && (
+                                        <div style={{ marginTop: "20px" }}>
+                                            <label style={{ fontWeight: 'bold' }}>Style</label>
+                                            <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+                                                <div
+                                                    onClick={() => {
+                                                        const updatedFields = fields.map(f =>
+                                                            f.id === selectedFieldId ? { ...f, bubble: true } : f
+                                                        );
+                                                        setFields(updatedFields);
+                                                    }}
+                                                    style={{
+                                                        border: fields.find(f => f.id === selectedFieldId)?.bubble ? '2px solid #2563eb' : '1px solid #ccc',
+                                                        padding: '10px',
+                                                        borderRadius: '8px',
+                                                        cursor: 'pointer',
+                                                        flex: '1',
+                                                        textAlign: 'center'
+                                                    }}
+                                                >
+                                                    <div style={{ fontSize: '20px', marginBottom: '5px' }}>☰</div>
+                                                    Bubble
+                                                </div>
+
+                                                <div
+                                                    onClick={() => {
+                                                        const updatedFields = fields.map(f =>
+                                                            f.id === selectedFieldId ? { ...f, bubble: false } : f
+                                                        );
+                                                        setFields(updatedFields);
+                                                    }}
+                                                    style={{
+                                                        border: !fields.find(f => f.id === selectedFieldId)?.bubble ? '2px solid #2563eb' : '1px solid #ccc',
+                                                        padding: '10px',
+                                                        borderRadius: '8px',
+                                                        cursor: 'pointer',
+                                                        flex: '1',
+                                                        textAlign: 'center'
+                                                    }}
+                                                >
+                                                    <div style={{ fontSize: '18px', marginBottom: '5px' }}>◯</div>
+                                                    Standard
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
-                                {["Date Picker", "Time Picker", "Date Time Picker"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                                    <div style={{ marginBottom: "10px" }}>
-                                        <label>
-                                            Default value{" "}
-                                            <span title="Set a default date/time for this field" style={{ cursor: "help" }}>🛈</span>
-                                        </label>
-                                        <input
-                                            type={
-                                                fields.find(f => f.id === selectedFieldId)?.type === "Date Picker" ? "date" :
-                                                    fields.find(f => f.id === selectedFieldId)?.type === "Time Picker" ? "time" : "datetime-local"
-                                            }
-                                            className="form-control"
-                                            value={fields.find(f => f.id === selectedFieldId)?.default_value || ""}
-                                            onChange={(e) => {
-                                                const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId ? { ...f, default_value: e.target.value } : f
-                                                );
-                                                setFields(updatedFields);
-                                            }}
-                                        />
-                                    </div>
-                                )}
-
-                                {fields.find(f => f.id === selectedFieldId)?.type === "Star Rating" && (
-                                    <div style={{ marginBottom: "10px" }}>
-                                        <label>
-                                            Max Stars{" "}
-                                            <span title="Maximum number of stars to display (Max 50)" style={{ cursor: "help" }}>🛈</span>
-                                        </label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            max="50"
-                                            className="form-control"
-                                            value={fields.find(f => f.id === selectedFieldId)?.max_value || 5}
-                                            onChange={(e) => {
-                                                const value = Math.min(50, parseInt(e.target.value, 10));
-                                                const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId ? { ...f, max_value: value } : f
-                                                );
-                                                setFields(updatedFields);
-                                            }}
-                                        />
-                                    </div>
-                                )}
-
-                                {fields.find(f => f.id === selectedFieldId)?.type === "Slider" && (
-                                    <div style={{ marginBottom: "10px" }}>
-                                        <label>
-                                            Max Slider Value{" "}
-                                            <span title="Set the maximum value for the slider (between 10 and 100)" style={{ cursor: "help" }}>🛈</span>
-                                        </label>
-                                        <input
-                                            type="number"
-                                            min="10"
-                                            max="100"
-                                            className="form-control"
-                                            value={fields.find(f => f.id === selectedFieldId)?.max_value || 100}
-                                            onChange={(e) => {
-                                                let value = parseInt(e.target.value, 10);
-                                                value = Math.max(10, Math.min(100, value)); // clamp to 10–100
-
-                                                const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId ? { ...f, max_value: value } : f
-                                                );
-                                                setFields(updatedFields);
-                                            }}
-                                        />
-                                    </div>
-                                )}
-
-                                {fields.find(f => f.id === selectedFieldId)?.type === "Opinion Scale" && (
-                                    <>
+                                    {["Date Picker", "Time Picker", "Date Time Picker"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                         <div style={{ marginBottom: "10px" }}>
                                             <label>
-                                                Min Opinion
-                                                <span title="Minimum scale value (Min 1)" style={{ cursor: "help" }}> 🛈</span>
+                                                Default value{" "}
+                                                <span title="Set a default date/time for this field" style={{ cursor: "help" }}>🛈</span>
+                                            </label>
+                                            <input
+                                                type={
+                                                    fields.find(f => f.id === selectedFieldId)?.type === "Date Picker" ? "date" :
+                                                        fields.find(f => f.id === selectedFieldId)?.type === "Time Picker" ? "time" : "datetime-local"
+                                                }
+                                                className="form-control"
+                                                value={fields.find(f => f.id === selectedFieldId)?.default_value || ""}
+                                                onChange={(e) => {
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId ? { ...f, default_value: e.target.value } : f
+                                                    );
+                                                    setFields(updatedFields);
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {fields.find(f => f.id === selectedFieldId)?.type === "Star Rating" && (
+                                        <div style={{ marginBottom: "10px" }}>
+                                            <label>
+                                                Max Stars{" "}
+                                                <span title="Maximum number of stars to display (Max 50)" style={{ cursor: "help" }}>🛈</span>
                                             </label>
                                             <input
                                                 type="number"
                                                 min="1"
-                                                max={(fields.find(f => f.id === selectedFieldId)?.max_value || 10) - 1}
+                                                max="50"
                                                 className="form-control"
-                                                value={fields.find(f => f.id === selectedFieldId)?.min_value ?? 1}
+                                                value={fields.find(f => f.id === selectedFieldId)?.max_value || 5}
                                                 onChange={(e) => {
-                                                    const rawValue = e.target.value;
-                                                    const parsed = parseInt(rawValue, 10);
-                                                    if (!isNaN(parsed)) {
-                                                        const value = Math.max(1, parsed);
-                                                        const updatedFields = fields.map(f =>
-                                                            f.id === selectedFieldId ? { ...f, min_value: value } : f
-                                                        );
-                                                        setFields(updatedFields);
-                                                    }
+                                                    const value = Math.min(50, parseInt(e.target.value, 10));
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId ? { ...f, max_value: value } : f
+                                                    );
+                                                    setFields(updatedFields);
                                                 }}
                                             />
                                         </div>
+                                    )}
 
+                                    {fields.find(f => f.id === selectedFieldId)?.type === "Slider" && (
                                         <div style={{ marginBottom: "10px" }}>
                                             <label>
-                                                Max Opinion
-                                                <span title="Maximum scale value (Max 100)" style={{ cursor: "help" }}> 🛈</span>
+                                                Max Slider Value{" "}
+                                                <span title="Set the maximum value for the slider (between 10 and 100)" style={{ cursor: "help" }}>🛈</span>
                                             </label>
                                             <input
                                                 type="number"
-                                                min={(fields.find(f => f.id === selectedFieldId)?.min_value || 1) + 1}
+                                                min="10"
                                                 max="100"
                                                 className="form-control"
-                                                value={fields.find(f => f.id === selectedFieldId)?.max_value ?? 10}
+                                                value={fields.find(f => f.id === selectedFieldId)?.max_value || 100}
                                                 onChange={(e) => {
-                                                    const rawValue = e.target.value;
-                                                    const parsed = parseInt(rawValue, 10);
-                                                    if (!isNaN(parsed)) {
-                                                        const value = Math.min(100, parsed);
+                                                    let value = parseInt(e.target.value, 10);
+                                                    value = Math.max(10, Math.min(100, value)); // clamp to 10–100
+
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId ? { ...f, max_value: value } : f
+                                                    );
+                                                    setFields(updatedFields);
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {fields.find(f => f.id === selectedFieldId)?.type === "Opinion Scale" && (
+                                        <>
+                                            <div style={{ marginBottom: "10px" }}>
+                                                <label>
+                                                    Min Opinion
+                                                    <span title="Minimum scale value (Min 1)" style={{ cursor: "help" }}> 🛈</span>
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    max={(fields.find(f => f.id === selectedFieldId)?.max_value || 10) - 1}
+                                                    className="form-control"
+                                                    value={fields.find(f => f.id === selectedFieldId)?.min_value ?? 1}
+                                                    onChange={(e) => {
+                                                        const rawValue = e.target.value;
+                                                        const parsed = parseInt(rawValue, 10);
+                                                        if (!isNaN(parsed)) {
+                                                            const value = Math.max(1, parsed);
+                                                            const updatedFields = fields.map(f =>
+                                                                f.id === selectedFieldId ? { ...f, min_value: value } : f
+                                                            );
+                                                            setFields(updatedFields);
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+
+                                            <div style={{ marginBottom: "10px" }}>
+                                                <label>
+                                                    Max Opinion
+                                                    <span title="Maximum scale value (Max 100)" style={{ cursor: "help" }}> 🛈</span>
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    min={(fields.find(f => f.id === selectedFieldId)?.min_value || 1) + 1}
+                                                    max="100"
+                                                    className="form-control"
+                                                    value={fields.find(f => f.id === selectedFieldId)?.max_value ?? 10}
+                                                    onChange={(e) => {
+                                                        const rawValue = e.target.value;
+                                                        const parsed = parseInt(rawValue, 10);
+                                                        if (!isNaN(parsed)) {
+                                                            const value = Math.min(100, parsed);
+                                                            const updatedFields = fields.map(f =>
+                                                                f.id === selectedFieldId ? { ...f, max_value: value } : f
+                                                            );
+                                                            setFields(updatedFields);
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {fields.find(f => f.id === selectedFieldId)?.type === "Number" && (
+                                        <>
+                                            <label>
+                                                Default value{" "}
+                                                <span title="Initial value" style={{ cursor: "help" }}>🛈</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                inputMode="numeric"
+                                                pattern="[0-9]*"
+                                                value={fields.find(f => f.id === selectedFieldId)?.default_value || ""}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    if (/^\d*$/.test(value)) {
                                                         const updatedFields = fields.map(f =>
-                                                            f.id === selectedFieldId ? { ...f, max_value: value } : f
+                                                            f.id === selectedFieldId ? { ...f, value, default_value: value } : f
                                                         );
                                                         setFields(updatedFields);
                                                     }
                                                 }}
                                             />
-                                        </div>
-                                    </>
-                                )}
-
-                                {fields.find(f => f.id === selectedFieldId)?.type === "Number" && (
-                                    <>
-                                        <label>
-                                            Default value{" "}
-                                            <span title="Initial value" style={{ cursor: "help" }}>🛈</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            inputMode="numeric"
-                                            pattern="[0-9]*"
-                                            value={fields.find(f => f.id === selectedFieldId)?.default_value || ""}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                if (/^\d*$/.test(value)) {
-                                                    const updatedFields = fields.map(f =>
-                                                        f.id === selectedFieldId ? { ...f, value, default_value: value } : f
-                                                    );
-                                                    setFields(updatedFields);
-                                                }
-                                            }}
-                                        />
-                                    </>
-                                )}
-
-                                {fields.find(f => f.id === selectedFieldId)?.type === "Divider" && (
-                                    <>
-                                        <label>
-                                            Label{" "}
-                                            <span title="This text appears in the center of the divider" style={{ cursor: "help" }}>🛈</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            placeholder="Enter divider text"
-                                            value={fields.find(f => f.id === selectedFieldId)?.label || ""}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                const updatedFields = fields.map(f =>
-                                                    f.id === selectedFieldId ? { ...f, label: value } : f
-                                                );
-                                                setFields(updatedFields);
-                                            }}
-                                        />
-                                    </>
-                                )}
-
-                                {["Image", "PDF", "Video"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
-                                    const field = fields.find(f => f.id === selectedFieldId);
-
-                                    // Fallback to uploaded values if field values are undefined
-                                    const alignment = field?.alignment || field?.uploads?.[0]?.file_field_Alignment || "center";
-                                    const previewSize = field?.previewSize || field?.uploads?.[0]?.file_field_size || 300;
-
-                                    return (
-                                        <>
-                                            <label>Max Height</label>
-
-                                            {/* Image Resize Slider */}
-                                            <div className="mt-2">
-                                                <label>Size: {previewSize}px</label>
-                                                <input
-                                                    type="range"
-                                                    min="100"
-                                                    max="600"
-                                                    step="10"
-                                                    value={previewSize}
-                                                    onChange={(e) => {
-                                                        const updatedFields = fields.map(f =>
-                                                            f.id === selectedFieldId
-                                                                ? { ...f, previewSize: parseInt(e.target.value) }
-                                                                : f
-                                                        );
-                                                        setFields(updatedFields);
-                                                    }}
-                                                    className="form-range"
-                                                />
-                                            </div>
-
-                                            {/* Alignment Controls */}
-                                            <div className="mt-3">
-                                                <label>Alignment</label>
-                                                <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
-                                                    {["left", "center", "right"].map((align) => {
-                                                        const icons = {
-                                                            left: "⬅️",
-                                                            center: "↔️",
-                                                            right: "➡️"
-                                                        };
-                                                        return (
-                                                            <button
-                                                                key={align}
-                                                                onClick={() => {
-                                                                    const updatedFields = fields.map(f =>
-                                                                        f.id === selectedFieldId ? { ...f, alignment: align } : f
-                                                                    );
-                                                                    setFields(updatedFields);
-                                                                }}
-                                                                style={{
-                                                                    padding: "6px 10px",
-                                                                    fontSize: "1.2rem",
-                                                                    border: alignment === align
-                                                                        ? "2px solid #007bff"
-                                                                        : "1px solid lightgray",
-                                                                    borderRadius: "5px",
-                                                                    background: "white",
-                                                                    cursor: "pointer"
-                                                                }}
-                                                            >
-                                                                {icons[align]}
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
                                         </>
-                                    );
-                                })()}
+                                    )}
 
-                                {["YouTubeVideo"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
-                                    const field = fields.find(f => f.id === selectedFieldId);
-                                    const previewSize = field?.previewSize || 300;
-                                    const youtubeUrl = field?.youtubeUrl || "";
-
-                                    return (
+                                    {fields.find(f => f.id === selectedFieldId)?.type === "Divider" && (
                                         <>
-                                            <label className="form-label">YouTube Video URL</label>
+                                            <label>
+                                                Label{" "}
+                                                <span title="This text appears in the center of the divider" style={{ cursor: "help" }}>🛈</span>
+                                            </label>
                                             <input
                                                 type="text"
-                                                placeholder="https://www.youtube.com/..."
-                                                value={youtubeUrl}
+                                                className="form-control"
+                                                placeholder="Enter divider text"
+                                                value={fields.find(f => f.id === selectedFieldId)?.label || ""}
                                                 onChange={(e) => {
+                                                    const value = e.target.value;
                                                     const updatedFields = fields.map(f =>
-                                                        f.id === selectedFieldId ? { ...f, youtubeUrl: e.target.value } : f
+                                                        f.id === selectedFieldId ? { ...f, label: value } : f
                                                     );
                                                     setFields(updatedFields);
                                                 }}
-                                                className="form-control mb-3"
                                             />
+                                        </>
+                                    )}
 
-                                            <label className="form-label">Max Height</label>
-                                            <div className="mt-2">
-                                                <label>Size: {previewSize}px</label>
+                                    {["Image", "PDF", "Video"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
+                                        const field = fields.find(f => f.id === selectedFieldId);
+
+                                        // Fallback to uploaded values if field values are undefined
+                                        const alignment = field?.alignment || field?.uploads?.[0]?.file_field_Alignment || "center";
+                                        const previewSize = field?.previewSize || field?.uploads?.[0]?.file_field_size || 300;
+
+                                        return (
+                                            <>
+                                                <label>Max Height</label>
+
+                                                {/* Image Resize Slider */}
+                                                <div className="mt-2">
+                                                    <label>Size: {previewSize}px</label>
+                                                    <input
+                                                        type="range"
+                                                        min="100"
+                                                        max="600"
+                                                        step="10"
+                                                        value={previewSize}
+                                                        onChange={(e) => {
+                                                            const updatedFields = fields.map(f =>
+                                                                f.id === selectedFieldId
+                                                                    ? { ...f, previewSize: parseInt(e.target.value) }
+                                                                    : f
+                                                            );
+                                                            setFields(updatedFields);
+                                                        }}
+                                                        className="form-range"
+                                                    />
+                                                </div>
+
+                                                {/* Alignment Controls */}
+                                                <div className="mt-3">
+                                                    <label>Alignment</label>
+                                                    <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+                                                        {["left", "center", "right"].map((align) => {
+                                                            const icons = {
+                                                                left: "⬅️",
+                                                                center: "↔️",
+                                                                right: "➡️"
+                                                            };
+                                                            return (
+                                                                <button
+                                                                    key={align}
+                                                                    onClick={() => {
+                                                                        const updatedFields = fields.map(f =>
+                                                                            f.id === selectedFieldId ? { ...f, alignment: align } : f
+                                                                        );
+                                                                        setFields(updatedFields);
+                                                                    }}
+                                                                    style={{
+                                                                        padding: "6px 10px",
+                                                                        fontSize: "1.2rem",
+                                                                        border: alignment === align
+                                                                            ? "2px solid #007bff"
+                                                                            : "1px solid lightgray",
+                                                                        borderRadius: "5px",
+                                                                        background: "white",
+                                                                        cursor: "pointer"
+                                                                    }}
+                                                                >
+                                                                    {icons[align]}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
+
+                                    {["YouTubeVideo"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
+                                        const field = fields.find(f => f.id === selectedFieldId);
+                                        const previewSize = field?.previewSize || 300;
+                                        const youtubeUrl = field?.youtubeUrl || "";
+
+                                        return (
+                                            <>
+                                                <label className="form-label">YouTube Video URL</label>
                                                 <input
-                                                    type="range"
-                                                    min="100"
-                                                    max="600"
-                                                    step="10"
-                                                    value={previewSize}
+                                                    type="text"
+                                                    placeholder="https://www.youtube.com/..."
+                                                    value={youtubeUrl}
                                                     onChange={(e) => {
                                                         const updatedFields = fields.map(f =>
-                                                            f.id === selectedFieldId
-                                                                ? { ...f, previewSize: parseInt(e.target.value) }
-                                                                : f
+                                                            f.id === selectedFieldId ? { ...f, youtubeUrl: e.target.value } : f
                                                         );
                                                         setFields(updatedFields);
                                                     }}
-                                                    className="form-range"
+                                                    className="form-control mb-3"
                                                 />
+
+                                                <label className="form-label">Max Height</label>
+                                                <div className="mt-2">
+                                                    <label>Size: {previewSize}px</label>
+                                                    <input
+                                                        type="range"
+                                                        min="100"
+                                                        max="600"
+                                                        step="10"
+                                                        value={previewSize}
+                                                        onChange={(e) => {
+                                                            const updatedFields = fields.map(f =>
+                                                                f.id === selectedFieldId
+                                                                    ? { ...f, previewSize: parseInt(e.target.value) }
+                                                                    : f
+                                                            );
+                                                            setFields(updatedFields);
+                                                        }}
+                                                        className="form-range"
+                                                    />
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
+
+                                    {!["Heading", "Banner", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                        <>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
+                                                {/* Required Row */}
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <label className="form-check-label">Required</label>
+                                                    <span
+                                                        className={`custom-toggle ${fields.find(f => f.id === selectedFieldId)?.required ? 'active' : ''}`}
+                                                        onClick={() => {
+                                                            const updatedFields = fields.map(f =>
+                                                                f.id === selectedFieldId ? { ...f, required: !f.required } : f
+                                                            );
+                                                            setFields(updatedFields);
+                                                        }}
+                                                    ></span>
+                                                </div>
                                             </div>
                                         </>
-                                    );
-                                })()}
+                                    )}
 
-                                {!["Heading", "Banner", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                                    <>
+                                    {["ThankYou"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
-                                            {/* Required Row */}
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <label className="form-check-label">Required</label>
+                                                <label className="form-check-label">Hide icon</label>
                                                 <span
-                                                    className={`custom-toggle ${fields.find(f => f.id === selectedFieldId)?.required ? 'active' : ''}`}
+                                                    className={`custom-toggle ${fields.find(f => f.id === selectedFieldId)?.hideIcon ? 'active' : ''}`}
                                                     onClick={() => {
                                                         const updatedFields = fields.map(f =>
-                                                            f.id === selectedFieldId ? { ...f, required: !f.required } : f
+                                                            f.id === selectedFieldId
+                                                                ? { ...f, hideIcon: !f.hideIcon }
+                                                                : f
                                                         );
                                                         setFields(updatedFields);
                                                     }}
                                                 ></span>
                                             </div>
                                         </div>
-                                    </>
-                                )}
+                                    )}
 
-                                {["ThankYou"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <label className="form-check-label">Hide icon</label>
-                                            <span
-                                                className={`custom-toggle ${fields.find(f => f.id === selectedFieldId)?.hideIcon ? 'active' : ''}`}
-                                                onClick={() => {
-                                                    const updatedFields = fields.map(f =>
-                                                        f.id === selectedFieldId
-                                                            ? { ...f, hideIcon: !f.hideIcon }
-                                                            : f
-                                                    );
-                                                    setFields(updatedFields);
-                                                }}
-                                            ></span>
-                                        </div>
-                                    </div>
-                                )}
+                                    {["Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
+                                        const field = fields.find(f => f.id === selectedFieldId);
+                                        const btnalignment = field?.btnalignment || "left";
 
-                                {["Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (() => {
-                                    const field = fields.find(f => f.id === selectedFieldId);
-                                    const btnalignment = field?.btnalignment || "left";
-
-                                    return (
-                                        <>
-                                            <label>Button Text</label>
-                                            <input
-                                                className="form-control mb-3"
-                                                type="text"
-                                                value={field.label}
-                                                onChange={(e) => {
-                                                    const updatedFields = fields.map(f =>
-                                                        f.id === selectedFieldId ? { ...f, label: e.target.value } : f
-                                                    );
-                                                    setFields(updatedFields);
-                                                }}
-                                            />
-
-                                            {/* Background Color */}
-                                            <div className="d-flex align-items-center justify-content-between mb-3" style={{ position: "relative" }}>
-                                                <label className="me-2" style={{ width: '150px' }}>Background Color</label>
-                                                <div
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setActiveBtnColorPicker("btnbgColor");
+                                        return (
+                                            <>
+                                                <label>Button Text</label>
+                                                <input
+                                                    className="form-control mb-3"
+                                                    type="text"
+                                                    value={field.label}
+                                                    onChange={(e) => {
+                                                        const updatedFields = fields.map(f =>
+                                                            f.id === selectedFieldId ? { ...f, label: e.target.value } : f
+                                                        );
+                                                        setFields(updatedFields);
                                                     }}
-                                                    style={{
-                                                        width: "30px",
-                                                        height: "25px",
-                                                        backgroundColor: field.btnbgColor || "#6c757d",
-                                                        border: "1px solid #ccc",
-                                                        borderRadius: "4px",
-                                                        cursor: "pointer"
-                                                    }}
-                                                ></div>
+                                                />
 
-                                                {activeBtnColorPicker === "btnbgColor" && (
+                                                {/* Background Color */}
+                                                <div className="d-flex align-items-center justify-content-between mb-3" style={{ position: "relative" }}>
+                                                    <label className="me-2" style={{ width: '150px' }}>Background Color</label>
                                                     <div
-                                                        ref={pickerRef}
-                                                        style={{
-                                                            position: "absolute",
-                                                            top: "35px",
-                                                            right: "35px", // show ChromePicker on left side of the box
-                                                            zIndex: 9999,
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setActiveBtnColorPicker("btnbgColor");
                                                         }}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <ChromePicker
-                                                            color={field.btnbgColor || "#6c757d"}
-                                                            onChangeComplete={(color) => {
-                                                                const updatedFields = fields.map(f =>
-                                                                    f.id === selectedFieldId ? { ...f, btnbgColor: color.hex } : f
-                                                                );
-                                                                setFields(updatedFields);
-                                                            }}
-                                                            disableAlpha
-                                                        />
+                                                        style={{
+                                                            width: "30px",
+                                                            height: "25px",
+                                                            backgroundColor: field.btnbgColor || "#6c757d",
+                                                            border: "1px solid #ccc",
+                                                            borderRadius: "4px",
+                                                            cursor: "pointer"
+                                                        }}
+                                                    ></div>
+
+                                                    {activeBtnColorPicker === "btnbgColor" && (
                                                         <div
-                                                            onClick={() => setActiveBtnColorPicker(null)}
+                                                            ref={pickerRef}
                                                             style={{
-                                                                marginTop: "5px",
-                                                                fontSize: "12px",
-                                                                color: "#374151",
-                                                                cursor: "pointer"
+                                                                position: "absolute",
+                                                                top: "35px",
+                                                                right: "35px", // show ChromePicker on left side of the box
+                                                                zIndex: 9999,
                                                             }}
+                                                            onClick={(e) => e.stopPropagation()}
                                                         >
-                                                            Close
+                                                            <ChromePicker
+                                                                color={field.btnbgColor || "#6c757d"}
+                                                                onChangeComplete={(color) => {
+                                                                    const updatedFields = fields.map(f =>
+                                                                        f.id === selectedFieldId ? { ...f, btnbgColor: color.hex } : f
+                                                                    );
+                                                                    setFields(updatedFields);
+                                                                }}
+                                                                disableAlpha
+                                                            />
+                                                            <div
+                                                                onClick={() => setActiveBtnColorPicker(null)}
+                                                                style={{
+                                                                    marginTop: "5px",
+                                                                    fontSize: "12px",
+                                                                    color: "#374151",
+                                                                    cursor: "pointer"
+                                                                }}
+                                                            >
+                                                                Close
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                )}
-                                            </div>
+                                                    )}
+                                                </div>
 
-                                            {/* Label Color */}
-                                            <div className="d-flex align-items-center justify-content-between mb-3" style={{ position: "relative" }}>
-                                                <label className="me-2" style={{ width: '150px' }}>Label Color</label>
-                                                <div
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setActiveBtnColorPicker("btnlabelColor");
-                                                    }}
-                                                    style={{
-                                                        width: "30px",
-                                                        height: "25px",
-                                                        backgroundColor: field.btnlabelColor || "#ffffff",
-                                                        border: "1px solid #ccc",
-                                                        borderRadius: "4px",
-                                                        cursor: "pointer"
-                                                    }}
-                                                ></div>
-
-                                                {activeBtnColorPicker === "btnlabelColor" && (
+                                                {/* Label Color */}
+                                                <div className="d-flex align-items-center justify-content-between mb-3" style={{ position: "relative" }}>
+                                                    <label className="me-2" style={{ width: '150px' }}>Label Color</label>
                                                     <div
-                                                        ref={pickerRef}
-                                                        style={{
-                                                            position: "absolute",
-                                                            top: "35px",
-                                                            right: "35px", // show ChromePicker on left side of the box
-                                                            zIndex: 9999,
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setActiveBtnColorPicker("btnlabelColor");
                                                         }}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <ChromePicker
-                                                            color={field.btnlabelColor || "#ffffff"}
-                                                            onChangeComplete={(color) => {
-                                                                const updatedFields = fields.map(f =>
-                                                                    f.id === selectedFieldId ? { ...f, btnlabelColor: color.hex } : f
-                                                                );
-                                                                setFields(updatedFields);
-                                                            }}
-                                                            disableAlpha
-                                                        />
+                                                        style={{
+                                                            width: "30px",
+                                                            height: "25px",
+                                                            backgroundColor: field.btnlabelColor || "#ffffff",
+                                                            border: "1px solid #ccc",
+                                                            borderRadius: "4px",
+                                                            cursor: "pointer"
+                                                        }}
+                                                    ></div>
+
+                                                    {activeBtnColorPicker === "btnlabelColor" && (
                                                         <div
-                                                            onClick={() => setActiveBtnColorPicker(null)}
+                                                            ref={pickerRef}
                                                             style={{
-                                                                marginTop: "5px",
-                                                                fontSize: "12px",
-                                                                color: "#374151",
-                                                                cursor: "pointer"
+                                                                position: "absolute",
+                                                                top: "35px",
+                                                                right: "35px", // show ChromePicker on left side of the box
+                                                                zIndex: 9999,
                                                             }}
+                                                            onClick={(e) => e.stopPropagation()}
                                                         >
-                                                            Close
+                                                            <ChromePicker
+                                                                color={field.btnlabelColor || "#ffffff"}
+                                                                onChangeComplete={(color) => {
+                                                                    const updatedFields = fields.map(f =>
+                                                                        f.id === selectedFieldId ? { ...f, btnlabelColor: color.hex } : f
+                                                                    );
+                                                                    setFields(updatedFields);
+                                                                }}
+                                                                disableAlpha
+                                                            />
+                                                            <div
+                                                                onClick={() => setActiveBtnColorPicker(null)}
+                                                                style={{
+                                                                    marginTop: "5px",
+                                                                    fontSize: "12px",
+                                                                    color: "#374151",
+                                                                    cursor: "pointer"
+                                                                }}
+                                                            >
+                                                                Close
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </>
-                                    );
-                                })()}
+                                                    )}
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
 
-                            </div>
-                        </div>
-                    )}
-                </>
-            )
-            }
-
-            <div className="modal fade" id="fontModal" tabIndex="-1" aria-hidden="true">
-                <div className="modal-dialog modal-lg modal-dialog-centered">
-                    <div className="modal-content p-0">
-                        <div className="modal-header updated-header">
-                            <h5 className="modal-title">Choose a Font</h5>
-                            <button
-                                id="fontCloseBtn"
-                                type="button"
-                                className="btn-close"
-                                data-bs-dismiss="modal"
-                                aria-label="Close"
-                            ><i class="fa-solid fa-xmark"></i></button>
-                        </div>
-                        <div className="modal-body">
-                            {/* Search Bar */}
-                            <div className="px-3 pb-2">
-                                <input
-                                    className="form-control"
-                                    placeholder="Search fonts"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                />
-                            </div>
-
-                            {/* Fonts Grid */}
-                            <div className="modal-options px-3 pb-3">
-                                <div style={{
-                                    display: "grid",
-                                    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                                    gap: "15px"
-                                }}>
-                                    {filteredFonts.map(font => (
-                                        <div
-                                            key={font}
-                                            onClick={() => handleFontSelect(font)}
-                                            style={{
-                                                fontFamily: `'${font}', sans-serif`,
-                                                border: tempFont === font ? "2px solid #1976d2" : "1px solid #ccc",
-                                                backgroundColor: tempFont === font ? "#e3f2fd" : "#fff",
-                                                padding: "15px",
-                                                borderRadius: "10px",
-                                                height: "120px",
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                justifyContent: "center",
-                                                position: "relative",
-                                                cursor: "pointer",
-                                                transition: "all 0.2s ease-in-out"
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                if (tempFont !== font) e.currentTarget.style.backgroundColor = "#f0f8ff";
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                if (tempFont !== font) e.currentTarget.style.backgroundColor = "#fff";
-                                            }}
-                                        >
-                                            <div style={{ fontSize: "14px" }}>The quick brown fox jumped over the lazy dog</div>
-                                            <div style={{ fontSize: "12px", marginTop: "8px", color: "#555" }}>{font}</div>
-
-                                            {tempFont === font && (
-                                                <i
-                                                    className="fas fa-check-circle"
-                                                    style={{
-                                                        color: "#1976d2",
-                                                        position: "absolute",
-                                                        top: "10px",
-                                                        right: "10px",
-                                                        fontSize: "18px"
-                                                    }}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSelectedFont("");
-                                                        setTempFont("");
-                                                    }}
-                                                ></i>
-                                            )}
-                                        </div>
-                                    ))}
                                 </div>
                             </div>
-                        </div>
+                        )}
+                    </>
+                )
+                }
 
-                        {/* Footer Buttons */}
-                        <div className="modal-footer justify-content-end">
-                            <button
-                                className="btn btn-primary"
-                                disabled={!tempFont}
-                                onClick={handleDone}
-                            >
-                                Done
-                            </button>
+                <div className="modal fade" id="fontModal" tabIndex="-1" aria-hidden="true">
+                    <div className="modal-dialog modal-lg modal-dialog-centered">
+                        <div className="modal-content p-0">
+                            <div className="modal-header updated-header">
+                                <h5 className="modal-title">Choose a Font</h5>
+                                <button
+                                    id="fontCloseBtn"
+                                    type="button"
+                                    className="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"
+                                ><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div className="modal-body">
+                                {/* Search Bar */}
+                                <div className="px-3 pb-2">
+                                    <input
+                                        className="form-control"
+                                        placeholder="Search fonts"
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                    />
+                                </div>
+
+                                {/* Fonts Grid */}
+                                <div className="modal-options px-3 pb-3">
+                                    <div style={{
+                                        display: "grid",
+                                        gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                                        gap: "15px"
+                                    }}>
+                                        {filteredFonts.map(font => (
+                                            <div
+                                                key={font}
+                                                onClick={() => handleFontSelect(font)}
+                                                style={{
+                                                    fontFamily: `'${font}', sans-serif`,
+                                                    border: tempFont === font ? "2px solid #1976d2" : "1px solid #ccc",
+                                                    backgroundColor: tempFont === font ? "#e3f2fd" : "#fff",
+                                                    padding: "15px",
+                                                    borderRadius: "10px",
+                                                    height: "120px",
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    justifyContent: "center",
+                                                    position: "relative",
+                                                    cursor: "pointer",
+                                                    transition: "all 0.2s ease-in-out"
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    if (tempFont !== font) e.currentTarget.style.backgroundColor = "#f0f8ff";
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    if (tempFont !== font) e.currentTarget.style.backgroundColor = "#fff";
+                                                }}
+                                            >
+                                                <div style={{ fontSize: "14px" }}>The quick brown fox jumped over the lazy dog</div>
+                                                <div style={{ fontSize: "12px", marginTop: "8px", color: "#555" }}>{font}</div>
+
+                                                {tempFont === font && (
+                                                    <i
+                                                        className="fas fa-check-circle"
+                                                        style={{
+                                                            color: "#1976d2",
+                                                            position: "absolute",
+                                                            top: "10px",
+                                                            right: "10px",
+                                                            fontSize: "18px"
+                                                        }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedFont("");
+                                                            setTempFont("");
+                                                        }}
+                                                    ></i>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer Buttons */}
+                            <div className="modal-footer justify-content-end">
+                                <button
+                                    className="btn btn-primary"
+                                    disabled={!tempFont}
+                                    onClick={handleDone}
+                                >
+                                    Done
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div
-                className={`modal fade ${showModal ? "show d-block" : ""}`}
-                id="createFormModalCenter"
-                tabIndex="-1"
-                role="dialog"
-                aria-labelledby="createFormModalCenterTitle"
-                aria-hidden={!showModal}
-                style={{ backgroundColor: showModal ? "rgba(0,0,0,0.5)" : "transparent" }}
-            >
-                <div className="modal-dialog modal-dialog-centered" role="document">
-                    <div className="modal-content custom-modal p-0">
-                        <div className="modal-header border-0 pb-0">
-                            <h5 className="modal-title">Name your form</h5>
-                            <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} onClick={() => { navigate("/home"); }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
-                        </div>
-                        <div className="modal-body pt-2">
-                            <input
-                                type="text"
-                                id="formNameInput"
-                                className="form-control custom-input"
-                                value={formTitle}
-                                onChange={(e) => setFormTitle(e.target.value)}
-                            />
-                        </div>
-                        <div className="modal-footer border-0 pt-0 justify-content-end">
-                            <button type="button" id="continueButton" className="btn btn-primary custom-continue-btn" onClick={handleContinue}>Continue</button>
+                <div
+                    className={`modal fade ${showModal ? "show d-block" : ""}`}
+                    id="createFormModalCenter"
+                    tabIndex="-1"
+                    role="dialog"
+                    aria-labelledby="createFormModalCenterTitle"
+                    aria-hidden={!showModal}
+                    style={{ backgroundColor: showModal ? "rgba(0,0,0,0.5)" : "transparent" }}
+                >
+                    <div className="modal-dialog modal-dialog-centered" role="document">
+                        <div className="modal-content custom-modal p-0">
+                            <div className="modal-header border-0 pb-0">
+                                <h5 className="modal-title">Name your form</h5>
+                                <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} onClick={() => { navigate("/home"); }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div className="modal-body pt-2">
+                                <input
+                                    type="text"
+                                    id="formNameInput"
+                                    className="form-control custom-input"
+                                    value={formTitle}
+                                    onChange={(e) => setFormTitle(e.target.value)}
+                                />
+                            </div>
+                            <div className="modal-footer border-0 pt-0 justify-content-end">
+                                <button type="button" id="continueButton" className="btn btn-primary custom-continue-btn" onClick={handleContinue}>Continue</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div
-                className={`modal fade ${showTemplateModal ? "show d-block" : ""}`}
-                id="TemplateFormModalCenter"
-                tabIndex="-1"
-                role="dialog"
-                aria-labelledby="TemplateFormModalCenterTitle"
-                aria-hidden={!showTemplateModal}
-                style={{ backgroundColor: showTemplateModal ? "rgba(0,0,0,0.5)" : "transparent" }}
-            >
-                <div className="modal-dialog modal-dialog-centered" role="document">
-                    <div className="modal-content custom-modal p-0">
-                        <div className="modal-header border-0 pb-0">
-                            <h5 className="modal-title">Name your form</h5>
-                            <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} onClick={() => { navigate("/home"); }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
-                        </div>
-                        <div className="modal-body pt-2">
-                            <input
-                                type="text"
-                                id="formNameInput"
-                                className="form-control custom-input"
-                                value={templateFormTitle}
-                                onChange={(e) => setTemplateFormTitle(e.target.value)}
-                            />
-                        </div>
-                        <div className="modal-footer border-0 pt-0 justify-content-end">
-                            <button type="button" id="continueButton" className="btn btn-primary custom-continue-btn" onClick={handleTemplateFormContinue}>Continue</button>
+                <div
+                    className={`modal fade ${showTemplateModal ? "show d-block" : ""}`}
+                    id="TemplateFormModalCenter"
+                    tabIndex="-1"
+                    role="dialog"
+                    aria-labelledby="TemplateFormModalCenterTitle"
+                    aria-hidden={!showTemplateModal}
+                    style={{ backgroundColor: showTemplateModal ? "rgba(0,0,0,0.5)" : "transparent" }}
+                >
+                    <div className="modal-dialog modal-dialog-centered" role="document">
+                        <div className="modal-content custom-modal p-0">
+                            <div className="modal-header border-0 pb-0">
+                                <h5 className="modal-title">Name your form</h5>
+                                <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} onClick={() => { navigate("/home"); }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div className="modal-body pt-2">
+                                <input
+                                    type="text"
+                                    id="formNameInput"
+                                    className="form-control custom-input"
+                                    value={templateFormTitle}
+                                    onChange={(e) => setTemplateFormTitle(e.target.value)}
+                                />
+                            </div>
+                            <div className="modal-footer border-0 pt-0 justify-content-end">
+                                <button type="button" id="continueButton" className="btn btn-primary custom-continue-btn" onClick={handleTemplateFormContinue}>Continue</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div
-                className={`modal fade ${showNewPageModal ? "show d-block" : ""}`}
-                id="newPageModalCenter"
-                tabIndex="-1"
-                role="dialog"
-                aria-labelledby="newPageModalCenterTitle"
-                aria-hidden={!showNewPageModal}
-                style={{ backgroundColor: showNewPageModal ? "rgba(0,0,0,0.5)" : "transparent" }}
-            >
-                <div className="modal-dialog modal-dialog-centered" role="document">
-                    <div className="modal-content custom-modal p-0">
-                        <div className="modal-header border-0 pb-0">
-                            <h5 className="modal-title">Name your form page</h5>
-                            <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} onClick={() => { setShowNewPageModal(false) }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
-                        </div>
-                        <div className="modal-body pt-2">
-                            <input
-                                type="text"
-                                id="formNewPageInput"
-                                className="form-control custom-input"
-                                value={newPageTitle}
-                                onChange={(e) => setNewPageTitle(e.target.value)}
-                            />
-                        </div>
-                        <div className="modal-footer border-0 pt-0 justify-content-end">
-                            <button type="button" id="continueButton" className="btn btn-primary custom-continue-btn" onClick={handleNewPageContinue}>Continue</button>
+                <div
+                    className={`modal fade ${showNewPageModal ? "show d-block" : ""}`}
+                    id="newPageModalCenter"
+                    tabIndex="-1"
+                    role="dialog"
+                    aria-labelledby="newPageModalCenterTitle"
+                    aria-hidden={!showNewPageModal}
+                    style={{ backgroundColor: showNewPageModal ? "rgba(0,0,0,0.5)" : "transparent" }}
+                >
+                    <div className="modal-dialog modal-dialog-centered" role="document">
+                        <div className="modal-content custom-modal p-0">
+                            <div className="modal-header border-0 pb-0">
+                                <h5 className="modal-title">Name your form page</h5>
+                                <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} onClick={() => { setShowNewPageModal(false) }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div className="modal-body pt-2">
+                                <input
+                                    type="text"
+                                    id="formNewPageInput"
+                                    className="form-control custom-input"
+                                    value={newPageTitle}
+                                    onChange={(e) => setNewPageTitle(e.target.value)}
+                                />
+                            </div>
+                            <div className="modal-footer border-0 pt-0 justify-content-end">
+                                <button type="button" id="continueButton" className="btn btn-primary custom-continue-btn" onClick={handleNewPageContinue}>Continue</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div className="modal fade" id="DuplicateModalCenter" tabIndex="-1" role="dialog" aria-hidden="true" >
-                <div className="modal-dialog modal-dialog-centered" role="document">
-                    <div className="modal-content custom-modal p-0">
-                        <div className="modal-header border-0 pb-0">
-                            <h5 className="modal-title">Name your page</h5>
-                            <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
-                        </div>
-                        <div className="modal-body pt-2">
-                            <input
-                                type="text"
-                                className="form-control"
-                                value={duplicatePageTitle}
-                                onChange={(e) => setDuplicatePageTitle(e.target.value)}
-                            />
-                        </div>
-                        <div className="modal-footer border-0 pt-0 justify-content-end">
-                            <button
-                                className="btn btn-primary"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDuplicatePage();
-                                }}
-                            >
-                                Continue
-                            </button>
+                <div className="modal fade" id="DuplicateModalCenter" tabIndex="-1" role="dialog" aria-hidden="true" >
+                    <div className="modal-dialog modal-dialog-centered" role="document">
+                        <div className="modal-content custom-modal p-0">
+                            <div className="modal-header border-0 pb-0">
+                                <h5 className="modal-title">Name your page</h5>
+                                <button type="button" className="btn-close" style={{ outline: "none", border: "none", boxShadow: "none" }} data-bs-dismiss="modal" aria-label="Close"><i className="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div className="modal-body pt-2">
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={duplicatePageTitle}
+                                    onChange={(e) => setDuplicatePageTitle(e.target.value)}
+                                />
+                            </div>
+                            <div className="modal-footer border-0 pt-0 justify-content-end">
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDuplicatePage();
+                                    }}
+                                >
+                                    Continue
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-        </div >
+            </div >
+        </>
     );
 };
 

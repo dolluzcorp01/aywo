@@ -137,6 +137,13 @@
     padding: 5px 20.5px
 }
 
+.form_builder_header-publish-btn.dimmed {
+    opacity: 0.75;
+    pointer-events: none;
+    background-color: #d1d5db;
+    color: #374151;
+}
+
 @media (max-width: 768px) {
     .form_builder_header-right {
         display: none;

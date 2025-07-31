@@ -31,33 +31,25 @@ function App() {
       <Route
         path="/form-builder"
         element={
-          <FormBuilderLayout>
-            <FormBuilder />
-          </FormBuilderLayout>
+          <FormBuilder />
         }
       />
       <Route
         path="/form-builder/:template"
         element={
-          <FormBuilderLayout>
-            <FormBuilder />
-          </FormBuilderLayout>
+          <FormBuilder />
         }
       />
       <Route
         path="/form-builder/:formId/:pageId"
         element={
-          <FormBuilderLayout>
-            <FormBuilder />
-          </FormBuilderLayout>
+          <FormBuilder />
         }
       />
       <Route
         path="/form-builder/:formId/page-:pageId"
         element={
-          <FormBuilderLayout>
-            <FormBuilder />
-          </FormBuilderLayout>
+          <FormBuilder />
         }
       />
 
