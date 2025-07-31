@@ -51,7 +51,8 @@ router.get("/get-responses/:formId", async (req, res) => {
             answers: responseFields
                 .filter(({ response_id }) => response_id === response.response_id)
                 .map(({ field_id, label, answer, type }) => {
-                    const isFile = answer && answer.includes("/");
+                    const isFile = answer && /^\/?uploads\/.+\.\w+$/.test(answer);
+
                     return {
                         field_id,
                         label,
