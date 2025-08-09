@@ -4540,29 +4540,32 @@ const FormBuilder = () => {
                                                                             handlePageNavigation(page.page_number);
                                                                         }}
                                                                     >
-                                                                        {/* Icon - three dots for active, form icon otherwise */}
                                                                         <i
                                                                             className={`fas ${isActive ? "fa-ellipsis-vertical" : "fa-file-alt"}`}
                                                                             onClick={(e) => {
                                                                                 if (isActive) {
                                                                                     handleMenuToggle(e, page.id);
-                                                                                    e.preventDefault(); // prevent navigation
-                                                                                    e.stopPropagation(); // only popup opens
+                                                                                    e.preventDefault();
+                                                                                    e.stopPropagation();
                                                                                 }
                                                                             }}
                                                                             style={{ cursor: isActive ? "pointer" : "default" }}
                                                                         ></i>
 
                                                                         <span>{page.page_title || `Page ${index + 1}`}</span>
-
                                                                     </div>
-                                                                )
-                                                                }
+                                                                )}
                                                             </Draggable>
                                                         );
                                                     })}
                                                     {provided.placeholder}
-                                                    <div className="d-flex align-items-center gap-1 text-muted" onClick={() => { handleEndingPage() }}>
+
+                                                    {/* Ending Page */}
+                                                    <div
+                                                        className={`d-flex align-items-center gap-1 ${location.pathname.includes("/page-end") ? "active-page" : "text-muted"}`}
+                                                        onClick={() => { handleEndingPage() }}
+                                                        style={{ cursor: "pointer" }}
+                                                    >
                                                         <i className="fas fa-check-circle"></i>
                                                         <span>Ending</span>
                                                     </div>
