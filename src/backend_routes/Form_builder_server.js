@@ -37,7 +37,6 @@ const checkDuplicateFormTitle = async (userId, title, formId = null) => {
     const result = await queryPromise(db, query, params);
     return result[0].count > 0;
 };
-
 router.post("/create", verifyJWT, async (req, res) => {
     const { title } = req.body;
     const userId = req.user_id;
@@ -56,7 +55,7 @@ router.post("/create", verifyJWT, async (req, res) => {
             return res.status(409).json({ message: "Form title already exists" });
         }
 
-        // Insert into dforms
+        // 1️⃣ Insert into dforms
         const formQuery = `
             INSERT INTO dforms (
                 user_id, title, internal_note, starred, is_closed,
@@ -67,36 +66,50 @@ router.post("/create", verifyJWT, async (req, res) => {
         const formResult = await queryPromise(db, formQuery, [userId, title]);
         const formId = formResult.insertId;
 
-        // Insert first page
-        const pageQuery = `
-            INSERT INTO dform_pages (form_id, page_title, sort_order, page_number)
-            VALUES (?, 'Page', 1, 1)
-        `;
-        const pageResult = await queryPromise(db, pageQuery, [formId]);
+        // This is the default fields_version for both heading + next
+        const fieldsVersion = 1;
 
-        // Insert "Thank You" field into dform_fields
-        const thankYouFieldQuery = `
+        // 2️⃣ Insert Heading field on "start" page
+        await queryPromise(db, `
+            INSERT INTO dform_fields (
+                form_id, page_id, type, label, placeholder, caption, default_value,
+                description, alert_type, font_size, required, sort_order,
+                min_value, max_value, fields_version, heading_alignment, created_at
+            ) VALUES (?, ?, 'Start_pg_Heading', ?, '', '', '', '', 'info', 24, 'No', 0, NULL, NULL, ?, 'center', NOW())
+        `, [formId, 'start', title, fieldsVersion]);
+
+        // 3️⃣ Insert Next button on "start" page
+        await queryPromise(db, `
+            INSERT INTO dform_fields (
+                form_id, page_id, type, label, placeholder, caption, default_value,
+                description, alert_type, font_size, required, sort_order,
+                min_value, max_value, btnalignment, btnbgColor, btnlabelColor,
+                fields_version, created_at
+            ) VALUES (?, ?, 'Next', 'Next', '', '', '', '', 'info', 14, 'No', 0, NULL, NULL, 'left', '#3b82f6', '#FFFFFF', ?, NOW())
+        `, [formId, 'start', fieldsVersion]);
+
+        // 4️⃣ Insert Thank You field on "end" page
+        const thankYouFieldResult = await queryPromise(db, `
             INSERT INTO dform_fields (
                 form_id, page_id, type, label, placeholder, caption, default_value,
                 description, alert_type, font_size, required, sort_order,
                 min_value, max_value, fields_version, created_at
-            ) VALUES (?, ?, 'ThankYou', 'ThankYou', '', '', '', '', 'info', 16, 'No', 0, NULL, NULL, 1, NOW())
-        `;
-        const thankYouFieldResult = await queryPromise(db, thankYouFieldQuery, [formId, 'end']);
+            ) VALUES (?, ?, 'ThankYou', 'ThankYou', '', '', '', '', 'info', 16, 'No', 0, NULL, NULL, ?, NOW())
+        `, [formId, 'end', fieldsVersion]);
+
         const fieldId = thankYouFieldResult.insertId;
 
-        // Insert into dform_thankyou
-        const thankYouQuery = `
+        // 5️⃣ Link Thank You field in dform_thankyou
+        await queryPromise(db, `
             INSERT INTO dform_thankyou (form_id, field_id)
             VALUES (?, ?)
-        `;
-        await queryPromise(db, thankYouQuery, [formId, fieldId]);
+        `, [formId, fieldId]);
 
         res.status(200).json({
             form_id: formId,
-            page_id: '1',
+            page_id: 'start',
             thank_you_field_id: fieldId,
-            message: "Form, page, and thank you components created successfully"
+            message: "Form, heading, next button, and thank you components created successfully"
         });
 
     } catch (error) {
@@ -949,7 +962,7 @@ router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res
         `;
         const [page] = await queryPromise(db, pageQuery, [pageId, formId]);
 
-        if (!page && pageId !== "end") {
+        if (!page && pageId !== "end" && pageId !== "start") {
             return res.status(404).json({ error: "Page not found for this form" });
         }
 

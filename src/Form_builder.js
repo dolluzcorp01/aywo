@@ -20,6 +20,7 @@ import "./Form_builder.css";
 
 const fieldIcons = {
     "Heading": <FaHeading />,
+    "start_pg_Heading": <FaHeading />,
     "Paragraph": <FaAlignLeft />,
     "Banner": <FaFileAlt />,
 
@@ -129,7 +130,7 @@ const FormBuilder = () => {
     const [showArrows, setShowArrows] = useState(false);
 
     const urlmatch = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
-    const pageId = urlmatch ? Number(urlmatch[2]) : null;
+    const pageId = urlmatch ? urlmatch[2] : null;
 
     // Check overflow on mount & when pages change
     useEffect(() => {
@@ -864,12 +865,58 @@ const FormBuilder = () => {
         }
     };
 
-    const handleEndingPage = async () => {
+    const handleStartingPage = async () => {
         try {
             const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
             const formId = match ? match[1] : null;
 
-            navigate(`/form-builder/form-${formId}/page-end`);
+            if (isSaveEnabled) {
+                Swal.fire({
+                    title: "Unsaved changes",
+                    text: "You have unsaved changes. Do you want to leave without saving?",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Leave without saving",
+                    cancelButtonText: "Stay on page",
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        navigate(`/form-builder/form-${formId}/page-start`);
+                    }
+                    // If they click cancel: do nothing
+                });
+            } else {
+                navigate(`/form-builder/form-${formId}/page-start`);
+            }
+        } catch (error) {
+            console.error("❌ Error loading pages:", error);
+        }
+    };
+
+    const handleEndingPage = async () => {
+        try {
+            const match = location.pathname.match(/\/form-builder\/form-(\d+)/);
+            const formId = match ? match[1] : null;
+            if (isSaveEnabled) {
+                Swal.fire({
+                    title: "Unsaved changes",
+                    text: "You have unsaved changes. Do you want to leave without saving?",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Leave without saving",
+                    cancelButtonText: "Stay on page",
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        navigate(`/form-builder/form-${formId}/page-end`);
+                    }
+                    // If they click cancel: do nothing
+                });
+            } else {
+                navigate(`/form-builder/form-${formId}/page-end`);
+            }
         } catch (error) {
             console.error("❌ Error loading pages:", error);
         }
@@ -1029,7 +1076,7 @@ const FormBuilder = () => {
     };
 
     const handleNewPageContinue = async () => {
-        const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\d+)/);
+        const match = location.pathname.match(/\/form-builder\/form-(\d+)\/page-(\w+)/);
         const formId = match ? match[1] : null;
 
         const pageTitle = newPageTitle.trim();
@@ -1419,7 +1466,26 @@ const FormBuilder = () => {
         const pageIdentifier = match ? match[1] : null;
 
         // ✅ If pageIdentifier is 'end', then skip Submit/Next
+        // ✅ Determine button type for special pages
         if (pageIdentifier === "end") {
+            setFields(updatedFields);
+            setSelectedFieldId(newField.id);
+            setCustomizeVisible(true);
+            return;
+        }
+
+        if (pageIdentifier === "start") {
+            updatedFields.push({
+                id: Date.now() + 1,
+                type: "Next",
+                field_type: "Next",
+                label: "Next",
+                btnalignment: "left",
+                btnbgColor: formPrimaryColor,
+                btnlabelColor: "#FFFFFF",
+                fontSize: 16,
+                customized: {}
+            });
             setFields(updatedFields);
             setSelectedFieldId(newField.id);
             setCustomizeVisible(true);
@@ -1692,60 +1758,116 @@ const FormBuilder = () => {
                         }}
                     />
                 );
-            case "Heading": {
-                const headingAlign = field.alignment || "center";
+            case "Start_pg_Heading":
+                {
+                    const headingAlign = field.alignment || "center";
 
-                const handleHeadingChange = (e) => {
-                    const updatedFields = fields.map(f =>
-                        f.id === field.id ? { ...f, label: e.target.value } : f
-                    );
-                    setFields(updatedFields);
+                    const handleHeadingChange = (e) => {
+                        const updatedFields = fields.map(f =>
+                            f.id === field.id ? { ...f, label: e.target.value } : f
+                        );
+                        setFields(updatedFields);
 
-                    const el = e.target;
-                    el.style.height = "auto";
-                    el.style.height = `${el.scrollHeight}px`;
-                };
+                        const el = e.target;
+                        el.style.height = "auto";
+                        el.style.height = `${el.scrollHeight}px`;
+                    };
 
-                return (
-                    <div key={field.id} style={{ textAlign: headingAlign }}>
-                        <textarea
-                            ref={headingTextareaRef}
-                            value={field.label}
-                            onChange={handleHeadingChange}
-                            style={{
-                                fontSize: field.font_size || "24px",
-                                fontWeight: "bold",
-                                border: "none",
-                                background: "transparent",
-                                width: "100%",
-                                margin: "8px 0 4px 0",
-                                color: formQuestionColor,
-                                fontFamily: selectedFont,
-                                textAlign: headingAlign,
-                                resize: "none",
-                                overflow: "hidden",
-                                outline: "none",
-                                whiteSpace: "pre-wrap"
-                            }}
-                            rows={1}
-                        />
-
-                        {field.caption && (
-                            <div
+                    return (
+                        <div key={field.id} style={{ textAlign: headingAlign }}>
+                            <textarea
+                                ref={headingTextareaRef}
+                                value={field.label}
+                                onChange={handleHeadingChange}
                                 style={{
-                                    fontSize: "0.85rem",
-                                    color: "#6b7280",
+                                    fontSize: field.font_size || "24px",
+                                    fontWeight: "bold",
+                                    border: "none",
+                                    background: "transparent",
+                                    width: "100%",
+                                    margin: "8px 0 4px 0",
+                                    color: formQuestionColor,
                                     fontFamily: selectedFont,
                                     textAlign: headingAlign,
-                                    marginBottom: "6px"
+                                    resize: "none",
+                                    overflow: "hidden",
+                                    outline: "none",
+                                    whiteSpace: "pre-wrap"
                                 }}
-                            >
-                                {field.caption}
-                            </div>
-                        )}
-                    </div>
-                );
-            }
+                                rows={1}
+                            />
+
+                            {field.caption && (
+                                <div
+                                    style={{
+                                        fontSize: "0.85rem",
+                                        color: "#6b7280",
+                                        fontFamily: selectedFont,
+                                        textAlign: headingAlign,
+                                        marginBottom: "6px"
+                                    }}
+                                >
+                                    {field.caption}
+                                </div>
+                            )}
+                        </div>
+                    );
+                }
+            case "Heading":
+                {
+                    const headingAlign = field.alignment || "center";
+
+                    const handleHeadingChange = (e) => {
+                        const updatedFields = fields.map(f =>
+                            f.id === field.id ? { ...f, label: e.target.value } : f
+                        );
+                        setFields(updatedFields);
+
+                        const el = e.target;
+                        el.style.height = "auto";
+                        el.style.height = `${el.scrollHeight}px`;
+                    };
+
+                    return (
+                        <div key={field.id} style={{ textAlign: headingAlign }}>
+                            <textarea
+                                ref={headingTextareaRef}
+                                value={field.label}
+                                onChange={handleHeadingChange}
+                                style={{
+                                    fontSize: field.font_size || "24px",
+                                    fontWeight: "bold",
+                                    border: "none",
+                                    background: "transparent",
+                                    width: "100%",
+                                    margin: "8px 0 4px 0",
+                                    color: formQuestionColor,
+                                    fontFamily: selectedFont,
+                                    textAlign: headingAlign,
+                                    resize: "none",
+                                    overflow: "hidden",
+                                    outline: "none",
+                                    whiteSpace: "pre-wrap"
+                                }}
+                                rows={1}
+                            />
+
+                            {field.caption && (
+                                <div
+                                    style={{
+                                        fontSize: "0.85rem",
+                                        color: "#6b7280",
+                                        fontFamily: selectedFont,
+                                        textAlign: headingAlign,
+                                        marginBottom: "6px"
+                                    }}
+                                >
+                                    {field.caption}
+                                </div>
+                            )}
+                        </div>
+                    );
+                }
             case "Banner":
                 const alert_type = field.alert_type || "info"; // Default to 'info'
 
@@ -3373,7 +3495,9 @@ const FormBuilder = () => {
                 );
             case "Next":
                 const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
-                const isFirstPage = sortedPages.findIndex(p => p.page_number === parseInt(pageId)) === 0;
+
+                // ✅ Check if it's start page explicitly
+                const isFirstPage = pageId === "start";
 
                 return (
                     <div style={{
@@ -3681,7 +3805,101 @@ const FormBuilder = () => {
                                     />
                                 </div>
 
-                                {window.location.pathname.endsWith('/page-end') ? (
+                                {window.location.pathname.endsWith("/page-start") && (
+                                    <div className="field-group-scrollable mt-2">
+                                        <div className="field-group mt-1">
+                                            <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)} disabled={!isSaveEnabled}>
+                                                Save Form
+                                            </button>
+                                        </div>
+                                        <div className="field-group mt-1">
+                                            <h4>Frequently used</h4>
+                                            <div className="field-grid">
+                                                {["Short Answer", "Multiple Choice", "Email"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Frequently used" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Display text</h4>
+                                            <div className="field-grid">
+                                                {["Heading", "Paragraph", "Banner"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Display text" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Choices</h4>
+                                            <div className="field-grid">
+                                                {[
+                                                    "Dropdown", "Picture", "Multiple Select", "Switch", "Multiple Choice", "Checkbox",
+                                                    "Multiple Select Checkboxes", "Choice Matrix"
+                                                ]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Choices" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Time</h4>
+                                            <div className="field-grid">
+                                                {["Date Picker", "Date Time Picker", "Time Picker", "Date Range"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Time" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Rating & Ranking</h4>
+                                            <div className="field-grid">
+                                                {["Ranking", "Star Rating", "Slider", "Opinion Scale"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Rating & Ranking" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Text</h4>
+                                            <div className="field-grid">
+                                                {["Short Answer", "Long Answer"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Text" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Contact Info</h4>
+                                            <div className="field-grid">
+                                                {["Email", "Number", "Address", "Document Type"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Contact Info" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Navigation & Layout</h4>
+                                            <div className="field-grid">
+                                                {["Divider"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Navigation & Layout" />)}
+                                            </div>
+                                        </div>
+
+                                        <div className="field-group mt-1">
+                                            <h4>Media</h4>
+                                            <div className="field-grid">
+                                                {["Image", "Video", "PDF", "YouTubeVideo"]
+                                                    .filter(type => type.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                    .map(type => <FieldButton key={type} type={type} section="Media" />)}
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                )}
+
+                                {window.location.pathname.endsWith('/page-end') && (
                                     <div className="field-group-scrollable mt-2">
                                         <div className="field-group mt-1">
                                             <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)} disabled={!isSaveEnabled}>
@@ -3715,7 +3933,9 @@ const FormBuilder = () => {
                                             </div>
                                         </div>
                                     </div>
-                                ) : (
+                                )}
+
+                                {!window.location.pathname.endsWith("/page-start") && !window.location.pathname.endsWith("/page-end") && (
                                     <div className="field-group-scrollable mt-2">
                                         <div className="field-group mt-1">
                                             <button className="save-form-btn" onClick={() => saveOrUpdateForm(true)} disabled={!isSaveEnabled}>
@@ -4252,7 +4472,7 @@ const FormBuilder = () => {
                                                                     </div>
 
                                                                     <div className="form-field-content">
-                                                                        {!["Heading", "Banner", "Divider", "Image", "Video", "YouTubeVideo", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) ? (
+                                                                        {!["Heading", "Start_pg_Heading", "Banner", "Divider", "Image", "Video", "YouTubeVideo", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) ? (
                                                                             <>
                                                                                 <div style={{ display: 'inline-flex', alignItems: 'center' }}>
                                                                                     <span
@@ -4313,7 +4533,7 @@ const FormBuilder = () => {
                                                                                 />
                                                                             </button>
 
-                                                                            {!["Next", "Submit"].includes(field.type) && (
+                                                                            {!["Next", "Submit", "Start_pg_Heading"].includes(field.type) && (
                                                                                 <>
                                                                                     <button
                                                                                         className="change-type"
@@ -4521,6 +4741,14 @@ const FormBuilder = () => {
                                                     {...provided.droppableProps}
                                                     ref={provided.innerRef}
                                                 >
+                                                    <div
+                                                        className={`d-flex align-items-center gap-1 ${location.pathname.includes("/page-start") ? "active-page" : "text-muted"}`}
+                                                        onClick={() => { handleStartingPage() }}
+                                                        style={{ cursor: "pointer" }}
+                                                    >
+                                                        <i className="fas fa-check-circle"></i>
+                                                        <span>Starting</span>
+                                                    </div>
                                                     {formPages.map((page, index) => {
                                                         const isActive = location.pathname.includes(`/page-${page.page_number}`);
                                                         return (
@@ -4754,7 +4982,7 @@ const FormBuilder = () => {
                                     )}
 
                                     {/* Show only Specific Fields */}
-                                    {!["Heading", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                    {!["Heading", "Start_pg_Heading", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                         <>
                                             <label>Caption</label>
                                             <input
@@ -4771,7 +4999,7 @@ const FormBuilder = () => {
                                         </>
                                     )}
 
-                                    {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Multiple Select Checkboxes", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                    {!["Heading", "Start_pg_Heading", "Banner", "Multiple Choice", "Checkbox", "Multiple Select Checkboxes", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Address", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                         <>
                                             <label>Placeholder</label>
                                             <input
@@ -4788,7 +5016,7 @@ const FormBuilder = () => {
                                         </>
                                     )}
 
-                                    {!["Heading", "Banner", "Multiple Choice", "Checkbox", "Multiple Select Checkboxes", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                    {!["Heading", "Start_pg_Heading", "Banner", "Multiple Choice", "Checkbox", "Multiple Select Checkboxes", "Dropdown", "Multiple Select", "Picture", "Switch", "Choice Matrix", "Date Picker", "Date Time Picker", "Time Picker", "Date Range", "Ranking", "Star Rating", "Slider", "Opinion Scale", "Number", "Address", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "Document Type", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                         <>
                                             <label>Default value<span title="Initial value" style={{ cursor: "help" }}>🛈</span></label>
                                             <input
@@ -4839,6 +5067,77 @@ const FormBuilder = () => {
 
                                     {/* ✅ Style section for Heading */}
                                     {fields.find(f => f.id === selectedFieldId)?.type === "Heading" && (
+                                        <>
+                                            <label>Font Size (px)</label>
+                                            <input
+                                                type="number"
+                                                min={12}
+                                                max={48}
+                                                className="form-control"
+                                                value={parseInt(fields.find(f => f.id === selectedFieldId)?.font_size || "24")}
+                                                onChange={(e) => {
+                                                    const updatedFields = fields.map(f =>
+                                                        f.id === selectedFieldId ? { ...f, font_size: `${e.target.value}px` } : f
+                                                    );
+                                                    setFields(updatedFields);
+                                                }}
+                                            />
+
+                                            <label>Caption</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                value={fields.find(f => f.id === selectedFieldId)?.caption ?? ""}
+                                                placeholder="Description"
+                                                onChange={(e) => {
+                                                    const updatedFields = fields.map(f => {
+                                                        if (f.id === selectedFieldId) {
+                                                            return { ...f, caption: e.target.value };
+                                                        }
+                                                        return f;
+                                                    });
+                                                    setFields(updatedFields);
+                                                }}
+                                            />
+
+                                            {/* Heading Alignment */}
+                                            <label className="mt-3">Heading Alignment</label>
+                                            <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+                                                {["left", "center", "right"].map((align) => {
+                                                    const icons = {
+                                                        left: "⬅️",
+                                                        center: "↔️",
+                                                        right: "➡️"
+                                                    };
+                                                    return (
+                                                        <button
+                                                            key={align}
+                                                            onClick={() => {
+                                                                const updatedFields = fields.map(f =>
+                                                                    f.id === selectedFieldId ? { ...f, alignment: align } : f
+                                                                );
+                                                                setFields(updatedFields);
+                                                            }}
+                                                            style={{
+                                                                padding: "6px 10px",
+                                                                fontSize: "1.2rem",
+                                                                border: fields.find(f => f.id === selectedFieldId)?.alignment === align
+                                                                    ? "2px solid #007bff"
+                                                                    : "1px solid lightgray",
+                                                                borderRadius: "5px",
+                                                                background: "white",
+                                                                cursor: "pointer"
+                                                            }}
+                                                        >
+                                                            {icons[align]}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {fields.find(f => f.id === selectedFieldId)?.type === "Start_pg_Heading" && (
                                         <>
                                             <label>Font Size (px)</label>
                                             <input
@@ -5367,7 +5666,7 @@ const FormBuilder = () => {
                                         );
                                     })()}
 
-                                    {!["Heading", "Banner", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
+                                    {!["Heading", "Start_pg_Heading", "Banner", "Divider", "Image", "Video", "PDF", "YouTubeVideo", "ThankYou", "Submit", "Next"].includes(fields.find(f => f.id === selectedFieldId)?.type) && (
                                         <>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
                                                 {/* Required Row */}
