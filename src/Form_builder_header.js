@@ -49,7 +49,7 @@ const Form_builder_header = ({ isSaveEnabled }) => {
     const formIdforfetch = match ? match[1] : null;
     const pageIdforfetch = match ? match[2] : null;
 
-    const preview_pg_match = location.pathname.match(/\/preview\/form-(\d+)\/page-(\d+|end)\/device-(\w+)/);
+    const preview_pg_match = location.pathname.match(/\/preview\/form-(\d+)\/page-(\d+|start|end)\/device-(\w+)/);
     const preview_pg_pageId = preview_pg_match ? preview_pg_match[2] : null;
 
     const [formPages, setFormPages] = useState([]);
@@ -88,6 +88,32 @@ const Form_builder_header = ({ isSaveEnabled }) => {
             console.error("❌ Error loading pages:", error);
         }
     };
+
+    useEffect(() => {
+        const match = location.pathname.match(/\/preview\/form-(\d+)\/page-(\d+|start|end)\/device-(\w+)/);
+        if (!match) return;
+
+        const [, formIdFromUrl, pageFromUrl, deviceFromUrl] = match;
+
+        if (pageFromUrl === "start") {
+            setSelectedPage({
+                page_number: "start",
+                page_title: "Page start",
+                id: "page-start"
+            });
+        } else if (pageFromUrl === "end") {
+            setSelectedPage({
+                page_number: "end",
+                page_title: "Page end",
+                id: "page-end"
+            });
+        } else {
+            const numericPage = formPages.find(p => p.page_number.toString() === pageFromUrl);
+            if (numericPage) {
+                setSelectedPage(numericPage);
+            }
+        }
+    }, [location.pathname, formPages]);
 
     useEffect(() => {
         populateProfileDetails();
@@ -516,7 +542,7 @@ const Form_builder_header = ({ isSaveEnabled }) => {
                     {(window.location.pathname.includes("form-builder") || window.location.pathname.includes("share")) && (
                         <button
                             className="form_builder_header-preview-btn"
-                            onClick={() => navigate(`/preview/${formId}/page-${form.page_id}/device-desktop`)}
+                            onClick={() => navigate(`/preview/${formId}/page-start/device-desktop`)}
                         >
                             Preview
                         </button>
@@ -568,6 +594,36 @@ const Form_builder_header = ({ isSaveEnabled }) => {
                                             zIndex: 1000,
                                         }}
                                     >
+                                        {/* 🔽 Hardcoded Page start option */}
+                                        <div
+                                            key="page-start"
+                                            className="form_builder_page-option"
+                                            style={{
+                                                padding: '8px 12px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                backgroundColor: selectedPage?.page_number === "start" ? '#2563eb' : 'white',
+                                                color: selectedPage?.page_number === "start" ? 'white' : 'black',
+                                            }}
+                                            onClick={() => {
+                                                setIsOpen(false);
+                                                navigate(`/preview/${formId}/page-start/device-${device}`);
+                                                // Delay setting selectedPage to avoid conflict with useEffect
+                                                setTimeout(() => {
+                                                    const startPageObj = {
+                                                        page_number: "start",
+                                                        page_title: "Page start",
+                                                        id: "page-start"
+                                                    };
+                                                    setSelectedPage(startPageObj);
+                                                }, 100);
+                                            }}
+                                        >
+                                            <i className="fa-solid fa-file-alt recently-viewed-icon" style={{ marginRight: '6px', color: "rgb(245, 158, 11)" }}></i>
+                                            Page start
+                                        </div>
+
                                         {[...formPages]
                                             .sort((a, b) => a.sort_order - b.sort_order) // Ensure sorted order
                                             .map((page) => (

@@ -1401,6 +1401,51 @@ router.post("/duplicate-template/:formId", verifyJWT, async (req, res) => {
 
         let versionCounter = 2;
 
+        const startPageFields = await queryPromise(connection, `
+                SELECT * 
+                FROM temlpates_dform_fields
+                WHERE form_id = ? 
+                AND page_id = "start"
+                AND fields_version = (
+                    SELECT MAX(fields_version) 
+                    FROM temlpates_dform_fields
+                    WHERE form_id = ? AND page_id = "start"
+                )
+            `, [formId, formId]);
+
+        // 2️⃣ Duplicate them into the new form with same fields_version
+        for (const field of startPageFields) {
+            await queryPromise(connection, `
+                INSERT INTO dform_fields (
+                    form_id, page_id, type, label, placeholder, caption, default_value,
+                    description, alert_type, font_size, required, sort_order,
+                    min_value, max_value, heading_alignment,
+                    btnalignment, btnbgColor, btnlabelColor, fields_version, created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            `, [
+                newFormId,
+                field.page_id,
+                field.type,
+                field.label,
+                field.placeholder,
+                field.caption,
+                field.default_value,
+                field.description,
+                field.alert_type,
+                field.font_size,
+                field.required,
+                field.sort_order,
+                field.min_value,
+                field.max_value,
+                field.heading_alignment,
+                field.btnalignment,
+                field.btnbgColor,
+                field.btnlabelColor,
+                field.fields_version
+            ]);
+        }
+
         // 👇 Hardcode ThankYou field before the loop
         const thankYouFieldResult = await queryPromise(connection, `
         INSERT INTO dform_fields 
@@ -1618,6 +1663,51 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
         const pages = await queryPromise(connection, `SELECT * FROM dform_pages WHERE form_id = ?`, [formId]);
 
         let versionCounter = 2;
+
+        const startPageFields = await queryPromise(connection, `
+                SELECT * 
+                FROM dform_fields
+                WHERE form_id = ? 
+                AND page_id = "start"
+                AND fields_version = (
+                    SELECT MAX(fields_version) 
+                    FROM dform_fields
+                    WHERE form_id = ? AND page_id = "start"
+                )
+            `, [formId, formId]);
+
+        // 2️⃣ Duplicate them into the new form with same fields_version
+        for (const field of startPageFields) {
+            await queryPromise(connection, `
+                INSERT INTO dform_fields (
+                    form_id, page_id, type, label, placeholder, caption, default_value,
+                    description, alert_type, font_size, required, sort_order,
+                    min_value, max_value, heading_alignment,
+                    btnalignment, btnbgColor, btnlabelColor, fields_version, created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            `, [
+                newFormId,
+                field.page_id,
+                field.type,
+                field.label,
+                field.placeholder,
+                field.caption,
+                field.default_value,
+                field.description,
+                field.alert_type,
+                field.font_size,
+                field.required,
+                field.sort_order,
+                field.min_value,
+                field.max_value,
+                field.heading_alignment,
+                field.btnalignment,
+                field.btnbgColor,
+                field.btnlabelColor,
+                field.fields_version
+            ]);
+        }
 
         // 👇 Hardcode ThankYou field before the loop
         const thankYouFieldResult = await queryPromise(connection, `

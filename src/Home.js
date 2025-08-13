@@ -215,7 +215,7 @@ function Home() {
 
   const handleFormClick = (form_id, page_id, title, response_count, published, internal_note, is_closed, starred) => {
     // Navigate to form builder
-    navigate(`/form-builder/form-${form_id}/page-${page_id}`);
+    navigate(`/form-builder/form-${form_id}/page-start`);
 
     // Update recently viewed forms
     const updatedRecentlyViewed = [{ form_id, page_id, title, response_count, published, internal_note, is_closed, starred }, ...recentlyViewed.filter(f => f.form_id !== form_id)].slice(0, 3);

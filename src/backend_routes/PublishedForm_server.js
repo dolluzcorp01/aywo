@@ -148,7 +148,7 @@ router.get("/get-published-form/:formId/:pageId", async (req, res) => {
         const pageQuery = "SELECT * FROM dform_pages WHERE form_id = ? AND page_number = ?";
         const [page] = await queryPromise(db, pageQuery, [formId, pageId]);
 
-        if (!page && pageId !== "end") {
+        if (!page && pageId !== "end" && pageId !== "start") {
             return res.status(404).json({ error: "Page not found" });
         }
 
