@@ -96,7 +96,7 @@ const Share = () => {
             setFormData(prev => ({ ...prev, published: 1 }));
 
             // ✅ Construct public URL
-            const publicUrl = `${window.location.origin}/forms/form-${formId}/page-${firstPageNumber}`;
+            const publicUrl = `${window.location.origin}/forms/form-${formId}/page-start`;
 
             // ✅ Copy link to clipboard
             try {
@@ -167,7 +167,7 @@ const Share = () => {
                             className="share-url-input"
                             value={
                                 formData
-                                    ? `${window.location.origin}/forms/form-${formData.form_id}/page-${formData.page_id}`
+                                    ? `${window.location.origin}/forms/form-${formData.form_id}/page-start`
                                     : ''
                             }
                             readOnly
@@ -175,7 +175,7 @@ const Share = () => {
                         <button
                             className="copy-btn"
                             onClick={() => {
-                                const shareUrl = `${window.location.origin}/forms/form-${formData.form_id}/page-${formData.page_id}`;
+                                const shareUrl = `${window.location.origin}/forms/form-${formData.form_id}/page-start`;
                                 navigator.clipboard.writeText(shareUrl);
 
                                 setToastMessage("Copied link to clipboard!");

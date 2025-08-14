@@ -357,7 +357,6 @@ const Preview = () => {
         );
     };
 
-
     const headingTextareaRef = useRef(null);
 
     useEffect(() => {

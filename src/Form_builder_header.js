@@ -310,7 +310,7 @@ const Form_builder_header = ({ isSaveEnabled }) => {
             }
 
             // ✅ Construct public URL
-            const publicUrl = `${window.location.origin}/forms/form-${cleanFormId}/page-${firstPageNumber}`;
+            const publicUrl = `${window.location.origin}/forms/form-${cleanFormId}/page-start`;
 
             // ✅ Copy link to clipboard
             if (document.hasFocus()) {

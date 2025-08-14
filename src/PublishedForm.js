@@ -411,6 +411,15 @@ const PublishedForm = () => {
         );
     };
 
+    const headingTextareaRef = useRef(null);
+
+    useEffect(() => {
+        if (headingTextareaRef.current) {
+            headingTextareaRef.current.style.height = "auto";
+            headingTextareaRef.current.style.height = `${headingTextareaRef.current.scrollHeight}px`;
+        }
+    }, [fields]);
+
     const renderField = (field) => {
         const commonProps = {
             className: "form-control",
@@ -441,6 +450,62 @@ const PublishedForm = () => {
                 return <input type="text" {...commonProps} />;
             case "Short Answer":
                 return <input type="text" {...commonProps} />;
+            case "Start_pg_Heading":
+                {
+                    const headingAlign = field.alignment || "center";
+
+                    const handleHeadingChange = (e) => {
+                        const updatedFields = fields.map(f =>
+                            f.id === field.id ? { ...f, label: e.target.value } : f
+                        );
+                        setFields(updatedFields);
+
+                        const el = e.target;
+                        el.style.height = "auto";
+                        el.style.height = `${el.scrollHeight}px`;
+                    };
+
+                    return (
+                        <div key={field.id} style={{ textAlign: headingAlign }}>
+                            <textarea
+                                ref={headingTextareaRef}
+                                value={field.label}
+                                onChange={handleHeadingChange}
+                                readOnly
+                                style={{
+                                    fontSize: field.font_size || "24px",
+                                    fontWeight: "bold",
+                                    border: "none",
+                                    background: "transparent",
+                                    width: "100%",
+                                    margin: "8px 0 4px 0",
+                                    color: formQuestionColor,
+                                    fontFamily: selectedFont,
+                                    textAlign: headingAlign,
+                                    resize: "none",
+                                    overflow: "hidden",
+                                    outline: "none",
+                                    whiteSpace: "pre-wrap"
+                                }}
+                                rows={1}
+                            />
+
+                            {field.caption && (
+                                <div
+                                    style={{
+                                        fontSize: "0.85rem",
+                                        color: "#6b7280",
+                                        fontFamily: selectedFont,
+                                        textAlign: headingAlign,
+                                        marginBottom: "6px"
+                                    }}
+                                >
+                                    {field.caption}
+                                </div>
+                            )}
+                        </div>
+                    );
+                }
             case "Heading":
                 return (
                     <HeadingField
@@ -1920,7 +1985,9 @@ const PublishedForm = () => {
                 );
             case "Next":
                 const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
-                const isFirstPage = sortedPages.findIndex(p => p.page_number === parseInt(pageId)) === 0;
+
+                // ✅ Check if it's start page explicitly
+                const isFirstPage = pageId === "start";
 
                 return (
                     <div style={{
@@ -1931,8 +1998,8 @@ const PublishedForm = () => {
                         {!isFirstPage ? (
                             <button
                                 type="button"
-                                onClick={handleBackPage}
                                 className="btn"
+                                onClick={handleBackPage}
                                 style={{
                                     padding: "6px 12px",
                                     fontSize: "1.2rem",
@@ -1949,8 +2016,8 @@ const PublishedForm = () => {
 
                         <button
                             type="button"
-                            onClick={handleNextPage}
                             className="btn"
+                            onClick={handleNextPage}
                             style={{
                                 padding: "6px 12px",
                                 fontSize: "1.2rem",
@@ -2258,7 +2325,7 @@ const PublishedForm = () => {
                             }}
                         >
                             {/* Render label, required asterisk, and caption (only for applicable fields) */}
-                            {!["Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) && (
+                            {!["Heading", "Start_pg_Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) && (
                                 <>
                                     <label
                                         style={{
