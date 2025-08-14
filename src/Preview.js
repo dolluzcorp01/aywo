@@ -1990,30 +1990,44 @@ const Preview = () => {
     };
 
     const handleNextPage = () => {
-        const currentPageId = parseInt(pageId);
         const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
 
-        const currentIndex = sortedPages.findIndex(p => p.page_number === currentPageId);
-
-        if (currentIndex !== -1 && currentIndex < sortedPages.length - 1) {
-            const nextPage = sortedPages[currentIndex + 1];
-            navigate(`/preview/form-${formId}/page-${nextPage.page_number}/device-${device}`);
+        if (pageId === "start") {
+            // If on start page → go to first page
+            if (sortedPages.length > 0) {
+                const firstPage = sortedPages[0];
+                navigate(`/preview/form-${formId}/page-${firstPage.page_number}/device-${device}`);
+            }
         } else {
-            console.log("This is the last page or page not found");
+            const currentPageId = parseInt(pageId);
+            const currentIndex = sortedPages.findIndex(p => p.page_number === currentPageId);
+
+            if (currentIndex !== -1 && currentIndex < sortedPages.length - 1) {
+                const nextPage = sortedPages[currentIndex + 1];
+                navigate(`/preview/form-${formId}/page-${nextPage.page_number}/device-${device}`);
+            } else {
+                // If last page → go to end page
+                navigate(`/preview/form-${formId}/page-end/device-${device}`);
+            }
         }
     };
 
     const handleBackPage = () => {
-        const currentPageId = parseInt(pageId);
         const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
 
-        const currentIndex = sortedPages.findIndex(p => p.page_number === currentPageId);
-
-        if (currentIndex > 0) {
-            const previousPage = sortedPages[currentIndex - 1];
-            navigate(`/preview/form-${formId}/page-${previousPage.page_number}/device-${device}`);
+        if (pageId === "start") {
+            console.log("Already at start page");
         } else {
-            console.log("This is the first page");
+            const currentPageId = parseInt(pageId);
+            const currentIndex = sortedPages.findIndex(p => p.page_number === currentPageId);
+
+            if (currentIndex > 0) {
+                const previousPage = sortedPages[currentIndex - 1];
+                navigate(`/preview/form-${formId}/page-${previousPage.page_number}/device-${device}`);
+            } else {
+                // If current page is first page → go back to start
+                navigate(`/preview/form-${formId}/page-start/device-${device}`);
+            }
         }
     };
 
