@@ -1881,6 +1881,80 @@ const Preview = () => {
                     </div>
                 );
             case "Submit":
+                // ✅ Single-page form (no formPages at all)
+                if (!formPages || formPages.length === 0) {
+                    return (
+                        <div style={{ marginTop: "1rem", textAlign: "right" }}>
+                            <button
+                                type="submit"
+                                className="btn"
+                                onClick={handleSubmitForm}
+                                style={{
+                                    padding: "6px 12px",
+                                    fontSize: "1.2rem",
+                                    fontFamily: selectedFont,
+                                    backgroundColor: field.btnbgColor || formPrimaryColor,
+                                    color: field.btnlabelColor || "#ffffff",
+                                    border: focusedFieldId === field.id ? "2px solid #007bff" : "1px solid lightgray",
+                                    borderRadius: "5px"
+                                }}
+                                onFocus={() => setFocusedFieldId(field.id)}
+                                onBlur={() => setFocusedFieldId(null)}
+                            >
+                                {field.label || "Submit"}
+                            </button>
+                        </div>
+                    );
+                }
+
+                // ✅ Normal flow: only hide Previous if we’re literally on "start"
+                const isStartPage = pageId === "start";
+
+                return (
+                    <div style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        marginTop: "1rem"
+                    }}>
+                        {!isStartPage && (
+                            <button
+                                type="button"
+                                className="btn"
+                                onClick={handleBackPage}
+                                style={{
+                                    padding: "6px 12px",
+                                    fontSize: "1.2rem",
+                                    fontFamily: selectedFont,
+                                    backgroundColor: field.btnbgColor || formPrimaryColor,
+                                    color: field.btnlabelColor || "#ffffff",
+                                    border: "1px solid lightgray",
+                                    borderRadius: "5px"
+                                }}
+                            >
+                                <i className="fa-solid fa-arrow-left me-2"></i> Previous
+                            </button>
+                        )}
+
+                        <button
+                            type="submit"
+                            className="btn"
+                            onClick={handleSubmitForm}
+                            style={{
+                                padding: "6px 12px",
+                                fontSize: "1.2rem",
+                                fontFamily: selectedFont,
+                                backgroundColor: field.btnbgColor || formPrimaryColor,
+                                color: field.btnlabelColor || "#ffffff",
+                                border: focusedFieldId === field.id ? "2px solid #007bff" : "1px solid lightgray",
+                                borderRadius: "5px"
+                            }}
+                            onFocus={() => setFocusedFieldId(field.id)}
+                            onBlur={() => setFocusedFieldId(null)}
+                        >
+                            {field.label || "Submit"}
+                        </button>
+                    </div>
+                );
                 const sortedSubmitPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
                 const isFirstSubmitPage = sortedSubmitPages.findIndex(p => p.page_number === parseInt(pageId)) === 0;
 

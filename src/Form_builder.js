@@ -3451,11 +3451,7 @@ const FormBuilder = () => {
                     </div>
                 );
             case "Submit":
-                const sortedSubmitPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
-                const isFirstSubmitPage = sortedSubmitPages.findIndex(p => p.page_number === parseInt(pageId)) === 0;
-
-                // ✅ If there are no pages in formPages (single-page form),
-                // just show Submit button only
+                // ✅ Single-page form (no formPages at all)
                 if (!formPages || formPages.length === 0) {
                     return (
                         <div style={{ marginTop: "1rem", textAlign: "right" }}>
@@ -3480,14 +3476,16 @@ const FormBuilder = () => {
                     );
                 }
 
-                // ✅ Normal multi-page flow (Previous + Submit)
+                // ✅ Normal flow: only hide Previous if we’re literally on "start"
+                const isStartPage = pageId === "start";
+
                 return (
                     <div style={{
                         display: "flex",
                         justifyContent: "space-between",
                         marginTop: "1rem"
                     }}>
-                        {!isFirstSubmitPage ? (
+                        {!isStartPage && (
                             <button
                                 type="button"
                                 className="btn"
@@ -3503,7 +3501,7 @@ const FormBuilder = () => {
                             >
                                 <i className="fa-solid fa-arrow-left me-2"></i> Previous
                             </button>
-                        ) : <div></div>}
+                        )}
 
                         <button
                             type="submit"
