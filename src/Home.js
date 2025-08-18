@@ -795,7 +795,7 @@ function Home() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setRecentlyViewedMenuOpen(null);
-                                const publicUrl = `${window.location.origin}/forms/form-${form.form_id}/page-${form.page_id}`;
+                                const publicUrl = `${window.location.origin}/forms/form-${form.form_id}/page-start`;
                                 navigator.clipboard.writeText(publicUrl);
                                 Swal.fire("Copied!", `Share this link: <br><b>${publicUrl}</b>`, "success");
                                 setMenuOpen(null);
@@ -1031,7 +1031,7 @@ function Home() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                const publicUrl = `${window.location.origin}/forms/${form.form_id}`;
+                                const publicUrl = `${window.location.origin}/forms/form-${form.form_id}/page-start`;
                                 navigator.clipboard.writeText(publicUrl);
                                 Swal.fire("Copied!", `Share this link: <br><b>${publicUrl}</b>`, "success");
                                 setStarredFormsMenuOpen(null);
@@ -1331,7 +1331,7 @@ function Home() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              const publicUrl = `${window.location.origin}/forms/${form.form_id}`;
+                              const publicUrl = `${window.location.origin}/forms/form-${form.form_id}/page-start`;
                               navigator.clipboard.writeText(publicUrl);
                               Swal.fire("Copied!", `Share this link: <br><b>${publicUrl}</b>`, "success");
                               setMenuOpen(null);
