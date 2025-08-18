@@ -1475,17 +1475,21 @@ const FormBuilder = () => {
         }
 
         if (pageIdentifier === "start") {
+            // Check if there are more pages in formPages[]
+            const hasMorePages = formPages && formPages.length > 1;
+
             updatedFields.push({
                 id: Date.now() + 1,
-                type: "Next",
-                field_type: "Next",
-                label: "Next",
+                type: hasMorePages ? "Next" : "Submit",
+                field_type: hasMorePages ? "Next" : "Submit",
+                label: hasMorePages ? "Next" : "Submit",
                 btnalignment: "left",
                 btnbgColor: formPrimaryColor,
                 btnlabelColor: "#FFFFFF",
                 fontSize: 16,
                 customized: {}
             });
+
             setFields(updatedFields);
             setSelectedFieldId(newField.id);
             setCustomizeVisible(true);
@@ -3450,6 +3454,33 @@ const FormBuilder = () => {
                 const sortedSubmitPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
                 const isFirstSubmitPage = sortedSubmitPages.findIndex(p => p.page_number === parseInt(pageId)) === 0;
 
+                // ✅ If there are no pages in formPages (single-page form),
+                // just show Submit button only
+                if (!formPages || formPages.length === 0) {
+                    return (
+                        <div style={{ marginTop: "1rem", textAlign: "right" }}>
+                            <button
+                                type="submit"
+                                className="btn"
+                                style={{
+                                    padding: "6px 12px",
+                                    fontSize: "1.2rem",
+                                    fontFamily: selectedFont,
+                                    backgroundColor: field.btnbgColor || formPrimaryColor,
+                                    color: field.btnlabelColor || "#ffffff",
+                                    border: focusedFieldId === field.id ? "2px solid #007bff" : "1px solid lightgray",
+                                    borderRadius: "5px"
+                                }}
+                                onFocus={() => setFocusedFieldId(field.id)}
+                                onBlur={() => setFocusedFieldId(null)}
+                            >
+                                {field.label || "Submit"}
+                            </button>
+                        </div>
+                    );
+                }
+
+                // ✅ Normal multi-page flow (Previous + Submit)
                 return (
                     <div style={{
                         display: "flex",
@@ -3748,8 +3779,6 @@ const FormBuilder = () => {
             });
 
             formData.set("fields", JSON.stringify(clonedFields));
-
-            console.log("📦 Save content:", clonedFields);
 
             const response = await fetch("/api/form_builder/save-form", {
                 method: "POST",

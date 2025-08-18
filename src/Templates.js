@@ -1766,6 +1766,34 @@ const Templates = ({ formId, pageId, ...props }) => {
                 const sortedSubmitPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
                 const isFirstSubmitPage = sortedSubmitPages.findIndex(p => p.page_number === parseInt(pageId)) === 0;
 
+                // ✅ If there are no pages in formPages (single-page form),
+                // just show Submit button only
+                if (!formPages || formPages.length === 0) {
+                    return (
+                        <div style={{ marginTop: "1rem", textAlign: "right" }}>
+                            <button
+                                type="submit"
+                                onClick={handleSubmitForm}
+                                className="btn"
+                                style={{
+                                    padding: "6px 12px",
+                                    fontSize: "1.2rem",
+                                    fontFamily: selectedFont,
+                                    backgroundColor: field.btnbgColor || formPrimaryColor,
+                                    color: field.btnlabelColor || "#ffffff",
+                                    border: focusedFieldId === field.id ? "2px solid #007bff" : "1px solid lightgray",
+                                    borderRadius: "5px"
+                                }}
+                                onFocus={() => setFocusedFieldId(field.id)}
+                                onBlur={() => setFocusedFieldId(null)}
+                            >
+                                {field.label || "Submit"}
+                            </button>
+                        </div>
+                    );
+                }
+
+                // ✅ Normal multi-page flow (Previous + Submit)
                 return (
                     <div style={{
                         display: "flex",

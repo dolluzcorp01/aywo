@@ -85,7 +85,7 @@ router.post("/create", verifyJWT, async (req, res) => {
                 description, alert_type, font_size, required, sort_order,
                 min_value, max_value, btnalignment, btnbgColor, btnlabelColor,
                 fields_version, created_at
-            ) VALUES (?, ?, 'Next', 'Next', '', '', '', '', 'info', 14, 'No', 0, NULL, NULL, 'left', '#3b82f6', '#FFFFFF', ?, NOW())
+            ) VALUES (?, ?, 'Submit', 'Submit', '', '', '', '', 'info', 14, 'No', 0, NULL, NULL, 'left', '#3b82f6', '#FFFFFF', ?, NOW())
         `, [formId, 'start', fieldsVersion]);
 
         // 4️⃣ Insert Thank You field on "end" page

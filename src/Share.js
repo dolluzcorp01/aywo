@@ -51,34 +51,6 @@ const Share = () => {
         }
 
         try {
-            // ✅ Fetch form pages directly
-            const res = await fetch(`/api/form_builder/get-form-pages/${formId}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include"
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || "Failed to fetch pages");
-            }
-
-            const pages = data.pages || [];
-
-            if (pages.length === 0) {
-                Swal.fire("Error", "No pages found for this form.", "error");
-                return;
-            }
-
-            // ✅ Sort pages by sort_order to get the first page number
-            const firstPage = pages.reduce((min, page) =>
-                page.sort_order < min.sort_order ? page : min, pages[0]
-            );
-            const firstPageNumber = firstPage?.page_number || 1;
-
             // ✅ Send publish request
             const response = await apiFetch(`/api/form_builder/publish-form/${formId}`, {
                 method: 'PUT',

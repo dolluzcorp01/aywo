@@ -258,7 +258,7 @@ const Form_builder_header = ({ isSaveEnabled }) => {
             Swal.fire("Unsaved Changes", "Please save your changes before publishing the form.", "warning");
             return;
         }
-
+        
         if (!formId) {
             Swal.fire("Error", "Please save the form before publishing.", "error");
             return;
@@ -266,34 +266,6 @@ const Form_builder_header = ({ isSaveEnabled }) => {
 
         try {
             const cleanFormId = formId.replace("form-", "");
-
-            // ✅ Fetch form pages directly
-            const res = await fetch(`/api/form_builder/get-form-pages/${cleanFormId}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include"
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || "Failed to fetch pages");
-            }
-
-            const pages = data.pages || [];
-
-            if (pages.length === 0) {
-                Swal.fire("Error", "No pages found for this form.", "error");
-                return;
-            }
-
-            // ✅ Sort pages by sort_order to get the first page number
-            const firstPage = pages.reduce((min, page) =>
-                page.sort_order < min.sort_order ? page : min, pages[0]
-            );
-            const firstPageNumber = firstPage?.page_number || 1;
 
             // ✅ Send publish request
             const response = await apiFetch(`/api/form_builder/publish-form/${cleanFormId}`, {
@@ -482,7 +454,7 @@ const Form_builder_header = ({ isSaveEnabled }) => {
                     <>
                         <span
                             className={`center-nav-btn ${window.location.pathname.includes("form-builder") ? "active" : ""}`}
-                            onClick={() => navigate(`/form-builder/${formId}/page-${form.page_id}`)}
+                            onClick={() => navigate(`/form-builder/${formId}/page-start`)}
                         >
                             Edit
                         </span>
@@ -686,7 +658,7 @@ const Form_builder_header = ({ isSaveEnabled }) => {
                             <button
                                 className="form_builder_header-publish-btn"
                                 style={{ fontSize: "0.9rem", fontWeight: "500" }}
-                                onClick={() => navigate(`/form-builder/${formId}/page-${form.page_id}`)}
+                                onClick={() => navigate(`/form-builder/${formId}/page-start`)}
                             >
                                 <i className="fa-solid fa-xmark"></i> Exit preview
                             </button>
