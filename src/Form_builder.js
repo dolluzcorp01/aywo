@@ -1025,7 +1025,7 @@ const FormBuilder = () => {
             if (response.ok && result.form_id) {
                 Swal.fire("Success", "Form created successfully!", "success");
                 setShowModal(false);
-                navigate(`/form-builder/form-${result.form_id}/page-${result.page_id}`);
+                navigate(`/form-builder/form-${result.form_id}/page-start`);
             } else {
                 Swal.fire("Error", result.message || "Form creation failed", "error");
             }
@@ -1065,7 +1065,7 @@ const FormBuilder = () => {
             if (response.ok && result.newFormId) {
                 Swal.fire("Success", "Form created successfully!", "success");
                 setShowTemplateModal(false);
-                navigate(`/form-builder/form-${result.newFormId}/page-1`);
+                navigate(`/form-builder/form-${result.newFormId}/page-start`);
             } else {
                 Swal.fire("Error", result.message || "Form creation failed", "error");
             }

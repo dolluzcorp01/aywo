@@ -244,54 +244,54 @@ function Home() {
     {
       name: "Employee Emergency Contact",
       image: Employee_emergency_contact_pg_1,
-      url: "template-1",
-      template_formId: 1,
+      url: "template-7",
+      template_formId: 7,
       child_templates: [
-        { name: "Child Template 1", image: Employee_emergency_contact_pg_1, template_formId: 1, template_pageId: 1 },
-        { name: "Child Template 2", image: Employee_emergency_contact_pg_2, template_formId: 1, template_pageId: 2 },
-        { name: "Child Template 3", image: Employee_emergency_contact_pg_3, template_formId: 1, template_pageId: 3 },
-        { name: "Child Template 3", image: Employee_emergency_contact_pg_end, template_formId: 1, template_pageId: "end" }
+        { name: "Child Template 1", image: Employee_emergency_contact_pg_1, template_formId: 7, template_pageId: "start" },
+        { name: "Child Template 2", image: Employee_emergency_contact_pg_2, template_formId: 7, template_pageId: 1 },
+        { name: "Child Template 3", image: Employee_emergency_contact_pg_3, template_formId: 7, template_pageId: 2 },
+        { name: "Child Template 3", image: Employee_emergency_contact_pg_end, template_formId: 7, template_pageId: "end" }
       ]
     },
     {
       name: "Job Application",
       image: Job_Application_Form_pg_1,
-      url: "template-2",
-      template_formId: 2,
+      url: "template-6",
+      template_formId: 6,
       child_templates: [
-        { name: "Child Template 1", image: Job_Application_Form_pg_1, template_formId: 2, template_pageId: 1 },
-        { name: "Child Template 3", image: Job_Application_Form_pg_end, template_formId: 2, template_pageId: "end" }
+        { name: "Child Template 1", image: Job_Application_Form_pg_1, template_formId: 6, template_pageId: "start" },
+        { name: "Child Template 3", image: Job_Application_Form_pg_end, template_formId: 6, template_pageId: "end" }
       ]
     },
     {
       name: "Health Care",
       image: Health_Care_Form_pg_1,
-      url: "template-3",
-      template_formId: 3,
+      url: "template-8",
+      template_formId: 8,
       child_templates: [
-        { name: "Child Template 1", image: Health_Care_Form_pg_1, template_formId: 3, template_pageId: 1 },
-        { name: "Child Template 3", image: Health_Care_Form_pg_end, template_formId: 3, template_pageId: "end" }
+        { name: "Child Template 1", image: Health_Care_Form_pg_1, template_formId: 8, template_pageId: "start" },
+        { name: "Child Template 3", image: Health_Care_Form_pg_end, template_formId: 8, template_pageId: "end" }
       ]
     },
     {
       name: "Training Application",
       image: Training_Application_Form_pg_1,
-      url: "template-4",
-      template_formId: 4,
+      url: "template-9",
+      template_formId: 9,
       child_templates: [
-        { name: "Child Template 1", image: Training_Application_Form_pg_1, template_formId: 4, template_pageId: 1 },
-        { name: "Child Template 3", image: Training_Application_Form_pg_end, template_formId: 4, template_pageId: "end" }
+        { name: "Child Template 1", image: Training_Application_Form_pg_1, template_formId: 9, template_pageId: "start" },
+        { name: "Child Template 3", image: Training_Application_Form_pg_end, template_formId: 9, template_pageId: "end" }
       ]
     },
     {
       name: "Holiday Party",
       image: Holiday_Party_Form_pg_1,
-      url: "template-5",
-      template_formId: 5,
+      url: "template-10",
+      template_formId: 10,
       child_templates: [
-        { name: "Child Template 1", image: Holiday_Party_Form_pg_1, template_formId: 5, template_pageId: 1 },
-        { name: "Child Template 1", image: Holiday_Party_Form_pg_2, template_formId: 5, template_pageId: 2 },
-        { name: "Child Template 3", image: Holiday_Party_Form_pg_end, template_formId: 5, template_pageId: "end" }
+        { name: "Child Template 1", image: Holiday_Party_Form_pg_1, template_formId: 10, template_pageId: "start" },
+        { name: "Child Template 1", image: Holiday_Party_Form_pg_2, template_formId: 10, template_pageId: 1 },
+        { name: "Child Template 3", image: Holiday_Party_Form_pg_end, template_formId: 10, template_pageId: "end" }
       ]
     },
   ];
