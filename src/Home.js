@@ -896,7 +896,9 @@ function Home() {
 
                   {/* Title */}
                   <div className="recently-viewed-form-title-row">
-                    <p className="form-title-text">{form.title}</p>
+                    <p className="form-title-text" title={form.title}>
+                      {form.title}
+                    </p>
                     {form.starred ? (
                       <i className="fa-solid fa-star form-star-icon"
                         onClick={(e) => {
@@ -962,9 +964,10 @@ function Home() {
                     className="form-card-content"
                     onClick={() => handleFormClick(form.form_id, form.page_id, form.title, form.response_count, form.published, form.internal_note, form.is_closed, form.starred)}
                   >
-
                     <div className="form-title-row">
-                      <p className="form-title">{form.title}</p>
+                      <p className="form-title" title={form.title}>
+                        {form.title}
+                      </p>
                       {form.starred ? (
                         <i className="fa-solid fa-star form-star-icon"
                           onClick={(e) => {
@@ -1238,7 +1241,9 @@ function Home() {
                 >
 
                   <div className="form-title-row">
-                    <p className="form-title">{form.title}</p>
+                    <p className="form-title" title={form.title}>
+                      {form.title}
+                    </p>
                     {form.starred ? (
                       <i className="fa-solid fa-star form-star-icon"
                         onClick={(e) => {
