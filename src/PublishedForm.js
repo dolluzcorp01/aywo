@@ -205,16 +205,32 @@ const PublishedForm = () => {
     };
 
     useEffect(() => {
+        if (!formPages || formPages.length === 0) return;
+
+        // If we are on page-start → always allow
+        if (pageId === "page-start") return;
+
+        // Check localStorage for this page
+        const savedData = localStorage.getItem(`form_${formId}_page_${pageId}`);
+
+        if (!savedData) {
+            console.warn("⚠️ No saved data for this page. Redirecting to start page.");
+            navigate(`/forms/form-${formId}/page-start`, { replace: true });
+        }
+    }, [formPages, pageId, formId, navigate]);
+
+    useEffect(() => {
         if (!formLoaded) return;
 
         const saved = localStorage.getItem(`form_${formId}_page_${pageId}`);
         if (saved) {
             const parsed = JSON.parse(saved);
-            setResponses(parsed);
+            const savedData = parsed.data || {};   // ✅ extract .data
 
-            // Optionally update field display values from localStorage too
+            setResponses(savedData);
+
             const updatedFields = fields.map(field => {
-                const response = parsed[field.id];
+                const response = savedData[field.id];
                 if (!response) return field;
 
                 if (field.type === "Multiple Choice") {
@@ -230,25 +246,21 @@ const PublishedForm = () => {
                 }
 
                 if (field.type === "Ranking") {
-                    const savedRanking = response.value || []; // ["Option 2", "Option 1", "Option 3"]
-
+                    const savedRanking = response.value || [];
                     const reorderedOptions = [];
                     const seen = new Set();
 
-                    // Step 1: Place saved ranking in order
                     savedRanking.forEach(text => {
                         const match = field.options.find(opt => {
                             const label = typeof opt === "object" ? opt.option_text : opt;
                             return label === text;
                         });
-
                         if (match) {
                             reorderedOptions.push(match);
                             seen.add(text);
                         }
                     });
 
-                    // Step 2: Add remaining options not in saved data (e.g., newly added ones)
                     const remainingOptions = field.options.filter(opt => {
                         const label = typeof opt === "object" ? opt.option_text : opt;
                         return !seen.has(label);
@@ -262,18 +274,15 @@ const PublishedForm = () => {
 
                 if (field.type === "Choice Matrix") {
                     const matrixValue = response.value || {};
-
                     const getText = (val) => typeof val === "object" ? val.option_text : val;
 
                     const selectedMatrix = (field.rows || []).map((rowItem) => {
                         const rowLabel = getText(rowItem).trim().toLowerCase();
-
                         const selectedColLabel = matrixValue[rowLabel];
                         const colIndex = (field.columns || []).findIndex(col => {
                             const colLabel = getText(col).trim().toLowerCase();
                             return colLabel === (selectedColLabel || "").trim().toLowerCase();
                         });
-
                         return colIndex >= 0 ? colIndex : null;
                     });
 
@@ -293,7 +302,7 @@ const PublishedForm = () => {
 
             setFields(updatedFields);
         }
-    }, [formLoaded]);
+    }, [formLoaded, fields]);
 
     const handleFieldChange = (fieldId, fieldType, newValue) => {
         const updatedResponses = {
