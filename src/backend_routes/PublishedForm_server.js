@@ -3,7 +3,28 @@ const multer = require("multer");
 const path = require("path");
 const router = express.Router();
 const getDBConnection = require("../../config/db");
+const nodemailer = require("nodemailer");
 
+const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    auth: {
+        user: "vv.pavithran12@gmail.com",
+        pass: "aajuyoahcuszqrey",
+    },
+});
+
+async function sendFormMail(to, subject, html) {
+    const mailOptions = {
+        from: '"dForms Support" <vv.pavithran12@gmail.com>',
+        to,
+        subject,
+        html,
+    };
+
+    return transporter.sendMail(mailOptions);
+}
 const db = getDBConnection("form_builder");
 
 const queryPromise = (db, sql, params) => {
@@ -113,6 +134,51 @@ router.post("/submit-form", upload.any(), async (req, res) => {
         }
 
         await connection.commit();
+
+        // ✅ Get workflow + user email
+        const [formOwner] = await queryPromise(
+            db,
+            `SELECT u.email 
+            FROM dforms f 
+            JOIN users u ON f.user_id = u.user_id 
+            WHERE f.id = ?`,
+            [form_id]
+        );
+
+
+        const workflows = await queryPromise(
+            db,
+            "SELECT * FROM dform_workflow WHERE form_id = ? AND delete_at IS NULL",
+            [form_id]
+        );
+
+        if (formOwner && formOwner.email && workflows.length > 0) {
+            const workflow = workflows[0];
+            const recipientEmail = formOwner.email;
+
+            const html = `
+    <h2>dForms Response</h2>
+    <p>Thank you for submitting the form.</p>
+    <pre>${JSON.stringify(responses, null, 2)}</pre>
+  `;
+
+            if (workflow.workflow_name === "Thank you email") {
+                // Send immediately
+                sendFormMail(recipientEmail, "Your form submission", html)
+                    .then(() => console.log("✅ Thank you email sent"))
+                    .catch(err => console.error("❌ Error sending email:", err));
+            }
+
+            if (workflow.workflow_name === "Send email after delay") {
+                const delayMinutes = workflow.workflow_delay_time || 30;
+                setTimeout(() => {
+                    sendFormMail(recipientEmail, "Your form submission", html)
+                        .then(() => console.log(`✅ Delayed email sent after ${delayMinutes}m`))
+                        .catch(err => console.error("❌ Error sending delayed email:", err));
+                }, delayMinutes * 60 * 1000);
+            }
+        }
+
         res.json({ message: "Form submitted successfully!", filePath: file ? `/uploads/${file.filename}` : null });
 
     } catch (error) {
