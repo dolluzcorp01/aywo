@@ -1,0 +1,166 @@
+.workflow-page {
+    background: #0f172a;
+    min-height: 100%;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    font-family: sans-serif;
+}
+
+.workflow-header {
+    display: flex;
+    padding: 12px 20px;
+    background: #0f172a;
+    gap: 8px;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.tab-btn.active {
+    background: #1e293b;
+    color: #fff;
+}
+
+.tab-btn .count {
+    background: #334155;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 12px;
+    margin-left: 6px;
+}
+
+.workflow-subtitle {
+    padding: 12px 20px;
+    background: #0f172a;
+    color: #cbd5e1;
+    font-size: 14px;
+}
+
+.workflow-subtitle a {
+    color: #38bdf8;
+    margin-left: 6px;
+    text-decoration: none;
+}
+
+.workflow-content {
+    background: #fff;
+    border-radius: 10px;
+    margin-right: 10%;
+    margin-left: 10%;
+    padding: 20px;
+}
+
+.workflow-toolbar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.workflow-toolbar select {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.blank-btn {
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.section-title {
+    margin-bottom: 18px;
+    font-weight: 600;
+    font-size: 24px;
+    color: rgb(75 85 99);
+    padding: 10px;
+}
+
+.workflow-cards {
+    display: flex;
+    gap: 16px;
+}
+
+.workflow-card {
+    flex: 1;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    transition: box-shadow 0.2s;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.workflow-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.workflow-card .icons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.workflow-card .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    color: white;
+    font-size: 14px;
+}
+
+.workflow-card h4 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.workflow-card p {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.icons-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.delay-input {
+    width: 60px;
+    padding: 4px 6px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.delete-icon {
+    color: #ef4444;
+    font-size: 16px;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: color 0.2s ease;
+}
+
+.delete-icon:hover {
+    color: #dc2626;
+}

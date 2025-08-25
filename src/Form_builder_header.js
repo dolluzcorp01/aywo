@@ -258,7 +258,7 @@ const Form_builder_header = ({ isSaveEnabled }) => {
             Swal.fire("Unsaved Changes", "Please save your changes before publishing the form.", "warning");
             return;
         }
-        
+
         if (!formId) {
             Swal.fire("Error", "Please save the form before publishing.", "error");
             return;
@@ -457,6 +457,12 @@ const Form_builder_header = ({ isSaveEnabled }) => {
                             onClick={() => navigate(`/form-builder/${formId}/page-start`)}
                         >
                             Edit
+                        </span>
+                        <span
+                            className={`center-nav-btn ${window.location.pathname.includes("Workflow") ? "active" : ""}`}
+                            onClick={() => navigate(`/Workflow/${formId}`)}
+                        >
+                            Integrate
                         </span>
                         <span
                             className={`center-nav-btn ${window.location.pathname.includes("share") ? "active" : ""}`}

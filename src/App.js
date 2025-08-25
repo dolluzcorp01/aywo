@@ -9,6 +9,7 @@ import PublishedForm from "./PublishedForm";
 import Responses from "./Responses";
 import Preview from "./Preview";
 import Share from "./Share";
+import Workflow from "./Workflow";
 import Templates from "./Templates";
 
 function App() {
@@ -82,6 +83,16 @@ function App() {
         element={
           <FormBuilderLayout>
             <Share />
+          </FormBuilderLayout>
+        }
+      />
+
+      {/* ✅ Workflow route */}
+      <Route
+        path="/Workflow/:formId"
+        element={
+          <FormBuilderLayout>
+            <Workflow />
           </FormBuilderLayout>
         }
       />

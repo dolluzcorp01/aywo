@@ -2316,4 +2316,104 @@ router.get("/get-templates-form/:formId/:pageId", async (req, res) => {
     }
 });
 
+// Fetch workflows for a form
+router.get("/workflows/:formId", verifyJWT, async (req, res) => {
+    const { formId } = req.params;
+    const userId = req.user_id;
+
+    try {
+        const [form] = await queryPromise(
+            db,
+            "SELECT id FROM dforms WHERE id = ? AND user_id = ?",
+            [formId, userId]
+        );
+
+        if (!form) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        const workflows = await queryPromise(
+            db,
+            "SELECT * FROM dform_workflow WHERE form_id = ? AND delete_at IS NULL",
+            [formId]
+        );
+
+        res.json(workflows);
+    } catch (error) {
+        console.error("Error fetching workflows:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// ✅ Save workflow (replace old one)
+router.post("/workflows/create", verifyJWT, async (req, res) => {
+    const { form_id, workflow_name, workflow_delay_time } = req.body;
+    const userId = req.user_id; // from JWT
+
+    try {
+        // check if form belongs to user
+        const [form] = await queryPromise(
+            db,
+            "SELECT id FROM dforms WHERE id = ? AND user_id = ?",
+            [form_id, userId]
+        );
+
+        if (!form) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        // 🔹 Soft delete any existing workflows for this form
+        await queryPromise(
+            db,
+            "UPDATE dform_workflow SET delete_at = NOW() WHERE form_id = ? AND delete_at IS NULL",
+            [form_id]
+        );
+
+        // 🔹 Insert the new workflow
+        await queryPromise(
+            db,
+            "INSERT INTO dform_workflow (form_id, workflow_name, workflow_delay_time) VALUES (?, ?, ?)",
+            [form_id, workflow_name, workflow_delay_time || 30]
+        );
+
+        res.json({ message: "Workflow created successfully" });
+    } catch (error) {
+        console.error("Error creating workflow:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// ✅ Soft delete workflow
+router.delete("/workflows/:id", verifyJWT, async (req, res) => {
+    const workflowId = req.params.id;
+    const userId = req.user_id; // from JWT
+
+    try {
+        // Ensure workflow belongs to user
+        const [workflow] = await queryPromise(
+            db,
+            `SELECT w.id 
+             FROM dform_workflow w
+             JOIN dforms f ON w.form_id = f.id
+             WHERE w.id = ? AND f.user_id = ? AND w.delete_at IS NULL`,
+            [workflowId, userId]
+        );
+
+        if (!workflow) {
+            return res.status(404).json({ error: "Workflow not found or unauthorized" });
+        }
+
+        await queryPromise(
+            db,
+            "UPDATE dform_workflow SET delete_at = NOW() WHERE id = ?",
+            [workflowId]
+        );
+
+        res.json({ message: "Workflow deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting workflow:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 module.exports = router;
