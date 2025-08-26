@@ -204,20 +204,49 @@ const PublishedForm = () => {
         return match ? match[1] : "";
     };
 
+    const [skipCheck, setSkipCheck] = useState(false);
+
     useEffect(() => {
         if (!formPages || formPages.length === 0) return;
 
-        // If we are on page-start → always allow
-        if (pageId === "page-start") return;
+        // ✅ Always allow page-start
+        if (pageId === "start") return;
 
-        // Check localStorage for this page
-        const savedData = localStorage.getItem(`form_${formId}_page_${pageId}`);
+        // ✅ Skip validation if we're navigating via Next button
+        if (skipCheck) {
+            return;
+        }
 
-        if (!savedData) {
-            console.warn("⚠️ No saved data for this page. Redirecting to start page.");
+        const currentPageNum = parseInt(pageId);
+        const sortedPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
+
+        // ✅ Find current page index
+        const currentIndex = sortedPages.findIndex(p => p.page_number === currentPageNum);
+
+        // If current page not found → redirect
+        if (currentIndex === -1) {
+            navigate(`/forms/form-${formId}/page-start`, { replace: true });
+            return;
+        }
+
+        // ✅ Check saved data for current page
+        const currentPageData = localStorage.getItem(`form_${formId}_page_${currentPageNum}`);
+        if (currentPageData) return;
+
+        // ✅ Otherwise check previous page
+        let previousPageData = null;
+        if (currentIndex === 0) {
+            previousPageData = localStorage.getItem(`form_${formId}_page_start`);
+        } else {
+            const prevPage = sortedPages[currentIndex - 1];
+            previousPageData = localStorage.getItem(`form_${formId}_page_${prevPage.page_number}`);
+        }
+
+        if (!previousPageData) {
+            console.warn("⚠️ Missing data in both current and previous page → redirecting to start page.");
             navigate(`/forms/form-${formId}/page-start`, { replace: true });
         }
-    }, [formPages, pageId, formId, navigate]);
+    }, [formPages, pageId, formId, navigate, skipCheck]);
 
     useEffect(() => {
         if (!formLoaded) return;
@@ -2390,6 +2419,7 @@ const PublishedForm = () => {
             // If on start page → go to first page
             if (sortedPages.length > 0) {
                 const firstPage = sortedPages[0];
+                setSkipCheck(true);
                 navigate(`/forms/form-${formId}/page-${firstPage.page_number}`);
             }
         } else {
@@ -2398,9 +2428,11 @@ const PublishedForm = () => {
 
             if (currentIndex !== -1 && currentIndex < sortedPages.length - 1) {
                 const nextPage = sortedPages[currentIndex + 1];
+                setSkipCheck(true);
                 navigate(`/forms/form-${formId}/page-${nextPage.page_number}`);
             } else {
                 // If last page → go to end page
+                setSkipCheck(true);
                 navigate(`/forms/form-${formId}/page-end`);
             }
         }
