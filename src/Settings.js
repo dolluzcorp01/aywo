@@ -8,14 +8,17 @@ import {
     FaGraduationCap,
     FaCode,
     FaChartLine,
-    FaEnvelope
+    FaEnvelope,
+    FaClock,
+    FaCalendarAlt
 } from "react-icons/fa";
-import Swal from "sweetalert2"; // for confirmation
+import Swal from "sweetalert2";
 import "./Settings.css";
 
 const Settings = () => {
+    const [activeTab, setActiveTab] = useState("notifications"); // 🔹 track sidebar tab
     const [isWorkflowOn, setIsWorkflowOn] = useState(false);
-    const [workflowId, setWorkflowId] = useState(null); // store created workflow id
+    const [workflowId, setWorkflowId] = useState(null);
 
     const getFormId = () => {
         const match = window.location.pathname.match(/form-(\d+)/);
@@ -37,7 +40,6 @@ const Settings = () => {
             const data = await res.json();
 
             if (Array.isArray(data) && data.length > 0) {
-                // 🔍 Find "Thank you email" workflow
                 const thankYouWorkflow = data.find(
                     (wf) => wf.workflow_name === "Thank you email" && !wf.delete_at
                 );
@@ -58,7 +60,6 @@ const Settings = () => {
         }
     };
 
-    // ✅ Create workflow
     const handleCreateWorkflow = async () => {
         const formId = getFormId();
         if (!formId) {
@@ -81,7 +82,7 @@ const Settings = () => {
             const data = await res.json();
             if (res.ok) {
                 Swal.fire("Success", "Workflow created successfully!", "success");
-                setWorkflowId(data.id || null); // backend should return id
+                setWorkflowId(data.id || null);
                 setIsWorkflowOn(true);
             } else {
                 Swal.fire("Error", data.error || "Failed to create workflow", "error");
@@ -92,7 +93,6 @@ const Settings = () => {
         }
     };
 
-    // ✅ Delete workflow
     const handleDeleteWorkflow = async () => {
         if (!workflowId) {
             Swal.fire("Error", "No workflow found to delete", "error");
@@ -119,7 +119,6 @@ const Settings = () => {
         }
     };
 
-    // ✅ Toggle handler
     const handleSwitchToggle = (e) => {
         if (e.target.checked) {
             handleCreateWorkflow();
@@ -136,12 +135,14 @@ const Settings = () => {
                     <FaCog className="settings-icon" /> Settings
                 </h2>
                 <ul>
-                    <li className="active">
+                    <li className={activeTab === "notifications" ? "active" : ""} onClick={() => setActiveTab("notifications")}>
                         <FaBell /> Notifications
                     </li>
                     <li><FaLink /> URL parameters</li>
                     <li><FaCog /> Form behavior</li>
-                    <li><FaLock /> Access</li>
+                    <li className={activeTab === "access" ? "active" : ""} onClick={() => setActiveTab("access")}>
+                        <FaLock /> Access
+                    </li>
                     <li><FaGlobe /> Language</li>
                     <li><FaGraduationCap /> Quiz mode</li>
                     <li><FaCode /> Custom code <span className="badge business">Business</span></li>
@@ -149,36 +150,101 @@ const Settings = () => {
                 </ul>
             </div>
 
-            {/* Content */}
+            {/* Content Area */}
             <div className="settings-content">
-                <h3 className="content-title">Notifications</h3>
-
-                {/* Tabs */}
-                <div className="settings-tabs">
-                    <span className="tab active">General</span>
-                </div>
-
-                {/* Notification card */}
-                <div className="notification-card">
-                    <div className="notification-content">
-                        <FaEnvelope className="notification-icon" />
-                        <div className="notification-text">
-                            <strong>Self-email notifications</strong>
-                            <p>Get an email whenever your form is submitted</p>
+                {/* Notifications Tab */}
+                {activeTab === "notifications" && (
+                    <>
+                        <h3 className="content-title">Notifications</h3>
+                        <div className="settings-tabs">
+                            <span className="tab active">General</span>
                         </div>
-                    </div>
 
-                    <div className="notification-switch">
-                        <label className="switch">
-                            <input
-                                type="checkbox"
-                                checked={isWorkflowOn}
-                                onChange={handleSwitchToggle}
-                            />
-                            <span className="slider round"></span>
-                        </label>
-                    </div>
-                </div>
+                        <div className="notification-card">
+                            <div className="notification-content">
+                                <FaEnvelope className="notification-icon" />
+                                <div className="notification-text">
+                                    <strong>Self-email notifications</strong>
+                                    <p>Get an email whenever your form is submitted</p>
+                                </div>
+                            </div>
+
+                            <div className="notification-switch">
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={isWorkflowOn}
+                                        onChange={handleSwitchToggle}
+                                    />
+                                    <span className="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {/* Access Tab */}
+                {activeTab === "access" && (
+                    <>
+                        <h3 className="content-title">Access</h3>
+
+                        <div className="notification-card">
+                            <div className="notification-content">
+                                <FaLock className="notification-icon" />
+                                <div className="notification-text">
+                                    <strong>Close form</strong>
+                                    <p>Close your form to new submissions.</p>
+                                </div>
+                            </div>
+                            <label className="switch">
+                                <input type="checkbox" />
+                                <span className="slider round"></span>
+                            </label>
+                        </div>
+
+                        <div className="notification-card">
+                            <div className="notification-content">
+                                <FaClock className="notification-icon" />
+                                <div className="notification-text">
+                                    <strong>Form open date</strong>
+                                    <p>Set a date for your form to become available.</p>
+                                </div>
+                            </div>
+                            <label className="switch">
+                                <input type="checkbox" />
+                                <span className="slider round"></span>
+                            </label>
+                        </div>
+
+                        <div className="notification-card">
+                            <div className="notification-content">
+                                <FaCalendarAlt className="notification-icon" />
+                                <div className="notification-text">
+                                    <strong>Form expiration date</strong>
+                                    <p>Close form upon reaching a certain date.</p>
+                                </div>
+                            </div>
+                            <label className="switch">
+                                <input type="checkbox" />
+                                <span className="slider round"></span>
+                            </label>
+                        </div>
+
+                        <div className="notification-card">
+                            <div className="notification-content">
+                                <FaChartLine className="notification-icon" />
+                                <div className="notification-text">
+                                    <strong>Form submission limit</strong>
+                                    <p>Close form after reaching a certain number of submissions.</p>
+                                </div>
+                            </div>
+                            <label className="switch">
+                                <input type="checkbox" />
+                                <span className="slider round"></span>
+                            </label>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );
