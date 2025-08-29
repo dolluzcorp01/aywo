@@ -10,6 +10,7 @@ import Responses from "./Responses";
 import Preview from "./Preview";
 import Share from "./Share";
 import Workflow from "./Workflow";
+import Settings from "./Settings";
 import Templates from "./Templates";
 
 function App() {
@@ -94,6 +95,14 @@ function App() {
           <FormBuilderLayout>
             <Workflow />
           </FormBuilderLayout>
+        }
+      />
+
+      {/* ✅ settings route */}
+      <Route
+        path="/Settings/:formId"
+        element={
+          <Settings />
         }
       />
 

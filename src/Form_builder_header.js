@@ -5,7 +5,9 @@ import styled from "styled-components";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Modal } from 'bootstrap';
 import confetti from 'canvas-confetti';
+import { FaGear } from "react-icons/fa6";
 import "./Form_builder_header.css";
+import Settings from "./Settings";
 
 const Navbar = styled.nav`
   background-color: #f8f9fa ;
@@ -57,6 +59,7 @@ const Form_builder_header = ({ isSaveEnabled }) => {
     const device = preview_pg_match ? preview_pg_match[3] : null;
 
     const [selectedPage, setSelectedPage] = useState(null);
+    const [showSettings, setShowSettings] = useState(false);
 
     const [isOpen, setIsOpen] = useState(false);
     useEffect(() => {
@@ -516,6 +519,19 @@ const Form_builder_header = ({ isSaveEnabled }) => {
                     </div>
                 )}
 
+                {!window.location.pathname.includes("responses") && (
+                    <>
+                        <div className="divider" />
+                        <button
+                            className="form_builder_header-setting-btn"
+                            style={{ marginLeft: "-5px" }}
+                            onClick={() => setShowSettings(true)}
+                        >
+                            <FaGear />
+                        </button>
+                    </>
+                )}
+
                 <div className="action-btns">
                     {(window.location.pathname.includes("form-builder") || window.location.pathname.includes("share")) && (
                         <button
@@ -707,6 +723,20 @@ const Form_builder_header = ({ isSaveEnabled }) => {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {showSettings && (
+                <div className="settings-overlay">
+                    <div className="settings-modal">
+                        <button
+                            className="settings-close"
+                            onClick={() => setShowSettings(false)}
+                        >
+                            ✕
+                        </button>
+                        <Settings />
                     </div>
                 </div>
             )}

@@ -113,6 +113,26 @@
     color: gray;
 }
 
+.form_builder_header-setting-btn {
+    background-color: transparent;
+    border: none;
+    outline: none;
+    color: rgb(209 213 219);
+    border-radius: 5px;
+}
+
+.form_builder_header-setting-btn:hover {
+    background-color: #f0f0f0;
+    color: gray;
+}
+
+.divider {
+    width: 2px;
+    height: 28px;
+    background-color: #ddd;
+    margin: 0 8px;
+}
+
 .action-btns {
     display: flex;
     align-items: center;
