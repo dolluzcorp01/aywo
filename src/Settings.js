@@ -29,6 +29,12 @@ const Settings = () => {
     const [closedTitle, setClosedTitle] = useState("Form closed to new submissions");
     const [closedDesc, setClosedDesc] = useState("Contact the form owner for more details.");
 
+    const [isOpenDateOn, setIsOpenDateOn] = useState(false);
+    const [isExpiryOn, setIsExpiryOn] = useState(false);
+    const [isLimitOn, setIsLimitOn] = useState(false);
+
+    const shouldShowCustomMessage = isFormClosed || isOpenDateOn || isExpiryOn || isLimitOn;
+
     const handleSaveClosedMessage = async () => {
         const formId = getFormId();
         if (!formId) {
@@ -278,7 +284,10 @@ const Settings = () => {
                                     <input
                                         type="checkbox"
                                         checked={isWorkflowOn}
-                                        onChange={handleSwitchToggle}
+                                        onChange={() => {
+                                            handleSwitchToggle();
+                                            setIsFormClosed(!isFormClosed);
+                                        }}
                                     />
                                     <span className="slider round"></span>
                                 </label>
@@ -322,7 +331,11 @@ const Settings = () => {
                                 </div>
                             </div>
                             <label className="switch">
-                                <input type="checkbox" />
+                                <input type="checkbox"
+                                    onChange={() => {
+                                        setIsFormClosed(!isFormClosed);
+                                    }}
+                                />
                                 <span className="slider round"></span>
                             </label>
                         </div>
@@ -336,7 +349,10 @@ const Settings = () => {
                                 </div>
                             </div>
                             <label className="switch">
-                                <input type="checkbox" />
+                                <input type="checkbox"
+                                    onChange={() => {
+                                        setIsFormClosed(!isFormClosed);
+                                    }} />
                                 <span className="slider round"></span>
                             </label>
                         </div>
@@ -350,37 +366,41 @@ const Settings = () => {
                                 </div>
                             </div>
                             <label className="switch">
-                                <input type="checkbox" />
+                                <input type="checkbox"
+                                    onChange={() => {
+                                        setIsFormClosed(!isFormClosed);
+                                    }} />
                                 <span className="slider round"></span>
                             </label>
                         </div>
 
-                        <div className="notification-card">
-                            <div className="notification-content">
-                                <FaRegCommentDots className="notification-icon" />
-                                <div className="notification-text">
-                                    <strong>Custom form closed message</strong>
-                                    <p>Provide custom messages to show users when the form is closed/expired.</p>
+                        {shouldShowCustomMessage && (
+                            <div className="notification-card">
+                                <div className="notification-content">
+                                    <FaRegCommentDots className="notification-icon" />
+                                    <div className="notification-text">
+                                        <strong>Custom form closed message</strong>
+                                        <p>Provide custom messages to show users when the form is closed/expired.</p>
 
-                                    {/* Show Edit button below <p> if switch is ON */}
-                                    {isCustomMessageOn && (
-                                        <button className="edit-close-btn" onClick={() => setIsModalOpen(true)}>
-                                            <FaRegEdit style={{ color: "rgb(107 114 128)", fontSize: "1.1rem" }} /> Edit close page
-                                        </button>
-                                    )}
+                                        {isCustomMessageOn && (
+                                            <button className="edit-close-btn" onClick={() => setIsModalOpen(true)}>
+                                                <FaRegEdit style={{ color: "rgb(107 114 128)", fontSize: "1.1rem" }} /> Edit close page
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="notification-switch">
+                                    <label className="switch">
+                                        <input
+                                            type="checkbox"
+                                            checked={isCustomMessageOn}
+                                            onChange={(e) => setIsCustomMessageOn(e.target.checked)}
+                                        />
+                                        <span className="slider round"></span>
+                                    </label>
                                 </div>
                             </div>
-                            <div className="notification-switch">
-                                <label className="switch">
-                                    <input
-                                        type="checkbox"
-                                        checked={isCustomMessageOn}
-                                        onChange={(e) => setIsCustomMessageOn(e.target.checked)}
-                                    />
-                                    <span className="slider round"></span>
-                                </label>
-                            </div>
-                        </div>
+                        )}
 
                         {/* Modal */}
                         {isModalOpen && (
