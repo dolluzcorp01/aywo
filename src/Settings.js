@@ -33,6 +33,12 @@ const Settings = () => {
     const [isExpiryOn, setIsExpiryOn] = useState(false);
     const [isLimitOn, setIsLimitOn] = useState(false);
 
+    const [isFormOpenDateOn, setIsFormOpenDateOn] = useState(false);
+    const [formOpenDate, setFormOpenDate] = useState("");
+
+    const [isFormExpiryOn, setIsFormExpiryOn] = useState(false);
+    const [formExpiryDate, setFormExpiryDate] = useState("");
+
     const shouldShowCustomMessage = isFormClosed || isOpenDateOn || isExpiryOn || isLimitOn;
 
     const handleSaveClosedMessage = async () => {
@@ -75,7 +81,168 @@ const Settings = () => {
     useEffect(() => {
         fetchWorkflows();
         fetchClosedMessage();
+        fetchFormDates();
     }, []);
+
+    const fetchFormDates = async () => {
+        const formId = getFormId();
+        if (!formId) return;
+
+        try {
+            const res = await fetch(`/api/form_builder/forms/${formId}/dates`, {
+                credentials: "include",
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                if (data.form_open_date) {
+                    setFormOpenDate(data.form_open_date.slice(0, 16)); // format for datetime-local
+                    setIsFormOpenDateOn(true);
+                }
+                if (data.form_expire_date) {
+                    setFormExpiryDate(data.form_expire_date.slice(0, 16));
+                    setIsFormExpiryOn(true);
+                }
+            } else {
+                console.error("Error fetching form dates:", data.error);
+            }
+        } catch (err) {
+            console.error("Error fetching form dates:", err);
+        }
+    };
+
+    const saveOpenDate = async () => {
+        if (isFormOpenDateOn && formOpenDate) {
+            const now = new Date();
+            const openDate = new Date(formOpenDate);
+
+            if (openDate < now) {
+                return Swal.fire({
+                    icon: "warning",
+                    title: "Invalid Date",
+                    text: "Form open date must be greater than the current date & time.",
+                    confirmButtonColor: "#d33",
+                });
+            }
+
+            if (isFormExpiryOn && formExpiryDate) {
+                const expireDate = new Date(formExpiryDate);
+                if (expireDate <= openDate) {
+                    return Swal.fire({
+                        icon: "warning",
+                        title: "Invalid Dates",
+                        text: "Form open date must be earlier than the expiration date.",
+                        confirmButtonColor: "#d33",
+                    });
+                }
+            }
+        }
+
+        // Proceed to save if valid
+        const formId = getFormId();
+        try {
+            const res = await fetch("/api/form_builder/forms/update-dates", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    form_id: formId,
+                    form_open_date: isFormOpenDateOn ? formOpenDate : null,
+                    form_expire_date: isFormExpiryOn ? formExpiryDate : null,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                Swal.fire({
+                    icon: "success",
+                    title: "Saved",
+                    text: `Form Open Date saved as ${formOpenDate || "cleared"}`,
+                    confirmButtonColor: "#3085d6",
+                });
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: data.error || "Failed to save open date",
+                    confirmButtonColor: "#d33",
+                });
+            }
+        } catch (err) {
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Something went wrong while saving open date",
+            });
+            console.error("Error saving open date:", err);
+        }
+    };
+
+    const saveExpireDate = async () => {
+        if (isFormExpiryOn && formExpiryDate) {
+            const now = new Date();
+            const expireDate = new Date(formExpiryDate);
+
+            if (expireDate < now) {
+                return Swal.fire({
+                    icon: "warning",
+                    title: "Invalid Date",
+                    text: "Form expiration date must be greater than the current date & time.",
+                    confirmButtonColor: "#d33",
+                });
+            }
+
+            if (isFormOpenDateOn && formOpenDate) {
+                const openDate = new Date(formOpenDate);
+                if (expireDate <= openDate) {
+                    return Swal.fire({
+                        icon: "warning",
+                        title: "Invalid Dates",
+                        text: "Expiration date must be later than the form open date.",
+                        confirmButtonColor: "#d33",
+                    });
+                }
+            }
+        }
+
+        // Proceed to save if valid
+        const formId = getFormId();
+        try {
+            const res = await fetch("/api/form_builder/forms/update-dates", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    form_id: formId,
+                    form_open_date: isFormOpenDateOn ? formOpenDate : null,
+                    form_expire_date: isFormExpiryOn ? formExpiryDate : null,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                Swal.fire({
+                    icon: "success",
+                    title: "Saved",
+                    text: `Form Expiration Date saved as ${formExpiryDate || "cleared"}`,
+                    confirmButtonColor: "#3085d6",
+                });
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: data.error || "Failed to save expiration date",
+                    confirmButtonColor: "#d33",
+                });
+            }
+        } catch (err) {
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Something went wrong while saving expiration date",
+            });
+            console.error("Error saving expiration date:", err);
+        }
+    };
 
     const fetchClosedMessage = async () => {
         const formId = getFormId();
@@ -322,39 +489,78 @@ const Settings = () => {
                             </label>
                         </div>
 
+                        {/* Form open date */}
                         <div className="notification-card">
                             <div className="notification-content">
                                 <FaClock className="notification-icon" />
                                 <div className="notification-text">
                                     <strong>Form open date</strong>
                                     <p>Set a date for your form to become available.</p>
+
+                                    {isFormOpenDateOn && (
+                                        <div style={{ marginTop: "8px", display: "flex", gap: "8px", alignItems: "center" }}>
+                                            <input
+                                                type="datetime-local"
+                                                value={formOpenDate}
+                                                onChange={(e) => setFormOpenDate(e.target.value)}
+                                            />
+                                            <button
+                                                className="save-btn"
+                                                onClick={saveOpenDate}
+                                            >
+                                                Save
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                            <label className="switch">
-                                <input type="checkbox"
-                                    onChange={() => {
-                                        setIsFormClosed(!isFormClosed);
-                                    }}
-                                />
-                                <span className="slider round"></span>
-                            </label>
+                            <div className="notification-switch">
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={isFormOpenDateOn}
+                                        onChange={(e) => setIsFormOpenDateOn(e.target.checked)}
+                                    />
+                                    <span className="slider round"></span>
+                                </label>
+                            </div>
                         </div>
 
+                        {/* Form expiration date */}
                         <div className="notification-card">
                             <div className="notification-content">
                                 <FaCalendarAlt className="notification-icon" />
                                 <div className="notification-text">
                                     <strong>Form expiration date</strong>
                                     <p>Close form upon reaching a certain date.</p>
+
+                                    {isFormExpiryOn && (
+                                        <div style={{ marginTop: "8px", display: "flex", gap: "8px", alignItems: "center" }}>
+                                            <input
+                                                type="datetime-local"
+                                                value={formExpiryDate}
+                                                onChange={(e) => setFormExpiryDate(e.target.value)}
+                                            />
+                                            <button
+                                                className="save-btn"
+                                                onClick={saveExpireDate}
+                                            >
+                                                Save
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                            <label className="switch">
-                                <input type="checkbox"
-                                    onChange={() => {
-                                        setIsFormClosed(!isFormClosed);
-                                    }} />
-                                <span className="slider round"></span>
-                            </label>
+                            <div className="notification-switch">
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={isFormExpiryOn}
+                                        onChange={(e) => setIsFormExpiryOn(e.target.checked)}
+                                    />
+                                    <span className="slider round"></span>
+                                </label>
+                            </div>
                         </div>
 
                         <div className="notification-card">

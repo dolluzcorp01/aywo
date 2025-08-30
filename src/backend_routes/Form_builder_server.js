@@ -2470,4 +2470,60 @@ router.get("/forms/:formId/close-message", verifyJWT, async (req, res) => {
     }
 });
 
+// Update open & expire date
+router.put("/forms/update-dates", verifyJWT, async (req, res) => {
+    const { form_id, form_open_date, form_expire_date } = req.body;
+    const userId = req.user_id; // from JWT
+
+    try {
+        // check if form belongs to user
+        const [form] = await queryPromise(
+            db,
+            "SELECT id FROM dforms WHERE id = ? AND user_id = ?",
+            [form_id, userId]
+        );
+
+        if (!form) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        // update open/expire dates
+        await queryPromise(
+            db,
+            `UPDATE dforms 
+             SET form_open_date = ?, form_expire_date = ?, updated_at = NOW() 
+             WHERE id = ?`,
+            [form_open_date || null, form_expire_date || null, form_id]
+        );
+
+        res.json({ message: "Form dates updated successfully" });
+    } catch (error) {
+        console.error("Error updating form dates:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// Fetch open & expire dates
+router.get("/forms/:formId/dates", verifyJWT, async (req, res) => {
+    const { formId } = req.params;
+    const userId = req.user_id;
+
+    try {
+        const [form] = await queryPromise(
+            db,
+            "SELECT form_open_date, form_expire_date FROM dforms WHERE id = ? AND user_id = ?",
+            [formId, userId]
+        );
+
+        if (!form) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        res.json(form);
+    } catch (error) {
+        console.error("Error fetching form dates:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 module.exports = router;

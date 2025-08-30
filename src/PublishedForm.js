@@ -41,6 +41,39 @@ const PublishedForm = () => {
     const [closedTitle, setClosedTitle] = useState("Form closed to new submissions");
     const [closedDesc, setClosedDesc] = useState("Contact the form owner for more details.");
 
+    const fetchFormDates = async () => {
+        if (!formId) return;
+
+        try {
+            const res = await fetch(`/api/form_builder/forms/${formId}/dates`, {
+                credentials: "include",
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                let now = new Date();
+
+                let openDate = data.form_open_date ? new Date(data.form_open_date) : null;
+                let expireDate = data.form_expire_date ? new Date(data.form_expire_date) : null;
+
+                // Check if current date is outside the open & expire range
+                if (
+                    (openDate && now < openDate) || // not yet open
+                    (expireDate && now > expireDate) // already expired
+                ) {
+                    setIsFormClosed(true);
+                } else {
+                    setIsFormClosed(false);
+                }
+            } else {
+                console.error("Error fetching form dates:", data.error);
+            }
+        } catch (err) {
+            console.error("Error fetching form dates:", err);
+        }
+    };
+
     const fetchClosedMessage = async () => {
         if (!formId) return;
 
@@ -178,6 +211,7 @@ const PublishedForm = () => {
             fetchClosedMessage();
             fetchPublishedForm();
             fetchFormPages();
+            fetchFormDates();
         }
     }, [formId, pageId]);
 
@@ -1164,11 +1198,6 @@ const PublishedForm = () => {
                                                     value={col}
                                                     checked={field.selectedMatrix?.[rowIdx] === colIdx}
                                                     onChange={() => {
-                                                        console.log("🔘 Radio changed:");
-                                                        console.log("Row label:", row);
-                                                        console.log("Col label:", col);
-                                                        console.log("colIdx:", colIdx);
-
                                                         const updatedFields = fields.map(f => {
                                                             if (f.id === field.id) {
                                                                 const newMatrix = [...(f.selectedMatrix || [])];
