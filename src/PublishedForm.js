@@ -38,6 +38,29 @@ const PublishedForm = () => {
 
     const [formLoaded, setFormLoaded] = useState(false);
     const [isFormClosed, setIsFormClosed] = useState(false);
+    const [closedTitle, setClosedTitle] = useState("Form closed to new submissions");
+    const [closedDesc, setClosedDesc] = useState("Contact the form owner for more details.");
+
+    const fetchClosedMessage = async () => {
+        if (!formId) return;
+
+        try {
+            const res = await fetch(`/api/form_builder/forms/${formId}/close-message`, {
+                credentials: "include",
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setClosedTitle(data.close_title || "Form closed to new submissions");
+                setClosedDesc(data.close_description || "Contact the form owner for more details.");
+            } else {
+                console.error("Error fetching close message:", data.error);
+            }
+        } catch (err) {
+            console.error("Error fetching close message:", err);
+        }
+    };
 
     useEffect(() => {
         const fetchPublishedForm = async () => {
@@ -152,6 +175,7 @@ const PublishedForm = () => {
         };
 
         if (formId && pageId) {
+            fetchClosedMessage();
             fetchPublishedForm();
             fetchFormPages();
         }
@@ -2474,8 +2498,10 @@ const PublishedForm = () => {
                     <div className="form-closed-wrapper">
                         <div className="form-closed-card">
                             <FaLock size={48} style={{ marginBottom: "1rem", color: "rgb(155, 160, 168)" }} />
-                            <h2>Form closed to new submissions</h2>
-                            <p>Contact the form owner for more details.</p>
+
+                            {/* Use state values instead of hardcoded text */}
+                            <h2>{closedTitle}</h2>
+                            <p>{closedDesc}</p>
                         </div>
                     </div>
                 ) : (
