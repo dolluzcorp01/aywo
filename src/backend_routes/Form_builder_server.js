@@ -2526,4 +2526,94 @@ router.get("/forms/:formId/dates", verifyJWT, async (req, res) => {
     }
 });
 
+// Update submission limit
+router.put("/forms/update-submission-limit", verifyJWT, async (req, res) => {
+    const { form_id, submission_limit } = req.body;
+    const userId = req.user_id; // from JWT
+
+    try {
+        // check if form belongs to user
+        const [form] = await queryPromise(
+            db,
+            "SELECT id FROM dforms WHERE id = ? AND user_id = ?",
+            [form_id, userId]
+        );
+
+        if (!form) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        // update submission limit
+        await queryPromise(
+            db,
+            `UPDATE dforms 
+             SET submission_limit = ?, updated_at = NOW() 
+             WHERE id = ?`,
+            [submission_limit || null, form_id]
+        );
+
+        res.json({ message: "Submission limit updated successfully" });
+    } catch (error) {
+        console.error("Error updating submission limit:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// Fetch submission limit
+router.get("/forms/:formId/submission-limit", verifyJWT, async (req, res) => {
+    const { formId } = req.params;
+    const userId = req.user_id;
+
+    try {
+        const [form] = await queryPromise(
+            db,
+            "SELECT submission_limit FROM dforms WHERE id = ? AND user_id = ?",
+            [formId, userId]
+        );
+
+        if (!form) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        res.json(form);
+    } catch (error) {
+        console.error("Error fetching submission limit:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// Fetch submission limit + current response count
+router.get("/forms/:formId/responseLimit-limit", verifyJWT, async (req, res) => {
+    const { formId } = req.params;
+    const userId = req.user_id;
+
+    try {
+        // Get submission limit for this form
+        const [form] = await queryPromise(
+            db,
+            "SELECT submission_limit FROM dforms WHERE id = ? AND user_id = ?",
+            [formId, userId]
+        );
+
+        if (!form) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        // Count responses
+        const [countResult] = await queryPromise(
+            db,
+            "SELECT COUNT(*) AS response_count FROM dform_responses WHERE form_id = ?",
+            [formId]
+        );
+
+        res.json({
+            submission_limit: form.submission_limit,
+            response_count: countResult.response_count,
+        });
+    } catch (error) {
+        console.error("Error fetching submission limit:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 module.exports = router;

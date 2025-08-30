@@ -39,39 +39,11 @@ const Settings = () => {
     const [isFormExpiryOn, setIsFormExpiryOn] = useState(false);
     const [formExpiryDate, setFormExpiryDate] = useState("");
 
-    const shouldShowCustomMessage = isFormClosed || isOpenDateOn || isExpiryOn || isLimitOn;
+    const [isSubmissionLimitOn, setIsSubmissionLimitOn] = useState(false);
+    const [submissionLimit, setSubmissionLimit] = useState(50);
 
-    const handleSaveClosedMessage = async () => {
-        const formId = getFormId();
-        if (!formId) {
-            Swal.fire("Error", "Form ID not found in URL", "error");
-            return;
-        }
-
-        try {
-            const res = await fetch("/api/form_builder/forms/update-close-message", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({
-                    form_id: formId,
-                    close_title: closedTitle,
-                    close_description: closedDesc,
-                }),
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                Swal.fire("Success", "Close page updated successfully!", "success");
-                setIsModalOpen(false);
-            } else {
-                Swal.fire("Error", data.error || "Failed to update close page", "error");
-            }
-        } catch (error) {
-            console.error("Error updating close page:", error);
-            Swal.fire("Error", "Server error while updating close page", "error");
-        }
-    };
+    const shouldShowCustomMessage =
+        isFormClosed || isFormOpenDateOn || isFormExpiryOn || isSubmissionLimitOn;
 
     const getFormId = () => {
         const match = window.location.pathname.match(/form-(\d+)/);
@@ -82,7 +54,61 @@ const Settings = () => {
         fetchWorkflows();
         fetchClosedMessage();
         fetchFormDates();
+        fetchSubmissionLimit();
     }, []);
+
+    const fetchSubmissionLimit = async () => {
+        const formId = getFormId();
+        if (!formId) return;
+
+        try {
+            const res = await fetch(`/api/form_builder/forms/${formId}/submission-limit`, {
+                credentials: "include",
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                setSubmissionLimit(data.submission_limit || 50);
+                setIsSubmissionLimitOn(!!data.submission_limit);
+            } else {
+                console.error("Error fetching submission limit:", data.error);
+            }
+        } catch (err) {
+            console.error("Error fetching submission limit:", err);
+        }
+    };
+
+    const saveSubmissionLimit = async () => {
+        const formId = getFormId();
+
+        try {
+            const res = await fetch("/api/form_builder/forms/update-submission-limit", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    form_id: formId,
+                    submission_limit: isSubmissionLimitOn ? submissionLimit : null,
+                }),
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                if (isSubmissionLimitOn && submissionLimit) {
+                    Swal.fire("Success", `Submission limit set to ${submissionLimit}`, "success");
+                } else {
+                    Swal.fire("Success", "Submission limit unset", "success");
+                    setIsSubmissionLimitOn(false);
+                    setSubmissionLimit("");
+                }
+            } else {
+                Swal.fire("Error", data.error || "Failed to update submission limit", "error");
+            }
+        } catch (error) {
+            console.error("Error updating submission limit:", error);
+            Swal.fire("Error", "Server error while updating submission limit", "error");
+        }
+    };
 
     const fetchFormDates = async () => {
         const formId = getFormId();
@@ -112,10 +138,19 @@ const Settings = () => {
         }
     };
 
-    const saveOpenDate = async () => {
-        if (isFormOpenDateOn && formOpenDate) {
+    const saveOpenDate = async (overrideValue = undefined) => {
+        const formId = getFormId();
+
+        // ✅ Decide the value to save
+        const openDateToSave =
+            overrideValue !== undefined
+                ? overrideValue
+                : (isFormOpenDateOn ? formOpenDate : null);
+
+        // ✅ Validation only if we are saving a date
+        if (openDateToSave) {
             const now = new Date();
-            const openDate = new Date(formOpenDate);
+            const openDate = new Date(openDateToSave);
 
             if (openDate < now) {
                 return Swal.fire({
@@ -139,8 +174,6 @@ const Settings = () => {
             }
         }
 
-        // Proceed to save if valid
-        const formId = getFormId();
         try {
             const res = await fetch("/api/form_builder/forms/update-dates", {
                 method: "PUT",
@@ -148,16 +181,20 @@ const Settings = () => {
                 credentials: "include",
                 body: JSON.stringify({
                     form_id: formId,
-                    form_open_date: isFormOpenDateOn ? formOpenDate : null,
+                    form_open_date: openDateToSave,
                     form_expire_date: isFormExpiryOn ? formExpiryDate : null,
                 }),
             });
+
             const data = await res.json();
+
             if (res.ok) {
                 Swal.fire({
                     icon: "success",
                     title: "Saved",
-                    text: `Form Open Date saved as ${formOpenDate || "cleared"}`,
+                    text: openDateToSave
+                        ? `Form Open Date saved as ${openDateToSave}`
+                        : "Form Open Date unset",
                     confirmButtonColor: "#3085d6",
                 });
             } else {
@@ -178,10 +215,19 @@ const Settings = () => {
         }
     };
 
-    const saveExpireDate = async () => {
-        if (isFormExpiryOn && formExpiryDate) {
+    const saveExpireDate = async (overrideValue = undefined) => {
+        const formId = getFormId();
+
+        // ✅ Decide the value to save
+        const expireDateToSave =
+            overrideValue !== undefined
+                ? overrideValue
+                : (isFormExpiryOn ? formExpiryDate : null);
+
+        // ✅ Validation only if we are saving a date
+        if (expireDateToSave) {
             const now = new Date();
-            const expireDate = new Date(formExpiryDate);
+            const expireDate = new Date(expireDateToSave);
 
             if (expireDate < now) {
                 return Swal.fire({
@@ -205,8 +251,6 @@ const Settings = () => {
             }
         }
 
-        // Proceed to save if valid
-        const formId = getFormId();
         try {
             const res = await fetch("/api/form_builder/forms/update-dates", {
                 method: "PUT",
@@ -215,15 +259,19 @@ const Settings = () => {
                 body: JSON.stringify({
                     form_id: formId,
                     form_open_date: isFormOpenDateOn ? formOpenDate : null,
-                    form_expire_date: isFormExpiryOn ? formExpiryDate : null,
+                    form_expire_date: expireDateToSave,
                 }),
             });
+
             const data = await res.json();
+
             if (res.ok) {
                 Swal.fire({
                     icon: "success",
                     title: "Saved",
-                    text: `Form Expiration Date saved as ${formExpiryDate || "cleared"}`,
+                    text: expireDateToSave
+                        ? `Form Expiration Date saved as ${expireDateToSave}`
+                        : "Form Expiration Date unset",
                     confirmButtonColor: "#3085d6",
                 });
             } else {
@@ -263,6 +311,38 @@ const Settings = () => {
             }
         } catch (err) {
             console.error("Error fetching close message:", err);
+        }
+    };
+
+    const handleSaveClosedMessage = async () => {
+        const formId = getFormId();
+        if (!formId) {
+            Swal.fire("Error", "Form ID not found in URL", "error");
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/form_builder/forms/update-close-message", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    form_id: formId,
+                    close_title: closedTitle,
+                    close_description: closedDesc,
+                }),
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                Swal.fire("Success", "Close page updated successfully!", "success");
+                setIsModalOpen(false);
+            } else {
+                Swal.fire("Error", data.error || "Failed to update close page", "error");
+            }
+        } catch (error) {
+            console.error("Error updating close page:", error);
+            Swal.fire("Error", "Server error while updating close page", "error");
         }
     };
 
@@ -504,10 +584,7 @@ const Settings = () => {
                                                 value={formOpenDate}
                                                 onChange={(e) => setFormOpenDate(e.target.value)}
                                             />
-                                            <button
-                                                className="save-btn"
-                                                onClick={saveOpenDate}
-                                            >
+                                            <button className="save-btn" onClick={() => saveOpenDate()}>
                                                 Save
                                             </button>
                                         </div>
@@ -519,7 +596,15 @@ const Settings = () => {
                                     <input
                                         type="checkbox"
                                         checked={isFormOpenDateOn}
-                                        onChange={(e) => setIsFormOpenDateOn(e.target.checked)}
+                                        onChange={(e) => {
+                                            const checked = e.target.checked;
+                                            setIsFormOpenDateOn(checked);
+
+                                            if (!checked) {
+                                                setFormOpenDate("");
+                                                saveOpenDate(null);
+                                            }
+                                        }}
                                     />
                                     <span className="slider round"></span>
                                 </label>
@@ -541,10 +626,7 @@ const Settings = () => {
                                                 value={formExpiryDate}
                                                 onChange={(e) => setFormExpiryDate(e.target.value)}
                                             />
-                                            <button
-                                                className="save-btn"
-                                                onClick={saveExpireDate}
-                                            >
+                                            <button className="save-btn" onClick={() => saveExpireDate()} >
                                                 Save
                                             </button>
                                         </div>
@@ -556,28 +638,59 @@ const Settings = () => {
                                     <input
                                         type="checkbox"
                                         checked={isFormExpiryOn}
-                                        onChange={(e) => setIsFormExpiryOn(e.target.checked)}
+                                        onChange={(e) => {
+                                            const checked = e.target.checked;
+                                            setIsFormExpiryOn(checked);
+
+                                            if (!checked) {
+                                                setFormExpiryDate("");
+                                                saveExpireDate(null);
+                                            }
+                                        }}
                                     />
                                     <span className="slider round"></span>
                                 </label>
                             </div>
                         </div>
 
+                        {/* Form submission limit */}
                         <div className="notification-card">
                             <div className="notification-content">
                                 <FaChartLine className="notification-icon" />
                                 <div className="notification-text">
                                     <strong>Form submission limit</strong>
                                     <p>Close form after reaching a certain number of submissions.</p>
+
+                                    {isSubmissionLimitOn && (
+                                        <div style={{ marginTop: "8px", display: "flex", gap: "8px", alignItems: "center" }}>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                value={submissionLimit}
+                                                onChange={(e) => setSubmissionLimit(e.target.value)}
+                                            />
+                                            <button
+                                                className="save-btn"
+                                                onClick={saveSubmissionLimit}
+                                            >
+                                                Save
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                            <label className="switch">
-                                <input type="checkbox"
-                                    onChange={() => {
-                                        setIsFormClosed(!isFormClosed);
-                                    }} />
-                                <span className="slider round"></span>
-                            </label>
+                            <div className="notification-switch">
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={isSubmissionLimitOn}
+                                        onChange={(e) => {
+                                            setIsSubmissionLimitOn(e.target.checked);
+                                        }}
+                                    />
+                                    <span className="slider round"></span>
+                                </label>
+                            </div>
                         </div>
 
                         {shouldShowCustomMessage && (

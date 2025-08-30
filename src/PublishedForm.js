@@ -41,6 +41,31 @@ const PublishedForm = () => {
     const [closedTitle, setClosedTitle] = useState("Form closed to new submissions");
     const [closedDesc, setClosedDesc] = useState("Contact the form owner for more details.");
 
+    const fetchresponseLimit = async () => {
+        if (!formId) return;
+
+        try {
+            const res = await fetch(`/api/form_builder/forms/${formId}/responseLimit-limit`, {
+                credentials: "include",
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                const { submission_limit, response_count } = data;
+
+                if (submission_limit && response_count >= submission_limit) {
+                    setIsFormClosed(true);   // 🚨 close the form
+                } else {
+                    setIsFormClosed(false);  // ✅ keep form open
+                }
+            } else {
+                console.error("Error fetching submission limit:", data.error);
+            }
+        } catch (err) {
+            console.error("Error fetching submission limit:", err);
+        }
+    };
+
     const fetchFormDates = async () => {
         if (!formId) return;
 
@@ -212,6 +237,7 @@ const PublishedForm = () => {
             fetchPublishedForm();
             fetchFormPages();
             fetchFormDates();
+            fetchresponseLimit();
         }
     }, [formId, pageId]);
 
