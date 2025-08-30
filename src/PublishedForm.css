@@ -50,3 +50,35 @@ body {
     border: none !important;
     outline: none !important;
 }
+
+.form-closed-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    height: 100%;
+    width: 100%;
+    padding-top: 2%;
+}
+
+.form-closed-card {
+    background: #fff;
+    padding: 60px 70px;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    text-align: center;
+    max-width: 700px;
+    width: 100%;
+}
+
+.form-closed-card h2 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: rgb(55, 65, 81);
+}
+
+.form-closed-card p {
+    font-size: 1.1rem;
+    color: #9BA0A8;
+    margin: 0;
+}

@@ -4,7 +4,7 @@ import { apiFetch, API_BASE } from "./utils/api";
 import Swal from "sweetalert2";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import Select from 'react-select';
-import { FaStar } from "react-icons/fa";
+import { FaStar, FaLock } from "react-icons/fa";
 import confetti from 'canvas-confetti';
 import "./PublishedForm.css";
 
@@ -37,6 +37,7 @@ const PublishedForm = () => {
     const pageId = match ? match[2] : null;
 
     const [formLoaded, setFormLoaded] = useState(false);
+    const [isFormClosed, setIsFormClosed] = useState(false);
 
     useEffect(() => {
         const fetchPublishedForm = async () => {
@@ -48,6 +49,7 @@ const PublishedForm = () => {
                 if (!response.ok) throw new Error("Failed to fetch form");
 
                 const data = await response.json();
+                setIsFormClosed(data.form.is_closed === 1);
                 if (data.form.background_image) {
                     setFormbgImage(`${API_BASE}/${data.form.background_image.replace(/\\/g, "/")}`);
                 }
@@ -2468,57 +2470,66 @@ const PublishedForm = () => {
                     backgroundImage: formbgImage ? `url(${formbgImage})` : "none"
                 }}
             >
-                <div
-                    className="Published-form-content"
-                    style={{ backgroundColor: form.questions_background_color }}
-                >
-                    {fields.map((field) => (
-                        <div
-                            key={field.id}
-                            style={{
-                                marginBottom: "1rem",
-                                padding: "0.5rem",
-                                borderRadius: "6px"
-                            }}
-                        >
-                            {/* Render label, required asterisk, and caption (only for applicable fields) */}
-                            {!["Heading", "Start_pg_Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) && (
-                                <>
-                                    <label
-                                        style={{
-                                            fontSize: "1rem",
-                                            border: "none",
-                                            background: "transparent",
-                                            width: "fit-content",
-                                            marginBottom: "2px",
-                                            color: formQuestionColor,
-                                            fontFamily: selectedFont
-                                        }}
-                                    >
-                                        {field.label}
-                                        {field.required && <span style={{ color: "red", marginLeft: "5px" }}>*</span>}
-                                    </label>
-                                    {field.caption && (
-                                        <small
+                {isFormClosed ? (
+                    <div className="form-closed-wrapper">
+                        <div className="form-closed-card">
+                            <FaLock size={48} style={{ marginBottom: "1rem", color: "rgb(155, 160, 168)" }} />
+                            <h2>Form closed to new submissions</h2>
+                            <p>Contact the form owner for more details.</p>
+                        </div>
+                    </div>
+                ) : (
+                    // 👇 your actual form content
+                    <div
+                        className="Published-form-content"
+                        style={{ backgroundColor: form.questions_background_color }}
+                    >
+                        {fields.map((field) => (
+                            <div
+                                key={field.id}
+                                style={{
+                                    marginBottom: "1rem",
+                                    padding: "0.5rem",
+                                    borderRadius: "6px"
+                                }}
+                            >
+                                {!["Heading", "Start_pg_Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) && (
+                                    <>
+                                        <label
                                             style={{
-                                                color: "gray",
-                                                display: "block",
-                                                marginBottom: "6px",
-                                                fontFamily: form.selected_font || 'inherit'
+                                                fontSize: "1rem",
+                                                border: "none",
+                                                background: "transparent",
+                                                width: "fit-content",
+                                                marginBottom: "2px",
+                                                color: formQuestionColor,
+                                                fontFamily: selectedFont
                                             }}
                                         >
-                                            {field.caption}
-                                        </small>
-                                    )}
-                                </>
-                            )}
-
-                            {renderField(field)}
-                        </div>
-                    ))}
-                </div>
+                                            {field.label}
+                                            {field.required && <span style={{ color: "red", marginLeft: "5px" }}>*</span>}
+                                        </label>
+                                        {field.caption && (
+                                            <small
+                                                style={{
+                                                    color: "gray",
+                                                    display: "block",
+                                                    marginBottom: "6px",
+                                                    fontFamily: form.selected_font || 'inherit'
+                                                }}
+                                            >
+                                                {field.caption}
+                                            </small>
+                                        )}
+                                    </>
+                                )}
+                                {renderField(field)}
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
-        </div >
+        </div>
     );
 
 };
