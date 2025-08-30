@@ -10,7 +10,10 @@ import {
     FaChartLine,
     FaEnvelope,
     FaClock,
-    FaCalendarAlt
+    FaCalendarAlt,
+    FaRegCommentDots,
+    FaRegEdit,
+    FaTimes
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import "./Settings.css";
@@ -21,6 +24,43 @@ const Settings = () => {
     const [workflowId, setWorkflowId] = useState(null);
     const [isFormClosed, setIsFormClosed] = useState(false);
 
+    const [isCustomMessageOn, setIsCustomMessageOn] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [closedTitle, setClosedTitle] = useState("Form closed to new submissions");
+    const [closedDesc, setClosedDesc] = useState("Contact the form owner for more details.");
+
+    const handleSaveClosedMessage = async () => {
+        const formId = getFormId();
+        if (!formId) {
+            Swal.fire("Error", "Form ID not found in URL", "error");
+            return;
+        }
+
+        try {
+            const res = await fetch("/api/form_builder/forms/update-close-message", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    form_id: formId,
+                    close_title: closedTitle,
+                    close_description: closedDesc,
+                }),
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                Swal.fire("Success", "Close page updated successfully!", "success");
+                setIsModalOpen(false);
+            } else {
+                Swal.fire("Error", data.error || "Failed to update close page", "error");
+            }
+        } catch (error) {
+            console.error("Error updating close page:", error);
+            Swal.fire("Error", "Server error while updating close page", "error");
+        }
+    };
+
     const getFormId = () => {
         const match = window.location.pathname.match(/form-(\d+)/);
         return match ? match[1] : null;
@@ -28,7 +68,30 @@ const Settings = () => {
 
     useEffect(() => {
         fetchWorkflows();
+        fetchClosedMessage();
     }, []);
+
+    const fetchClosedMessage = async () => {
+        const formId = getFormId();
+        if (!formId) return;
+
+        try {
+            const res = await fetch(`/api/form_builder/forms/${formId}/close-message`, {
+                credentials: "include",
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setClosedTitle(data.close_title || "Form closed to new submissions");
+                setClosedDesc(data.close_description || "Contact the form owner for more details.");
+            } else {
+                console.error("Error fetching close message:", data.error);
+            }
+        } catch (err) {
+            console.error("Error fetching close message:", err);
+        }
+    };
 
     const fetchWorkflows = async () => {
         const formId = getFormId();
@@ -291,6 +354,82 @@ const Settings = () => {
                                 <span className="slider round"></span>
                             </label>
                         </div>
+
+                        <div className="notification-card">
+                            <div className="notification-content">
+                                <FaRegCommentDots className="notification-icon" />
+                                <div className="notification-text">
+                                    <strong>Custom form closed message</strong>
+                                    <p>Provide custom messages to show users when the form is closed/expired.</p>
+
+                                    {/* Show Edit button below <p> if switch is ON */}
+                                    {isCustomMessageOn && (
+                                        <button className="edit-close-btn" onClick={() => setIsModalOpen(true)}>
+                                            <FaRegEdit style={{ color: "rgb(107 114 128)", fontSize: "1.1rem" }} /> Edit close page
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="notification-switch">
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={isCustomMessageOn}
+                                        onChange={(e) => setIsCustomMessageOn(e.target.checked)}
+                                    />
+                                    <span className="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Modal */}
+                        {isModalOpen && (
+                            <div className="custom-modal-overlay">
+                                <div className="custom-modal">
+                                    <div className="custom-modal-header">
+                                        <h3>Edit close page</h3>
+                                        <button
+                                            className="custom-close-icon"
+                                            onClick={() => setIsModalOpen(false)}
+                                        >
+                                            <FaTimes style={{ color: "rgb(156 163 175)", fontSize: "1.2rem" }} />
+                                        </button>
+                                    </div>
+
+                                    <div className="custom-closed-wrapper">
+                                        <div className="custom-closed-card">
+                                            <FaLock
+                                                size={48}
+                                                style={{ marginBottom: "1rem", color: "rgb(155, 160, 168)" }}
+                                            />
+
+                                            {/* Editable Title */}
+                                            <input
+                                                type="text"
+                                                className="closed-input"
+                                                value={closedTitle}
+                                                onChange={(e) => setClosedTitle(e.target.value)}
+                                            />
+
+                                            {/* Editable Description */}
+                                            <textarea
+                                                className="closed-textarea"
+                                                value={closedDesc}
+                                                onChange={(e) => setClosedDesc(e.target.value)}
+                                                rows="3"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="modal-actions">
+                                        <button onClick={handleSaveClosedMessage} className="save-btn">
+                                            Done
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                     </>
                 )}
             </div>

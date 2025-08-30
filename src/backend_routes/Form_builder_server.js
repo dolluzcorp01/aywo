@@ -2416,4 +2416,58 @@ router.delete("/workflows/:id", verifyJWT, async (req, res) => {
     }
 });
 
+// Update close page content
+router.put("/forms/update-close-message", verifyJWT, async (req, res) => {
+    const { form_id, close_title, close_description } = req.body;
+    const userId = req.user_id; // from JWT
+
+    try {
+        // check if form belongs to user
+        const [form] = await queryPromise(
+            db,
+            "SELECT id FROM dforms WHERE id = ? AND user_id = ?",
+            [form_id, userId]
+        );
+
+        if (!form) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        // update close message
+        await queryPromise(
+            db,
+            "UPDATE dforms SET close_title = ?, close_description = ?, updated_at = NOW() WHERE id = ?",
+            [close_title, close_description, form_id]
+        );
+
+        res.json({ message: "Close page updated successfully" });
+    } catch (error) {
+        console.error("Error updating close page:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// Fetch close message for a form
+router.get("/forms/:formId/close-message", verifyJWT, async (req, res) => {
+    const { formId } = req.params;
+    const userId = req.user_id;
+
+    try {
+        const [form] = await queryPromise(
+            db,
+            "SELECT close_title, close_description FROM dforms WHERE id = ? AND user_id = ?",
+            [formId, userId]
+        );
+
+        if (!form) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        res.json(form);
+    } catch (error) {
+        console.error("Error fetching close message:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 module.exports = router;
