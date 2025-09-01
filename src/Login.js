@@ -254,7 +254,7 @@ function Login() {
       });
 
       const data = await response.json();
-    
+
       if (data.message === "OTP sent successfully") {
         showSuccessMessage("OTP has been sent successfully!");
         setShowOTPVerificationSection(true);
@@ -541,8 +541,8 @@ function Login() {
                 </button>
 
                 {/* Divider Line with "Or" */}
-                <div className="divider">
-                  <span className="divider-text">Or</span>
+                <div className="login-divider">
+                  <span className="login-divider-text">Or</span>
                 </div>
 
                 <div className="form-group mt-3">
