@@ -69,6 +69,28 @@ const Form_builder_header = ({ isSaveEnabled }) => {
         }
     }, [formPages, currentPageId]);
 
+    const [isMobile, setIsMobile] = useState(false);
+    const [hideNavbar, setHideNavbar] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            const screenWidth = window.innerWidth;
+            const isMobileCondition = screenWidth < 768;
+            setIsMobile(isMobileCondition);
+
+            // ✅ check if URL contains /form-builder/ OR /workflow
+            const path = window.location.pathname.toLowerCase();
+            const isSpecialPage =
+                path.includes("/form-builder/") || path.includes("/workflow") || path.includes("/share") || path.includes("/preview");
+
+            setHideNavbar(isMobileCondition && isSpecialPage);
+        };
+
+        handleResize(); // run once on mount
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
     const fetchFormPages = async (formId) => {
         try {
             const cleanFormId = formId.replace("form-", "");
@@ -367,6 +389,8 @@ const Form_builder_header = ({ isSaveEnabled }) => {
         });
     };
 
+    if (hideNavbar) return null;
+
     return (
         <Navbar className="form_builder_header">
             <div className="form_builder_header-left">
@@ -455,30 +479,43 @@ const Form_builder_header = ({ isSaveEnabled }) => {
                     </div>
                 ) : (
                     <>
-                        <span
-                            className={`center-nav-btn ${window.location.pathname.includes("form-builder") ? "active" : ""}`}
-                            onClick={() => navigate(`/form-builder/${formId}/page-start`)}
-                        >
-                            Edit
-                        </span>
-                        <span
-                            className={`center-nav-btn ${window.location.pathname.includes("Workflow") ? "active" : ""}`}
-                            onClick={() => navigate(`/Workflow/${formId}`)}
-                        >
-                            Integrate
-                        </span>
-                        <span
-                            className={`center-nav-btn ${window.location.pathname.includes("share") ? "active" : ""}`}
-                            onClick={() => navigate(`/share/${formId}`)}
-                        >
-                            Share
-                        </span>
-                        <span
-                            className={`center-nav-btn ${window.location.pathname.includes("responses") ? "active" : ""}`}
-                            onClick={() => navigate(`/responses/${formId}`)}
-                        >
-                            Results
-                        </span>
+                        {isMobile ? (
+                            // ✅ Mobile → show only Results
+                            <span
+                                className={`center-nav-btn ${window.location.pathname.includes("responses") ? "active" : ""}`}
+                                onClick={() => navigate(`/responses/${formId}`)}
+                            >
+                                Results
+                            </span>
+                        ) : (
+                            // ✅ Desktop → show all options
+                            <>
+                                <span
+                                    className={`center-nav-btn ${window.location.pathname.includes("form-builder") ? "active" : ""}`}
+                                    onClick={() => navigate(`/form-builder/${formId}/page-start`)}
+                                >
+                                    Edit
+                                </span>
+                                <span
+                                    className={`center-nav-btn ${window.location.pathname.includes("workflow") ? "active" : ""}`}
+                                    onClick={() => navigate(`/workflow/${formId}`)}
+                                >
+                                    Integrate
+                                </span>
+                                <span
+                                    className={`center-nav-btn ${window.location.pathname.includes("share") ? "active" : ""}`}
+                                    onClick={() => navigate(`/share/${formId}`)}
+                                >
+                                    Share
+                                </span>
+                                <span
+                                    className={`center-nav-btn ${window.location.pathname.includes("responses") ? "active" : ""}`}
+                                    onClick={() => navigate(`/responses/${formId}`)}
+                                >
+                                    Results
+                                </span>
+                            </>
+                        )}
                     </>
                 )}
             </div>

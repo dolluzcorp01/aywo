@@ -7,6 +7,7 @@ const Workflow = () => {
     const [delayTime, setDelayTime] = useState(30);
     const [loading, setLoading] = useState(true);
     const [activeWorkflow, setActiveWorkflow] = useState(null);
+    const [isMobile, setIsMobile] = useState(false);
 
     const workflows = [
         {
@@ -145,104 +146,154 @@ const Workflow = () => {
         }
     };
 
+    useEffect(() => {
+        const handleResize = () => {
+            const zoom = window.devicePixelRatio || 1;
+            const screenWidth = window.innerWidth;
+
+            // Consider as "mobile" if screen is small OR zoom is above 150%
+            const isMobileCondition = screenWidth < 768 || (screenWidth / window.outerWidth) < 0.67;
+
+            setIsMobile(isMobileCondition);
+        };
+
+        handleResize(); // run once on mount
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    const MobileWarning = () => (
+        <div
+            style={{
+                padding: "10px",
+                borderRadius: "12px",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                backgroundColor: "#fff",
+                maxWidth: "700px",
+                width: "100%",
+                margin: "20px auto",
+                boxSizing: "border-box",
+                overflowWrap: "break-word",
+                wordBreak: "break-word",
+                overflow: "hidden"
+            }}
+        >
+            <div className="mobile-warning">
+                <div className="icon" style={{ color: "#6B7280", fontSize: "1rem" }}>
+                    <i className="fa-solid fa-desktop"></i>
+                </div>
+                <h2 style={{ fontWeight: "700", color: "#374151" }}>
+                    The dForms editor works best on larger screens
+                </h2>
+                <p style={{ color: "#6B7280", fontWeight: "bolder" }}>
+                    Note that the forms you build <u>will work</u> on mobile devices!
+                </p>
+            </div>
+        </div>
+    );
+
     if (loading) return <p>Loading workflows...</p>;
 
     return (
-        <div className="workflow-page">
-            <div className="workflow-header">
-                <button className="tab-btn active">
-                    Workflows <span className="count">0</span>
-                </button>
-            </div>
-            <p className="workflow-subtitle">
-                Automate your forms with workflows <a href="#">Help?</a>
-            </p>
+        <div className="workflow-page" style={{ backgroundColor: isMobile ? "#fff" : "#0f172a" }}>
+            {isMobile ? (
+                <MobileWarning />
+            ) : (<>
+                <div className="workflow-header">
+                    <button className="tab-btn active">
+                        Workflows <span className="count">0</span>
+                    </button>
+                </div>
+                <p className="workflow-subtitle">
+                    Automate your forms with workflows <a href="#">Help?</a>
+                </p>
 
-            <div className="workflow-content">
-                {activeWorkflow && (
-                    <>
-                        <h3 className="section-title">Your Workflow</h3>
-                        <div className="your-workflows">
-                            <div className="workflow-card active">
-                                <div className="icons-row">
-                                    <div className="icons">
-                                        {activeWorkflow.workflow_name === "Send email after delay" && (
-                                            <>
-                                                <span className="icon" style={{ backgroundColor: "#3b82f6" }}><FaDownload /></span>
-                                                <span className="icon" style={{ backgroundColor: "#f59e0b" }}><FaClock /></span>
-                                                <span className="icon" style={{ backgroundColor: "#6366f1" }}><FaEnvelope /></span>
-                                            </>
-                                        )}
-                                        {activeWorkflow.workflow_name === "Thank you email" && (
-                                            <>
-                                                <span className="icon" style={{ backgroundColor: "#3b82f6" }}><FaDownload /></span>
-                                                <span className="icon" style={{ backgroundColor: "#6366f1" }}><FaEnvelope /></span>
-                                            </>
-                                        )}
+                <div className="workflow-content">
+                    {activeWorkflow && (
+                        <>
+                            <h3 className="section-title">Your Workflow</h3>
+                            <div className="your-workflows">
+                                <div className="workflow-card active">
+                                    <div className="icons-row">
+                                        <div className="icons">
+                                            {activeWorkflow.workflow_name === "Send email after delay" && (
+                                                <>
+                                                    <span className="icon" style={{ backgroundColor: "#3b82f6" }}><FaDownload /></span>
+                                                    <span className="icon" style={{ backgroundColor: "#f59e0b" }}><FaClock /></span>
+                                                    <span className="icon" style={{ backgroundColor: "#6366f1" }}><FaEnvelope /></span>
+                                                </>
+                                            )}
+                                            {activeWorkflow.workflow_name === "Thank you email" && (
+                                                <>
+                                                    <span className="icon" style={{ backgroundColor: "#3b82f6" }}><FaDownload /></span>
+                                                    <span className="icon" style={{ backgroundColor: "#6366f1" }}><FaEnvelope /></span>
+                                                </>
+                                            )}
+                                        </div>
+
+                                        {/* 🔹 Trash icon on right side */}
+                                        <FaTrash
+                                            className="delete-icon"
+                                            onClick={() => handleDeleteWorkflow(activeWorkflow.id)}
+                                        />
                                     </div>
 
-                                    {/* 🔹 Trash icon on right side */}
-                                    <FaTrash
-                                        className="delete-icon"
-                                        onClick={() => handleDeleteWorkflow(activeWorkflow.id)}
-                                    />
+                                    <h4>{activeWorkflow.workflow_name}</h4>
+                                    {activeWorkflow.workflow_delay_time && (
+                                        <p>Delay: {activeWorkflow.workflow_delay_time} min</p>
+                                    )}
                                 </div>
 
-                                <h4>{activeWorkflow.workflow_name}</h4>
-                                {activeWorkflow.workflow_delay_time && (
-                                    <p>Delay: {activeWorkflow.workflow_delay_time} min</p>
-                                )}
                             </div>
+                        </>
+                    )}
+                    <h3 className="section-title">Notifications</h3>
 
-                        </div>
-                    </>
-                )}
-                <h3 className="section-title">Notifications</h3>
+                    <div className="workflow-cards">
+                        {workflows.map((w) => (
+                            <div
+                                className="workflow-card"
+                                key={w.id}
+                                style={{ cursor: "pointer" }}
+                                onClick={() => handleWorkflowClick(w.title, w.hasDelay)}
+                            >
+                                <div className="icons-row">
+                                    <div className="icons">
+                                        {w.icons.map((icon, i) => (
+                                            <span
+                                                key={i}
+                                                className="icon"
+                                                style={{ backgroundColor: icon.color }}
+                                            >
+                                                {icon.el}
+                                            </span>
+                                        ))}
+                                    </div>
 
-                <div className="workflow-cards">
-                    {workflows.map((w) => (
-                        <div
-                            className="workflow-card"
-                            key={w.id}
-                            style={{ cursor: "pointer" }}
-                            onClick={() => handleWorkflowClick(w.title, w.hasDelay)}
-                        >
-                            <div className="icons-row">
-                                <div className="icons">
-                                    {w.icons.map((icon, i) => (
-                                        <span
-                                            key={i}
-                                            className="icon"
-                                            style={{ backgroundColor: icon.color }}
-                                        >
-                                            {icon.el}
-                                        </span>
-                                    ))}
+                                    {w.hasDelay && (
+                                        <input
+                                            type="number"
+                                            min="10"
+                                            max="60"
+                                            value={delayTime}
+                                            onClick={(e) => e.stopPropagation()} // prevent card click
+                                            onChange={(e) => {
+                                                let val = Number(e.target.value);
+                                                if (val < 10) val = 10;
+                                                if (val > 60) val = 60;
+                                                setDelayTime(val);
+                                            }}
+                                            className="delay-input"
+                                        />
+                                    )}
                                 </div>
-
-                                {w.hasDelay && (
-                                    <input
-                                        type="number"
-                                        min="10"
-                                        max="60"
-                                        value={delayTime}
-                                        onClick={(e) => e.stopPropagation()} // prevent card click
-                                        onChange={(e) => {
-                                            let val = Number(e.target.value);
-                                            if (val < 10) val = 10;
-                                            if (val > 60) val = 60;
-                                            setDelayTime(val);
-                                        }}
-                                        className="delay-input"
-                                    />
-                                )}
+                                <h4>{w.title}</h4>
+                                <p>{w.description}</p>
                             </div>
-                            <h4>{w.title}</h4>
-                            <p>{w.description}</p>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
-            </div>
+            </>)}
         </div>
     );
 };

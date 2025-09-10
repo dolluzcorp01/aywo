@@ -9,6 +9,7 @@ import "./Preview.css";
 
 const Preview = () => {
     const [form, setForm] = useState(null);
+    const [isMobile, setIsMobile] = useState(false);
     const [formPages, setFormPages] = useState([]);
     const [fields, setFields] = useState([]);
     const [responses, setResponses] = useState({});
@@ -2133,113 +2134,162 @@ const Preview = () => {
         }
     };
 
+    useEffect(() => {
+        const handleResize = () => {
+            const zoom = window.devicePixelRatio || 1;
+            const screenWidth = window.innerWidth;
+
+            // Consider as "mobile" if screen is small OR zoom is above 150%
+            const isMobileCondition = screenWidth < 768 || (screenWidth / window.outerWidth) < 0.67;
+
+            setIsMobile(isMobileCondition);
+        };
+
+        handleResize(); // run once on mount
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    const MobileWarning = () => (
+        <div
+            style={{
+                padding: "10px",
+                borderRadius: "12px",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                backgroundColor: "#fff",
+                maxWidth: "700px",
+                width: "100%",
+                margin: "20px auto",
+                boxSizing: "border-box",
+                overflowWrap: "break-word",
+                wordBreak: "break-word",
+                overflow: "hidden"
+            }}
+        >
+            <div className="mobile-warning">
+                <div className="icon" style={{ color: "#6B7280", fontSize: "1rem" }}>
+                    <i className="fa-solid fa-desktop"></i>
+                </div>
+                <h2 style={{ fontWeight: "700", color: "#374151" }}>
+                    The dForms editor works best on larger screens
+                </h2>
+                <p style={{ color: "#6B7280", fontWeight: "bolder" }}>
+                    Note that the forms you build <u>will work</u> on mobile devices!
+                </p>
+            </div>
+        </div>
+    );
+
     if (!form) return <p>Loading...</p>;
 
     return (
         <div className={`Preview-form-container ${device === "mobile" ? "mobile-preview-wrapper" : ""}`}>
-
-            {device === "mobile" ? (
-                <div className="mobile-preview-phone">
-                    <div
-                        className="Preview-form-content"
-                        style={{ backgroundColor: form.questions_background_color }}
-                    >
-                        {fields.map((field) => (
-                            <div
-                                key={field.id}
-                                style={{
-                                    marginBottom: "1rem",
-                                    padding: "0.5rem",
-                                    borderRadius: "6px"
-                                }}
-                            >
-                                {/* Labels */}
-                                {!["Heading", "Start_pg_Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) && (
-                                    <>
-                                        <label
-                                            style={{
-                                                fontSize: "1rem",
-                                                background: "transparent",
-                                                marginBottom: "2px",
-                                                color: formQuestionColor,
-                                                fontFamily: selectedFont
-                                            }}
-                                        >
-                                            {field.label}
-                                            {field.required && <span style={{ color: "red", marginLeft: "5px" }}>*</span>}
-                                        </label>
-                                        {field.caption && (
-                                            <small style={{
-                                                color: "gray",
-                                                display: "block",
-                                                marginBottom: "6px",
-                                                fontFamily: form.selected_font || 'inherit'
-                                            }}>
-                                                {field.caption}
-                                            </small>
-                                        )}
-                                    </>
-                                )}
-                                {renderField(field)}
-                            </div>
-                        ))}
+            {isMobile ? (
+                <MobileWarning />
+            ) : (<>
+                {device === "mobile" ? (
+                    <div className="mobile-preview-phone">
+                        <div
+                            className="Preview-form-content"
+                            style={{ backgroundColor: form.questions_background_color }}
+                        >
+                            {fields.map((field) => (
+                                <div
+                                    key={field.id}
+                                    style={{
+                                        marginBottom: "1rem",
+                                        padding: "0.5rem",
+                                        borderRadius: "6px"
+                                    }}
+                                >
+                                    {/* Labels */}
+                                    {!["Heading", "Start_pg_Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) && (
+                                        <>
+                                            <label
+                                                style={{
+                                                    fontSize: "1rem",
+                                                    background: "transparent",
+                                                    marginBottom: "2px",
+                                                    color: formQuestionColor,
+                                                    fontFamily: selectedFont
+                                                }}
+                                            >
+                                                {field.label}
+                                                {field.required && <span style={{ color: "red", marginLeft: "5px" }}>*</span>}
+                                            </label>
+                                            {field.caption && (
+                                                <small style={{
+                                                    color: "gray",
+                                                    display: "block",
+                                                    marginBottom: "6px",
+                                                    fontFamily: form.selected_font || 'inherit'
+                                                }}>
+                                                    {field.caption}
+                                                </small>
+                                            )}
+                                        </>
+                                    )}
+                                    {renderField(field)}
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            ) : (
-                // Desktop layout fallback
-                <div
-                    className={`Preview-form-body ${formbgImage ? "with-bg-image" : ""}`}
-                    style={{
-                        backgroundColor: formBgColor,
-                        backgroundImage: formbgImage ? `url(${formbgImage})` : "none"
-                    }}
-                >
+                ) : (
+                    // Desktop layout fallback
                     <div
-                        className="Preview-form-content"
-                        style={{ backgroundColor: form.questions_background_color }}
+                        className={`Preview-form-body ${formbgImage ? "with-bg-image" : ""}`}
+                        style={{
+                            backgroundColor: formBgColor,
+                            backgroundImage: formbgImage ? `url(${formbgImage})` : "none"
+                        }}
                     >
-                        {fields.map((field) => (
-                            <div
-                                key={field.id}
-                                style={{
-                                    marginBottom: "1rem",
-                                    padding: "0.5rem",
-                                    borderRadius: "6px"
-                                }}
-                            >
-                                {/* Labels */}
-                                {!["Heading", "Start_pg_Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) && (
-                                    <>
-                                        <label
-                                            style={{
-                                                fontSize: "1rem",
-                                                background: "transparent",
-                                                marginBottom: "2px",
-                                                color: formQuestionColor,
-                                                fontFamily: selectedFont
-                                            }}
-                                        >
-                                            {field.label}
-                                            {field.required && <span style={{ color: "red", marginLeft: "5px" }}>*</span>}
-                                        </label>
-                                        {field.caption && (
-                                            <small style={{
-                                                color: "gray",
-                                                display: "block",
-                                                marginBottom: "6px",
-                                                fontFamily: form.selected_font || 'inherit'
-                                            }}>
-                                                {field.caption}
-                                            </small>
-                                        )}
-                                    </>
-                                )}
-                                {renderField(field)}
-                            </div>
-                        ))}
+                        <div
+                            className="Preview-form-content"
+                            style={{ backgroundColor: form.questions_background_color }}
+                        >
+                            {fields.map((field) => (
+                                <div
+                                    key={field.id}
+                                    style={{
+                                        marginBottom: "1rem",
+                                        padding: "0.5rem",
+                                        borderRadius: "6px"
+                                    }}
+                                >
+                                    {/* Labels */}
+                                    {!["Heading", "Start_pg_Heading", "Banner", "Divider", "Image", "Video", "PDF", "ThankYou", "Next", "Submit"].includes(field.type) && (
+                                        <>
+                                            <label
+                                                style={{
+                                                    fontSize: "1rem",
+                                                    background: "transparent",
+                                                    marginBottom: "2px",
+                                                    color: formQuestionColor,
+                                                    fontFamily: selectedFont
+                                                }}
+                                            >
+                                                {field.label}
+                                                {field.required && <span style={{ color: "red", marginLeft: "5px" }}>*</span>}
+                                            </label>
+                                            {field.caption && (
+                                                <small style={{
+                                                    color: "gray",
+                                                    display: "block",
+                                                    marginBottom: "6px",
+                                                    fontFamily: form.selected_font || 'inherit'
+                                                }}>
+                                                    {field.caption}
+                                                </small>
+                                            )}
+                                        </>
+                                    )}
+                                    {renderField(field)}
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
+            </>)}
         </div>
     );
 };

@@ -10,6 +10,7 @@ const Share = () => {
     const location = useLocation();
     const [formData, setFormData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
 
     const [toastMessage, setToastMessage] = useState("");
 
@@ -90,6 +91,52 @@ const Share = () => {
         }
     };
 
+    useEffect(() => {
+        const handleResize = () => {
+            const zoom = window.devicePixelRatio || 1;
+            const screenWidth = window.innerWidth;
+
+            // Consider as "mobile" if screen is small OR zoom is above 150%
+            const isMobileCondition = screenWidth < 768 || (screenWidth / window.outerWidth) < 0.67;
+
+            setIsMobile(isMobileCondition);
+        };
+
+        handleResize(); // run once on mount
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    const MobileWarning = () => (
+        <div
+            style={{
+                padding: "10px",
+                borderRadius: "12px",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                backgroundColor: "#fff",
+                maxWidth: "700px",
+                width: "100%",
+                margin: "20px auto",
+                boxSizing: "border-box",
+                overflowWrap: "break-word",
+                wordBreak: "break-word",
+                overflow: "hidden"
+            }}
+        >
+            <div className="mobile-warning">
+                <div className="icon" style={{ color: "#6B7280", fontSize: "1rem" }}>
+                    <i className="fa-solid fa-desktop"></i>
+                </div>
+                <h2 style={{ fontWeight: "700", color: "#374151" }}>
+                    The dForms editor works best on larger screens
+                </h2>
+                <p style={{ color: "#6B7280", fontWeight: "bolder" }}>
+                    Note that the forms you build <u>will work</u> on mobile devices!
+                </p>
+            </div>
+        </div>
+    );
+
     if (loading) return <p>Loading form data...</p>;
     if (!formData) return <p>Form not found</p>;
 
@@ -119,68 +166,72 @@ const Share = () => {
     // ✅ Published version
     return (
         <div className="share-container">
-            <div className="share-page-published">
-                <div className="share-header">
-                    <div className="share-icon">
-                        <i className="fa-solid fa-share-nodes"></i>
+            {isMobile ? (
+                <MobileWarning />
+            ) : (<>
+                <div className="share-page-published">
+                    <div className="share-header">
+                        <div className="share-icon">
+                            <i className="fa-solid fa-share-nodes"></i>
+                        </div>
+                        <h2>Share</h2>
+                        <span className="ready-badge">✅ Ready to share</span>
                     </div>
-                    <h2>Share</h2>
-                    <span className="ready-badge">✅ Ready to share</span>
-                </div>
 
-                <p style={{ color: "rgb(75 85 99)", fontSize: "1.125rem" }}>
-                    Publish your form to share it with others
-                </p>
+                    <p style={{ color: "rgb(75 85 99)", fontSize: "1.125rem" }}>
+                        Publish your form to share it with others
+                    </p>
 
-                <div className="share-card">
-                    <div className="share-url-container">
-                        <input
-                            type="text"
-                            className="share-url-input"
-                            value={
-                                formData
-                                    ? `${window.location.origin}/forms/form-${formData.form_id}/page-start`
-                                    : ''
-                            }
-                            readOnly
-                        />
-                        <button
-                            className="copy-btn"
-                            onClick={() => {
-                                const shareUrl = `${window.location.origin}/forms/form-${formData.form_id}/page-start`;
-                                navigator.clipboard.writeText(shareUrl);
+                    <div className="share-card">
+                        <div className="share-url-container">
+                            <input
+                                type="text"
+                                className="share-url-input"
+                                value={
+                                    formData
+                                        ? `${window.location.origin}/forms/form-${formData.form_id}/page-start`
+                                        : ''
+                                }
+                                readOnly
+                            />
+                            <button
+                                className="copy-btn"
+                                onClick={() => {
+                                    const shareUrl = `${window.location.origin}/forms/form-${formData.form_id}/page-start`;
+                                    navigator.clipboard.writeText(shareUrl);
 
-                                setToastMessage("Copied link to clipboard!");
-                                // Hide after 5 sec
-                                setTimeout(() => setToastMessage(""), 5000);
-                            }}
-                        >
-                            <i className="fa-solid fa-file-import fa-flip-horizontal"></i> Copy
-                        </button>
+                                    setToastMessage("Copied link to clipboard!");
+                                    // Hide after 5 sec
+                                    setTimeout(() => setToastMessage(""), 5000);
+                                }}
+                            >
+                                <i className="fa-solid fa-file-import fa-flip-horizontal"></i> Copy
+                            </button>
 
-                        {toastMessage && (
-                            <div className="toast-popup">
-                                <div className="toast-icon-container">
-                                    <span className="toast-icon"><i className="fa-solid fa-circle-check"></i></span>
+                            {toastMessage && (
+                                <div className="toast-popup">
+                                    <div className="toast-icon-container">
+                                        <span className="toast-icon"><i className="fa-solid fa-circle-check"></i></span>
+                                    </div>
+                                    <div className="toast-text">{toastMessage}</div>
+                                    <button className="toast-close" onClick={() => setToastMessage("")}>
+                                        &times;
+                                    </button>
                                 </div>
-                                <div className="toast-text">{toastMessage}</div>
-                                <button className="toast-close" onClick={() => setToastMessage("")}>
-                                    &times;
-                                </button>
-                            </div>
-                        )}
+                            )}
 
-                    </div>
+                        </div>
 
-                    <div className="share-social-icons">
-                        <i className="fa-solid fa-qrcode"></i>
-                        <i className="fa-brands fa-twitter"></i>
-                        <i className="fa-brands fa-facebook"></i>
-                        <i className="fa-brands fa-linkedin"></i>
-                        <i className="fa-brands fa-reddit"></i>
+                        <div className="share-social-icons">
+                            <i className="fa-solid fa-qrcode"></i>
+                            <i className="fa-brands fa-twitter"></i>
+                            <i className="fa-brands fa-facebook"></i>
+                            <i className="fa-brands fa-linkedin"></i>
+                            <i className="fa-brands fa-reddit"></i>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </>)}
         </div>
     );
 };
