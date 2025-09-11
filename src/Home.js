@@ -701,6 +701,25 @@ function Home() {
     navigate("/form-builder");
   };
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const zoom = window.devicePixelRatio || 1;
+      const screenWidth = window.innerWidth;
+
+      // ✅ Mobile check: width < 768 OR high zoom ratio
+      const isMobileCondition =
+        screenWidth < 768 || (screenWidth / window.outerWidth) < 0.67;
+
+      setIsMobile(isMobileCondition);
+    };
+
+    handleResize(); // run once on mount
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <div className="home-container">
       <div className="welcome-section">
@@ -711,13 +730,16 @@ function Home() {
               ? "Welcome, User!"
               : `Welcome, ${profileDetails?.user_name || "User"}!`}
         </h3>
-        <button
-          className="btn btn-warning make-form-btn"
-          data-bs-toggle="modal"
-          data-bs-target="#myModal"
-        >
-          <i className="fa-solid fa-plus mr-1"></i> Make a Form
-        </button>
+        {/* ✅ Show button only if NOT mobile */}
+        {!isMobile && (
+          <button
+            className="btn btn-warning make-form-btn"
+            data-bs-toggle="modal"
+            data-bs-target="#myModal"
+          >
+            <i className="fa-solid fa-plus mr-1"></i> Make a Form
+          </button>
+        )}
       </div>
 
       {/* Forms I have created */}
