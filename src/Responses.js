@@ -303,7 +303,7 @@ const Responses = () => {
             });
 
             $('.custom-filter-wrapper').html(`
-                <div style="position:relative; display:inline-block; margin-left:12px;">
+                <div style="position:relative; display:inline-block; margin-left:1px;">
                     <button id="toggleCustomFilter" style="
                         background:none;
                         border:1px solid #ccc;

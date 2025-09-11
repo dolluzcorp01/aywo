@@ -166,6 +166,8 @@
     border: none;
     cursor: pointer;
     border-radius: 5px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .responses-container .dropdown-menu {
@@ -300,4 +302,9 @@ input:checked+.slider {
 
 input:checked+.slider:before {
     transform: translateX(14px);
+}
+
+.top-bar-wrapper {
+    padding-left: 15px;
+    padding-right: 15px;
 }
