@@ -12,12 +12,14 @@ import Share from "./Share";
 import Workflow from "./Workflow";
 import Settings from "./Settings";
 import Templates from "./Templates";
+import Landing_pg from "./Landing_pg";
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Login />} />
+      <Route path="/Landing_pg" element={<Landing_pg />} />
 
       {/* Normal layout */}
       <Route
