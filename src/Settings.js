@@ -13,7 +13,11 @@ import {
     FaCalendarAlt,
     FaRegCommentDots,
     FaRegEdit,
-    FaTimes
+    FaTimes,
+    FaCookieBite,
+    FaHistory,
+    FaArrowRight,
+    FaTasks
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import "./Settings.css";
@@ -32,6 +36,11 @@ const Settings = () => {
     const [isOpenDateOn, setIsOpenDateOn] = useState(false);
     const [isExpiryOn, setIsExpiryOn] = useState(false);
     const [isLimitOn, setIsLimitOn] = useState(false);
+
+    const [cookieConsent, setCookieConsent] = useState(false);
+    const [allowResuming, setAllowResuming] = useState(true);
+    const [autoJump, setAutoJump] = useState(false);
+    const [showProgress, setShowProgress] = useState(true);
 
     const [isFormOpenDateOn, setIsFormOpenDateOn] = useState(false);
     const [formOpenDate, setFormOpenDate] = useState("");
@@ -496,7 +505,12 @@ const Settings = () => {
                         <FaBell /> Notifications
                     </li>
                     <li><FaLink /> URL parameters</li>
-                    <li><FaCog /> Form behavior</li>
+                    <li
+                        className={activeTab === "formBehavior" ? "active" : ""}
+                        onClick={() => setActiveTab("formBehavior")}
+                    >
+                        <FaCog /> Form behavior
+                    </li>
                     <li className={activeTab === "access" ? "active" : ""} onClick={() => setActiveTab("access")}>
                         <FaLock /> Access
                     </li>
@@ -771,6 +785,87 @@ const Settings = () => {
 
                     </>
                 )}
+
+                {/* Form Behavior Tab */}
+                {activeTab === "formBehavior" && (
+                    <>
+                        <h3 className="content-title">Form behavior</h3>
+                        <p className="content-subtitle">
+                            Global settings to control how your form behaves when used
+                        </p>
+
+                        {/* Cookie consent */}
+                        <div className="notification-card">
+                            <div className="notification-content">
+                                <FaCookieBite className="notification-icon" />
+                                <div className="notification-text">
+                                    <strong>Cookie consent</strong>
+                                </div>
+                            </div>
+                            <label className="switch">
+                                <input
+                                    type="checkbox"
+                                    checked={cookieConsent}
+                                    onChange={() => setCookieConsent(!cookieConsent)}
+                                />
+                                <span className="slider round"></span>
+                            </label>
+                        </div>
+
+                        {/* Allow resuming partial submissions */}
+                        <div className="notification-card">
+                            <div className="notification-content">
+                                <FaHistory className="notification-icon" />
+                                <div className="notification-text">
+                                    <strong>Allow resuming partial submissions</strong>
+                                </div>
+                            </div>
+                            <label className="switch">
+                                <input
+                                    type="checkbox"
+                                    onChange={() => setAllowResuming(!allowResuming)}
+                                />
+                                <span className="slider round"></span>
+                            </label>
+                        </div>
+
+                        {/* Auto-jump */}
+                        <div className="notification-card">
+                            <div className="notification-content">
+                                <FaArrowRight className="notification-icon" />
+                                <div className="notification-text">
+                                    <strong>Auto-jump to the next page</strong>
+                                </div>
+                            </div>
+                            <label className="switch">
+                                <input
+                                    type="checkbox"
+                                    checked={autoJump}
+                                    onChange={() => setAutoJump(!autoJump)}
+                                />
+                                <span className="slider round"></span>
+                            </label>
+                        </div>
+
+                        {/* Show progress bar */}
+                        <div className="notification-card">
+                            <div className="notification-content">
+                                <FaTasks className="notification-icon" />
+                                <div className="notification-text">
+                                    <strong>Show progress bar</strong>
+                                </div>
+                            </div>
+                            <label className="switch">
+                                <input
+                                    type="checkbox"
+                                    onChange={() => setShowProgress(!showProgress)}
+                                />
+                                <span className="slider round"></span>
+                            </label>
+                        </div>
+                    </>
+                )}
+
             </div>
         </div>
     );
