@@ -514,12 +514,12 @@ body {
 /* CTA Banner */
 .landing-cta-banner {
     background: linear-gradient(to right, #ff9f43, #feca57);
-    text-align: center;
     padding: 80px 20px;
     color: #1e293b;
     border-radius: 16px;
-    margin: 60px auto;
+    text-align: center;
     max-width: 1100px;
+    margin: 0 auto;
 }
 
 .landing-cta-banner h2 {
@@ -559,4 +559,79 @@ body {
     gap: 15px;
     justify-content: center;
     margin-bottom: 15px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+
+    /* Navbar */
+    .landing-navbar {
+        flex-direction: row;
+        /* stay in one row */
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+    }
+
+    .landing-logo {
+        font-size: 1.3rem;
+        /* slightly smaller logo */
+    }
+
+    .landing-nav-links {
+        display: none;
+        /* hide menu links */
+    }
+
+    .landing-nav-right {
+        margin-top: 0;
+        /* remove stacking margin */
+        display: flex;
+        gap: 10px;
+    }
+
+    .landing-login {
+        font-size: 0.9rem;
+    }
+
+    .landing-btn-primary {
+        padding: 8px 14px;
+        font-size: 0.9rem;
+    }
+
+    /* Hero Section */
+    .landing-hero {
+        flex-direction: column;
+        padding: 50px 20px;
+        text-align: center;
+    }
+
+    .landing-hero-left {
+        padding-right: 0;
+        margin-bottom: 30px;
+    }
+
+    .landing-hero-left h1 {
+        font-size: 2rem;
+    }
+
+    .landing-hero-left p {
+        font-size: 1rem;
+    }
+
+    .landing-hero-right {
+        width: 100%;
+        padding: 20px;
+    }
+
+    .landing-floating-icons {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        width: 100%;
+    }
+
+    .landing-cta-banner {
+        margin-left: 20px;
+        margin-right: 20px;
+    }
 }
