@@ -439,7 +439,7 @@ const PublishedForm = () => {
     };
 
     const cleanupExpiredFormStorage = () => {
-        const EXPIRATION_TIME = 60 * 60 * 1000; // 1 hour in ms
+        const EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000; // 1 week in ms
         const now = Date.now();
 
         Object.keys(localStorage).forEach(key => {
