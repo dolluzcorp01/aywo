@@ -337,3 +337,16 @@
     height: auto !important;
     min-height: auto !important;
 }
+
+
+.template-picker-modal-dialog {
+    max-width: 60%;
+    width: 100%;
+}
+
+.template-preview-modal-dialog {
+    max-width: 75%;
+    width: 75%;
+    margin-top: 15px;
+    margin-bottom: auto;
+}
