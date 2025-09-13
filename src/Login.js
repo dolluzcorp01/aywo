@@ -4,6 +4,7 @@ import { auth, provider, signInWithPopup } from "./firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { FaCreditCard, FaShieldAlt, FaUserCheck, FaPaintBrush, FaRobot } from "react-icons/fa";
 import Login_pg_pg_intro from "./assets/img/Login_pg_pg_intro.png";
+import doodle_bg from "./assets/img/doodle_bg.jpg";
 import Login_intro_bottom_img from "./assets/img/Login_intro_bottom_img.png";
 import Google_icon from "./assets/img/Google_icon.png";
 import styled from 'styled-components';
@@ -695,7 +696,7 @@ function Login() {
 
         {/* Right side image content */}
         <div className="login-image">
-          <img src={Login_pg_pg_intro} alt="Login_Background" />
+          <img src={doodle_bg} alt="Login_Background" />
 
           {/* White Div with Dynamic Text */}
           <div className="dynamic-text-container" style={{ color: currentMessage.color }}>
@@ -707,9 +708,9 @@ function Login() {
           <div className="overlay-text">Make a form</div>
 
           {/* Second image inside a div */}
-          <div className="bottom-image-container">
+          {/* <div className="bottom-image-container">
             <img src={Login_intro_bottom_img} alt="Bottom_Image" className="bottom-image" />
-          </div>
+          </div> */}
         </div>
 
       </div>
