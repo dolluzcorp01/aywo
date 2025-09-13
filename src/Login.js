@@ -482,8 +482,8 @@ function Login() {
                   </button>
 
                   {/* Divider Line with "Or" */}
-                  <div className="divider">
-                    <span className="divider-text">Or</span>
+                  <div className="login-divider">
+                    <span className="login-divider-text">Or</span>
                   </div>
 
                   <div className="input-group mt-2">

@@ -45,7 +45,7 @@ const LandingPage = () => {
 
                 <div className="landing-nav-right">
                     <a className="landing-login" onClick={() => navigate("/login")}>Login</a>
-                    <button className="landing-btn-primary">Sign Up</button>
+                    <button className="landing-btn-primary" onClick={() => navigate("/signup")}>Sign Up</button>
                 </div>
             </nav>
 
