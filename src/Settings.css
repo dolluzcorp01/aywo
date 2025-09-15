@@ -378,3 +378,36 @@ input:checked+.slider:before {
     width: 100%;
     resize: none;
 }
+
+.tooltip-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-left: 6px;
+    cursor: pointer;
+}
+
+.question-icon {
+    color: #888;
+    font-size: 14px;
+}
+
+.tooltip-text {
+    visibility: hidden;
+    width: 240px;
+    background-color: #333;
+    color: #fff;
+    text-align: left;
+    border-radius: 4px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    top: -5px;
+    left: 125%;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.tooltip-wrapper:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}

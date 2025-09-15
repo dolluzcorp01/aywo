@@ -17,7 +17,8 @@ import {
     FaCookieBite,
     FaHistory,
     FaArrowRight,
-    FaTasks
+    FaTasks,
+    FaQuestionCircle
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import "./Settings.css";
@@ -871,13 +872,23 @@ const Settings = () => {
                             <div className="notification-content">
                                 <FaCookieBite className="notification-icon" />
                                 <div className="notification-text">
-                                    <strong>Cookie consent</strong>
+                                    <strong>
+                                        Cookie consent
+                                        <span className="tooltip-wrapper" style={{ marginLeft: "10px" }}>
+                                            <FaQuestionCircle className="question-icon" />
+                                            <span className="tooltip-text">
+                                                Show a cookie consent message on your live forms.
+                                                We recommend enabling this setting to meet applicable legal requirements.
+                                            </span>
+                                        </span>
+                                    </strong>
                                 </div>
                             </div>
                             <label className="switch">
                                 <input
                                     type="checkbox"
                                     checked={cookieConsent}
+                                    disabled
                                     onChange={() => setCookieConsent(!cookieConsent)}
                                 />
                                 <span className="slider round"></span>
@@ -889,12 +900,23 @@ const Settings = () => {
                             <div className="notification-content">
                                 <FaHistory className="notification-icon" />
                                 <div className="notification-text">
-                                    <strong>Allow resuming partial submissions</strong>
+                                    <strong>Allow resuming partial submissions
+                                        <span className="tooltip-wrapper" style={{ marginLeft: "10px" }}>
+                                            <FaQuestionCircle className="question-icon" />
+                                            <span className="tooltip-text">
+                                                If enabled, users can come back to the
+                                                form they previously started and
+                                                resume where they left off.
+                                            </span>
+                                        </span>
+                                    </strong>
                                 </div>
                             </div>
                             <label className="switch">
                                 <input
                                     type="checkbox"
+                                    checked={true}
+                                    disabled
                                     onChange={() => setAllowResuming(!allowResuming)}
                                 />
                                 <span className="slider round"></span>
@@ -906,13 +928,26 @@ const Settings = () => {
                             <div className="notification-content">
                                 <FaArrowRight className="notification-icon" />
                                 <div className="notification-text">
-                                    <strong>Auto-jump to the next page</strong>
+                                    <strong>
+                                        Auto-jump to the next page
+                                        <span className="tooltip-wrapper">
+                                            <FaQuestionCircle className="question-icon" />
+                                            <span className="tooltip-text">
+                                                Automatically transition to the next page when a user answers
+                                                a multiple choice, picture choice, dropdown, star rating, or
+                                                opinion scale question. <br /><br />
+                                                Only applies when there is a single question on the page and
+                                                when the form is not about to be completed.
+                                            </span>
+                                        </span>
+                                    </strong>
                                 </div>
                             </div>
                             <label className="switch">
                                 <input
                                     type="checkbox"
                                     checked={autoJump}
+                                    disabled
                                     onChange={() => setAutoJump(!autoJump)}
                                 />
                                 <span className="slider round"></span>
@@ -942,12 +977,25 @@ const Settings = () => {
                             <div className="notification-content">
                                 <FaTasks className="notification-icon" />
                                 <div className="notification-text">
-                                    <strong>Only use of external storage</strong>
+                                    <strong>
+                                        Only use external storage
+                                        <span className="tooltip-wrapper">
+                                            <FaQuestionCircle className="question-icon" />
+                                            <span className="tooltip-text">
+                                                If enabled, the system will not store form results and will instead
+                                                only pass collected data to any connected integrations. <br /><br />
+                                                File upload fields are still stored on AWS S3 as many 3rd-party
+                                                integrations require an external link to uploaded files.
+                                            </span>
+                                        </span>
+                                    </strong>
                                 </div>
                             </div>
                             <label className="switch">
                                 <input
                                     type="checkbox"
+                                    checked={useExternalStorage}
+                                    disabled
                                     onChange={() => setUseExternalStorage(!useExternalStorage)}
                                 />
                                 <span className="slider round"></span>
