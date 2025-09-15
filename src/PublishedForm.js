@@ -241,6 +241,29 @@ const PublishedForm = () => {
         }
     }, [formId, pageId]);
 
+    // Extract page number
+    let currentPageNumber = 0;
+
+    if (pageId === "page-start") {
+        currentPageNumber = 0; // start page
+    } else if (!isNaN(Number(pageId))) {
+        // pageId is just "1", "2", etc.
+        currentPageNumber = Number(pageId);
+    } else if (pageId?.startsWith("page-")) {
+        // pageId is like "page-1", "page-2"
+        currentPageNumber = parseInt(pageId.split("-")[1], 10);
+    }
+
+    // Total pages (excluding start page)
+    const totalPages = formPages.length;
+
+    // Progress %
+    const progressPercent =
+        totalPages > 0 && currentPageNumber >= 0
+            ? (currentPageNumber / totalPages) * 100
+            : 0;
+
+
     const [colors, setColors] = useState({
         background: "#F8F9FA",
         questionsBackground: "#FFFFFF",
@@ -2542,6 +2565,19 @@ const PublishedForm = () => {
 
     return (
         <div className="Published-form-container">
+            {/* Progress bar */}
+            <div
+                className="publish_pg_progress-bar-overlay"
+                style={{
+                    height: "6px",
+                    backgroundColor: formPrimaryColor || "rgb(91, 136, 207)",
+                    borderTopLeftRadius: "6px",
+                    borderTopRightRadius: "6px",
+                    width: `${progressPercent}%`,
+                    transition: "width 0.3s ease",
+                }}
+            ></div>
+
             <div
                 className={`Published-form-body ${formbgImage ? "with-bg-image" : ""}`}
                 style={{
