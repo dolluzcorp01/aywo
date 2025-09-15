@@ -2674,4 +2674,62 @@ router.get("/forms/:formId/progress-bar", verifyJWT, async (req, res) => {
     }
 });
 
+// ✅ Toggle respondent notifications
+router.post("/toogle-respondent_notifications/:formId", verifyJWT, async (req, res) => {
+    const { formId } = req.params;
+    const { respondent_notifications } = req.body; // TRUE or FALSE
+    const userId = req.user_id;
+
+    if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+        const result = await queryPromise(
+            db,
+            "UPDATE dforms SET respondent_notifications = ? WHERE id = ? AND user_id = ?",
+            [respondent_notifications, formId, userId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        const [updatedForm] = await queryPromise(
+            db,
+            "SELECT * FROM dforms WHERE id = ?",
+            [formId]
+        );
+
+        const statusMsg = respondent_notifications ? "enabled" : "disabled";
+        res.json({ message: `Respondent notifications ${statusMsg} successfully`, newForm: updatedForm });
+    } catch (error) {
+        console.error("Error updating respondent notifications:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// ✅ Fetch respondent notifications
+router.get("/forms/:formId/respondent_notifications", verifyJWT, async (req, res) => {
+    const { formId } = req.params;
+    const userId = req.user_id;
+
+    try {
+        const [form] = await queryPromise(
+            db,
+            "SELECT respondent_notifications FROM dforms WHERE id = ? AND user_id = ?",
+            [formId, userId]
+        );
+
+        if (!form) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        res.json(form); // { respondent_notifications: 0/1 }
+    } catch (error) {
+        console.error("Error fetching respondent notifications:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 module.exports = router;

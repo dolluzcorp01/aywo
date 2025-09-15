@@ -53,6 +53,8 @@ const Settings = () => {
     const [isSubmissionLimitOn, setIsSubmissionLimitOn] = useState(false);
     const [submissionLimit, setSubmissionLimit] = useState(50);
 
+    const [respondentNotifications, setRespondentNotifications] = useState(false);
+
     const shouldShowCustomMessage =
         isFormClosed || isFormOpenDateOn || isFormExpiryOn || isSubmissionLimitOn;
 
@@ -67,6 +69,7 @@ const Settings = () => {
         fetchFormDates();
         fetchSubmissionLimit();
         fetchProgressBar();
+        fetchRespondentNotifications();
     }, []);
 
     const fetchSubmissionLimit = async () => {
@@ -558,6 +561,69 @@ const Settings = () => {
         }
     };
 
+    // ✅ Fetch respondent_notifications
+    const fetchRespondentNotifications = async () => {
+        const formId = getFormId();
+        if (!formId) return;
+
+        try {
+            const res = await fetch(`/api/form_builder/forms/${formId}/respondent_notifications`, {
+                credentials: "include",
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                setRespondentNotifications(!!data.respondent_notifications); // convert 0/1 → boolean
+            } else {
+                console.error("Error fetching respondent notifications:", data.error);
+            }
+        } catch (err) {
+            console.error("Error fetching respondent notifications:", err);
+        }
+    };
+
+    // ✅ Toggle respondent_notifications
+    const handleToggleRespondentNotifications = async (isCurrentlyEnabled) => {
+        const formId = getFormId();
+        const action = isCurrentlyEnabled ? "disable" : "enable";
+
+        try {
+            const response = await fetch(`/api/form_builder/toogle-respondent_notifications/${formId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ respondent_notifications: !isCurrentlyEnabled }), // toggle
+                credentials: "include",
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                Swal.fire({
+                    icon: "success",
+                    title: `Respondent notifications ${action}d successfully!`,
+                    showConfirmButton: false,
+                    timer: 1500,
+                });
+
+                setRespondentNotifications(!isCurrentlyEnabled); // update state
+            } else {
+                console.error(`Respondent notifications ${action} failed:`, data.error);
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: data.error,
+                });
+            }
+        } catch (error) {
+            console.error(`Error trying to ${action} respondent notifications:`, error);
+            Swal.fire({
+                icon: "error",
+                title: "Server Error",
+                text: `An error occurred while trying to ${action} respondent notifications.`,
+            });
+        }
+    };
+
     return (
         <div className="settings-container">
             {/* Sidebar */}
@@ -614,6 +680,29 @@ const Settings = () => {
                                             handleSwitchToggle();
                                             setIsFormClosed(!isFormClosed);
                                         }}
+                                    />
+                                    <span className="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+
+                        {/* Respondent notifications */}
+                        <div className="notification-card">
+                            <div className="notification-content">
+                                <FaBell className="notification-icon" />
+                                <div className="notification-text">
+                                    <strong>Respondent notifications</strong>
+                                    <p>Send an email to the person who filled out your form upon submission</p>
+                                </div>
+                            </div>
+
+                            <div className="notification-switch">
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={respondentNotifications}
+                                        onChange={() => handleToggleRespondentNotifications(respondentNotifications)}
                                     />
                                     <span className="slider round"></span>
                                 </label>
