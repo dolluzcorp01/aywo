@@ -2455,7 +2455,7 @@ router.get("/forms/:formId/close-message", verifyJWT, async (req, res) => {
     try {
         const [form] = await queryPromise(
             db,
-            "SELECT close_title, close_description FROM dforms WHERE id = ? AND user_id = ?",
+            "SELECT is_closed, close_title, close_description FROM dforms WHERE id = ? AND user_id = ?",
             [formId, userId]
         );
 
@@ -2612,6 +2612,64 @@ router.get("/forms/:formId/responseLimit-limit", verifyJWT, async (req, res) => 
         });
     } catch (error) {
         console.error("Error fetching submission limit:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// ✅ Toggle progress bar (Protected Route)
+router.post("/toggle-progress/:formId", verifyJWT, async (req, res) => {
+    const { formId } = req.params;
+    const { show_progress_bar } = req.body; // TRUE or FALSE
+    const userId = req.user_id;
+
+    if (!userId) {
+        return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+        const result = await queryPromise(
+            db,
+            "UPDATE dforms SET show_progress_bar = ? WHERE id = ? AND user_id = ?",
+            [show_progress_bar, formId, userId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        const [updatedForm] = await queryPromise(
+            db,
+            "SELECT * FROM dforms WHERE id = ?",
+            [formId]
+        );
+
+        const statusMsg = show_progress_bar ? "enabled" : "disabled";
+        res.json({ message: `Progress bar ${statusMsg} successfully`, newForm: updatedForm });
+    } catch (error) {
+        console.error("Error updating progress bar:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// Fetch progress bar setting
+router.get("/forms/:formId/progress-bar", verifyJWT, async (req, res) => {
+    const { formId } = req.params;
+    const userId = req.user_id;
+
+    try {
+        const [form] = await queryPromise(
+            db,
+            "SELECT show_progress_bar FROM dforms WHERE id = ? AND user_id = ?",
+            [formId, userId]
+        );
+
+        if (!form) {
+            return res.status(404).json({ error: "Form not found or unauthorized" });
+        }
+
+        res.json(form); // { show_progress_bar: 0/1 }
+    } catch (error) {
+        console.error("Error fetching progress bar setting:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 });

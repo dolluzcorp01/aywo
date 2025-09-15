@@ -338,7 +338,6 @@
     min-height: auto !important;
 }
 
-
 .template-picker-modal-dialog {
     max-width: 60%;
     width: 100%;
@@ -349,4 +348,8 @@
     width: 75%;
     margin-top: 15px;
     margin-bottom: auto;
+}
+
+.swal2-container {
+    z-index: 10000 !important;
 }

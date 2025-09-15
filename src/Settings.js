@@ -38,9 +38,10 @@ const Settings = () => {
     const [isLimitOn, setIsLimitOn] = useState(false);
 
     const [cookieConsent, setCookieConsent] = useState(false);
-    const [allowResuming, setAllowResuming] = useState(true);
+    const [allowResuming, setAllowResuming] = useState(false);
     const [autoJump, setAutoJump] = useState(false);
-    const [showProgress, setShowProgress] = useState(true);
+    const [showProgress, setShowProgress] = useState(false);
+    const [useExternalStorage, setUseExternalStorage] = useState(false);
 
     const [isFormOpenDateOn, setIsFormOpenDateOn] = useState(false);
     const [formOpenDate, setFormOpenDate] = useState("");
@@ -64,6 +65,7 @@ const Settings = () => {
         fetchClosedMessage();
         fetchFormDates();
         fetchSubmissionLimit();
+        fetchProgressBar();
     }, []);
 
     const fetchSubmissionLimit = async () => {
@@ -87,7 +89,7 @@ const Settings = () => {
         }
     };
 
-    const saveSubmissionLimit = async () => {
+    const saveSubmissionLimit = async (limit = submissionLimit, enabled = isSubmissionLimitOn) => {
         const formId = getFormId();
 
         try {
@@ -97,14 +99,14 @@ const Settings = () => {
                 credentials: "include",
                 body: JSON.stringify({
                     form_id: formId,
-                    submission_limit: isSubmissionLimitOn ? submissionLimit : null,
+                    submission_limit: enabled ? limit : null,
                 }),
             });
 
             const data = await res.json();
             if (res.ok) {
-                if (isSubmissionLimitOn && submissionLimit) {
-                    Swal.fire("Success", `Submission limit set to ${submissionLimit}`, "success");
+                if (enabled && limit) {
+                    Swal.fire("Success", `Submission limit set to ${limit}`, "success");
                 } else {
                     Swal.fire("Success", "Submission limit unset", "success");
                     setIsSubmissionLimitOn(false);
@@ -315,11 +317,52 @@ const Settings = () => {
             if (res.ok) {
                 setClosedTitle(data.close_title || "Form closed to new submissions");
                 setClosedDesc(data.close_description || "Contact the form owner for more details.");
+                setIsFormClosed(!!data.is_closed);
             } else {
                 console.error("Error fetching close message:", data.error);
             }
         } catch (err) {
             console.error("Error fetching close message:", err);
+        }
+    };
+
+    const handleCloseForm = async (isCurrentlyClosed) => {
+        const formId = getFormId();
+        const action = isCurrentlyClosed ? "re-open" : "close";
+
+        try {
+            const response = await fetch(`/api/form_builder/close-form/${formId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ is_closed: !isCurrentlyClosed }), // Toggle value
+                credentials: "include",
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                Swal.fire({
+                    icon: 'success',
+                    title: `Form ${action}ed successfully!`,
+                    showConfirmButton: false,
+                    timer: 1500,
+                });
+
+            } else {
+                console.error(`Form ${action} failed:`, data.error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.error,
+                });
+            }
+        } catch (error) {
+            console.error(`Error trying to ${action} form:`, error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Server Error',
+                text: `An error occurred while trying to ${action} the form.`,
+            });
         }
     };
 
@@ -453,15 +496,35 @@ const Settings = () => {
         }
     };
 
-    const handleCloseForm = async (isCurrentlyClosed) => {
+    const fetchProgressBar = async () => {
         const formId = getFormId();
-        const action = isCurrentlyClosed ? "re-open" : "close";
+        if (!formId) return;
 
         try {
-            const response = await fetch(`/api/form_builder/close-form/${formId}`, {
+            const res = await fetch(`/api/form_builder/forms/${formId}/progress-bar`, {
+                credentials: "include",
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                setShowProgress(!!data.show_progress_bar); // ✅ convert 0/1 to boolean
+            } else {
+                console.error("Error fetching progress bar setting:", data.error);
+            }
+        } catch (err) {
+            console.error("Error fetching progress bar setting:", err);
+        }
+    };
+
+    const handleToggleProgress = async (isCurrentlyEnabled) => {
+        const formId = getFormId();
+        const action = isCurrentlyEnabled ? "disable" : "enable";
+
+        try {
+            const response = await fetch(`/api/form_builder/toggle-progress/${formId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ is_closed: !isCurrentlyClosed }), // Toggle value
+                body: JSON.stringify({ show_progress_bar: !isCurrentlyEnabled }), // Toggle
                 credentials: "include",
             });
 
@@ -470,13 +533,14 @@ const Settings = () => {
             if (response.ok) {
                 Swal.fire({
                     icon: 'success',
-                    title: `Form ${action}ed successfully!`,
+                    title: `Progress bar ${action}d successfully!`,
                     showConfirmButton: false,
                     timer: 1500,
                 });
 
+                setShowProgress(!isCurrentlyEnabled); // update UI state
             } else {
-                console.error(`Form ${action} failed:`, data.error);
+                console.error(`Progress bar ${action} failed:`, data.error);
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
@@ -484,11 +548,11 @@ const Settings = () => {
                 });
             }
         } catch (error) {
-            console.error(`Error trying to ${action} form:`, error);
+            console.error(`Error trying to ${action} progress bar:`, error);
             Swal.fire({
                 icon: 'error',
                 title: 'Server Error',
-                text: `An error occurred while trying to ${action} the form.`,
+                text: `An error occurred while trying to ${action} the progress bar.`,
             });
         }
     };
@@ -699,7 +763,15 @@ const Settings = () => {
                                         type="checkbox"
                                         checked={isSubmissionLimitOn}
                                         onChange={(e) => {
-                                            setIsSubmissionLimitOn(e.target.checked);
+                                            const checked = e.target.checked;
+
+                                            if (!checked) {
+                                                setIsSubmissionLimitOn(false);
+                                                setSubmissionLimit(null);
+                                                saveSubmissionLimit(null, false);
+                                            } else {
+                                                setIsSubmissionLimitOn(true);
+                                            }
                                         }}
                                     />
                                     <span className="slider round"></span>
@@ -858,7 +930,25 @@ const Settings = () => {
                             <label className="switch">
                                 <input
                                     type="checkbox"
-                                    onChange={() => setShowProgress(!showProgress)}
+                                    checked={showProgress}
+                                    onChange={() => handleToggleProgress(showProgress)}
+                                />
+                                <span className="slider round"></span>
+                            </label>
+                        </div>
+
+                        {/* Only use of external storage */}
+                        <div className="notification-card">
+                            <div className="notification-content">
+                                <FaTasks className="notification-icon" />
+                                <div className="notification-text">
+                                    <strong>Only use of external storage</strong>
+                                </div>
+                            </div>
+                            <label className="switch">
+                                <input
+                                    type="checkbox"
+                                    onChange={() => setUseExternalStorage(!useExternalStorage)}
                                 />
                                 <span className="slider round"></span>
                             </label>
