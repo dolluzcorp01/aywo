@@ -6,6 +6,9 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import Select from 'react-select';
 import { FaStar, FaLock } from "react-icons/fa";
 import confetti from 'canvas-confetti';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import dForms_logo from "./assets/img/dForms_logo.png";
 import "./PublishedForm.css";
 
 const PublishedForm = () => {
@@ -40,6 +43,29 @@ const PublishedForm = () => {
     const [isFormClosed, setIsFormClosed] = useState(false);
     const [closedTitle, setClosedTitle] = useState("Form closed to new submissions");
     const [closedDesc, setClosedDesc] = useState("Contact the form owner for more details.");
+
+    const [respondentNotifications, setRespondentNotifications] = useState(false);
+    const [downloadPDF, setDownloadPDF] = useState(false);
+    const [columns, setColumns] = useState([]);
+
+    const fetchRespondentNotifications = async () => {
+        if (!formId) return;
+
+        try {
+            const res = await fetch(`/api/form_builder/forms/${formId}/respondent_notifications`, {
+                credentials: "include",
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                setRespondentNotifications(data.respondent_notifications === 1);
+            } else {
+                console.error("Error fetching respondent notifications:", data.error);
+            }
+        } catch (err) {
+            console.error("Error fetching respondent notifications:", err);
+        }
+    };
 
     const fetchresponseLimit = async () => {
         if (!formId) return;
@@ -238,6 +264,7 @@ const PublishedForm = () => {
             fetchFormPages();
             fetchFormDates();
             fetchresponseLimit();
+            fetchRespondentNotifications();
         }
     }, [formId, pageId]);
 
@@ -2080,7 +2107,90 @@ const PublishedForm = () => {
                 // ✅ Single-page form (no formPages at all)
                 if (!formPages || formPages.length === 0) {
                     return (
-                        <div style={{ marginTop: "1rem", textAlign: "right" }}>
+                        <div style={{ marginTop: "1rem" }}>
+                            {/* ✅ Show checkbox only if respondent_notifications is true */}
+                            {respondentNotifications && (
+                                <div style={{ marginBottom: "0.5rem" }}>
+                                    <label style={{ fontFamily: selectedFont, fontSize: "14px" }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={downloadPDF}
+                                            onChange={(e) => setDownloadPDF(e.target.checked)}
+                                            style={{ marginRight: "6px" }}
+                                        />
+                                        Do you want to save the response in PDF?
+                                    </label>
+                                </div>
+                            )}
+
+                            <div style={{ textAlign: "right" }}>
+                                <button
+                                    type="submit"
+                                    className="btn"
+                                    onClick={handleSubmitForm}
+                                    style={{
+                                        padding: "6px 12px",
+                                        fontSize: "1.2rem",
+                                        fontFamily: selectedFont,
+                                        backgroundColor: field.btnbgColor || formPrimaryColor,
+                                        color: field.btnlabelColor || "#ffffff",
+                                        border: focusedFieldId === field.id ? "2px solid #007bff" : "1px solid lightgray",
+                                        borderRadius: "5px"
+                                    }}
+                                    onFocus={() => setFocusedFieldId(field.id)}
+                                    onBlur={() => setFocusedFieldId(null)}
+                                >
+                                    {field.label || "Submit"}
+                                </button>
+                            </div>
+                        </div>
+                    );
+                }
+
+                // ✅ Normal flow: only hide Previous if we’re literally on "start"
+                const isStartPage = pageId === "start";
+
+                return (
+                    <div style={{ marginTop: "1rem" }}>
+                        {/* ✅ Show checkbox only if respondent_notifications is true */}
+                        {respondentNotifications && (
+                            <div style={{ marginBottom: "0.5rem" }}>
+                                <label style={{ fontFamily: selectedFont, fontSize: "14px" }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={downloadPDF}
+                                        onChange={(e) => setDownloadPDF(e.target.checked)}
+                                        style={{ marginRight: "6px" }}
+                                    />
+                                    Do you want to save the response in PDF?
+                                </label>
+                            </div>
+                        )}
+
+                        <div style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            marginTop: "1rem"
+                        }}>
+                            {!isStartPage && (
+                                <button
+                                    type="button"
+                                    className="btn"
+                                    onClick={handleBackPage}
+                                    style={{
+                                        padding: "6px 12px",
+                                        fontSize: "1.2rem",
+                                        fontFamily: selectedFont,
+                                        backgroundColor: field.btnbgColor || formPrimaryColor,
+                                        color: field.btnlabelColor || "#ffffff",
+                                        border: "1px solid lightgray",
+                                        borderRadius: "5px"
+                                    }}
+                                >
+                                    <i className="fa-solid fa-arrow-left me-2"></i> Previous
+                                </button>
+                            )}
+
                             <button
                                 type="submit"
                                 className="btn"
@@ -2100,55 +2210,6 @@ const PublishedForm = () => {
                                 {field.label || "Submit"}
                             </button>
                         </div>
-                    );
-                }
-
-                // ✅ Normal flow: only hide Previous if we’re literally on "start"
-                const isStartPage = pageId === "start";
-
-                return (
-                    <div style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        marginTop: "1rem"
-                    }}>
-                        {!isStartPage && (
-                            <button
-                                type="button"
-                                className="btn"
-                                onClick={handleBackPage}
-                                style={{
-                                    padding: "6px 12px",
-                                    fontSize: "1.2rem",
-                                    fontFamily: selectedFont,
-                                    backgroundColor: field.btnbgColor || formPrimaryColor,
-                                    color: field.btnlabelColor || "#ffffff",
-                                    border: "1px solid lightgray",
-                                    borderRadius: "5px"
-                                }}
-                            >
-                                <i className="fa-solid fa-arrow-left me-2"></i> Previous
-                            </button>
-                        )}
-
-                        <button
-                            type="submit"
-                            className="btn"
-                            onClick={handleSubmitForm}
-                            style={{
-                                padding: "6px 12px",
-                                fontSize: "1.2rem",
-                                fontFamily: selectedFont,
-                                backgroundColor: field.btnbgColor || formPrimaryColor,
-                                color: field.btnlabelColor || "#ffffff",
-                                border: focusedFieldId === field.id ? "2px solid #007bff" : "1px solid lightgray",
-                                borderRadius: "5px"
-                            }}
-                            onFocus={() => setFocusedFieldId(field.id)}
-                            onBlur={() => setFocusedFieldId(null)}
-                        >
-                            {field.label || "Submit"}
-                        </button>
                     </div>
                 );
                 const sortedSubmitPages = [...formPages].sort((a, b) => a.sort_order - b.sort_order);
@@ -2158,11 +2219,109 @@ const PublishedForm = () => {
                 // just show Submit button only
                 if (!formPages || formPages.length === 0) {
                     return (
-                        <div style={{ marginTop: "1rem", textAlign: "right" }}>
+                        <div style={{ marginTop: "1rem" }}>
+                            {/* ✅ Show checkbox only if respondent_notifications is true */}
+                            {respondentNotifications && (
+                                <div style={{ marginBottom: "0.5rem" }}>
+                                    <label style={{ fontFamily: selectedFont, fontSize: "14px" }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={downloadPDF}
+                                            onChange={(e) => setDownloadPDF(e.target.checked)}
+                                            style={{ marginRight: "6px" }}
+                                        />
+                                        Do you want to save the response in PDF?
+                                    </label>
+                                </div>
+                            )}
+
+                            <div style={{ marginTop: "1rem" }}>
+                                {/* ✅ Show checkbox only if respondent_notifications is true */}
+                                {respondentNotifications && (
+                                    <div style={{ marginBottom: "0.5rem" }}>
+                                        <label style={{ fontFamily: selectedFont, fontSize: "14px" }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={downloadPDF}
+                                                onChange={(e) => setDownloadPDF(e.target.checked)}
+                                                style={{ marginRight: "6px" }}
+                                            />
+                                            Do you want to save the response in PDF?
+                                        </label>
+                                    </div>
+                                )}
+
+                                <div style={{ textAlign: "right" }}>
+                                    <button
+                                        type="submit"
+                                        className="btn"
+                                        onClick={handleSubmitForm}
+                                        style={{
+                                            padding: "6px 12px",
+                                            fontSize: "1.2rem",
+                                            fontFamily: selectedFont,
+                                            backgroundColor: field.btnbgColor || formPrimaryColor,
+                                            color: field.btnlabelColor || "#ffffff",
+                                            border: focusedFieldId === field.id ? "2px solid #007bff" : "1px solid lightgray",
+                                            borderRadius: "5px"
+                                        }}
+                                        onFocus={() => setFocusedFieldId(field.id)}
+                                        onBlur={() => setFocusedFieldId(null)}
+                                    >
+                                        {field.label || "Submit"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }
+
+                // ✅ Normal multi-page flow (Previous + Submit)
+                return (
+                    <div style={{ marginTop: "1rem" }}>
+                        {/* ✅ Show checkbox only if respondent_notifications is true */}
+                        {respondentNotifications && (
+                            <div style={{ marginBottom: "0.5rem" }}>
+                                <label style={{ fontFamily: selectedFont, fontSize: "14px" }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={downloadPDF}
+                                        onChange={(e) => setDownloadPDF(e.target.checked)}
+                                        style={{ marginRight: "6px" }}
+                                    />
+                                    Do you want to save the response in PDF?
+                                </label>
+                            </div>
+                        )}
+
+                        <div style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            marginTop: "1rem"
+                        }}>
+                            {!isFirstSubmitPage ? (
+                                <button
+                                    type="button"
+                                    onClick={handleBackPage}
+                                    className="btn"
+                                    style={{
+                                        padding: "6px 12px",
+                                        fontSize: "1.2rem",
+                                        fontFamily: selectedFont,
+                                        backgroundColor: field.btnbgColor || formPrimaryColor,
+                                        color: field.btnlabelColor || "#ffffff",
+                                        border: "1px solid lightgray",
+                                        borderRadius: "5px"
+                                    }}
+                                >
+                                    <i className="fa-solid fa-arrow-left me-2"></i> Previous
+                                </button>
+                            ) : <div></div>}
+
                             <button
                                 type="submit"
-                                onClick={handleSubmitForm}
                                 className="btn"
+                                onClick={handleSubmitForm}
                                 style={{
                                     padding: "6px 12px",
                                     fontSize: "1.2rem",
@@ -2178,53 +2337,6 @@ const PublishedForm = () => {
                                 {field.label || "Submit"}
                             </button>
                         </div>
-                    );
-                }
-
-                // ✅ Normal multi-page flow (Previous + Submit)
-                return (
-                    <div style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        marginTop: "1rem"
-                    }}>
-                        {!isFirstSubmitPage ? (
-                            <button
-                                type="button"
-                                onClick={handleBackPage}
-                                className="btn"
-                                style={{
-                                    padding: "6px 12px",
-                                    fontSize: "1.2rem",
-                                    fontFamily: selectedFont,
-                                    backgroundColor: field.btnbgColor || formPrimaryColor,
-                                    color: field.btnlabelColor || "#ffffff",
-                                    border: "1px solid lightgray",
-                                    borderRadius: "5px"
-                                }}
-                            >
-                                <i className="fa-solid fa-arrow-left me-2"></i> Previous
-                            </button>
-                        ) : <div></div>}
-
-                        <button
-                            type="submit"
-                            className="btn"
-                            onClick={handleSubmitForm}
-                            style={{
-                                padding: "6px 12px",
-                                fontSize: "1.2rem",
-                                fontFamily: selectedFont,
-                                backgroundColor: field.btnbgColor || formPrimaryColor,
-                                color: field.btnlabelColor || "#ffffff",
-                                border: focusedFieldId === field.id ? "2px solid #007bff" : "1px solid lightgray",
-                                borderRadius: "5px"
-                            }}
-                            onFocus={() => setFocusedFieldId(field.id)}
-                            onBlur={() => setFocusedFieldId(null)}
-                        >
-                            {field.label || "Submit"}
-                        </button>
                     </div>
                 );
             case "Next":
@@ -2282,6 +2394,109 @@ const PublishedForm = () => {
                 return <input type="text" {...commonProps} />;
         }
     };
+
+
+    const formatAnswerForPDF = (answer) => {
+        if (answer == null) return '';
+
+        try {
+            const parsed = JSON.parse(answer);
+
+            if (Array.isArray(parsed)) {
+                return parsed.join(", ");
+            } else if (typeof parsed === "object" && parsed !== null) {
+                return Object.entries(parsed)
+                    .map(([k, v]) => {
+                        if (typeof v === 'object') {
+                            return `${k}: ${JSON.stringify(v)}`;
+                        }
+                        return `${k}: ${v}`;
+                    })
+                    .join("\n");
+            } else {
+                return String(parsed); // for booleans, numbers
+            }
+        } catch (e) {
+            // fallback: raw text
+            return String(answer).trim();
+        }
+    };
+
+    // ✅ Export Data to PDF using jsPDF & autoTable
+    const exportToPDF = () => {
+        if (responses.length === 0) {
+            alert("No data available to export.");
+            return;
+        }
+        const cleanFormId = formId.replace("form-", "");
+
+        const doc = new jsPDF({ orientation: "landscape" });
+        const pageWidth = doc.internal.pageSize.getWidth();
+
+        const dynamicColumns = columns.slice(2);
+        const chunkSize = 8;
+        const dynamicChunks = [];
+        for (let i = 0; i < dynamicColumns.length; i += chunkSize) {
+            dynamicChunks.push(dynamicColumns.slice(i, i + chunkSize));
+        }
+
+        dynamicChunks.forEach((chunk, index) => {
+            if (index > 0) doc.addPage();
+
+            autoTable(doc, {
+                head: [[
+                    "Response ID",
+                    "Submitted At",
+                    ...chunk.map(col => col.title),
+                ]],
+                body: responses.map((response) => {
+                    const visibleAnswers = chunk.map(col => {
+                        const found = response.answers.find(a => a.label === col.title);
+                        return formatAnswerForPDF(found ? found.answer : '');
+                    });
+
+                    return [
+                        response.response_id,
+                        new Date(response.submitted_at).toLocaleString(),
+                        ...visibleAnswers
+                    ];
+                }),
+                startY: 50, // Leave space for logo and title
+                margin: { top: 50 },
+                theme: "grid",
+                styles: {
+                    cellWidth: 'wrap',
+                    overflow: 'linebreak',
+                    fontSize: 7,
+                },
+                headStyles: {
+                    halign: 'center',
+                },
+                didDrawPage: function (data) {
+                    // ✅ Add logo
+                    if (index === 0) {
+                        const imgWidth = 40;
+                        const imgHeight = 20;
+                        const imgX = (pageWidth - imgWidth) / 2;
+                        doc.addImage(dForms_logo, 'PNG', imgX, 5, imgWidth, imgHeight);
+
+                        // ✅ Add centered heading
+                        doc.setFontSize(13);
+                        doc.setTextColor(40);
+                        doc.text(`Responses for "${responses[0].formTitle}"`, pageWidth / 2, 30, { align: 'center' });
+
+                        // ✅ Add subtext
+                        doc.setFontSize(9);
+                        doc.setTextColor(100);
+                        doc.text(`Generated by dForms | Form ID: ${cleanFormId}`, pageWidth / 2, 38, { align: 'center' });
+                    }
+                }
+            });
+        });
+
+        doc.save(`Responses_${formId}.pdf`);
+    };
+
 
     const handleSubmitForm = async () => {
         const allRequiredFields = fields.filter(f => f.required);
@@ -2397,12 +2612,13 @@ const PublishedForm = () => {
 
             const data = await res.json();
             if (res.ok) {
-                confetti({
-                    particleCount: 200,
-                    spread: 200,
-                    origin: { y: 0.6 }
-                });
+                confetti({ particleCount: 200, spread: 200, origin: { y: 0.6 } });
                 Swal.fire("Form Submitted", "Your form has been submitted successfully!", "success");
+
+                // ✅ If checkbox selected, export PDF
+                if (downloadPDF) {
+                    exportToPDF();
+                }
 
                 Object.keys(localStorage).forEach((key) => {
                     if (key.startsWith("form_")) {
@@ -2417,7 +2633,8 @@ const PublishedForm = () => {
                     const formId = formMatch[1];
                     window.location.href = `/forms/${formId}/page-end`;
                 }
-            } else {
+            }
+            else {
                 Swal.fire("Error", data.error || "Submission failed.", "error");
             }
         }
