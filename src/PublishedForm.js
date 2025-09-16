@@ -270,9 +270,12 @@ const PublishedForm = () => {
 
     // Extract page number
     let currentPageNumber = 0;
+    let isEndPage = false;
 
-    if (pageId === "page-start") {
+    if (pageId === "start") {
         currentPageNumber = 0; // start page
+    } else if (pageId === "end") {
+        isEndPage = true; // mark as last page
     } else if (!isNaN(Number(pageId))) {
         // pageId is just "1", "2", etc.
         currentPageNumber = Number(pageId);
@@ -281,15 +284,20 @@ const PublishedForm = () => {
         currentPageNumber = parseInt(pageId.split("-")[1], 10);
     }
 
-    // Total pages (excluding start page)
+    // Total middle pages
     const totalPages = formPages.length;
 
     // Progress %
-    const progressPercent =
-        totalPages > 0 && currentPageNumber >= 0
-            ? (currentPageNumber / totalPages) * 100
-            : 0;
+    let progressPercent = 0;
 
+    if (pageId === "start") {
+        progressPercent = 0; // always start
+    } else if (isEndPage) {
+        progressPercent = 100; // always end
+    } else if (totalPages > 0 && currentPageNumber > 0) {
+        // distribute progress across middle pages
+        progressPercent = (currentPageNumber / (totalPages + 1)) * 100;
+    }
 
     const [colors, setColors] = useState({
         background: "#F8F9FA",
@@ -349,6 +357,7 @@ const PublishedForm = () => {
         if (pageId === "start") return;
 
         // ✅ Skip validation if we're navigating via Next button
+        debugger
         if (skipCheck) {
             return;
         }
