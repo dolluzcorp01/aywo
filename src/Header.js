@@ -3,6 +3,7 @@ import { apiFetch } from "./utils/api";
 import Swal from 'sweetalert2';
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from "react-router-dom";
+import LOGO from "./assets/img/LOGO.png";
 import "./Header.css";
 
 // Fix 1: Tell styled-components not to pass 'isHome' to the DOM
@@ -190,9 +191,11 @@ const Header = () => {
   return (
     <Navbar className="header">
       <div className="header-left">
-        <a className="navbar-brand" href="#">
-          dForms
-        </a>
+        <img
+          src={LOGO}
+          alt="dForms Logo"
+          style={{ height: "60px", objectFit: "contain" }}
+        />
       </div>
       <CenteredContainer $isHome={isHome} onClick={() => navigate("/home")}>
         <i className="fa-solid fa-file-alt form-icon"></i>

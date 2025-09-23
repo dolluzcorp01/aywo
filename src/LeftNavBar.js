@@ -1,9 +1,11 @@
 import { useNotification } from "./NotificationContext";
-import { apiFetch } from "./utils/api";
+import { apiFetch, API_BASE } from "./utils/api";
 import styled from 'styled-components';
 import Swal from 'sweetalert2';
 import React, { useEffect, useState, useRef } from 'react';
+import { FaCamera } from "react-icons/fa";
 import { useNavigate, useLocation } from 'react-router-dom';
+import help_desk from "./assets/img/help_desk.png";
 import './LeftNavBar.css';
 
 const RoundedCircle = styled.span`
@@ -78,10 +80,48 @@ const LeftNavBar = () => {
     const { showNotification } = useNotification();
     const navigate = useNavigate();
     const location = useLocation();
+    const [isHovered, setIsHovered] = useState(false);
 
     const [profileDetails, setProfileDetails] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
+
+    const handleFileChange = (e) => {
+        setSelectedFile(e.target.files[0]);
+    };
+
+    const handleSaveProfileImage = async () => {
+        if (!selectedFile) {
+            Swal.fire("Error", "Please select an image!", "warning");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("profileImage", selectedFile);
+        formData.append("userId", profileDetails.user_id);
+
+        try {
+            const res = await fetch("/api/leftnavbar/upload-profile-image", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire("Success", "Profile image updated!", "success");
+                setIsModalOpen(false);
+                // Optionally refresh user details or image
+            } else {
+                Swal.fire("Error", data.message || "Something went wrong", "error");
+            }
+        } catch (err) {
+            console.error(err);
+            Swal.fire("Error", "Something went wrong", "error");
+        }
+    };
 
     useEffect(() => {
         populateProfileDetails();
@@ -95,6 +135,26 @@ const LeftNavBar = () => {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    const handleCopyEmail = (email) => {
+        navigator.clipboard.writeText(email)
+            .then(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Copied!',
+                    text: `${email} has been copied to clipboard`,
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            })
+            .catch(() => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Failed to copy email!'
+                });
+            });
+    };
 
     const populateProfileDetails = async () => {
         try {
@@ -114,6 +174,8 @@ const LeftNavBar = () => {
             }
 
             const data = await response.json();
+            console.log(data);
+
             setProfileDetails(data);
         } catch (error) {
             console.error(error);
@@ -168,14 +230,24 @@ const LeftNavBar = () => {
                                     color: 'white',
                                     fontSize: '18px',
                                     fontWeight: 'bold',
+                                    backgroundImage: profileDetails.users_profile_img
+                                        ? profileDetails.users_profile_img.startsWith("data:")
+                                            ? `url(${profileDetails.users_profile_img})`
+                                            : `url(${API_BASE}/${profileDetails.users_profile_img.replace(/\\/g, "/")})`
+                                        : undefined,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
                                 }}
                             >
-                                {profileDetails.profile_letters}
+                                {!profileDetails.users_profile_img && profileDetails.profile_letters}
                             </RoundedCircle>
 
                             <div className="profile-text">
                                 <span className="profile-name">{profileDetails.user_name}</span>
-                                <span className="profile-org">{profileDetails.user_name}'s organization</span>
+                                <span className="profile-org" style={{ fontStyle: 'italic' }}>Your Form, Your Space</span>
                             </div>
 
                             <div className="profile-arrow-wrapper">
@@ -198,23 +270,105 @@ const LeftNavBar = () => {
                                     color: 'white',
                                     fontSize: '18px',
                                     fontWeight: 'bold',
+                                    cursor: 'pointer',
+                                    backgroundImage: profileDetails.users_profile_img
+                                        ? profileDetails.users_profile_img.startsWith("data:")
+                                            ? `url(${profileDetails.users_profile_img})`
+                                            : `url(${API_BASE}/${profileDetails.users_profile_img.replace(/\\/g, "/")})`
+                                        : undefined,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
                                 }}
+                                onMouseEnter={() => setIsHovered(true)}
+                                onMouseLeave={() => setIsHovered(false)}
+                                onClick={() => { setIsModalOpen(true); console.log(API_BASE) }}
                             >
-                                {profileDetails.profile_letters}
+                                {/* Show camera on hover, otherwise letters if no image */}
+                                {isHovered ? (
+                                    <FaCamera color="white" />
+                                ) : (
+                                    !profileDetails.users_profile_img && profileDetails.profile_letters
+                                )}
                             </RoundedCircle>
+
                             <div className="profile-text" style={{ display: "flex", flexDirection: "column" }}>
                                 <DropdownProfileName>{profileDetails.user_name}</DropdownProfileName>
-                                <DropdownProfileOrg>{profileDetails.user_name}'s organization</DropdownProfileOrg>
+                                <DropdownProfileOrg style={{ fontStyle: 'italic' }}>
+                                    Your Form, Your Space
+                                </DropdownProfileOrg>
                             </div>
                         </DropdownProfile>
 
-                        <DropdownItem href="#"><i className="fa fa-hands-helping"></i> Help center</DropdownItem>
+                        <DropdownItem
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                            onClick={() => handleCopyEmail("Help@dFroms.io")}
+                        >
+                            <img
+                                src={help_desk}
+                                alt="Help Desk"
+                                style={{ width: "20px", height: "20px", objectFit: "contain" }}
+                            />
+                            Help@dFroms.io
+                        </DropdownItem>
                         <DropdownItem href="/login?changePassword"><i className="fa fa-key"></i> Change Password</DropdownItem>
                         <DropdownDivider />
                         <DropdownItem onClick={handleLogout} style={{ color: "red" }}>Logout</DropdownItem>
                     </DropdownMenu>
                 )}
             </div>
+
+            {isModalOpen && (
+                <div className="profile-modal-overlay">
+                    <div className="profile-modal">
+                        <button
+                            className="profile-modal-close"
+                            onClick={() => setIsModalOpen(false)}
+                        >
+                            ✖
+                        </button>
+
+                        <h3 className="profile-modal-title">Update Profile Image</h3>
+
+                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px', marginBottom: '5px' }}>
+                            {selectedFile ? (
+                                <img
+                                    src={URL.createObjectURL(selectedFile)}
+                                    alt="Preview"
+                                    className="profile-image-preview"
+                                />
+                            ) : profileDetails.users_profile_img ? (
+                                <img
+                                    src={`${API_BASE}/${profileDetails.users_profile_img.replace(/\\/g, "/")}`}
+                                    alt="Profile"
+                                    className="profile-image-preview"
+                                />
+                            ) : (
+                                <FaCamera size={60} color="#555" style={{ alignSelf: "center" }} />
+                            )}
+                        </div>
+
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            style={{ marginTop: "10px" }}
+                        />
+
+                        <div className="profile-modal-buttons">
+                            <button
+                                className="profile-modal-save"
+                                onClick={handleSaveProfileImage}
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )
+            }
 
         </div >
     );

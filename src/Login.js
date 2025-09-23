@@ -6,6 +6,8 @@ import { FaCreditCard, FaShieldAlt, FaUserCheck, FaPaintBrush, FaRobot } from "r
 import Login_pg_pg_intro from "./assets/img/Login_pg_pg_intro.png";
 import doodle_bg from "./assets/img/doodle_bg.jpg";
 import Login_intro_bottom_img from "./assets/img/Login_intro_bottom_img.png";
+import LOGO from "./assets/img/LOGO.png";
+import signup from "./assets/img/signup.png";
 import Google_icon from "./assets/img/Google_icon.png";
 import styled from 'styled-components';
 import "./Login.css";
@@ -454,12 +456,22 @@ function Login() {
       {/* Header Navbar */}
       <Navbar className="navbar navbar-expand-lg navbar-light header">
         <div className="header-left">
-          <a className="navbar-brand" style={{ fontSize: "1.5rem" }} href="#">dForms</a> {/* Project name changed */}
+          <a className="navbar-brand" href="#">
+            <img
+              src={LOGO}
+              alt="dForms Logo"
+              style={{ height: "80px", objectFit: "contain" }}
+            />
+          </a>
         </div>
         <div className="header-right">
           {showLoginbtn ? (
             <button className="btn navbtns" onClick={handleLoginbtn} >
-              Sign Up
+              <img
+                src={signup}
+                alt="dForms Logo"
+                style={{ height: "80px", objectFit: "contain", marginBottom: "-10px" }}
+              />
             </button>
           ) : (
             <button className="btn navbtns" onClick={handleSignUpbtn}>

@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const getDBConnection = require('../../config/db');
 const { verifyJWT } = require('./Login_server');
+const multer = require("multer");
+const path = require("path");
 
 // Generate a color based on user name
 function generateColorFromText(text) {
@@ -22,7 +24,7 @@ router.get('/get-user-profile', verifyJWT, (req, res) => {
     const db = getDBConnection('form_builder');
 
     const query = `
-        SELECT user_id, user_name
+        SELECT user_id, user_name, users_profile_img
         FROM form_builder.users WHERE user_id = ?;
     `;
 
@@ -61,5 +63,41 @@ router.post('/logout', (req, res) => {
     res.json({ success: true, message: 'Logged out successfully' });
 });
 
+
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, "user_profile_uploads/");
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + "-" + file.originalname);
+    }
+});
+
+const upload = multer({ storage: storage });
+
+router.post("/upload-profile-image", upload.single("profileImage"), async (req, res) => {
+    const userId = req.body.userId;
+    if (!userId) return res.status(400).json({ success: false, message: "User ID missing" });
+
+    if (!req.file) return res.status(400).json({ success: false, message: "No file uploaded" });
+
+    const imagePath = req.file.path;
+
+    try {
+        const db = getDBConnection('form_builder');
+        const sql = "UPDATE users SET users_profile_img = ? WHERE user_id = ?";
+        db.query(sql, [imagePath, userId], (err, result) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({ success: false, message: "Database error" });
+            }
+            res.json({ success: true, message: "Profile image updated!", imagePath });
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+});
 
 module.exports = router;

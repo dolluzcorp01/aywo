@@ -52,10 +52,11 @@ app.use('/field_file_uploads', express.static(path.join(__dirname, 'field_file_u
 app.use('/field_file_uploads_templates', express.static(path.join(__dirname, 'field_file_uploads_templates')));
 app.use('/form_bg_img_uploads', express.static(path.join(__dirname, 'form_bg_img_uploads')));
 app.use('/form_bg_img_uploads_templates', express.static(path.join(__dirname, 'form_bg_img_uploads_templates')));
+app.use('/user_profile_uploads', express.static(path.join(__dirname, 'user_profile_uploads')));
 
 console.log('✅ Routes have been set up');
 
-// ✅ Start the server
+// ✅ Start the server2
 app.listen(port, () => {
     console.log(`🚀 Server running on http://localhost:${port}`);
 });

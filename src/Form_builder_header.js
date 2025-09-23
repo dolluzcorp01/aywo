@@ -6,6 +6,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Modal } from 'bootstrap';
 import confetti from 'canvas-confetti';
 import { FaGear } from "react-icons/fa6";
+import LOGO from "./assets/img/LOGO.png"
 import "./Form_builder_header.css";
 import Settings from "./Settings";
 
@@ -530,6 +531,15 @@ const Form_builder_header = ({ isSaveEnabled }) => {
                         <i className="fa-regular fa-clock"></i>
                     </button>
                 )}
+
+                {/* Logo before profile */}
+                <a href="/home" style={{ display: "flex", alignItems: "center" }}>
+                    <img
+                        src={LOGO}
+                        alt="Home Logo"
+                        style={{ height: "45px", cursor: "pointer", objectFit: "contain" }}
+                    />
+                </a>
 
                 {!window.location.pathname.includes("preview") && (
                     <div
