@@ -2,12 +2,10 @@ import React, { useState, useEffect } from "react";
 import { apiFetch } from "./utils/api";
 import { auth, provider, signInWithPopup } from "./firebaseConfig";
 import { useNavigate } from "react-router-dom";
-import { FaCreditCard, FaShieldAlt, FaUserCheck, FaPaintBrush, FaRobot } from "react-icons/fa";
-import Login_pg_pg_intro from "./assets/img/Login_pg_pg_intro.png";
+import { FaShieldAlt, FaUserCheck, FaPaintBrush, FaRobot } from "react-icons/fa";
 import doodle_bg from "./assets/img/doodle_bg.jpg";
-import Login_intro_bottom_img from "./assets/img/Login_intro_bottom_img.png";
 import LOGO from "./assets/img/LOGO.png";
-import signup from "./assets/img/signup.png";
+import signupimg from "./assets/img/signup.png";
 import Google_icon from "./assets/img/Google_icon.png";
 import styled from 'styled-components';
 import "./Login.css";
@@ -468,9 +466,9 @@ function Login() {
           {showLoginbtn ? (
             <button className="btn navbtns" onClick={handleLoginbtn} >
               <img
-                src={signup}
+                src={signupimg}
                 alt="dForms Logo"
-                style={{ height: "80px", objectFit: "contain", marginBottom: "-10px" }}
+                style={{ height: "70px", objectFit: "contain", marginBottom: "-10px" }}
               />
             </button>
           ) : (
