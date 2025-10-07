@@ -28,7 +28,7 @@ const verifyJWT = (req, res, next) => {
 //Google signup 
 router.post("/google-signup", (req, res) => {
   const { email, username } = req.body;
-  const db = getDBConnection("form_builder");
+  const db = getDBConnection("aywo");
 
   if (!email) {
     return res.status(400).json({ success: false, message: "Email is required" });
@@ -90,7 +90,7 @@ router.post("/google-signup", (req, res) => {
 
 router.post("/google-signin", (req, res) => {
   const { email } = req.body;
-  const db = getDBConnection("form_builder");
+  const db = getDBConnection("aywo");
 
   if (!email) {
     return res.status(400).json({ success: false, message: "Email is required" });
@@ -121,7 +121,7 @@ router.post("/google-signin", (req, res) => {
 //Normal singup
 router.post('/signup', (req, res) => {
   const { username, email, password } = req.body;
-  const db = getDBConnection('form_builder');
+  const db = getDBConnection('aywo');
 
   if (!username || !email || !password) {
     return res.status(400).json({ success: false, message: 'All fields are required' });
@@ -188,7 +188,7 @@ router.post('/signup', (req, res) => {
 // 🔹 Login API with JWT
 router.post('/verifyLogin', (req, res) => {
   const { email, password } = req.body;
-  const db = getDBConnection('form_builder');
+  const db = getDBConnection('aywo');
   const query = 'SELECT user_id, account_password FROM users WHERE email = ?';
 
   db.query(query, [email], (err, results) => {
@@ -224,7 +224,7 @@ router.post('/verifyLogin', (req, res) => {
 // 🔹 Check if User Exists API
 router.post('/checkUserExists', (req, res) => {
   const { userInput } = req.body;
-  const db = getDBConnection('form_builder');
+  const db = getDBConnection('aywo');
   const query = 'SELECT COUNT(*) AS count FROM users WHERE email = ?';
 
   db.query(query, [userInput], (err, results) => {
@@ -244,7 +244,7 @@ router.post('/checkUserExists', (req, res) => {
 const generateOTP = (userInput, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const expiryTime = new Date(Date.now() + 5 * 60000);
-  const db = getDBConnection('form_builder');
+  const db = getDBConnection('aywo');
 
   const query = `INSERT INTO otpstorage (UserInput, OTP, ExpiryTime) VALUES (?, ?, ?) 
                  ON DUPLICATE KEY UPDATE OTP = ?, ExpiryTime = ?`;
@@ -298,7 +298,7 @@ const generateOTP = (userInput, res) => {
 // 🔹 Verify OTP or Old Password API
 router.post('/VerifyOrValidate', (req, res) => {
   const { validationType, userInput, enteredValue } = req.body;
-  const db = getDBConnection('form_builder');
+  const db = getDBConnection('aywo');
 
   if (validationType === "OTP") {
     // ✅ Verify OTP
@@ -367,7 +367,7 @@ router.post('/updatePassword', verifyJWT, (req, res) => {
   const { newPassword } = req.body;
   const user_id = req.user_id;
   const hashedPassword = bcrypt.hashSync(newPassword, 10);
-  const db = getDBConnection('form_builder');
+  const db = getDBConnection('aywo');
   const query = 'UPDATE users SET account_password = ? WHERE user_id = ?';
 
   db.query(query, [hashedPassword, user_id], (err) => {

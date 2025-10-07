@@ -25,7 +25,7 @@ async function sendFormMail(to, subject, html) {
 
     return transporter.sendMail(mailOptions);
 }
-const db = getDBConnection("form_builder");
+const db = getDBConnection("aywo");
 
 const queryPromise = (db, sql, params) => {
     return new Promise((resolve, reject) => {

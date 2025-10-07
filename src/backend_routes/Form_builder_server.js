@@ -7,7 +7,7 @@ const getDBConnection = require("../../config/db"); // ✅ Use getDBConnection
 const { verifyJWT } = require("../backend_routes/Login_server");
 
 // ✅ Get database connection once
-const db = getDBConnection("form_builder");
+const db = getDBConnection("aywo");
 
 // Helper function to execute queries as Promises
 const queryPromise = (db, sql, params) => {
@@ -781,7 +781,7 @@ router.post("/check-pages-btnfields", verifyJWT, async (req, res) => {
         // 1. Get page mappings including page_number and sort_order
         const pageMappings = await new Promise((resolve, reject) => {
             connection.query(
-                `SELECT id, page_number, sort_order FROM form_builder.dform_pages WHERE id IN (${placeholders})`,
+                `SELECT id, page_number, sort_order FROM aywo.dform_pages WHERE id IN (${placeholders})`,
                 pageIds,
                 (err, results) => (err ? reject(err) : resolve(results))
             );

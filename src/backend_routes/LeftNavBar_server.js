@@ -21,11 +21,11 @@ router.get('/get-user-profile', verifyJWT, (req, res) => {
         return res.status(401).json({ error: 'Unauthorized access' });
     }
 
-    const db = getDBConnection('form_builder');
+    const db = getDBConnection('aywo');
 
     const query = `
         SELECT user_id, user_name, users_profile_img
-        FROM form_builder.users WHERE user_id = ?;
+        FROM aywo.users WHERE user_id = ?;
     `;
 
     db.query(query, [req.user_id], (err, results) => {
@@ -85,7 +85,7 @@ router.post("/upload-profile-image", upload.single("profileImage"), async (req, 
     const imagePath = req.file.path;
 
     try {
-        const db = getDBConnection('form_builder');
+        const db = getDBConnection('aywo');
         const sql = "UPDATE users SET users_profile_img = ? WHERE user_id = ?";
         db.query(sql, [imagePath, userId], (err, result) => {
             if (err) {

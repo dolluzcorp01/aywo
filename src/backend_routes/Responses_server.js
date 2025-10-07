@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const getDBConnection = require("../../config/db");
 
-const db = getDBConnection("form_builder");
+const db = getDBConnection("aywo");
 
 const queryPromise = (db, sql, params) => {
     return new Promise((resolve, reject) => {
