@@ -458,7 +458,7 @@ function Login() {
             <img
               src={LOGO}
               alt="Aywo Logo"
-              style={{ height: "80px", objectFit: "contain" }}
+              style={{ height: "80px", objectFit: "contain", marginTop: "-10px" }}
             />
           </a>
         </div>
@@ -708,6 +708,15 @@ function Login() {
         <div className="login-image">
           <img src={doodle_bg} alt="Login_Background" />
 
+          {/* 🔹 Add Logo ABOVE dynamic-text-container */}
+          <div className="logo-container">
+            <img
+              src={LOGO}
+              alt="Aywo Logo"
+              style={{ height: "80px", objectFit: "contain" }}
+            />
+          </div>
+
           {/* White Div with Dynamic Text */}
           <div className="dynamic-text-container" style={{ color: currentMessage.color }}>
             <span className="icon">{currentMessage.icon}</span>
@@ -716,11 +725,6 @@ function Login() {
 
           {/* Text */}
           <div className="overlay-text">Make a form</div>
-
-          {/* Second image inside a div */}
-          {/* <div className="bottom-image-container">
-            <img src={Login_intro_bottom_img} alt="Bottom_Image" className="bottom-image" />
-          </div> */}
         </div>
 
       </div>
