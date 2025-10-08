@@ -3,7 +3,7 @@ import { apiFetch } from "./utils/api";
 import Swal from 'sweetalert2';
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from "react-router-dom";
-import LOGO from "./assets/img/LOGO.png";
+import LOGO from "./assets/img/LOGO.jpg";
 import "./Header.css";
 
 // Fix 1: Tell styled-components not to pass 'isHome' to the DOM

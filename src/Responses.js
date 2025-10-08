@@ -14,7 +14,7 @@ import {
     FaSlidersH, FaSmile, FaEquals, FaBars, FaMapMarkerAlt, FaVideo, FaFilePdf, FaMinus, FaYoutube
 } from "react-icons/fa";
 import ExcelJS from 'exceljs';
-import dForms_logo from "./assets/img/dForms_logo.png";
+import LOGO from "./assets/img/LOGO.jpg";
 import "./Responses.css";
 
 const fieldIcons = {
@@ -583,7 +583,7 @@ const Responses = () => {
         const worksheet = workbook.addWorksheet("Responses");
 
         // ✅ Add Image
-        const imageResponse = await fetch(dForms_logo);
+        const imageResponse = await fetch(LOGO);
         const imageBlob = await imageResponse.blob();
         const imageBuffer = await imageBlob.arrayBuffer();
 
@@ -731,7 +731,7 @@ const Responses = () => {
                         const imgWidth = 40;
                         const imgHeight = 20;
                         const imgX = (pageWidth - imgWidth) / 2;
-                        doc.addImage(dForms_logo, 'PNG', imgX, 5, imgWidth, imgHeight);
+                        doc.addImage(LOGO, 'PNG', imgX, 5, imgWidth, imgHeight);
 
                         // ✅ Add centered heading
                         doc.setFontSize(13);

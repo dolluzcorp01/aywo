@@ -8,7 +8,7 @@ import { FaStar, FaLock } from "react-icons/fa";
 import confetti from 'canvas-confetti';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import dForms_logo from "./assets/img/dForms_logo.png";
+import LOGO from "./assets/img/LOGO.jpg";
 import "./PublishedForm.css";
 
 const PublishedForm = () => {
@@ -2467,7 +2467,7 @@ const PublishedForm = () => {
                 const imgHeight = 20;
                 const imgX = (pageWidth - imgWidth) / 2;
                 const imgY = 5;
-                doc.addImage(dForms_logo, 'PNG', imgX, imgY, imgWidth, imgHeight);
+                doc.addImage(LOGO, 'PNG', imgX, imgY, imgWidth, imgHeight);
             }
         });
 

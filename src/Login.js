@@ -4,7 +4,7 @@ import { auth, provider, signInWithPopup } from "./firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { FaShieldAlt, FaUserCheck, FaPaintBrush, FaRobot } from "react-icons/fa";
 import doodle_bg from "./assets/img/doodle_bg.jpg";
-import LOGO from "./assets/img/LOGO.png";
+import LOGO from "./assets/img/LOGO.jpg";
 import signupimg from "./assets/img/signup.png";
 import Google_icon from "./assets/img/Google_icon.png";
 import styled from 'styled-components';
