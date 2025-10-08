@@ -457,7 +457,7 @@ function Login() {
           <a className="navbar-brand" href="#">
             <img
               src={LOGO}
-              alt="dForms Logo"
+              alt="Aywo Logo"
               style={{ height: "80px", objectFit: "contain" }}
             />
           </a>
@@ -467,7 +467,7 @@ function Login() {
             <button className="btn navbtns" onClick={handleLoginbtn} >
               <img
                 src={signupimg}
-                alt="dForms Logo"
+                alt="Aywo Logo"
                 style={{ height: "70px", objectFit: "contain", marginBottom: "-10px" }}
               />
             </button>
@@ -545,7 +545,7 @@ function Login() {
 
             {showLoginSection && (
               <div id="login-section">
-                <h4 className="card-title text-center my-3 font-weight-bold">Sign in to dForms</h4>
+                <h4 className="card-title text-center my-3 font-weight-bold">Sign in to Aywo</h4>
                 <button onClick={handleGoogleSignIp} className="googleauthbtn">
                   <img src={Google_icon} alt="Google" style={{ width: "30px", height: "30px" }} className="google-icon" />
                   Sign in with Google
@@ -681,7 +681,7 @@ function Login() {
 
           <div style={{ textAlign: "center" }}>
             <span style={{ color: "gray", fontSize: "0.7rem", display: "block", marginTop: "-20px" }}>
-              By using dForms, you are agreeing to our{" "}
+              By using Aywo, you are agreeing to our{" "}
               <a
                 href="#"
                 style={{ color: "gray", textDecoration: "underline" }}

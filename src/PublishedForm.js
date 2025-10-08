@@ -2058,8 +2058,8 @@ const PublishedForm = () => {
 
                         <textarea
                             className="form-control"
-                            placeholder="Made with dForms, the easy way to make stunning forms"
-                            value={field.thankyou_subtext || "Made with dForms, the easy way to make stunning forms"}
+                            placeholder="Made with Aywo, the easy way to make stunning forms"
+                            value={field.thankyou_subtext || "Made with Aywo, the easy way to make stunning forms"}
                             readOnly
                             onChange={(e) => {
                                 const updatedFields = fields.map(f =>
@@ -2108,7 +2108,7 @@ const PublishedForm = () => {
                                 window.open('/login', '_blank');
                             }}
                         >
-                            Make your own <span style={{ fontWeight: "900", fontSize: "1.3rem" }}>dForms</span>
+                            Make your own <span style={{ fontWeight: "900", fontSize: "1.3rem" }}>Aywo</span>
                         </button>
                     </div>
                 );

@@ -193,7 +193,7 @@ const Header = () => {
       <div className="header-left">
         <img
           src={LOGO}
-          alt="dForms Logo"
+          alt="Aywo Logo"
           style={{ height: "60px", objectFit: "contain" }}
         />
       </div>

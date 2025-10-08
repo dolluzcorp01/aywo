@@ -14,7 +14,7 @@ const LandingPage = () => {
         <div className="landing-container">
             {/* Header / Navbar */}
             <nav className="landing-navbar">
-                <div className="landing-logo">dForms</div>
+                <div className="landing-logo">Aywo</div>
 
                 <ul className="landing-nav-links">
                     <li><a href="#features">Products</a></li>
@@ -74,7 +74,7 @@ const LandingPage = () => {
 
             {/* Features */}
             <section id="features" className="landing-features">
-                <h2>Why Choose dForms?</h2>
+                <h2>Why Choose Aywo?</h2>
                 <div className="landing-feature-grid">
                     <div className="landing-feature-card">
                         <h3>🛠 Smart Form Builder</h3>
@@ -152,7 +152,7 @@ const LandingPage = () => {
                     <div className="landing-testimonial-card">
                         <div className="landing-avatar">👩‍💼</div>
                         <h4>Alice, Product Manager</h4>
-                        <p>"dForms made collecting feedback a breeze! Our whole team adopted it within days."</p>
+                        <p>"Aywo made collecting feedback a breeze! Our whole team adopted it within days."</p>
                     </div>
                     <div className="landing-testimonial-card">
                         <div className="landing-avatar">👨‍💻</div>
@@ -198,7 +198,7 @@ const LandingPage = () => {
 
             {/* Final CTA */}
             <section className="landing-cta-banner">
-                <h2>Start building with dForms today.</h2>
+                <h2>Start building with Aywo today.</h2>
                 <button className="landing-btn-outline">Sign Up Free</button>
             </section>
 
@@ -216,7 +216,7 @@ const LandingPage = () => {
                     <span>🐦 Twitter</span>
                     <span>💻 GitHub</span>
                 </div>
-                <p>© {new Date().getFullYear()} dForms. All rights reserved.</p>
+                <p>© {new Date().getFullYear()} Aywo. All rights reserved.</p>
             </footer>
         </div>
     );

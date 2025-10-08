@@ -747,7 +747,7 @@ const FormBuilder = () => {
                             ...field,
                             required: normalizedRequired,
                             thankyou_heading: thankyouData.thankyou_heading || "Thank you",
-                            thankyou_subtext: thankyouData.thankyou_subtext || "Made with dForms, the easy way to make stunning forms",
+                            thankyou_subtext: thankyouData.thankyou_subtext || "Made with Aywo, the easy way to make stunning forms",
                             hideIcon: thankyouData.show_tick_icon === 0 // if 0, hide icon
                         };
                     }
@@ -1092,8 +1092,8 @@ const FormBuilder = () => {
         }
 
         // ✅ Check if user pasted a copy code
-        if (pageTitle.startsWith("dforms-copy:")) {
-            const encoded = pageTitle.split("dforms-copy:")[1];
+        if (pageTitle.startsWith("Aywo-copy:")) {
+            const encoded = pageTitle.split("Aywo-copy:")[1];
             try {
                 const decoded = atob(encoded); // "formId:pageId"
                 const [copiedFormId, copiedPageId] = decoded.split(":");
@@ -1245,7 +1245,7 @@ const FormBuilder = () => {
                     <i className="fa-solid fa-desktop"></i>
                 </div>
                 <h2 style={{ fontWeight: "700", color: "#374151" }}>
-                    The dForms editor works best on larger screens
+                    The Aywo editor works best on larger screens
                 </h2>
                 <p style={{ color: "#6B7280", fontWeight: "bolder" }}>
                     Note that the forms you build <u>will work</u> on mobile devices!
@@ -1449,7 +1449,7 @@ const FormBuilder = () => {
             case "PDF":
             case "ThankYou":
                 newField.thankyou_heading = "Thank you";
-                newField.thankyou_subtext = "Made with dForms, the easy way to make stunning forms";
+                newField.thankyou_subtext = "Made with Aywo, the easy way to make stunning forms";
                 newField.show_tick_icon = true;
                 break;
             default:
@@ -3400,8 +3400,8 @@ const FormBuilder = () => {
 
                         <textarea
                             className="form-control"
-                            placeholder="Made with dForms, the easy way to make stunning forms"
-                            value={field.thankyou_subtext || "Made with dForms, the easy way to make stunning forms"}
+                            placeholder="Made with Aywo, the easy way to make stunning forms"
+                            value={field.thankyou_subtext || "Made with Aywo, the easy way to make stunning forms"}
                             onChange={(e) => {
                                 const updatedFields = fields.map(f =>
                                     f.id === field.id ? { ...f, thankyou_subtext: e.target.value } : f
@@ -3446,7 +3446,7 @@ const FormBuilder = () => {
                                 e.currentTarget.style.border = "1px solid #e0e0e0";
                             }}
                         >
-                            Make your own <span style={{ fontWeight: "900", fontSize: "1.3rem" }}>dForms</span>
+                            Make your own <span style={{ fontWeight: "900", fontSize: "1.3rem" }}>Aywo</span>
                         </button>
                     </div>
                 );
@@ -4938,7 +4938,7 @@ const FormBuilder = () => {
                                                 if (copiedFormId && copiedPageId) {
                                                     const raw = `${copiedFormId}:${copiedPageId}`;
                                                     const encoded = btoa(raw); // base64 encode
-                                                    const code = `dforms-copy:${encoded}`;
+                                                    const code = `Aywo-copy:${encoded}`;
                                                     navigator.clipboard.writeText(code);
 
                                                     Swal.fire("Copied!", "Copy code copied to clipboard. Paste it in Add page", "success");

@@ -267,20 +267,20 @@ const generateOTP = (userInput, res) => {
     });
 
     const mailOptions = {
-      from: '"dForms Support" <vv.pavithran12@gmail.com>',
+      from: '"Aywo Support" <vv.pavithran12@gmail.com>',
       to: userInput,
-      subject: "dForms Password Reset - Your OTP Code",
+      subject: "Aywo Password Reset - Your OTP Code",
       html: `
     <div style="font-family: Arial, sans-serif; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
-      <h2 style="color: #4A90E2;">dForms - One Time Password (OTP)</h2>
+      <h2 style="color: #4A90E2;">Aywo - One Time Password (OTP)</h2>
       <p>Hello,</p>
-      <p>We received a request to reset your password on <strong>dForms</strong>.</p>
+      <p>We received a request to reset your password on <strong>Aywo</strong>.</p>
       <p>Please use the following OTP to verify your identity:</p>
       <h3 style="color: #333; font-size: 24px;">${otp}</h3>
       <p>This OTP is valid for <strong>2 minutes</strong>. Do not share this code with anyone.</p>
       <p>If you did not request a password reset, please ignore this message.</p>
       <br/>
-      <p style="color: #888;">— The dForms Team</p>
+      <p style="color: #888;">— The Aywo Team</p>
     </div>
   `
     };

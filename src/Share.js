@@ -128,7 +128,7 @@ const Share = () => {
                     <i className="fa-solid fa-desktop"></i>
                 </div>
                 <h2 style={{ fontWeight: "700", color: "#374151" }}>
-                    The dForms editor works best on larger screens
+                    The Aywo editor works best on larger screens
                 </h2>
                 <p style={{ color: "#6B7280", fontWeight: "bolder" }}>
                     Note that the forms you build <u>will work</u> on mobile devices!

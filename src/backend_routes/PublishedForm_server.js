@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
 
 async function sendFormMail(to, subject, html) {
     const mailOptions = {
-        from: '"dForms Support" <vv.pavithran12@gmail.com>',
+        from: '"Aywo Support" <vv.pavithran12@gmail.com>',
         to,
         subject,
         html,
@@ -157,7 +157,7 @@ router.post("/submit-form", upload.any(), async (req, res) => {
             const recipientEmail = formOwner.email;
 
             const html = `
-    <h2>dForms Response</h2>
+    <h2>Aywo Response</h2>
     <p>Thank you for submitting the form.</p>
     <pre>${JSON.stringify(responses, null, 2)}</pre>
   `;

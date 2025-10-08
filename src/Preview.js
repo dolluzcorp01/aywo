@@ -1827,8 +1827,8 @@ const Preview = () => {
 
                         <textarea
                             className="form-control"
-                            placeholder="Made with dForms, the easy way to make stunning forms"
-                            value={field.thankyou_subtext || "Made with dForms, the easy way to make stunning forms"}
+                            placeholder="Made with Aywo, the easy way to make stunning forms"
+                            value={field.thankyou_subtext || "Made with Aywo, the easy way to make stunning forms"}
                             readOnly
                             onChange={(e) => {
                                 const updatedFields = fields.map(f =>
@@ -1877,7 +1877,7 @@ const Preview = () => {
                                 window.open('/login', '_blank');
                             }}
                         >
-                            Make your own <span style={{ fontWeight: "900", fontSize: "1.3rem" }}>dForms</span>
+                            Make your own <span style={{ fontWeight: "900", fontSize: "1.3rem" }}>Aywo</span>
                         </button>
                     </div>
                 );
@@ -2171,7 +2171,7 @@ const Preview = () => {
                     <i className="fa-solid fa-desktop"></i>
                 </div>
                 <h2 style={{ fontWeight: "700", color: "#374151" }}>
-                    The dForms editor works best on larger screens
+                    The Aywo editor works best on larger screens
                 </h2>
                 <p style={{ color: "#6B7280", fontWeight: "bolder" }}>
                     Note that the forms you build <u>will work</u> on mobile devices!
