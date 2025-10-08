@@ -8,7 +8,7 @@ const port = 5000;
 // ✅ Middleware for CORS - Allow specific origins
 const allowedOrigins = [
     'http://localhost:3000',   // Allow React frontend
-    'https://app.aywo.in',   // Production URL
+    'https://forms.aywo.in',   // Production URL
     'http://127.0.0.1:3000',   // Allow localhost if accessing via 127.0.0.1
     'http://localhost:5000'     // Allow backend server origin (no trailing slash)
 ];
