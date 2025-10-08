@@ -25,7 +25,7 @@ const queryPromise = (db, sql, params) => {
 
 // ✅ Function to check if a form title already exists for a user
 const checkDuplicateFormTitle = async (userId, title, formId = null) => {
-    let query = `SELECT COUNT(*) AS count FROM dforms WHERE user_id = ? AND title = ?`;
+    let query = `SELECT COUNT(*) AS count FROM forms WHERE user_id = ? AND title = ?`;
     let params = [userId, title];
 
     if (formId) {
@@ -55,9 +55,9 @@ router.post("/create", verifyJWT, async (req, res) => {
             return res.status(409).json({ message: "Form title already exists" });
         }
 
-        // 1️⃣ Insert into dforms
+        // 1️⃣ Insert into forms
         const formQuery = `
-            INSERT INTO dforms (
+            INSERT INTO forms (
                 user_id, title, internal_note, starred, is_closed,
                 published, background_color, questions_background_color,
                 primary_color, questions_color, answers_color, font, created_at
@@ -71,7 +71,7 @@ router.post("/create", verifyJWT, async (req, res) => {
 
         // 2️⃣ Insert Heading field on "start" page
         await queryPromise(db, `
-            INSERT INTO dform_fields (
+            INSERT INTO form_fields (
                 form_id, page_id, type, label, placeholder, caption, default_value,
                 description, alert_type, font_size, required, sort_order,
                 min_value, max_value, fields_version, heading_alignment, created_at
@@ -80,7 +80,7 @@ router.post("/create", verifyJWT, async (req, res) => {
 
         // 3️⃣ Insert Next button on "start" page
         await queryPromise(db, `
-            INSERT INTO dform_fields (
+            INSERT INTO form_fields (
                 form_id, page_id, type, label, placeholder, caption, default_value,
                 description, alert_type, font_size, required, sort_order,
                 min_value, max_value, btnalignment, btnbgColor, btnlabelColor,
@@ -90,7 +90,7 @@ router.post("/create", verifyJWT, async (req, res) => {
 
         // 4️⃣ Insert Thank You field on "end" page
         const thankYouFieldResult = await queryPromise(db, `
-            INSERT INTO dform_fields (
+            INSERT INTO form_fields (
                 form_id, page_id, type, label, placeholder, caption, default_value,
                 description, alert_type, font_size, required, sort_order,
                 min_value, max_value, fields_version, created_at
@@ -99,9 +99,9 @@ router.post("/create", verifyJWT, async (req, res) => {
 
         const fieldId = thankYouFieldResult.insertId;
 
-        // 5️⃣ Link Thank You field in dform_thankyou
+        // 5️⃣ Link Thank You field in form_thankyou
         await queryPromise(db, `
-            INSERT INTO dform_thankyou (form_id, field_id)
+            INSERT INTO form_thankyou (form_id, field_id)
             VALUES (?, ?)
         `, [formId, fieldId]);
 
@@ -133,15 +133,15 @@ router.post("/createnewpage", verifyJWT, async (req, res) => {
     try {
         // Get max sort_order and max page_number
         const [[{ max_order }], [{ max_page_number }]] = await Promise.all([
-            queryPromise(db, `SELECT MAX(sort_order) AS max_order FROM dform_pages WHERE form_id = ?`, [form_id]),
-            queryPromise(db, `SELECT MAX(page_number) AS max_page_number FROM dform_pages WHERE form_id = ?`, [form_id])
+            queryPromise(db, `SELECT MAX(sort_order) AS max_order FROM form_pages WHERE form_id = ?`, [form_id]),
+            queryPromise(db, `SELECT MAX(page_number) AS max_page_number FROM form_pages WHERE form_id = ?`, [form_id])
         ]);
 
         const nextSortOrder = (max_order || 0) + 1;
         const nextPageNumber = (max_page_number || 0) + 1;
 
         const pageQuery = `
-            INSERT INTO dform_pages (form_id, page_title, sort_order, page_number)
+            INSERT INTO form_pages (form_id, page_title, sort_order, page_number)
             VALUES (?, ?, ?, ?)
         `;
         const pageResult = await queryPromise(db, pageQuery, [form_id, title, nextSortOrder, nextPageNumber]);
@@ -245,7 +245,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
             // 📝 Update form styling and title
             await new Promise((resolve, reject) => {
                 connection.query(
-                    `UPDATE dforms SET
+                    `UPDATE forms SET
             title = ?, background_color = ?, questions_background_color = ?,
             primary_color = ?, questions_color = ?, answers_color = ?, font = ?,
             background_image = ?, updated_at = NOW()
@@ -266,7 +266,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
         } else {
             // ➕ Insert new form
             const [formResult] = await new Promise((resolve, reject) => {
-                connection.query(`INSERT INTO dforms (
+                connection.query(`INSERT INTO forms (
             user_id, form_title, internal_note, starred, is_closed, published,
             background_color, questions_background_color, primary_color,
             questions_color, answers_color, font, background_image, created_at
@@ -289,7 +289,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
         if (existingFormId) {
             const versionResult = await new Promise((resolve, reject) => {
                 connection.query(
-                    `SELECT MAX(fields_version) AS maxVersion FROM dform_fields WHERE form_id = ?`,
+                    `SELECT MAX(fields_version) AS maxVersion FROM form_fields WHERE form_id = ?`,
                     [formId],
                     (err, results) => {
                         if (err) return reject(err);
@@ -306,7 +306,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
         for (const field of parsedFields) {
             const fieldResult = await new Promise((resolve, reject) => {
                 connection.query(
-                    `INSERT INTO dform_fields (
+                    `INSERT INTO form_fields (
                         form_id, page_id, type, label, placeholder, caption, default_value, description, alert_type, font_size, required, sort_order,
                         min_value, max_value, heading_alignment, btnalignment, btnbgColor, btnlabelColor, fields_version
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -340,7 +340,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
 
             const fieldId = fieldResult.insertId;
 
-            // ✅ Insert into dfield_file_uploads 
+            // ✅ Insert into field_file_uploads 
             if (["Image", "PDF", "Video"].includes(field.type)) {
 
                 if (field.file && typeof field.file === 'object' && field.file.name) {
@@ -362,7 +362,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
                     const previewSize = field.previewSize || 300;
 
                     await connection.query(`
-                    INSERT INTO dfield_file_uploads (field_id, form_id, file_type, file_path, file_field_size, file_field_Alignment)
+                    INSERT INTO field_file_uploads (field_id, form_id, file_type, file_path, file_field_size, file_field_Alignment)
                     VALUES (?, ?, ?, ?, ?, ?)
                 `, [
                         fieldId,
@@ -375,12 +375,12 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
                 }
             }
 
-            // ✅ Insert into dfield_file_uploads 
+            // ✅ Insert into field_file_uploads 
             if (["YouTubeVideo"].includes(field.type)) {
                 const previewSize = field.previewSize || 300;
 
                 await connection.query(`
-                        INSERT INTO dfield_file_uploads (field_id, form_id, file_type, file_path, youtube_url, file_field_size, file_field_Alignment)
+                        INSERT INTO field_file_uploads (field_id, form_id, file_type, file_path, youtube_url, file_field_size, file_field_Alignment)
                         VALUES (?, ?, ?, ?, ?, ?, ?)
                     `, [
                     fieldId,
@@ -402,7 +402,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
                     }
 
                     await connection.query(`
-                        INSERT INTO dfield_options (
+                        INSERT INTO field_options (
                             field_id, option_text, options_style, sort_order, image_path
                         ) VALUES (?, ?, ?, ?, ?)
                     `, [fieldId, opt.option_text || '', field.style || '', opt.sortOrder || 0, savedFilePath]);
@@ -415,14 +415,14 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
 
                 for (const row of rows) {
                     await connection.query(`
-                        INSERT INTO dfield_matrix (field_id, row_label, column_label)
+                        INSERT INTO field_matrix (field_id, row_label, column_label)
                         VALUES (?, ?, NULL)
                     `, [fieldId, row]);
                 }
 
                 for (const col of columns) {
                     await connection.query(`
-                        INSERT INTO dfield_matrix (field_id, row_label, column_label)
+                        INSERT INTO field_matrix (field_id, row_label, column_label)
                         VALUES (?, NULL, ?)
                     `, [fieldId, col]);
                 }
@@ -431,7 +431,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
             // Insert default values
             if (field.default_value) {
                 await connection.query(`
-                    INSERT INTO dfield_default_values (
+                    INSERT INTO field_default_values (
                         form_id, field_id, field_value, submitted_at
                     ) VALUES (?, ?, ?, NOW())
                 `, [formId, fieldId, typeof field.default_value === 'object' ? JSON.stringify(field.default_value) : field.default_value]);
@@ -439,7 +439,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
 
             if (field.type === "ThankYou") {
                 await connection.query(`
-                INSERT INTO dform_thankyou (
+                INSERT INTO form_thankyou (
                     form_id, field_id, show_tick_icon, thankyou_heading, thankyou_subtext, created_at
                 ) VALUES (?, ?, ?, ?, ?, NOW())
             `, [
@@ -447,7 +447,7 @@ router.post("/save-form", verifyJWT, saveFormUpload.any(), async (req, res) => {
                     fieldId,
                     field.show_tick_icon === true,
                     field.thankyou_heading || 'Thank you',
-                    field.thankyou_subtext || 'Made with dForms, the easy way to make stunning forms'
+                    field.thankyou_subtext || 'Made with forms, the easy way to make stunning forms'
                 ]);
             }
 
@@ -491,7 +491,7 @@ router.put("/rename-form/:formId", verifyJWT, async (req, res) => {
         }
 
         // ✅ Proceed with renaming if no duplicate is found
-        const result = await queryPromise(db, "UPDATE dforms SET title = ? WHERE id = ? AND user_id = ?", [title, formId, userId]);
+        const result = await queryPromise(db, "UPDATE forms SET title = ? WHERE id = ? AND user_id = ?", [title, formId, userId]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: "Form not found or unauthorized" });
@@ -516,8 +516,8 @@ router.put("/rename-page/:pageId", verifyJWT, async (req, res) => {
     try {
         // Check page ownership
         const page = await queryPromise(db, `
-      SELECT dp.* FROM dform_pages dp 
-      JOIN dforms f ON dp.form_id = f.id 
+      SELECT dp.* FROM form_pages dp 
+      JOIN forms f ON dp.form_id = f.id 
       WHERE dp.id = ? AND f.user_id = ?
     `, [pageId, userId]);
 
@@ -525,7 +525,7 @@ router.put("/rename-page/:pageId", verifyJWT, async (req, res) => {
             return res.status(404).json({ error: "Page not found or unauthorized" });
         }
 
-        await queryPromise(db, `UPDATE dform_pages SET page_title = ? WHERE id = ?`, [title, pageId]);
+        await queryPromise(db, `UPDATE form_pages SET page_title = ? WHERE id = ?`, [title, pageId]);
         res.json({ message: "Page renamed successfully" });
     } catch (err) {
         console.error("Error renaming page:", err);
@@ -566,7 +566,7 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
                 f.font,
                 f.created_at, 
                 COUNT(fr.response_id) AS response_count 
-            FROM dforms f
+            FROM forms f
             LEFT JOIN (
                 SELECT page_number, form_id
                 FROM (
@@ -574,11 +574,11 @@ router.get("/get-forms", verifyJWT, async (req, res) => {
                         page_number,
                         form_id,
                         ROW_NUMBER() OVER (PARTITION BY form_id ORDER BY sort_order ASC) AS rn
-                    FROM dform_pages
+                    FROM form_pages
                 ) ranked_pages
                 WHERE rn = 1
             ) AS first_page ON f.id = first_page.form_id
-            LEFT JOIN dform_responses fr ON f.id = fr.form_id
+            LEFT JOIN form_responses fr ON f.id = fr.form_id
             WHERE f.user_id = ? 
         `;
 
@@ -646,8 +646,8 @@ router.get("/get-templates", verifyJWT, async (req, res) => {
                         p.page_number,
                         p.page_title,
                         p.sort_order
-                        FROM temlpates_dforms f
-                        LEFT JOIN temlpates_dform_pages p ON f.id = p.form_id
+                        FROM temlpates_forms f
+                        LEFT JOIN temlpates_form_pages p ON f.id = p.form_id
                         WHERE f.id = ?
                     `;
             const params = [formId];
@@ -675,7 +675,7 @@ router.get("/get-templates", verifyJWT, async (req, res) => {
                         f.user_id,
                         f.title,
                         f.created_at
-                        FROM temlpates_dforms f
+                        FROM temlpates_forms f
                         WHERE f.user_id = ?
                     `;
             const forms = await queryPromise(db, query, [userId]);
@@ -696,7 +696,7 @@ router.get("/get-form-pages/:formId", async (req, res) => {
     try {
         const pagesQuery = `
             SELECT id, form_id, page_number, page_title, sort_order 
-            FROM dform_pages 
+            FROM form_pages 
             WHERE form_id = ? 
             ORDER BY sort_order ASC
         `;
@@ -736,7 +736,7 @@ router.post("/update-page-order", verifyJWT, async (req, res) => {
         for (const page of pages) {
             await new Promise((resolve, reject) => {
                 connection.query(
-                    "UPDATE dform_pages SET sort_order = ? WHERE id = ?",
+                    "UPDATE form_pages SET sort_order = ? WHERE id = ?",
                     [page.sort_order, page.id],
                     (err) => {
                         if (err) return reject(err);
@@ -781,7 +781,7 @@ router.post("/check-pages-btnfields", verifyJWT, async (req, res) => {
         // 1. Get page mappings including page_number and sort_order
         const pageMappings = await new Promise((resolve, reject) => {
             connection.query(
-                `SELECT id, page_number, sort_order FROM aywo.dform_pages WHERE id IN (${placeholders})`,
+                `SELECT id, page_number, sort_order FROM aywo.form_pages WHERE id IN (${placeholders})`,
                 pageIds,
                 (err, results) => (err ? reject(err) : resolve(results))
             );
@@ -801,7 +801,7 @@ router.post("/check-pages-btnfields", verifyJWT, async (req, res) => {
         const versionResults = await new Promise((resolve, reject) => {
             connection.query(
                 `SELECT page_id, MAX(fields_version) as latest_version
-                 FROM dform_fields
+                 FROM form_fields
                  WHERE form_id = ? AND page_id IN (${versionPlaceholders})
                  GROUP BY page_id`,
                 [formId, ...pageNumbers],
@@ -821,7 +821,7 @@ router.post("/check-pages-btnfields", verifyJWT, async (req, res) => {
         // 4. Get Submit button field from lastPage
         const [submitRow] = await new Promise((resolve, reject) => {
             connection.query(
-                `SELECT id, page_id, label FROM dform_fields
+                `SELECT id, page_id, label FROM form_fields
          WHERE form_id = ? AND type = 'Submit' AND fields_version = ?
          LIMIT 1`,
                 [formId, lastPageVersion],
@@ -841,7 +841,7 @@ router.post("/check-pages-btnfields", verifyJWT, async (req, res) => {
                 //❗Submit button is not on the last page, so update to Next button
                 await new Promise((resolve, reject) => {
                     connection.query(
-                        `UPDATE dform_fields SET type = 'Next', label = 'Next' WHERE id = ?`,
+                        `UPDATE form_fields SET type = 'Next', label = 'Next' WHERE id = ?`,
                         [submitbtnField.id],
                         (err) => (err ? reject(err) : resolve())
                     );
@@ -870,7 +870,7 @@ router.post("/check-pages-btnfields", verifyJWT, async (req, res) => {
         // Now find Next button in that last page and update it to Submit
         const [lastPageNextRow] = await new Promise((resolve, reject) => {
             connection.query(
-                `SELECT id, page_id, label FROM dform_fields
+                `SELECT id, page_id, label FROM form_fields
          WHERE form_id = ? AND page_id = ? AND type = 'Next' AND fields_version = ?
          LIMIT 1`,
                 [formId, lastSortedPageId, lastSortedPageVersion],
@@ -883,7 +883,7 @@ router.post("/check-pages-btnfields", verifyJWT, async (req, res) => {
         if (finalNextBtn) {
             await new Promise((resolve, reject) => {
                 connection.query(
-                    `UPDATE dform_fields SET type = 'Submit', label = 'Submit' WHERE id = ?`,
+                    `UPDATE form_fields SET type = 'Submit', label = 'Submit' WHERE id = ?`,
                     [finalNextBtn.id],
                     (err) => (err ? reject(err) : resolve())
                 );
@@ -899,7 +899,7 @@ router.post("/check-pages-btnfields", verifyJWT, async (req, res) => {
         if (submitbtnField) {
             [updatedSubmitField] = await new Promise((resolve, reject) => {
                 connection.query(
-                    `SELECT id, page_id, type, label FROM dform_fields WHERE id = ?`,
+                    `SELECT id, page_id, type, label FROM form_fields WHERE id = ?`,
                     [submitbtnField.id],
                     (err, results) => (err ? reject(err) : resolve(results))
                 );
@@ -909,7 +909,7 @@ router.post("/check-pages-btnfields", verifyJWT, async (req, res) => {
         if (finalNextBtn) {
             [updatedNextField] = await new Promise((resolve, reject) => {
                 connection.query(
-                    `SELECT id, page_id, type, label FROM dform_fields WHERE id = ?`,
+                    `SELECT id, page_id, type, label FROM form_fields WHERE id = ?`,
                     [finalNextBtn.id],
                     (err, results) => (err ? reject(err) : resolve(results))
                 );
@@ -945,7 +945,7 @@ router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res
             SELECT id, user_id, title, internal_note, starred, is_closed, published,
                    background_color, background_image, questions_background_color, primary_color,
                    questions_color, answers_color, font, created_at
-            FROM dforms
+            FROM forms
             WHERE id = ? AND user_id = ?
         `;
         const [form] = await queryPromise(db, formQuery, [formId, userId]);
@@ -957,7 +957,7 @@ router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res
         // 2. Fetch the page
         const pageQuery = `
             SELECT id, form_id, page_number, page_title, sort_order, created_at
-            FROM dform_pages
+            FROM form_pages
             WHERE page_number = ? AND form_id = ?
         `;
         const [page] = await queryPromise(db, pageQuery, [pageId, formId]);
@@ -972,16 +972,16 @@ router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res
         if (version) {
             // ✅ Use the specific version
             fieldsQuery = `
-    SELECT * FROM dform_fields 
+    SELECT * FROM form_fields 
     WHERE form_id = ? AND page_id = ? AND fields_version = ?
   `;
             fieldsParams = [formId, pageId, version];
         } else {
             // ✅ Default to latest version
             fieldsQuery = `
-    SELECT * FROM dform_fields 
+    SELECT * FROM form_fields 
     WHERE form_id = ? AND page_id = ? AND fields_version = (
-      SELECT MAX(fields_version) FROM dform_fields WHERE form_id = ? AND page_id = ?
+      SELECT MAX(fields_version) FROM form_fields WHERE form_id = ? AND page_id = ?
     )
   `;
             fieldsParams = [formId, pageId, formId, pageId];
@@ -1002,7 +1002,7 @@ router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res
                 // Fetch field options
                 const optionsQuery = `
                     SELECT id, option_text, options_style, sort_order, image_path
-                    FROM dfield_options
+                    FROM field_options
                     WHERE field_id = ?
                     ORDER BY sort_order ASC
                 `;
@@ -1011,7 +1011,7 @@ router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res
                 // Fetch matrix rows/columns
                 const matrixQuery = `
                     SELECT row_label, column_label
-                    FROM dfield_matrix
+                    FROM field_matrix
                     WHERE field_id = ?
                 `;
                 const matrix = await queryPromise(db, matrixQuery, [fieldId]);
@@ -1019,7 +1019,7 @@ router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res
                 // ✅ Fetch uploaded files
                 const uploadsQuery = `
                     SELECT id, file_type, file_path, youtube_url, file_field_size, file_field_Alignment, uploaded_at
-                    FROM dfield_file_uploads
+                    FROM field_file_uploads
                     WHERE field_id = ? AND form_id = ?
                 `;
                 const uploads = await queryPromise(db, uploadsQuery, [fieldId, formId]);
@@ -1027,7 +1027,7 @@ router.get("/get-specific-form/:formId/page/:pageId", verifyJWT, async (req, res
                 // Fetch thank you data
                 const thankyouQuery = `
                     SELECT show_tick_icon, thankyou_heading, thankyou_subtext
-                    FROM dform_thankyou
+                    FROM form_thankyou
                     WHERE form_id = ? AND field_id = ?
                     LIMIT 1
                 `;
@@ -1079,26 +1079,26 @@ router.delete("/delete-form/:formId", verifyJWT, async (req, res) => {
         await connection.beginTransaction();
 
         // ✅ 1. Gather all file paths before deleting rows
-        const [formRow] = await queryPromise(connection, `SELECT background_image FROM dforms WHERE id = ?`, [formId]);
+        const [formRow] = await queryPromise(connection, `SELECT background_image FROM forms WHERE id = ?`, [formId]);
 
         const uploadsInResponses = await queryPromise(
             connection,
-            `SELECT answer FROM dform_response_fields WHERE response_id IN (
-         SELECT response_id FROM dform_responses WHERE form_id = ?
+            `SELECT answer FROM form_response_fields WHERE response_id IN (
+         SELECT response_id FROM form_responses WHERE form_id = ?
       )`,
             [formId]
         );
 
         const uploadsInFileUploads = await queryPromise(
             connection,
-            `SELECT file_path FROM dfield_file_uploads WHERE form_id = ?`,
+            `SELECT file_path FROM field_file_uploads WHERE form_id = ?`,
             [formId]
         );
 
         const uploadsInOptions = await queryPromise(
             connection,
-            `SELECT image_path FROM dfield_options WHERE field_id IN (
-         SELECT id FROM dform_fields WHERE form_id = ?
+            `SELECT image_path FROM field_options WHERE field_id IN (
+         SELECT id FROM form_fields WHERE form_id = ?
       )`,
             [formId]
         );
@@ -1106,32 +1106,32 @@ router.delete("/delete-form/:formId", verifyJWT, async (req, res) => {
         // ✅ 2. Delete DB rows in proper order
         await queryPromise(
             connection,
-            `DELETE FROM dform_response_fields WHERE response_id IN (
-        SELECT response_id FROM dform_responses WHERE form_id = ?
+            `DELETE FROM form_response_fields WHERE response_id IN (
+        SELECT response_id FROM form_responses WHERE form_id = ?
       )`, [formId]
         );
-        await queryPromise(connection, `DELETE FROM dform_responses WHERE form_id = ?`, [formId]);
+        await queryPromise(connection, `DELETE FROM form_responses WHERE form_id = ?`, [formId]);
 
-        const fields = await queryPromise(connection, `SELECT id FROM dform_fields WHERE form_id = ?`, [formId]);
+        const fields = await queryPromise(connection, `SELECT id FROM form_fields WHERE form_id = ?`, [formId]);
         const fieldIds = fields.map(f => f.id);
 
         if (fieldIds.length) {
-            // 🗑️ Delete dependent rows in dfield_default_values first
-            await queryPromise(connection, `DELETE FROM dfield_default_values WHERE field_id IN (?)`, [fieldIds]);
+            // 🗑️ Delete dependent rows in field_default_values first
+            await queryPromise(connection, `DELETE FROM field_default_values WHERE field_id IN (?)`, [fieldIds]);
 
             // ✅ Then the rest as you already have it:
-            await queryPromise(connection, `DELETE FROM dfield_matrix WHERE field_id IN (?)`, [fieldIds]);
-            await queryPromise(connection, `DELETE FROM dfield_options WHERE field_id IN (?)`, [fieldIds]);
-            await queryPromise(connection, `DELETE FROM dfield_file_uploads WHERE field_id IN (?)`, [fieldIds]);
+            await queryPromise(connection, `DELETE FROM field_matrix WHERE field_id IN (?)`, [fieldIds]);
+            await queryPromise(connection, `DELETE FROM field_options WHERE field_id IN (?)`, [fieldIds]);
+            await queryPromise(connection, `DELETE FROM field_file_uploads WHERE field_id IN (?)`, [fieldIds]);
         }
 
-        await queryPromise(connection, `DELETE FROM dform_thankyou WHERE form_id = ?`, [formId]);
-        await queryPromise(connection, `DELETE FROM dform_fields WHERE form_id = ?`, [formId]);
-        await queryPromise(connection, `DELETE FROM dform_pages WHERE form_id = ?`, [formId]);
+        await queryPromise(connection, `DELETE FROM form_thankyou WHERE form_id = ?`, [formId]);
+        await queryPromise(connection, `DELETE FROM form_fields WHERE form_id = ?`, [formId]);
+        await queryPromise(connection, `DELETE FROM form_pages WHERE form_id = ?`, [formId]);
 
         const result = await queryPromise(
             connection,
-            `DELETE FROM dforms WHERE id = ? AND user_id = ?`, [formId, userId]
+            `DELETE FROM forms WHERE id = ? AND user_id = ?`, [formId, userId]
         );
 
         if (result.affectedRows === 0) {
@@ -1219,7 +1219,7 @@ router.delete("/delete-page/:pageId", verifyJWT, async (req, res) => {
         // ✅ Check if page belongs to the user's form
         const [pageRow] = await queryPromise(
             connection,
-            `SELECT form_id FROM dform_pages WHERE id = ?`,
+            `SELECT form_id FROM form_pages WHERE id = ?`,
             [pageId]
         );
 
@@ -1230,7 +1230,7 @@ router.delete("/delete-page/:pageId", verifyJWT, async (req, res) => {
 
         const [formRow] = await queryPromise(
             connection,
-            `SELECT id FROM dforms WHERE id = ? AND user_id = ?`,
+            `SELECT id FROM forms WHERE id = ? AND user_id = ?`,
             [pageRow.form_id, userId]
         );
 
@@ -1244,7 +1244,7 @@ router.delete("/delete-page/:pageId", verifyJWT, async (req, res) => {
         // ✅ Gather file paths linked to fields on this page
         const fields = await queryPromise(
             connection,
-            `SELECT id FROM dform_fields WHERE page_id = ? AND form_id = ?`,
+            `SELECT id FROM form_fields WHERE page_id = ? AND form_id = ?`,
             [page_number, formId]
         );
         const fieldIds = fields.map(f => f.id);
@@ -1255,27 +1255,27 @@ router.delete("/delete-page/:pageId", verifyJWT, async (req, res) => {
         if (fieldIds.length) {
             uploadsInFileUploads = await queryPromise(
                 connection,
-                `SELECT file_path FROM dfield_file_uploads WHERE field_id IN (?)`,
+                `SELECT file_path FROM field_file_uploads WHERE field_id IN (?)`,
                 [fieldIds]
             );
 
             uploadsInOptions = await queryPromise(
                 connection,
-                `SELECT image_path FROM dfield_options WHERE field_id IN (?)`,
+                `SELECT image_path FROM field_options WHERE field_id IN (?)`,
                 [fieldIds]
             );
         }
 
         // ✅ Delete related rows
         if (fieldIds.length) {
-            await queryPromise(connection, `DELETE FROM dfield_default_values WHERE field_id IN (?)`, [fieldIds]);
-            await queryPromise(connection, `DELETE FROM dfield_matrix WHERE field_id IN (?)`, [fieldIds]);
-            await queryPromise(connection, `DELETE FROM dfield_options WHERE field_id IN (?)`, [fieldIds]);
-            await queryPromise(connection, `DELETE FROM dfield_file_uploads WHERE field_id IN (?)`, [fieldIds]);
+            await queryPromise(connection, `DELETE FROM field_default_values WHERE field_id IN (?)`, [fieldIds]);
+            await queryPromise(connection, `DELETE FROM field_matrix WHERE field_id IN (?)`, [fieldIds]);
+            await queryPromise(connection, `DELETE FROM field_options WHERE field_id IN (?)`, [fieldIds]);
+            await queryPromise(connection, `DELETE FROM field_file_uploads WHERE field_id IN (?)`, [fieldIds]);
         }
 
-        await queryPromise(connection, `DELETE FROM dform_fields WHERE page_id = ? AND form_id = ?`, [String(page_number), formId]);
-        await queryPromise(connection, `DELETE FROM dform_pages WHERE id = ?`, [pageId]);
+        await queryPromise(connection, `DELETE FROM form_fields WHERE page_id = ? AND form_id = ?`, [String(page_number), formId]);
+        await queryPromise(connection, `DELETE FROM form_pages WHERE id = ?`, [pageId]);
 
         await connection.commit();
 
@@ -1314,7 +1314,7 @@ router.put("/publish-form/:formId", verifyJWT, async (req, res) => {
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
     try {
-        const updateQuery = "UPDATE dforms SET published = ? WHERE id = ? AND user_id = ?";
+        const updateQuery = "UPDATE forms SET published = ? WHERE id = ? AND user_id = ?";
         await queryPromise(db, updateQuery, [published, formId, userId]);
 
         res.json({ message: published ? "Form published successfully!" : "Form unpublished.", formId });
@@ -1357,7 +1357,7 @@ router.post("/duplicate-template/:formId", verifyJWT, async (req, res) => {
         await connection.beginTransaction();
 
         // 1️⃣ Get original form
-        const [originalForm] = await queryPromise(connection, `SELECT * FROM temlpates_dforms WHERE id = ?`, [formId]);
+        const [originalForm] = await queryPromise(connection, `SELECT * FROM temlpates_forms WHERE id = ?`, [formId]);
         if (!originalForm) return res.status(404).json({ error: "Original form not found." });
 
         const newBgImagePath = await copyFileWithNewName(
@@ -1375,7 +1375,7 @@ router.post("/duplicate-template/:formId", verifyJWT, async (req, res) => {
         }
 
         const formInsertQuery = `
-      INSERT INTO dforms 
+      INSERT INTO forms 
       (user_id, title, internal_note, starred, is_closed, published, background_color, background_image,
        questions_background_color, primary_color, questions_color, answers_color, font)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -1397,18 +1397,18 @@ router.post("/duplicate-template/:formId", verifyJWT, async (req, res) => {
         ]);
 
         // 3️⃣ Copy pages
-        const pages = await queryPromise(connection, `SELECT * FROM temlpates_dform_pages WHERE form_id = ?`, [formId]);
+        const pages = await queryPromise(connection, `SELECT * FROM temlpates_form_pages WHERE form_id = ?`, [formId]);
 
         let versionCounter = 2;
 
         const startPageFields = await queryPromise(connection, `
                 SELECT * 
-                FROM temlpates_dform_fields
+                FROM temlpates_form_fields
                 WHERE form_id = ? 
                 AND page_id = "start"
                 AND fields_version = (
                     SELECT MAX(fields_version) 
-                    FROM temlpates_dform_fields
+                    FROM temlpates_form_fields
                     WHERE form_id = ? AND page_id = "start"
                 )
             `, [formId, formId]);
@@ -1416,7 +1416,7 @@ router.post("/duplicate-template/:formId", verifyJWT, async (req, res) => {
         // 2️⃣ Duplicate them into the new form with same fields_version
         for (const field of startPageFields) {
             await queryPromise(connection, `
-                INSERT INTO dform_fields (
+                INSERT INTO form_fields (
                     form_id, page_id, type, label, placeholder, caption, default_value,
                     description, alert_type, font_size, required, sort_order,
                     min_value, max_value, heading_alignment,
@@ -1448,7 +1448,7 @@ router.post("/duplicate-template/:formId", verifyJWT, async (req, res) => {
 
         // 👇 Hardcode ThankYou field before the loop
         const thankYouFieldResult = await queryPromise(connection, `
-        INSERT INTO dform_fields 
+        INSERT INTO form_fields 
             (form_id, page_id, type, label, placeholder, caption, default_value, description, alert_type,
             font_size, required, sort_order, min_value, max_value, heading_alignment,
             btnalignment, btnbgColor, btnlabelColor, fields_version, created_at)
@@ -1471,17 +1471,17 @@ router.post("/duplicate-template/:formId", verifyJWT, async (req, res) => {
 
         for (const page of pages) {
             await queryPromise(connection, `
-        INSERT INTO dform_pages (page_number, form_id, page_title, sort_order)
+        INSERT INTO form_pages (page_number, form_id, page_title, sort_order)
         VALUES (?, ?, ?, ?)
       `, [page.page_number, newFormId, page.page_title, page.sort_order]);
 
             // 4️⃣ Copy fields for each page
             // ✅ Correct query string
             const fieldsQuery = `
-            SELECT * FROM temlpates_dform_fields 
+            SELECT * FROM temlpates_form_fields 
             WHERE form_id = ? AND page_id = ? AND fields_version = (
                 SELECT MAX(fields_version) 
-                FROM temlpates_dform_fields 
+                FROM temlpates_form_fields 
                 WHERE form_id = ? AND page_id = ?
             )`;
 
@@ -1493,7 +1493,7 @@ router.post("/duplicate-template/:formId", verifyJWT, async (req, res) => {
             for (const field of fields) {
 
                 const { insertId: newFieldId } = await queryPromise(connection, `
-          INSERT INTO dform_fields 
+          INSERT INTO form_fields 
           (form_id, page_id, type, label, placeholder, caption, default_value, description, alert_type,
            font_size, required, sort_order, min_value, max_value, heading_alignment,
            btnalignment, btnbgColor, btnlabelColor, fields_version)
@@ -1521,7 +1521,7 @@ router.post("/duplicate-template/:formId", verifyJWT, async (req, res) => {
                 ]);
 
                 // 5️⃣ Copy options
-                const options = await queryPromise(connection, `SELECT * FROM temlpates_dfield_options WHERE field_id = ?`, [field.id]);
+                const options = await queryPromise(connection, `SELECT * FROM temlpates_field_options WHERE field_id = ?`, [field.id]);
                 for (const opt of options) {
                     let newOptionImagePath = null;
 
@@ -1530,7 +1530,7 @@ router.post("/duplicate-template/:formId", verifyJWT, async (req, res) => {
                     }
 
                     await queryPromise(connection, `
-            INSERT INTO dfield_options (field_id, option_text, options_style, sort_order, image_path)
+            INSERT INTO field_options (field_id, option_text, options_style, sort_order, image_path)
             VALUES (?, ?, ?, ?, ?)
           `, [
                         newFieldId,
@@ -1542,16 +1542,16 @@ router.post("/duplicate-template/:formId", verifyJWT, async (req, res) => {
                 }
 
                 // 6️⃣ Copy matrix rows/columns
-                const matrix = await queryPromise(connection, `SELECT * FROM temlpates_dfield_matrix WHERE field_id = ?`, [field.id]);
+                const matrix = await queryPromise(connection, `SELECT * FROM temlpates_field_matrix WHERE field_id = ?`, [field.id]);
                 for (const m of matrix) {
                     await queryPromise(connection, `
-            INSERT INTO dfield_matrix (field_id, row_label, column_label)
+            INSERT INTO field_matrix (field_id, row_label, column_label)
             VALUES (?, ?, ?)
           `, [newFieldId, m.row_label, m.column_label]);
                 }
 
                 // 7️⃣ Copy file uploads if any
-                const uploads = await queryPromise(connection, `SELECT * FROM temlpates_dfield_file_uploads WHERE field_id = ?`, [field.id]);
+                const uploads = await queryPromise(connection, `SELECT * FROM temlpates_field_file_uploads WHERE field_id = ?`, [field.id]);
                 for (const upload of uploads) {
                     let newUploadFilePath = null;
 
@@ -1560,7 +1560,7 @@ router.post("/duplicate-template/:formId", verifyJWT, async (req, res) => {
                     }
 
                     await queryPromise(connection, `
-            INSERT INTO dfield_file_uploads
+            INSERT INTO field_file_uploads
               (field_id, form_id, file_type, file_path, youtube_url, file_field_size, file_field_Alignment)
             VALUES (?, ?, ?, ?, ?, ?, ?)
           `, [
@@ -1577,11 +1577,11 @@ router.post("/duplicate-template/:formId", verifyJWT, async (req, res) => {
         }
 
         // 8️⃣ Duplicate thank you if exists
-        const thankyou = await queryPromise(connection, `SELECT * FROM temlpates_dform_thankyou WHERE form_id = ?`, [formId]);
+        const thankyou = await queryPromise(connection, `SELECT * FROM temlpates_form_thankyou WHERE form_id = ?`, [formId]);
         if (thankyou.length) {
             const origTY = thankyou[0];
             await queryPromise(connection, `
-        INSERT INTO dform_thankyou
+        INSERT INTO form_thankyou
           (form_id, field_id, show_tick_icon, thankyou_heading, thankyou_subtext)
         VALUES (?, ?, ?, ?, ?)
       `, [
@@ -1620,7 +1620,7 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
         await connection.beginTransaction();
 
         // 1️⃣ Get original form
-        const [originalForm] = await queryPromise(connection, `SELECT * FROM dforms WHERE id = ?`, [formId]);
+        const [originalForm] = await queryPromise(connection, `SELECT * FROM forms WHERE id = ?`, [formId]);
         if (!originalForm) return res.status(404).json({ error: "Original form not found." });
 
         const newBgImagePath = await copyFileWithNewName(
@@ -1638,7 +1638,7 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
         }
 
         const formInsertQuery = `
-      INSERT INTO dforms 
+      INSERT INTO forms 
       (user_id, title, internal_note, starred, is_closed, published, background_color, background_image,
        questions_background_color, primary_color, questions_color, answers_color, font)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -1660,18 +1660,18 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
         ]);
 
         // 3️⃣ Copy pages
-        const pages = await queryPromise(connection, `SELECT * FROM dform_pages WHERE form_id = ?`, [formId]);
+        const pages = await queryPromise(connection, `SELECT * FROM form_pages WHERE form_id = ?`, [formId]);
 
         let versionCounter = 2;
 
         const startPageFields = await queryPromise(connection, `
                 SELECT * 
-                FROM dform_fields
+                FROM form_fields
                 WHERE form_id = ? 
                 AND page_id = "start"
                 AND fields_version = (
                     SELECT MAX(fields_version) 
-                    FROM dform_fields
+                    FROM form_fields
                     WHERE form_id = ? AND page_id = "start"
                 )
             `, [formId, formId]);
@@ -1679,7 +1679,7 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
         // 2️⃣ Duplicate them into the new form with same fields_version
         for (const field of startPageFields) {
             await queryPromise(connection, `
-                INSERT INTO dform_fields (
+                INSERT INTO form_fields (
                     form_id, page_id, type, label, placeholder, caption, default_value,
                     description, alert_type, font_size, required, sort_order,
                     min_value, max_value, heading_alignment,
@@ -1711,7 +1711,7 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
 
         // 👇 Hardcode ThankYou field before the loop
         const thankYouFieldResult = await queryPromise(connection, `
-        INSERT INTO dform_fields 
+        INSERT INTO form_fields 
             (form_id, page_id, type, label, placeholder, caption, default_value, description, alert_type,
             font_size, required, sort_order, min_value, max_value, heading_alignment,
             btnalignment, btnbgColor, btnlabelColor, fields_version, created_at)
@@ -1734,17 +1734,17 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
 
         for (const page of pages) {
             await queryPromise(connection, `
-        INSERT INTO dform_pages (page_number, form_id, page_title, sort_order)
+        INSERT INTO form_pages (page_number, form_id, page_title, sort_order)
         VALUES (?, ?, ?, ?)
       `, [page.page_number, newFormId, page.page_title, page.sort_order]);
 
             // 4️⃣ Copy fields for each page
             // ✅ Correct query string
             const fieldsQuery = `
-            SELECT * FROM dform_fields 
+            SELECT * FROM form_fields 
             WHERE form_id = ? AND page_id = ? AND fields_version = (
                 SELECT MAX(fields_version) 
-                FROM dform_fields 
+                FROM form_fields 
                 WHERE form_id = ? AND page_id = ?
             )`;
 
@@ -1756,7 +1756,7 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
             for (const field of fields) {
 
                 const { insertId: newFieldId } = await queryPromise(connection, `
-          INSERT INTO dform_fields 
+          INSERT INTO form_fields 
           (form_id, page_id, type, label, placeholder, caption, default_value, description, alert_type,
            font_size, required, sort_order, min_value, max_value, heading_alignment,
            btnalignment, btnbgColor, btnlabelColor, fields_version)
@@ -1784,7 +1784,7 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
                 ]);
 
                 // 5️⃣ Copy options
-                const options = await queryPromise(connection, `SELECT * FROM dfield_options WHERE field_id = ?`, [field.id]);
+                const options = await queryPromise(connection, `SELECT * FROM field_options WHERE field_id = ?`, [field.id]);
                 for (const opt of options) {
                     let newOptionImagePath = null;
 
@@ -1793,7 +1793,7 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
                     }
 
                     await queryPromise(connection, `
-            INSERT INTO dfield_options (field_id, option_text, options_style, sort_order, image_path)
+            INSERT INTO field_options (field_id, option_text, options_style, sort_order, image_path)
             VALUES (?, ?, ?, ?, ?)
           `, [
                         newFieldId,
@@ -1805,16 +1805,16 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
                 }
 
                 // 6️⃣ Copy matrix rows/columns
-                const matrix = await queryPromise(connection, `SELECT * FROM dfield_matrix WHERE field_id = ?`, [field.id]);
+                const matrix = await queryPromise(connection, `SELECT * FROM field_matrix WHERE field_id = ?`, [field.id]);
                 for (const m of matrix) {
                     await queryPromise(connection, `
-            INSERT INTO dfield_matrix (field_id, row_label, column_label)
+            INSERT INTO field_matrix (field_id, row_label, column_label)
             VALUES (?, ?, ?)
           `, [newFieldId, m.row_label, m.column_label]);
                 }
 
                 // 7️⃣ Copy file uploads if any
-                const uploads = await queryPromise(connection, `SELECT * FROM dfield_file_uploads WHERE field_id = ?`, [field.id]);
+                const uploads = await queryPromise(connection, `SELECT * FROM field_file_uploads WHERE field_id = ?`, [field.id]);
                 for (const upload of uploads) {
                     let newUploadFilePath = null;
 
@@ -1823,7 +1823,7 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
                     }
 
                     await queryPromise(connection, `
-            INSERT INTO dfield_file_uploads
+            INSERT INTO field_file_uploads
               (field_id, form_id, file_type, file_path, youtube_url, file_field_size, file_field_Alignment)
             VALUES (?, ?, ?, ?, ?, ?, ?)
           `, [
@@ -1840,11 +1840,11 @@ router.post("/duplicate-form/:formId", verifyJWT, async (req, res) => {
         }
 
         // 8️⃣ Duplicate thank you if exists
-        const thankyou = await queryPromise(connection, `SELECT * FROM dform_thankyou WHERE form_id = ?`, [formId]);
+        const thankyou = await queryPromise(connection, `SELECT * FROM form_thankyou WHERE form_id = ?`, [formId]);
         if (thankyou.length) {
             const origTY = thankyou[0];
             await queryPromise(connection, `
-        INSERT INTO dform_thankyou
+        INSERT INTO form_thankyou
           (form_id, field_id, show_tick_icon, thankyou_heading, thankyou_subtext)
         VALUES (?, ?, ?, ?, ?)
       `, [
@@ -1881,7 +1881,7 @@ router.post("/duplicate-page", verifyJWT, async (req, res) => {
         // 🚨 Before inserting the new page
         const existingPageWithTitle = await queryPromise(
             db,
-            `SELECT 1 FROM dform_pages WHERE form_id = ? AND page_title = ? LIMIT 1`,
+            `SELECT 1 FROM form_pages WHERE form_id = ? AND page_title = ? LIMIT 1`,
             [formId, pageTitle]
         );
 
@@ -1890,18 +1890,18 @@ router.post("/duplicate-page", verifyJWT, async (req, res) => {
         }
 
         const [[{ max_order }], [{ max_page_number }]] = await Promise.all([
-            queryPromise(db, `SELECT MAX(sort_order) AS max_order FROM dform_pages WHERE form_id = ?`, [formId]),
-            queryPromise(db, `SELECT MAX(page_number) AS max_page_number FROM dform_pages WHERE form_id = ?`, [formId])
+            queryPromise(db, `SELECT MAX(sort_order) AS max_order FROM form_pages WHERE form_id = ?`, [formId]),
+            queryPromise(db, `SELECT MAX(page_number) AS max_page_number FROM form_pages WHERE form_id = ?`, [formId])
         ]);
 
         const nextSortOrder = (max_order || 0) + 1;
         const nextPageNumber = (max_page_number || 0) + 1;
 
-        const [originalPage] = await queryPromise(db, `SELECT * FROM dform_pages WHERE id = ?`, [pageId]);
+        const [originalPage] = await queryPromise(db, `SELECT * FROM form_pages WHERE id = ?`, [pageId]);
         if (!originalPage) return res.status(404).json({ error: "Original page not found" });
 
         const insertPageResult = await queryPromise(db, `
-      INSERT INTO dform_pages (page_number, form_id, page_title, sort_order)
+      INSERT INTO form_pages (page_number, form_id, page_title, sort_order)
       VALUES (?, ?, ?, ?)`,
             [nextPageNumber, formId, pageTitle, nextSortOrder]
         );
@@ -1910,10 +1910,10 @@ router.post("/duplicate-page", verifyJWT, async (req, res) => {
 
         // Duplicate fields (latest version only)
         const fields = await queryPromise(db, `
-      SELECT * FROM dform_fields 
+      SELECT * FROM form_fields 
       WHERE form_id = ? AND page_id = ? AND fields_version = (
         SELECT MAX(fields_version) 
-        FROM dform_fields 
+        FROM form_fields 
         WHERE form_id = ? AND page_id = ?
       )`,
             [formId, originalPage.page_number, formId, originalPage.page_number]
@@ -1923,7 +1923,7 @@ router.post("/duplicate-page", verifyJWT, async (req, res) => {
 
         for (const field of fields) {
             const { insertId: newFieldId } = await queryPromise(db, `
-        INSERT INTO dform_fields
+        INSERT INTO form_fields
         (form_id, page_id, type, label, placeholder, caption, default_value, description, alert_type,
          font_size, required, sort_order, min_value, max_value, heading_alignment,
          btnalignment, btnbgColor, btnlabelColor, fields_version)
@@ -1938,7 +1938,7 @@ router.post("/duplicate-page", verifyJWT, async (req, res) => {
             );
 
             // Options
-            const options = await queryPromise(db, `SELECT * FROM dfield_options WHERE field_id = ?`, [field.id]);
+            const options = await queryPromise(db, `SELECT * FROM field_options WHERE field_id = ?`, [field.id]);
             for (const opt of options) {
                 let newOptionImagePath = null;
                 if (opt.image_path) {
@@ -1946,24 +1946,24 @@ router.post("/duplicate-page", verifyJWT, async (req, res) => {
                 }
 
                 await queryPromise(db, `
-  INSERT INTO dfield_options (field_id, option_text, options_style, sort_order, image_path)
+  INSERT INTO field_options (field_id, option_text, options_style, sort_order, image_path)
   VALUES (?, ?, ?, ?, ?)`,
                     [newFieldId, opt.option_text, opt.options_style, opt.sort_order, newOptionImagePath]
                 );
             }
 
             // Matrix
-            const matrix = await queryPromise(db, `SELECT * FROM dfield_matrix WHERE field_id = ?`, [field.id]);
+            const matrix = await queryPromise(db, `SELECT * FROM field_matrix WHERE field_id = ?`, [field.id]);
             for (const m of matrix) {
                 await queryPromise(db, `
-          INSERT INTO dfield_matrix (field_id, row_label, column_label)
+          INSERT INTO field_matrix (field_id, row_label, column_label)
           VALUES (?, ?, ?)`,
                     [newFieldId, m.row_label, m.column_label]
                 );
             }
 
             // File uploads
-            const uploads = await queryPromise(db, `SELECT * FROM dfield_file_uploads WHERE field_id = ?`, [field.id]);
+            const uploads = await queryPromise(db, `SELECT * FROM field_file_uploads WHERE field_id = ?`, [field.id]);
             for (const upload of uploads) {
                 let newUploadFilePath = null;
                 if (upload.file_path) {
@@ -1971,7 +1971,7 @@ router.post("/duplicate-page", verifyJWT, async (req, res) => {
                 }
 
                 await queryPromise(db, `
-  INSERT INTO dfield_file_uploads
+  INSERT INTO field_file_uploads
   (field_id, form_id, file_type, file_path, youtube_url, file_field_size, file_field_Alignment)
   VALUES (?, ?, ?, ?, ?, ?, ?)`,
                     [
@@ -2012,7 +2012,7 @@ router.post("/copy-page", verifyJWT, async (req, res) => {
         // 🚨 Before inserting the new page
         const existingPageWithTitle = await queryPromise(
             db,
-            `SELECT 1 FROM dform_pages WHERE form_id = ? AND page_title = ? LIMIT 1`,
+            `SELECT 1 FROM form_pages WHERE form_id = ? AND page_title = ? LIMIT 1`,
             [current_formId, pageTitle]
         );
 
@@ -2021,18 +2021,18 @@ router.post("/copy-page", verifyJWT, async (req, res) => {
         }
 
         const [[{ max_order }], [{ max_page_number }]] = await Promise.all([
-            queryPromise(db, `SELECT MAX(sort_order) AS max_order FROM dform_pages WHERE form_id = ?`, [current_formId]),
-            queryPromise(db, `SELECT MAX(page_number) AS max_page_number FROM dform_pages WHERE form_id = ?`, [current_formId])
+            queryPromise(db, `SELECT MAX(sort_order) AS max_order FROM form_pages WHERE form_id = ?`, [current_formId]),
+            queryPromise(db, `SELECT MAX(page_number) AS max_page_number FROM form_pages WHERE form_id = ?`, [current_formId])
         ]);
 
         const nextSortOrder = (max_order || 0) + 1;
         const nextPageNumber = (max_page_number || 0) + 1;
 
-        const [originalPage] = await queryPromise(db, `SELECT * FROM dform_pages WHERE id = ?`, [copiedPageId]);
+        const [originalPage] = await queryPromise(db, `SELECT * FROM form_pages WHERE id = ?`, [copiedPageId]);
         if (!originalPage) return res.status(404).json({ error: "Original page not found" });
 
         const insertPageResult = await queryPromise(db, `
-      INSERT INTO dform_pages (page_number, form_id, page_title, sort_order)
+      INSERT INTO form_pages (page_number, form_id, page_title, sort_order)
       VALUES (?, ?, ?, ?)`,
             [nextPageNumber, current_formId, pageTitle, nextSortOrder]
         );
@@ -2041,10 +2041,10 @@ router.post("/copy-page", verifyJWT, async (req, res) => {
 
         // Duplicate fields (latest version only)
         const fields = await queryPromise(db, `
-      SELECT * FROM dform_fields 
+      SELECT * FROM form_fields 
       WHERE form_id = ? AND page_id = ? AND fields_version = (
         SELECT MAX(fields_version) 
-        FROM dform_fields 
+        FROM form_fields 
         WHERE form_id = ? AND page_id = ?
       )`,
             [copiedFormId, originalPage.page_number, copiedFormId, originalPage.page_number]
@@ -2054,7 +2054,7 @@ router.post("/copy-page", verifyJWT, async (req, res) => {
 
         for (const field of fields) {
             const { insertId: newFieldId } = await queryPromise(db, `
-        INSERT INTO dform_fields
+        INSERT INTO form_fields
         (form_id, page_id, type, label, placeholder, caption, default_value, description, alert_type,
          font_size, required, sort_order, min_value, max_value, heading_alignment,
          btnalignment, btnbgColor, btnlabelColor, fields_version)
@@ -2069,7 +2069,7 @@ router.post("/copy-page", verifyJWT, async (req, res) => {
             );
 
             // Options
-            const options = await queryPromise(db, `SELECT * FROM dfield_options WHERE field_id = ?`, [field.id]);
+            const options = await queryPromise(db, `SELECT * FROM field_options WHERE field_id = ?`, [field.id]);
             for (const opt of options) {
                 let newOptionImagePath = null;
                 if (opt.image_path) {
@@ -2077,24 +2077,24 @@ router.post("/copy-page", verifyJWT, async (req, res) => {
                 }
 
                 await queryPromise(db, `
-  INSERT INTO dfield_options (field_id, option_text, options_style, sort_order, image_path)
+  INSERT INTO field_options (field_id, option_text, options_style, sort_order, image_path)
   VALUES (?, ?, ?, ?, ?)`,
                     [newFieldId, opt.option_text, opt.options_style, opt.sort_order, newOptionImagePath]
                 );
             }
 
             // Matrix
-            const matrix = await queryPromise(db, `SELECT * FROM dfield_matrix WHERE field_id = ?`, [field.id]);
+            const matrix = await queryPromise(db, `SELECT * FROM field_matrix WHERE field_id = ?`, [field.id]);
             for (const m of matrix) {
                 await queryPromise(db, `
-          INSERT INTO dfield_matrix (field_id, row_label, column_label)
+          INSERT INTO field_matrix (field_id, row_label, column_label)
           VALUES (?, ?, ?)`,
                     [newFieldId, m.row_label, m.column_label]
                 );
             }
 
             // File uploads
-            const uploads = await queryPromise(db, `SELECT * FROM dfield_file_uploads WHERE field_id = ?`, [field.id]);
+            const uploads = await queryPromise(db, `SELECT * FROM field_file_uploads WHERE field_id = ?`, [field.id]);
             for (const upload of uploads) {
                 let newUploadFilePath = null;
                 if (upload.file_path) {
@@ -2102,7 +2102,7 @@ router.post("/copy-page", verifyJWT, async (req, res) => {
                 }
 
                 await queryPromise(db, `
-  INSERT INTO dfield_file_uploads
+  INSERT INTO field_file_uploads
   (field_id, form_id, file_type, file_path, youtube_url, file_field_size, file_field_Alignment)
   VALUES (?, ?, ?, ?, ?, ?, ?)`,
                     [
@@ -2143,7 +2143,7 @@ router.post("/save-note/:formId", verifyJWT, async (req, res) => {
     try {
         const result = await queryPromise(
             db,
-            "UPDATE dforms SET internal_note = ? WHERE id = ? AND user_id = ?",
+            "UPDATE forms SET internal_note = ? WHERE id = ? AND user_id = ?",
             [note, formId, userId]
         );
 
@@ -2154,7 +2154,7 @@ router.post("/save-note/:formId", verifyJWT, async (req, res) => {
         // Return the updated form (optional)
         const [updatedForm] = await queryPromise(
             db,
-            "SELECT * FROM dforms WHERE id = ?",
+            "SELECT * FROM forms WHERE id = ?",
             [formId]
         );
 
@@ -2178,7 +2178,7 @@ router.post("/close-form/:formId", verifyJWT, async (req, res) => {
     try {
         const result = await queryPromise(
             db,
-            "UPDATE dforms SET is_closed = ? WHERE id = ? AND user_id = ?",
+            "UPDATE forms SET is_closed = ? WHERE id = ? AND user_id = ?",
             [is_closed, formId, userId]
         );
 
@@ -2188,7 +2188,7 @@ router.post("/close-form/:formId", verifyJWT, async (req, res) => {
 
         const [updatedForm] = await queryPromise(
             db,
-            "SELECT * FROM dforms WHERE id = ?",
+            "SELECT * FROM forms WHERE id = ?",
             [formId]
         );
 
@@ -2209,7 +2209,7 @@ router.post("/toggle-star/:formId", verifyJWT, async (req, res) => {
     try {
         const result = await queryPromise(
             db,
-            "UPDATE dforms SET starred = ? WHERE id = ? AND user_id = ?",
+            "UPDATE forms SET starred = ? WHERE id = ? AND user_id = ?",
             [starred, formId, userId]
         );
 
@@ -2236,7 +2236,7 @@ router.get('/:formId/version-history', async (req, res) => {
     try {
         const query = `
             SELECT fields_version, MIN(created_at) as created_at
-            FROM dform_fields
+            FROM form_fields
             WHERE form_id = ?
             GROUP BY fields_version
             ORDER BY fields_version DESC
@@ -2254,7 +2254,7 @@ router.get("/get-templates-form/:formId/:pageId", async (req, res) => {
 
     try {
         // ✅ 1. Fetch form
-        let formQuery = "SELECT * FROM temlpates_dforms WHERE id = ?";
+        let formQuery = "SELECT * FROM temlpates_forms WHERE id = ?";
         const queryParams = [formId];
 
 
@@ -2265,7 +2265,7 @@ router.get("/get-templates-form/:formId/:pageId", async (req, res) => {
         }
 
         // ✅ 2. Fetch page data
-        const pageQuery = "SELECT * FROM temlpates_dform_pages WHERE form_id = ? AND page_number = ?";
+        const pageQuery = "SELECT * FROM temlpates_form_pages WHERE form_id = ? AND page_number = ?";
         const [page] = await queryPromise(db, pageQuery, [formId, pageId]);
 
         if (!page && pageId !== "end" && pageId !== "start") {
@@ -2274,11 +2274,11 @@ router.get("/get-templates-form/:formId/:pageId", async (req, res) => {
 
         // ✅ 3. Fetch latest-version fields for this page
         const fieldsQuery = `
-            SELECT * FROM temlpates_dform_fields f
+            SELECT * FROM temlpates_form_fields f
             WHERE f.form_id = ? AND f.page_id = ?
             AND f.fields_version = (
                 SELECT MAX(f2.fields_version)
-                FROM temlpates_dform_fields f2
+                FROM temlpates_form_fields f2
                 WHERE f2.form_id = f.form_id AND f2.page_id = f.page_id 
             )
         `;
@@ -2288,11 +2288,11 @@ router.get("/get-templates-form/:formId/:pageId", async (req, res) => {
         let options = [], matrix = [], defaults = [], uploads = [];
 
         if (fieldIds.length > 0) {
-            options = await queryPromise(db, `SELECT * FROM temlpates_dfield_options WHERE field_id IN (${fieldIds.join(",")})`);
-            matrix = await queryPromise(db, `SELECT * FROM temlpates_dfield_matrix WHERE field_id IN (${fieldIds.join(",")})`);
-            defaults = await queryPromise(db, `SELECT * FROM temlpates_dfield_default_values WHERE form_id = ?`, [formId]);
-            uploads = await queryPromise(db, `SELECT * FROM temlpates_dfield_file_uploads WHERE form_id = ?`, [formId]);
-            thankyou = await queryPromise(db, `SELECT * FROM temlpates_dform_thankyou WHERE field_id IN (${fieldIds.join(",")}) AND form_id = ? LIMIT 1`, [formId]);
+            options = await queryPromise(db, `SELECT * FROM temlpates_field_options WHERE field_id IN (${fieldIds.join(",")})`);
+            matrix = await queryPromise(db, `SELECT * FROM temlpates_field_matrix WHERE field_id IN (${fieldIds.join(",")})`);
+            defaults = await queryPromise(db, `SELECT * FROM temlpates_field_default_values WHERE form_id = ?`, [formId]);
+            uploads = await queryPromise(db, `SELECT * FROM temlpates_field_file_uploads WHERE form_id = ?`, [formId]);
+            thankyou = await queryPromise(db, `SELECT * FROM temlpates_form_thankyou WHERE field_id IN (${fieldIds.join(",")}) AND form_id = ? LIMIT 1`, [formId]);
         }
 
         const fieldsWithDetails = fields.map(field => ({
@@ -2324,7 +2324,7 @@ router.get("/workflows/:formId", verifyJWT, async (req, res) => {
     try {
         const [form] = await queryPromise(
             db,
-            "SELECT id FROM dforms WHERE id = ? AND user_id = ?",
+            "SELECT id FROM forms WHERE id = ? AND user_id = ?",
             [formId, userId]
         );
 
@@ -2334,7 +2334,7 @@ router.get("/workflows/:formId", verifyJWT, async (req, res) => {
 
         const workflows = await queryPromise(
             db,
-            "SELECT * FROM dform_workflow WHERE form_id = ? AND delete_at IS NULL",
+            "SELECT * FROM form_workflow WHERE form_id = ? AND delete_at IS NULL",
             [formId]
         );
 
@@ -2354,7 +2354,7 @@ router.post("/workflows/create", verifyJWT, async (req, res) => {
         // check if form belongs to user
         const [form] = await queryPromise(
             db,
-            "SELECT id FROM dforms WHERE id = ? AND user_id = ?",
+            "SELECT id FROM forms WHERE id = ? AND user_id = ?",
             [form_id, userId]
         );
 
@@ -2365,14 +2365,14 @@ router.post("/workflows/create", verifyJWT, async (req, res) => {
         // 🔹 Soft delete any existing workflows for this form
         await queryPromise(
             db,
-            "UPDATE dform_workflow SET delete_at = NOW() WHERE form_id = ? AND delete_at IS NULL",
+            "UPDATE form_workflow SET delete_at = NOW() WHERE form_id = ? AND delete_at IS NULL",
             [form_id]
         );
 
         // 🔹 Insert the new workflow
         await queryPromise(
             db,
-            "INSERT INTO dform_workflow (form_id, workflow_name, workflow_delay_time) VALUES (?, ?, ?)",
+            "INSERT INTO form_workflow (form_id, workflow_name, workflow_delay_time) VALUES (?, ?, ?)",
             [form_id, workflow_name, workflow_delay_time || 30]
         );
 
@@ -2393,8 +2393,8 @@ router.delete("/workflows/:id", verifyJWT, async (req, res) => {
         const [workflow] = await queryPromise(
             db,
             `SELECT w.id 
-             FROM dform_workflow w
-             JOIN dforms f ON w.form_id = f.id
+             FROM form_workflow w
+             JOIN forms f ON w.form_id = f.id
              WHERE w.id = ? AND f.user_id = ? AND w.delete_at IS NULL`,
             [workflowId, userId]
         );
@@ -2405,7 +2405,7 @@ router.delete("/workflows/:id", verifyJWT, async (req, res) => {
 
         await queryPromise(
             db,
-            "UPDATE dform_workflow SET delete_at = NOW() WHERE id = ?",
+            "UPDATE form_workflow SET delete_at = NOW() WHERE id = ?",
             [workflowId]
         );
 
@@ -2425,7 +2425,7 @@ router.put("/forms/update-close-message", verifyJWT, async (req, res) => {
         // check if form belongs to user
         const [form] = await queryPromise(
             db,
-            "SELECT id FROM dforms WHERE id = ? AND user_id = ?",
+            "SELECT id FROM forms WHERE id = ? AND user_id = ?",
             [form_id, userId]
         );
 
@@ -2436,7 +2436,7 @@ router.put("/forms/update-close-message", verifyJWT, async (req, res) => {
         // update close message
         await queryPromise(
             db,
-            "UPDATE dforms SET close_title = ?, close_description = ?, updated_at = NOW() WHERE id = ?",
+            "UPDATE forms SET close_title = ?, close_description = ?, updated_at = NOW() WHERE id = ?",
             [close_title, close_description, form_id]
         );
 
@@ -2455,7 +2455,7 @@ router.get("/forms/:formId/close-message", verifyJWT, async (req, res) => {
     try {
         const [form] = await queryPromise(
             db,
-            "SELECT is_closed, close_title, close_description FROM dforms WHERE id = ? AND user_id = ?",
+            "SELECT is_closed, close_title, close_description FROM forms WHERE id = ? AND user_id = ?",
             [formId, userId]
         );
 
@@ -2479,7 +2479,7 @@ router.put("/forms/update-dates", verifyJWT, async (req, res) => {
         // check if form belongs to user
         const [form] = await queryPromise(
             db,
-            "SELECT id FROM dforms WHERE id = ? AND user_id = ?",
+            "SELECT id FROM forms WHERE id = ? AND user_id = ?",
             [form_id, userId]
         );
 
@@ -2490,7 +2490,7 @@ router.put("/forms/update-dates", verifyJWT, async (req, res) => {
         // update open/expire dates
         await queryPromise(
             db,
-            `UPDATE dforms 
+            `UPDATE forms 
              SET form_open_date = ?, form_expire_date = ?, updated_at = NOW() 
              WHERE id = ?`,
             [form_open_date || null, form_expire_date || null, form_id]
@@ -2511,7 +2511,7 @@ router.get("/forms/:formId/dates", verifyJWT, async (req, res) => {
     try {
         const [form] = await queryPromise(
             db,
-            "SELECT form_open_date, form_expire_date FROM dforms WHERE id = ? AND user_id = ?",
+            "SELECT form_open_date, form_expire_date FROM forms WHERE id = ? AND user_id = ?",
             [formId, userId]
         );
 
@@ -2535,7 +2535,7 @@ router.put("/forms/update-submission-limit", verifyJWT, async (req, res) => {
         // check if form belongs to user
         const [form] = await queryPromise(
             db,
-            "SELECT id FROM dforms WHERE id = ? AND user_id = ?",
+            "SELECT id FROM forms WHERE id = ? AND user_id = ?",
             [form_id, userId]
         );
 
@@ -2546,7 +2546,7 @@ router.put("/forms/update-submission-limit", verifyJWT, async (req, res) => {
         // update submission limit
         await queryPromise(
             db,
-            `UPDATE dforms 
+            `UPDATE forms 
              SET submission_limit = ?, updated_at = NOW() 
              WHERE id = ?`,
             [submission_limit || null, form_id]
@@ -2567,7 +2567,7 @@ router.get("/forms/:formId/submission-limit", verifyJWT, async (req, res) => {
     try {
         const [form] = await queryPromise(
             db,
-            "SELECT submission_limit FROM dforms WHERE id = ? AND user_id = ?",
+            "SELECT submission_limit FROM forms WHERE id = ? AND user_id = ?",
             [formId, userId]
         );
 
@@ -2591,7 +2591,7 @@ router.get("/forms/:formId/responseLimit-limit", verifyJWT, async (req, res) => 
         // Get submission limit for this form
         const [form] = await queryPromise(
             db,
-            "SELECT submission_limit FROM dforms WHERE id = ? AND user_id = ?",
+            "SELECT submission_limit FROM forms WHERE id = ? AND user_id = ?",
             [formId, userId]
         );
 
@@ -2602,7 +2602,7 @@ router.get("/forms/:formId/responseLimit-limit", verifyJWT, async (req, res) => 
         // Count responses
         const [countResult] = await queryPromise(
             db,
-            "SELECT COUNT(*) AS response_count FROM dform_responses WHERE form_id = ?",
+            "SELECT COUNT(*) AS response_count FROM form_responses WHERE form_id = ?",
             [formId]
         );
 
@@ -2629,7 +2629,7 @@ router.post("/toggle-progress/:formId", verifyJWT, async (req, res) => {
     try {
         const result = await queryPromise(
             db,
-            "UPDATE dforms SET show_progress_bar = ? WHERE id = ? AND user_id = ?",
+            "UPDATE forms SET show_progress_bar = ? WHERE id = ? AND user_id = ?",
             [show_progress_bar, formId, userId]
         );
 
@@ -2639,7 +2639,7 @@ router.post("/toggle-progress/:formId", verifyJWT, async (req, res) => {
 
         const [updatedForm] = await queryPromise(
             db,
-            "SELECT * FROM dforms WHERE id = ?",
+            "SELECT * FROM forms WHERE id = ?",
             [formId]
         );
 
@@ -2659,7 +2659,7 @@ router.get("/forms/:formId/progress-bar", verifyJWT, async (req, res) => {
     try {
         const [form] = await queryPromise(
             db,
-            "SELECT show_progress_bar FROM dforms WHERE id = ? AND user_id = ?",
+            "SELECT show_progress_bar FROM forms WHERE id = ? AND user_id = ?",
             [formId, userId]
         );
 
@@ -2687,7 +2687,7 @@ router.post("/toogle-respondent_notifications/:formId", verifyJWT, async (req, r
     try {
         const result = await queryPromise(
             db,
-            "UPDATE dforms SET respondent_notifications = ? WHERE id = ? AND user_id = ?",
+            "UPDATE forms SET respondent_notifications = ? WHERE id = ? AND user_id = ?",
             [respondent_notifications, formId, userId]
         );
 
@@ -2697,7 +2697,7 @@ router.post("/toogle-respondent_notifications/:formId", verifyJWT, async (req, r
 
         const [updatedForm] = await queryPromise(
             db,
-            "SELECT * FROM dforms WHERE id = ?",
+            "SELECT * FROM forms WHERE id = ?",
             [formId]
         );
 
@@ -2717,7 +2717,7 @@ router.get("/forms/:formId/respondent_notifications", verifyJWT, async (req, res
     try {
         const [form] = await queryPromise(
             db,
-            "SELECT respondent_notifications FROM dforms WHERE id = ? AND user_id = ?",
+            "SELECT respondent_notifications FROM forms WHERE id = ? AND user_id = ?",
             [formId, userId]
         );
 

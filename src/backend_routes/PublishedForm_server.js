@@ -80,8 +80,8 @@ router.post("/submit-form", upload.any(), async (req, res) => {
 
         await connection.beginTransaction();
 
-        // ✅ Insert response into `dform_responses`
-        const responseInsertQuery = "INSERT INTO dform_responses (form_id) VALUES (?)";
+        // ✅ Insert response into `form_responses`
+        const responseInsertQuery = "INSERT INTO form_responses (form_id) VALUES (?)";
         const responseResult = await queryPromise(connection, responseInsertQuery, [parseInt(form_id)]);
         const response_id = responseResult.insertId;
 
@@ -122,7 +122,7 @@ router.post("/submit-form", upload.any(), async (req, res) => {
             }
 
             const responseFieldQuery = `
-    INSERT INTO dform_response_fields (response_id, field_id, answer) 
+    INSERT INTO  (response_id, field_id, answer) 
     VALUES (?, ?, ?)`;
 
             if (Array.isArray(finalAnswer)) {
@@ -139,7 +139,7 @@ router.post("/submit-form", upload.any(), async (req, res) => {
         const [formOwner] = await queryPromise(
             db,
             `SELECT u.email 
-            FROM dforms f 
+            FROM forms f 
             JOIN users u ON f.user_id = u.user_id 
             WHERE f.id = ?`,
             [form_id]
@@ -148,7 +148,7 @@ router.post("/submit-form", upload.any(), async (req, res) => {
 
         const workflows = await queryPromise(
             db,
-            "SELECT * FROM dform_workflow WHERE form_id = ? AND delete_at IS NULL",
+            "SELECT * FROM form_workflow WHERE form_id = ? AND delete_at IS NULL",
             [form_id]
         );
 
@@ -196,7 +196,7 @@ router.get("/get-published-form/:formId/:pageId", async (req, res) => {
 
     try {
         // ✅ 1. Fetch form
-        let formQuery = "SELECT * FROM dforms WHERE id = ?";
+        let formQuery = "SELECT * FROM forms WHERE id = ?";
         const queryParams = [formId];
 
         // ✅ Add condition only if not preview mode
@@ -211,7 +211,7 @@ router.get("/get-published-form/:formId/:pageId", async (req, res) => {
         }
 
         // ✅ 2. Fetch page data
-        const pageQuery = "SELECT * FROM dform_pages WHERE form_id = ? AND page_number = ?";
+        const pageQuery = "SELECT * FROM form_pages WHERE form_id = ? AND page_number = ?";
         const [page] = await queryPromise(db, pageQuery, [formId, pageId]);
 
         if (!page && pageId !== "end" && pageId !== "start") {
@@ -220,11 +220,11 @@ router.get("/get-published-form/:formId/:pageId", async (req, res) => {
 
         // ✅ 3. Fetch latest-version fields for this page
         const fieldsQuery = `
-            SELECT * FROM dform_fields f
+            SELECT * FROM form_fields f
             WHERE f.form_id = ? AND f.page_id = ?
             AND f.fields_version = (
                 SELECT MAX(f2.fields_version)
-                FROM dform_fields f2
+                FROM form_fields f2
                 WHERE f2.form_id = f.form_id AND f2.page_id = f.page_id 
             )
         `;
@@ -234,11 +234,11 @@ router.get("/get-published-form/:formId/:pageId", async (req, res) => {
         let options = [], matrix = [], defaults = [], uploads = [];
 
         if (fieldIds.length > 0) {
-            options = await queryPromise(db, `SELECT * FROM dfield_options WHERE field_id IN (${fieldIds.join(",")})`);
-            matrix = await queryPromise(db, `SELECT * FROM dfield_matrix WHERE field_id IN (${fieldIds.join(",")})`);
-            defaults = await queryPromise(db, `SELECT * FROM dfield_default_values WHERE form_id = ?`, [formId]);
-            uploads = await queryPromise(db, `SELECT * FROM dfield_file_uploads WHERE form_id = ?`, [formId]);
-            thankyou = await queryPromise(db, `SELECT * FROM dform_thankyou WHERE field_id IN (${fieldIds.join(",")}) AND form_id = ? LIMIT 1`, [formId]);
+            options = await queryPromise(db, `SELECT * FROM field_options WHERE field_id IN (${fieldIds.join(",")})`);
+            matrix = await queryPromise(db, `SELECT * FROM field_matrix WHERE field_id IN (${fieldIds.join(",")})`);
+            defaults = await queryPromise(db, `SELECT * FROM field_default_values WHERE form_id = ?`, [formId]);
+            uploads = await queryPromise(db, `SELECT * FROM field_file_uploads WHERE form_id = ?`, [formId]);
+            thankyou = await queryPromise(db, `SELECT * FROM form_thankyou WHERE field_id IN (${fieldIds.join(",")}) AND form_id = ? LIMIT 1`, [formId]);
         }
 
         const fieldsWithDetails = fields.map(field => ({

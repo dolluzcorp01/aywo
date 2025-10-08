@@ -29,7 +29,7 @@ router.get("/get-responses/:formId", async (req, res) => {
     }
 
     try {
-        const formResponsesQuery = "SELECT * FROM dform_responses WHERE form_id = ?";
+        const formResponsesQuery = "SELECT * FROM form_responses WHERE form_id = ?";
         const formResponses = await queryPromise(db, formResponsesQuery, [numericFormId]);
 
         if (formResponses.length === 0) {
@@ -39,9 +39,9 @@ router.get("/get-responses/:formId", async (req, res) => {
         const responseIds = formResponses.map(res => res.response_id);
         const responseFieldsQuery = `
             SELECT rf.response_id, rf.field_id, ff.label, rf.answer, ff.type, ff.form_id, df.title AS formTitle 
-            FROM dform_response_fields rf
-            JOIN dform_fields ff ON rf.field_id = ff.id
-            LEFT JOIN dforms df ON df.id = ff.form_id
+            FROM form_response_fields rf
+            JOIN form_fields ff ON rf.field_id = ff.id
+            LEFT JOIN forms df ON df.id = ff.form_id
             WHERE rf.response_id IN (${responseIds.map(() => "?").join(",")})
         `;
         const responseFields = await queryPromise(db, responseFieldsQuery, responseIds);
