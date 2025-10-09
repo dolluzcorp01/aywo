@@ -47,6 +47,7 @@ const PublishedForm = () => {
     const [respondentNotifications, setRespondentNotifications] = useState(false);
     const [downloadPDF, setDownloadPDF] = useState(false);
     const [columns, setColumns] = useState([]);
+    const [skipCheck, setSkipCheck] = useState(false);
 
     const fetchRespondentNotifications = async () => {
         if (!formId) return;
@@ -348,13 +349,13 @@ const PublishedForm = () => {
         return match ? match[1] : "";
     };
 
-    const [skipCheck, setSkipCheck] = useState(false);
-
     useEffect(() => {
         if (!formPages || formPages.length === 0) return;
 
         // ✅ Always allow page-start
         if (pageId === "start") return;
+
+        if (pageId === "end" && skipCheck) return;
 
         // ✅ Skip validation if we're navigating via Next button
         debugger
@@ -2608,7 +2609,8 @@ const PublishedForm = () => {
                     const formMatch = currentPath.match(/\/forms\/(form-\d+)\//);
                     if (formMatch && formMatch[1]) {
                         const formId = formMatch[1];
-                        window.location.href = `/forms/${formId}/page-end`;
+                        setSkipCheck(true);
+                        navigate(`/forms/${formId}/page-end`);
                     }
                 }, 1000);
             }
