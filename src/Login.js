@@ -48,6 +48,7 @@ function Login() {
   const [otpEntered, setOtpEntered] = useState(false);
   const [showBackToLogin, setShowBackToLogin] = useState(true);
   const [showBackToChangePassword, setShowBackToChangePassword] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
   const [user, setUser] = useState(null);
 
@@ -247,11 +248,16 @@ function Login() {
       return;
     }
 
+    setIsSending(true); // ✅ Start loading
+
+    const isResetPassword = window.location.search.includes("changePassword");
+    const purpose = isResetPassword ? "reset" : "login";
+
     try {
       const response = await apiFetch("/api/login/checkUserExists", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userInput: otpInput }),
+        body: JSON.stringify({ userInput: otpInput, purpose }),
       });
 
       const data = await response.json();
@@ -267,6 +273,8 @@ function Login() {
     } catch (error) {
       console.error("Error sending OTP:", error);
       showErrorMessage("An error occurred while sending OTP. Please try again later.");
+    } finally {
+      setIsSending(false); // ✅ Stop loading
     }
   };
 
@@ -618,7 +626,14 @@ function Login() {
                     {/* alert messages */}
                     <div id="alert-message" style={{ display: "none" }}></div>
 
-                    <button onClick={sendOTP} className="btn btn-primary w-100 mt-3" style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none", outline: "none" }}>Send OTP</button>
+                    <button
+                      onClick={sendOTP}
+                      className="btn btn-primary w-100 mt-3"
+                      style={{ backgroundColor: "hsl(8, 77%, 56%)", border: "none", outline: "none" }}
+                      disabled={isSending} // ✅ Disable when sending
+                    >
+                      {isSending ? "Sending..." : "Send OTP"} {/* ✅ Dynamic Text */}
+                    </button>
                     {showBackToLogin && (
                       <button onClick={showLoginForm} id="Back_to_Login_btn" className="btn btn-secondary w-100 mt-2" style={{ border: "none", outline: "none" }}>Back to Login</button>
                     )}

@@ -223,7 +223,7 @@ router.post('/verifyLogin', (req, res) => {
 
 // 🔹 Check if User Exists API
 router.post('/checkUserExists', (req, res) => {
-  const { userInput } = req.body;
+  const { userInput, purpose } = req.body; // ✅ Read purpose
   const db = getDBConnection('aywo');
   const query = 'SELECT COUNT(*) AS count FROM users WHERE email = ?';
 
@@ -233,7 +233,7 @@ router.post('/checkUserExists', (req, res) => {
       return res.status(500).json({ message: 'Error checking user' });
     }
     if (results[0].count > 0) {
-      generateOTP(userInput, res);
+      generateOTP(userInput, res, purpose); // ✅ Pass to OTP function
     } else {
       res.json({ message: 'not_exists' });
     }
@@ -241,7 +241,7 @@ router.post('/checkUserExists', (req, res) => {
 });
 
 // 🔹 Generate OTP Function
-const generateOTP = (userInput, res) => {
+const generateOTP = (userInput, res, purpose = "reset") => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const expiryTime = new Date(Date.now() + 5 * 60000);
   const db = getDBConnection('aywo');
@@ -255,7 +255,24 @@ const generateOTP = (userInput, res) => {
       return res.status(500).json({ message: 'Error generating OTP' });
     }
 
-    // 🔹 Send OTP via Email
+    // 🔹 Email Content Based on Purpose
+    let subject = "";
+    let message = "";
+
+    if (purpose === "login") {
+      subject = "Aywo - Verify Your Email Address";
+      message = `
+        <p>We received a request to verify your email for <strong>Aywo Login</strong>.</p>
+        <p>Please use the following OTP to complete your login:</p>
+      `;
+    } else if (purpose === "reset") {
+      subject = "Aywo Password Reset - Your OTP Code";
+      message = `
+        <p>We received a request to reset your password on <strong>Aywo</strong>.</p>
+        <p>Please use the following OTP to verify your identity:</p>
+      `;
+    }
+
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 587,
@@ -269,20 +286,18 @@ const generateOTP = (userInput, res) => {
     const mailOptions = {
       from: '"Aywo Support" <vv.pavithran12@gmail.com>',
       to: userInput,
-      subject: "Aywo Password Reset - Your OTP Code",
+      subject: subject,
       html: `
-    <div style="font-family: Arial, sans-serif; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
-      <h2 style="color: #4A90E2;">Aywo - One Time Password (OTP)</h2>
-      <p>Hello,</p>
-      <p>We received a request to reset your password on <strong>Aywo</strong>.</p>
-      <p>Please use the following OTP to verify your identity:</p>
-      <h3 style="color: #333; font-size: 24px;">${otp}</h3>
-      <p>This OTP is valid for <strong>2 minutes</strong>. Do not share this code with anyone.</p>
-      <p>If you did not request a password reset, please ignore this message.</p>
-      <br/>
-      <p style="color: #888;">— The Aywo Team</p>
-    </div>
-  `
+        <div style="font-family: Arial, sans-serif; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+          <h2 style="color: #4A90E2;">Aywo - One Time Password (OTP)</h2>
+          ${message}
+          <h3 style="color: #333; font-size: 24px;">${otp}</h3>
+          <p>This OTP is valid for <strong>2 minutes</strong>. Do not share this code with anyone.</p>
+          <p>If you did not request this, please ignore this message.</p>
+          <br/>
+          <p style="color: #888;">— The Aywo Team</p>
+        </div>
+      `
     };
 
     try {
