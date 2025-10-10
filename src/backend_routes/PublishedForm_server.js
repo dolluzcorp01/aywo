@@ -164,7 +164,7 @@ router.post("/submit-form", upload.any(), async (req, res) => {
 
             if (workflow.workflow_name === "Thank you email") {
                 // Send immediately
-                sendFormMail(recipientEmail, "Your form submission", html)
+                sendFormMail(recipientEmail, "Aywo - Your form submission", html)
                     .then(() => console.log("✅ Thank you email sent"))
                     .catch(err => console.error("❌ Error sending email:", err));
             }
@@ -172,7 +172,7 @@ router.post("/submit-form", upload.any(), async (req, res) => {
             if (workflow.workflow_name === "Send email after delay") {
                 const delayMinutes = workflow.workflow_delay_time || 30;
                 setTimeout(() => {
-                    sendFormMail(recipientEmail, "Your form submission", html)
+                    sendFormMail(recipientEmail, "Aywo - Your form submission", html)
                         .then(() => console.log(`✅ Delayed email sent after ${delayMinutes}m`))
                         .catch(err => console.error("❌ Error sending delayed email:", err));
                 }, delayMinutes * 60 * 1000);
